@@ -7,6 +7,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
+  
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -14,6 +15,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
   app.enableCors({
     origin:true,
     credentials: true,
