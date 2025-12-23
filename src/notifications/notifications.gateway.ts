@@ -12,10 +12,15 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://www.hipster-ia.fr',
+      'https://hipster-api.fr',
+    ],
     credentials: true,
   },
-  namespace: '/notifications',
+  // Pas de namespace - utilise le chemin par défaut /socket.io/
 })
 export class NotificationsGateway
   implements OnGatewayConnection, OnGatewayDisconnect
