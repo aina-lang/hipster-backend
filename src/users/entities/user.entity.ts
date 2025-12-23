@@ -46,6 +46,9 @@ export class User {
   @Column({ nullable: true })
   contactEmail?: string;
 
+  @Column({ nullable: true })
+  pendingEmail?: string;
+
   @Column()
   password: string;
 

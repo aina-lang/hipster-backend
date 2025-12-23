@@ -15,6 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { UsersService } from './users.service';
+import { AuthService } from '../auth/auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from 'src/common/enums/role.enum';
@@ -30,7 +31,10 @@ import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly authService: AuthService,
+  ) {}
 
   // 🔹 Profil de l'utilisateur connecté
   @ApiOperation({ summary: "Récupérer le profil de l'utilisateur connecté" })
@@ -47,6 +51,24 @@ export class UsersController {
   async updateMe(@User() user: any, @Body() dto: UpdateUserProfileDto) {
     console.log('[UsersController] updateMe called with DTO:', JSON.stringify(dto, null, 2));
     return this.usersService.update(user.sub, dto);
+  }
+
+  @ApiOperation({ summary: "Initier le changement d'email (envoie OTP à l'email actuel)" })
+  @Post('me/email/request')
+  async requestEmailChange(@User() user: any) {
+    return this.authService.requestEmailChange(user.sub);
+  }
+
+  @ApiOperation({ summary: "Vérifier l'OTP de l'email actuel et envoyer OTP au nouvel email" })
+  @Post('me/email/verify-current')
+  async verifyCurrentEmailOtp(@User() user: any, @Body() dto: { code: string; newEmail: string }) {
+    return this.authService.verifyCurrentEmailOtp(user.sub, dto.code, dto.newEmail);
+  }
+
+  @ApiOperation({ summary: "Confirmer le nouvel email avec l'OTP reçu" })
+  @Post('me/email/verify-new')
+  async confirmNewEmailOtp(@User() user: any, @Body() dto: { code: string }) {
+    return this.authService.confirmNewEmailOtp(user.sub, dto.code);
   }
 
   @ApiOperation({ summary: "Uploader un avatar pour l'utilisateur connecté" })

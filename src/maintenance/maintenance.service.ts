@@ -82,7 +82,6 @@ export class MaintenanceService implements OnModuleInit {
       start_date: new Date(),
       status: ProjectStatus.IN_PROGRESS,
       budget: 0,
-      createdBy: { id: userId } as any,
       maintenanceConfig: { enabled: true, frequency: 'custom' }, // ✅ Force enable maintenance
     });
 

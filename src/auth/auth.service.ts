@@ -261,4 +261,73 @@ export class AuthService {
 
     return { message: 'Votre mot de passe a été réinitialisé. Vérifiez vos emails.' };
   }
+
+  async requestEmailChange(userId: number) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const otp = await this.otpService.generateOtp(user, OtpType.EMAIL_CHANGE_CURRENT);
+    
+    await this.mailService.sendEmail({
+      to: user.email,
+      subject: '🔑 Sécurité Hipster : Code de changement d\'email',
+      template: 'otp-email',
+      context: { name: user.firstName ?? user.email, code: otp },
+    });
+
+    return { message: 'Un code de vérification a été envoyé à votre adresse email actuelle.' };
+  }
+
+  async verifyCurrentEmailOtp(userId: number, code: string, newEmail: string) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const isAlreadyUsed = await this.userRepo.findOne({ where: { email: newEmail } });
+    if (isAlreadyUsed) throw new ConflictException('Cette adresse email est déjà utilisée.');
+
+    const isValid = await this.otpService.verifyOtp(user, code, OtpType.EMAIL_CHANGE_CURRENT);
+    if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
+
+    user.pendingEmail = newEmail;
+    await this.userRepo.save(user);
+
+    // Send OTP to NEW email
+    const otp = await this.otpService.generateOtp(user, OtpType.EMAIL_CHANGE_NEW);
+    await this.mailService.sendEmail({
+      to: newEmail,
+      subject: '🔑 Vérification de votre nouvel email Hipster',
+      template: 'otp-email',
+      context: { name: user.firstName ?? user.email, code: otp },
+    });
+
+    return { message: 'Code vérifié. Un nouveau code a été envoyé à votre nouvelle adresse email.' };
+  }
+
+  async confirmNewEmailOtp(userId: number, code: string) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+    if (!user.pendingEmail) throw new BadRequestException('Aucun changement d\'email en cours.');
+
+    const isValid = await this.otpService.verifyOtp(user, code, OtpType.EMAIL_CHANGE_NEW);
+    if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
+
+    const oldEmail = user.email;
+    user.email = user.pendingEmail;
+    user.pendingEmail = undefined;
+    user.refreshToken = null; // Forces re-login after email change
+    await this.userRepo.save(user);
+
+    // Optional: send confirmation to OLD email
+    await this.mailService.sendEmail({
+      to: oldEmail,
+      subject: '✅ Votre email Hipster a été modifié',
+      template: 'welcome-email', // adapted or simple content
+      context: { 
+        firstName: user.firstName, 
+        message: `Votre adresse email a été modifiée avec succès de ${oldEmail} vers ${user.email}.`
+      },
+    });
+
+    return { message: 'Votre adresse email a été mise à jour avec succès. Veuillez vous reconnecter.' };
+  }
 }
