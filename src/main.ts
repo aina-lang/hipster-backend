@@ -15,7 +15,7 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: 'https://www.hipster-ia.fr',
+    origin:true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
