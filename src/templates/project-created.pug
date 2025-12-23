@@ -1,0 +1,30 @@
+doctype html
+html
+  head
+    style.
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: #4F46E5; color: white; padding: 20px; text-align: center; }
+      .content { background: #f9f9f9; padding: 20px; }
+      .button { background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }
+      .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+  body
+    .container
+      .header
+        h1 🎉 Nouveau Projet Créé
+      .content
+        h2 Bonjour #{clientName},
+        p Nous sommes ravis de vous informer que votre projet a été créé avec succès !
+        
+        h3 Détails du projet:
+        ul
+          li <strong>Nom:</strong> #{projectName}
+          li <strong>Date de début:</strong> #{startDate}
+          li <strong>Date de fin prévue:</strong> #{endDate}
+          li <strong>Budget:</strong> #{budget}€
+        
+        p Notre équipe va commencer à travailler sur votre projet très bientôt.
+        
+        a.button(href=projectUrl) Voir le projet
+      .footer
+        p © 2025 Hipster Studio. Tous droits réservés.

@@ -1,0 +1,383 @@
+doctype html
+html(lang='fr')
+    head
+        meta(charset='UTF-8')
+        meta(name='viewport' content='width=device-width, initial-scale=1.0')
+        title Confirmation de compte - Hipster
+        style.
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 40px 20px;
+                line-height: 1.6;
+            }
+
+            .email-wrapper {
+                max-width: 600px;
+                margin: 0 auto;
+                background: #ffffff;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            }
+
+            .header {
+                background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+                padding: 40px 30px;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .header::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            }
+
+            .logo {
+                background: linear-gradient(135deg, #ff6f61, #ff9068);
+                width: 80px;
+                height: 80px;
+                margin: 0 auto 15px;
+                border-radius: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 36px;
+                font-weight: bold;
+                color: white;
+                box-shadow: 0 8px 20px rgba(255, 111, 97, 0.4);
+                position: relative;
+                z-index: 1;
+            }
+
+            .brand-name {
+                font-size: 28px;
+                font-weight: 700;
+                color: #ffffff;
+                letter-spacing: 1px;
+                position: relative;
+                z-index: 1;
+            }
+
+            .content {
+                padding: 50px 40px;
+                background: #ffffff;
+            }
+
+            .icon-check {
+                width: 60px;
+                height: 60px;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                border-radius: 50%;
+                margin: 0 auto 25px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .icon-check::after {
+                content: '✓';
+                color: white;
+                font-size: 32px;
+                font-weight: bold;
+            }
+
+            h1 {
+                font-size: 28px;
+                color: #2d2d2d;
+                margin-bottom: 15px;
+                text-align: center;
+                font-weight: 700;
+            }
+
+            .subtitle {
+                font-size: 16px;
+                color: #666;
+                text-align: center;
+                margin-bottom: 35px;
+            }
+
+            .greeting {
+                font-size: 17px;
+                color: #444;
+                margin-bottom: 25px;
+                text-align: center;
+            }
+
+            .otp-section {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border-radius: 12px;
+                padding: 30px;
+                margin: 30px 0;
+                border: 2px dashed #dee2e6;
+                text-align: center;
+            }
+
+            .otp-label {
+                font-size: 14px;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 12px;
+                font-weight: 600;
+            }
+
+            .otp {
+                font-size: 36px;
+                font-weight: 800;
+                letter-spacing: 8px;
+                color: #ff6f61;
+                background: white;
+                padding: 18px 30px;
+                border-radius: 10px;
+                display: inline-block;
+                box-shadow: 0 4px 15px rgba(255, 111, 97, 0.2);
+                margin-bottom: 15px;
+                font-family: 'Courier New', Courier, monospace;
+            }
+
+            .expiry {
+                font-size: 13px;
+                color: #888;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+            }
+
+            .expiry::before {
+                content: '⏱';
+                font-size: 16px;
+            }
+
+            .info-box {
+                background: #fff8f5;
+                border-left: 4px solid #ff6f61;
+                padding: 20px;
+                margin: 25px 0;
+                border-radius: 8px;
+            }
+
+            .info-box h3 {
+                font-size: 16px;
+                color: #ff6f61;
+                margin-bottom: 10px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .info-box h3::before {
+                content: 'ℹ';
+                font-size: 20px;
+            }
+
+            .info-box p {
+                font-size: 14px;
+                color: #666;
+                line-height: 1.6;
+            }
+
+            .btn {
+                display: inline-block;
+                padding: 16px 40px;
+                background: linear-gradient(135deg, #ff6f61, #ff9068);
+                color: white;
+                text-decoration: none;
+                border-radius: 50px;
+                font-weight: 700;
+                font-size: 16px;
+                box-shadow: 0 8px 20px rgba(255, 111, 97, 0.3);
+                text-align: center;
+                margin: 20px 0;
+            }
+
+            .security-section {
+                background: #f8f9fa;
+                padding: 25px;
+                border-radius: 10px;
+                margin-top: 30px;
+            }
+
+            .security-section h3 {
+                font-size: 16px;
+                color: #2d2d2d;
+                margin-bottom: 15px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .security-section h3::before {
+                content: '🔒';
+                font-size: 18px;
+            }
+
+            .security-tips {
+                list-style: none;
+                padding: 0;
+            }
+
+            .security-tips li {
+                font-size: 14px;
+                color: #666;
+                padding: 8px 0;
+                padding-left: 25px;
+                position: relative;
+            }
+
+            .security-tips li::before {
+                content: '✓';
+                position: absolute;
+                left: 0;
+                color: #28a745;
+                font-weight: bold;
+            }
+
+            .footer {
+                background: #2d2d2d;
+                padding: 30px;
+                text-align: center;
+                color: #aaa;
+            }
+
+            .footer-brand {
+                font-size: 18px;
+                font-weight: 700;
+                color: #ff6f61;
+                margin-bottom: 10px;
+            }
+
+            .footer p {
+                font-size: 13px;
+                margin: 8px 0;
+            }
+
+            .social-links {
+                margin-top: 20px;
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+            }
+
+            .social-links a {
+                display: inline-block;
+                width: 36px;
+                height: 36px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                color: white;
+                text-decoration: none;
+                line-height: 36px;
+            }
+
+            .divider {
+                height: 1px;
+                background: linear-gradient(to right, transparent, #ddd, transparent);
+                margin: 25px 0;
+            }
+
+            @media (max-width: 600px) {
+                body {
+                    padding: 20px 10px;
+                }
+
+                .content {
+                    padding: 30px 25px;
+                }
+
+                h1 {
+                    font-size: 24px;
+                }
+
+                .otp {
+                    font-size: 28px;
+                    letter-spacing: 6px;
+                    padding: 15px 20px;
+                }
+            }
+
+    body
+        .email-wrapper
+            //- En-tête avec logo
+            .header
+                .logo H
+                .brand-name HIPSTER
+
+            //- Contenu principal
+            .content
+                .icon-check
+
+                h1 Bienvenue chez Hipster !
+                p.subtitle Nous sommes ravis de vous compter parmi nous
+
+                p.greeting
+                    | Bonjour #{userName || ''},
+                    br
+                    | Pour finaliser la création de votre compte et accéder à toutes nos fonctionnalités, veuillez utiliser le code de vérification ci-dessous.
+
+                //- Section OTP
+                .otp-section
+                    .otp-label Votre code de vérification
+                    .otp= code || '123456'
+                    .expiry Ce code expire dans #{expiryMinutes || '10'} minutes
+
+                //- Bouton d'action
+                a.btn(href=confirmUrl || '#') Confirmer mon compte
+
+                //- Informations supplémentaires
+                .info-box
+                    h3 Comment utiliser ce code ?
+                    p
+                        | Copiez le code ci-dessus et collez-le dans la page de vérification. 
+                        | Vous pouvez également cliquer sur le bouton "Confirmer mon compte" pour 
+                        | être redirigé directement vers la page de confirmation.
+
+                .divider
+
+                //- Section sécurité
+                .security-section
+                    h3 Conseils de sécurité
+                    ul.security-tips
+                        li Ne partagez jamais ce code avec qui que ce soit
+                        li Hipster ne vous demandera jamais ce code par email ou téléphone
+                        li Si vous n'avez pas demandé ce code, ignorez cet email
+                        li En cas de doute, contactez notre support immédiatement
+
+                p(style='font-size: 13px; color: #999; margin-top: 30px; text-align: center;')
+                    | Vous n'avez pas créé de compte ? Ignorez simplement cet email.
+
+            //- Pied de page
+            .footer
+                .footer-brand HIPSTER
+                p Restez tendance, restez vous-même
+
+                .social-links
+                    a(href= '#') f
+                    a(href= '#') t
+                    a(href= '#') in
+                    a(href='#') ig
+
+                p(style='margin-top: 20px; font-size: 12px;')
+                    | © #{ '2024'} Hipster. Tous droits réservés.
+                    br
+                    | #{ '123 Rue de la Mode, 75001 Paris, France'}
+
+                p(style='font-size: 11px; margin-top: 15px;')
+                    a(href='#' style='color: #ff6f61; text-decoration: none;') Se désabonner
+                    |  | 
+                    a(href='#' style='color: #ff6f61; text-decoration: none;') Politique de confidentialité
+                    |  | 
+                    a(href='#' style='color: #ff6f61; text-decoration: none;') Conditions d'utilisation

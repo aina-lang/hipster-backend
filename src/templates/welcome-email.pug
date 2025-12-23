@@ -1,0 +1,95 @@
+doctype html
+html(lang="fr")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        title Bienvenue sur Hipster Studio Ai
+        style.
+            body {
+                font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                background-color: #f2f2f2;
+                margin: 0;
+                padding: 0;
+                color: #111;
+            }
+            .container {
+                max-width: 600px;
+                margin: 40px auto;
+                background-color: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                overflow: hidden;
+                border: 1px solid #e5e5e5;
+            }
+            .header {
+                background: #111;
+                color: white;
+                text-align: center;
+                padding: 30px 20px;
+            }
+            .header h1 {
+                margin: 0;
+                font-size: 28px;
+            }
+            .content {
+                padding: 30px;
+                font-size: 16px;
+                line-height: 1.6;
+            }
+            .content h2 {
+                color: #222;
+                font-size: 22px;
+            }
+            .btn {
+                display: inline-block;
+                background-color: #222;
+                color: white;
+                text-decoration: none;
+                padding: 12px 25px;
+                border-radius: 8px;
+                margin-top: 20px;
+                font-weight: 600;
+                border: 1px solid #000;
+            }
+            .btn:hover {
+                background-color: #000;
+            }
+            .credentials-box {
+                background-color: #f5f5f5;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 20px 0;
+                text-align: center;
+                border: 1px dashed #222;
+            }
+            .footer {
+                text-align: center;
+                font-size: 13px;
+                color: #666;
+                padding: 20px;
+            }
+
+    body
+        .container
+            .header
+                h1 Hipster
+            .content
+                h2 Salut #{firstName} !
+                p Bienvenue sur Hipster ! Nous sommes ravis de t’avoir parmi nous.
+                p Ton compte a été créé avec succès. Voici tes identifiants temporaires :
+
+                .credentials-box
+                    p(style="margin: 5px 0;") Email : #{email} lise.delvert@gmail.com
+                    p(style="margin: 5px 0;") Mot de passe temporaire : lise123
+                        span(style="font-family: monospace; font-size: 18px; color: #222; margin-left: 4px;") #{temporaryPassword}
+
+                p Nous te recommandons de changer ton mot de passe dès ta première connexion.
+
+                div(style="text-align: center;")
+                    a.btn(href=dashboardUrl target="_blank") Accéder à mon compte
+
+                p(style="margin-top: 30px; font-size: 14px; color: #666;") 
+                    | Si tu n’as pas demandé cette inscription, contacte-nous immédiatement.
+                h1 CECI EST UN TEST LISE 🤣🙏🤣🤣
+    .footer
+        p © #{new Date().getFullYear()} Hipster Studio Ai. Tous droits réservés.

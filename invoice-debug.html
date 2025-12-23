@@ -1,0 +1,147 @@
+
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: 'Helvetica', sans-serif; color: #333; line-height: 1.5; font-size: 14px; }
+          .container { max-width: 800px; margin: 0 auto; }
+          .header { display: flex; justify-content: space-between; margin-bottom: 40px; }
+          .logo { font-size: 24px; font-weight: bold; color: #000; text-transform: uppercase; }
+          .invoice-details { text-align: right; }
+          .invoice-details h1 { margin: 0; font-size: 28px; color: #000; }
+          .addresses { display: flex; justify-content: space-between; margin-bottom: 40px; gap: 20px; }
+          .box { flex: 1; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; }
+          .box-title { font-size: 12px; text-transform: uppercase; color: #6c757d; margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; }
+          .company-name { font-weight: bold; font-size: 16px; margin-bottom: 5px; display: block; }
+          
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th { text-align: left; padding: 12px; background: #212529; color: #fff; font-size: 12px; text-transform: uppercase; }
+          td { padding: 12px; border-bottom: 1px solid #dee2e6; }
+          tr:last-child td { border-bottom: none; }
+          
+          .totals-section { display: flex; justify-content: flex-end; margin-bottom: 40px; }
+          .totals-table { width: 300px; }
+          .totals-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
+          .totals-row.final { border-top: 2px solid #000; border-bottom: none; font-weight: bold; font-size: 16px; margin-top: 10px; padding-top: 10px; }
+          
+          .payment-info { margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px; font-size: 13px; }
+          .payment-info h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; }
+          
+          .footer { margin-top: 60px; text-align: center; font-size: 11px; color: #6c757d; border-top: 1px solid #dee2e6; padding-top: 20px; }
+          
+          .status-badge { 
+            display: inline-block; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase;
+            background: #fff3cd;
+            color: #856404;
+            margin-top: 10px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div>
+              <div class="logo">My Company</div>
+              <div style="font-size: 12px; color: #666; margin-top: 5px;">My Company</div>
+            </div>
+            <div class="invoice-details">
+              <h1>DEVIS</h1>
+              <p style="margin: 5px 0;">N° DEV-2512-317</p>
+              <p style="margin: 5px 0;">Date : 11/12/2025</p>
+              
+              <div class="status-badge">En attente</div>
+            </div>
+          </div>
+
+          <div class="addresses">
+            <div class="box">
+              <div class="box-title">Fournisseur</div>
+              <span class="company-name">My Company</span>
+              <div>My Company</div>
+              <div>11 RUE DE LA FRAPPIERE, 86100 POITIERS, FRANCE</div>
+              <div style="margin-top: 10px;">
+                SIRET : 85164648900019<br>
+                Email : lise.devert@gmail.com<br>
+                Tél : +33 6 37 37 13 00
+              </div>
+            </div>
+            <div class="box">
+              <div class="box-title">Client</div>
+              <span class="company-name">RAFANDEFERANA Mercia</span>
+              <div>Adresse non renseignée</div>
+              <div style="margin-top: 10px;">SIRET : 53751244400028</div>
+              <div>Email : merciaaina@gmail.com</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50%">Désignation</th>
+                <th style="text-align: right;">Qté</th>
+                <th style="text-align: right;">Prix Unit. HT</th>
+                <th style="text-align: right;">Total HT</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+                <tr>
+                  <td>
+                    <strong>test</strong>
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">forfait</div>
+                  </td>
+                  <td style="text-align: right;">1</td>
+                  <td style="text-align: right;">0,02 €</td>
+                  <td style="text-align: right;">0,02 €</td>
+                </tr>
+              
+            </tbody>
+          </table>
+
+          <div class="totals-section">
+            <div class="totals-table">
+              <div class="totals-row">
+                <span>Total HT</span>
+                <span>0,02 €</span>
+              </div>
+              
+              <div class="totals-row">
+                <span>TVA (20%)</span>
+                <span>0,00 €</span>
+              </div>
+              
+              <div class="totals-row final">
+                <span>Total TTC</span>
+                <span>0,02 €</span>
+              </div>
+              <div style="font-size: 11px; color: #666; margin-top: 5px; text-align: right;">
+                Devise : EUR
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 20px; font-style: italic;">TVA non applicable - Art. 293 B du CGI</div>
+
+          
+          <div class="payment-info">
+            <h3>Mode de paiement : Virement</h3>
+            <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px 20px;">
+              <div><strong>IBAN :</strong></div>
+              <div>FR76 3000 4027 1100 0105 5231 78</div>
+              <div><strong>BIC :</strong></div>
+              <div>BNPAFRPPXXX</div>
+              <div><strong>Banque :</strong></div>
+              <div>BNP PARIBAS</div>
+            </div>
+          </div>
+          
+
+          <div class="footer">
+            <p>My Company - My Company</p>
+            <p>SIRET : 85164648900019 - Adresse : 11 RUE DE LA FRAPPIERE, 86100 POITIERS, FRANCE</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    

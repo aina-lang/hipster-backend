@@ -1,0 +1,121 @@
+### Test Client CRUD Endpoints
+### Base URL
+@baseUrl = http://localhost:3000
+@token = YOUR_JWT_TOKEN_HERE
+
+### 1. Create Client with New User (Mode 1)
+POST {{baseUrl}}/profiles/client
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userData": {
+    "firstName": "Jean",
+    "lastName": "Dupont",
+    "email": "jean.dupont@example.com",
+    "password": "SecurePass123!",
+    "roles": ["client"],
+    "phones": ["+33612345678"],
+    "address": "123 Rue de la Paix",
+    "city": "Paris",
+    "zipCode": "75001",
+    "country": "France"
+  },
+  "clientType": "individual",
+  "billingAddress": "123 Rue de la Paix",
+  "city": "Paris",
+  "zipCode": "75001",
+  "country": "France"
+}
+
+### 2. Create Client with Existing User (Mode 2)
+POST {{baseUrl}}/profiles/client
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": 1,
+  "clientType": "company",
+  "companyName": "Acme Corporation",
+  "siret": "12345678901234",
+  "tvaNumber": "FR12345678901",
+  "website": "https://acme.com",
+  "billingAddress": "456 Avenue des Champs",
+  "city": "Lyon",
+  "zipCode": "69001",
+  "country": "France"
+}
+
+### 3. List All Clients (No Pagination)
+GET {{baseUrl}}/profiles/clients
+Authorization: Bearer {{token}}
+
+### 4. List Clients with Pagination
+GET {{baseUrl}}/profiles/clients?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### 5. Filter Clients by Type (Company)
+GET {{baseUrl}}/profiles/clients?clientType=company
+Authorization: Bearer {{token}}
+
+### 6. Filter Clients by Type (Individual)
+GET {{baseUrl}}/profiles/clients?clientType=individual
+Authorization: Bearer {{token}}
+
+### 7. Search Clients
+GET {{baseUrl}}/profiles/clients?search=acme
+Authorization: Bearer {{token}}
+
+### 8. Combined Filters
+GET {{baseUrl}}/profiles/clients?page=1&limit=5&clientType=company&search=corp
+Authorization: Bearer {{token}}
+
+### 9. Get Client by ID
+GET {{baseUrl}}/profiles/client/1
+Authorization: Bearer {{token}}
+
+### 10. Get Client by User ID
+GET {{baseUrl}}/profiles/client/user/1
+Authorization: Bearer {{token}}
+
+### 11. Update Client Profile
+PATCH {{baseUrl}}/profiles/client/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "companyName": "Updated Acme Corporation",
+  "loyaltyPoints": 150,
+  "cashbackTotal": 25.50,
+  "website": "https://www.acme-updated.com"
+}
+
+### 12. Delete Client Profile
+DELETE {{baseUrl}}/profiles/client/1
+Authorization: Bearer {{token}}
+
+### 13. Test Error - Both userId and userData
+POST {{baseUrl}}/profiles/client
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": 1,
+  "userData": {
+    "firstName": "Test",
+    "lastName": "User",
+    "email": "test@example.com",
+    "password": "test123"
+  },
+  "clientType": "individual"
+}
+
+### 14. Test Error - Neither userId nor userData
+POST {{baseUrl}}/profiles/client
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "clientType": "company",
+  "companyName": "Test Corp"
+}

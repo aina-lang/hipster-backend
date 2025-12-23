@@ -1,0 +1,117 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
+import { ProjectsService } from './projects.service';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { Public } from 'src/common/decorators/public.decorator';
+import { Request } from '@nestjs/common';
+import { FindProjectsQueryDto } from './dto/find-projects-query.dto';
+import { ProjectStatus } from './entities/project.entity';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
+import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+
+@ApiTags('Projects')
+@Controller('projects')
+export class ProjectsController {
+  constructor(private readonly projectsService: ProjectsService) { }
+
+  /**
+   * 🧩 Créer un projet
+   */
+  @ApiOperation({ summary: 'Créer un projet' })
+  @ResponseMessage('Projet créé avec succès')
+  @Post()
+  async create(@Body() createProjectDto: CreateProjectDto, @Request() req) {
+    return this.projectsService.create(createProjectDto, req.user.userId);
+  }
+
+  /**
+   * 📋 Liste paginée des projets
+   */
+  @ApiOperation({ summary: 'Liste paginée des projets' })
+  @ApiPaginationQueries([
+    { name: 'status', required: false, enum: ProjectStatus },
+    { name: 'clientId', required: false, type: Number },
+  ])
+  @Get()
+  async findAll(@Query() query: FindProjectsQueryDto, @Request() req) {
+    return this.projectsService.findPaginated(query, req.user.userId);
+  }
+
+  /**
+   * 🔍 Obtenir un projet par ID
+   */
+  @ApiOperation({ summary: 'Consulter un projet' })
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.projectsService.findOne(+id);
+  }
+
+  /**
+   * ✏️ Mise à jour d’un projet
+   */
+  @ApiOperation({ summary: 'Mettre à jour un projet' })
+  @ResponseMessage('Projet mis à jour avec succès')
+  @Patch(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+    @Request() req,
+  ) {
+    return this.projectsService.update(+id, updateProjectDto, req.user.userId);
+  }
+
+  /**
+   * ❌ Suppression d’un projet
+   */
+  @ApiOperation({ summary: 'Supprimer un projet' })
+  @ResponseMessage('Projet supprimé avec succès')
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    return this.projectsService.remove(+id);
+  }
+  /**
+   * 🌐 Ajouter un site web au projet
+   */
+  @ApiOperation({ summary: 'Ajouter un site web au projet' })
+  @Post(':id/websites/:websiteId')
+  async addWebsite(
+    @Param('id') id: string,
+    @Param('websiteId') websiteId: string,
+  ) {
+    return this.projectsService.addWebsite(+id, +websiteId);
+  }
+
+  /**
+   * 🗑️ Retirer un site web du projet
+   */
+  @ApiOperation({ summary: 'Retirer un site web du projet' })
+  @Delete(':id/websites/:websiteId')
+  async removeWebsite(
+    @Param('id') id: string,
+    @Param('websiteId') websiteId: string,
+  ) {
+    return this.projectsService.removeWebsite(+id, +websiteId);
+  }
+
+  /**
+   * 📅 Mettre à jour la planification globale du projet
+   */
+  @ApiOperation({ summary: 'Mettre à jour la planification globale du projet' })
+  @Post(':id/schedule')
+  async updateSchedule(
+    @Param('id') id: string,
+    @Body() schedule: { recurrenceType: string; recurrenceInterval?: number; recurrenceDays?: string[] },
+  ) {
+    return this.projectsService.updateProjectSchedule(+id, schedule);
+  }
+}

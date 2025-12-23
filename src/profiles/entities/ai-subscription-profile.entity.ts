@@ -1,0 +1,83 @@
+import { AiUsageLog } from 'src/ai/entities/ai-usage-log.entity';
+import { Payment } from 'src/payments/entities/payment.entity';
+import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
+import { User } from 'src/users/entities/user.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+
+export enum SubscriptionStatus {
+  ACTIVE = 'active',
+  CANCELED = 'canceled',
+  PAUSED = 'paused',
+  TRIAL = 'trial',
+}
+
+export enum PlanType {
+  BASIC = 'basic',
+  PRO = 'pro',
+  ENTERPRISE = 'enterprise',
+}
+
+export enum AiAccessLevel {
+  GUEST = 'GUEST',
+  FULL = 'FULL',
+}
+
+@Entity('ai_subscription_profiles')
+export class AiSubscriptionProfile {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({
+    type: 'enum',
+    enum: SubscriptionStatus,
+    default: SubscriptionStatus.TRIAL,
+  })
+  subscriptionStatus: SubscriptionStatus;
+
+  @Column({
+    type: 'enum',
+    enum: PlanType,
+    default: PlanType.BASIC,
+  })
+  planType: PlanType;
+
+  @Column({
+    type: 'enum',
+    enum: AiAccessLevel,
+    default: AiAccessLevel.GUEST,
+  })
+  accessLevel: AiAccessLevel;
+
+  @Column({ default: 1000 })
+  credits: number;
+
+  @Column({ nullable: true })
+  stripeCustomerId?: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastRenewalDate?: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  nextRenewalDate?: Date;
+
+  // Relations
+  @OneToOne(() => User, (u) => u.aiProfile, { onDelete: 'CASCADE' })
+  @JoinColumn()
+  user: User;
+
+  @OneToMany(() => AiSubscription, (s) => s.aiProfile)
+  subscriptions: AiSubscription[];
+
+  @OneToMany(() => Payment, (p) => p.aiProfile)
+  payments: Payment[];
+
+  @OneToMany(() => AiUsageLog, (l) => l.aiProfile)
+  usageLogs: AiUsageLog[];
+}

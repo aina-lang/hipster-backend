@@ -1,0 +1,99 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { User } from './users/entities/user.entity';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './common/guards/roles.guard';
+import { AuthGuard } from './common/guards/auth.guard';
+import { MailModule } from './mail/mail.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { OtpModule } from './otp/otp.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TasksModule } from './tasks/tasks.module';
+import { AiModule } from './ai/ai.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { PaymentsModule } from './payments/payments.module';
+import { ProjectsModule } from './projects/projects.module';
+import { InvoicesModule } from './invoices/invoices.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ChatsModule } from './chats/chats.module';
+import { TicketsModule } from './tickets/tickets.module';
+import { FilesModule } from './files/files.module';
+import { ProfilesModule } from './profiles/profiles.module';
+import { CampaignsModule } from './campaigns/campaigns.module';
+import { PermissionsModule } from './permissions/permissions.module';
+import { RolesModule } from './roles/roles.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
+
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { LoyaltyModule } from './loyalty/loyalty.module';
+import { ReferralModule } from './referral/referral.module';
+import { CompanyModule } from './company/company.module';
+
+@Module({
+  imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+    }),
+    ScheduleModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get<string>('DB_HOST', '127.0.0.1'),
+        port: configService.get<number>('DB_PORT', 3306),
+        username: configService.get<string>('DB_USERNAME', 'root'),
+        password: configService.get<string>('DB_PASSWORD', '#132ainachelicoco#'),
+        database: configService.get<string>('DB_NAME', 'hipster'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        autoLoadEntities: true,
+        synchronize: true,
+      }),
+    }),
+    UsersModule,
+    AuthModule,
+    MailModule,
+    OtpModule,
+    TasksModule,
+    AiModule,
+    SubscriptionsModule,
+    PaymentsModule,
+    ProjectsModule,
+    InvoicesModule,
+    NotificationsModule,
+    ChatsModule,
+    TicketsModule,
+    FilesModule,
+    ProfilesModule,
+    CampaignsModule,
+    PermissionsModule,
+    RolesModule,
+    LoyaltyModule,
+    ReferralModule,
+    CompanyModule,
+    MaintenanceModule,
+  ],
+
+  controllers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
+})
+export class AppModule {
+  // constructor(private dataSource: DataSource) { }
+}

@@ -1,0 +1,5 @@
+<FilesMatch \.php$>
+    SetHandler application/x-httpd-php81
+</FilesMatch>
+AddHandler application/x-httpd-php81 .php
+suPHP_ConfigPath /home/fumo3132/public_html/

@@ -1,0 +1,44 @@
+doctype html
+html
+  head
+    style.
+      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: #3B82F6; color: white; padding: 20px; text-align: center; }
+      .content { background: #f9f9f9; padding: 20px; }
+      .task-box { background: white; border-left: 4px solid #3B82F6; padding: 15px; margin: 20px 0; }
+      .priority { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+      .priority-high { background: #FEE2E2; color: #DC2626; }
+      .priority-medium { background: #FEF3C7; color: #D97706; }
+      .priority-low { background: #DBEAFE; color: #2563EB; }
+      .button { background: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }
+      .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+  body
+    .container
+      .header
+        h1 📋 Nouvelle Tâche Assignée
+      .content
+        h2 Bonjour #{employeeName},
+        p Une nouvelle tâche vous a été assignée dans le projet <strong>#{projectName}</strong>.
+        
+        .task-box
+          h3(style="margin-top: 0;") #{taskTitle}
+          p #{taskDescription || 'Aucune description'}
+          
+          div(style="margin-top: 15px;")
+            span(class=`priority priority-${priority}`) #{priority.toUpperCase()}
+            p(style="margin: 10px 0 0 0; color: #666;")
+              strong Date limite: 
+              | #{dueDate || 'Non définie'}
+        
+        h3 Détails du projet:
+        ul
+          li <strong>Projet:</strong> #{projectName}
+          li <strong>Client:</strong> #{clientName}
+          li <strong>Statut:</strong> #{taskStatus}
+        
+        p Veuillez consulter la plateforme pour plus de détails et commencer à travailler sur cette tâche.
+        
+        a.button(href=taskUrl) Voir la tâche
+      .footer
+        p © 2025 Hipster Studio. Tous droits réservés.
