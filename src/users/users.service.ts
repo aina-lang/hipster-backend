@@ -350,14 +350,21 @@ export class UsersService {
 
         // 🔹 PERMISSIONS ASSIGNMENT (Update)
         // 1. Manual assignment overrides everything
-        if (dto.permissions && dto.permissions.length > 0) {
-          const permissions = await this.permissionRepo.findBy({
-            slug: In(dto.permissions),
-          });
-          user.permissions = permissions;
-          console.log(
-            `[UsersService] Updated permissions manually: ${permissions.length} assigned`,
-          );
+        // 🔹 PERMISSIONS ASSIGNMENT (Update)
+        // 1. Manual assignment overrides everything
+        if (dto.permissions) {
+          if (dto.permissions.length > 0) {
+            const permissions = await this.permissionRepo.findBy({
+              slug: In(dto.permissions),
+            });
+            user.permissions = permissions;
+            console.log(
+              `[UsersService] Updated permissions manually: ${permissions.length} assigned`,
+            );
+          } else {
+             user.permissions = [];
+             console.log(`[UsersService] Cleared all permissions manually`);
+          }
         }
         // 2. Auto-assignment only if NO manual override provided AND poste changed
         else if (posteChanged) {
