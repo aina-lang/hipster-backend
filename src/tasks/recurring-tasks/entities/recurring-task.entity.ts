@@ -48,7 +48,7 @@ export class RecurringTask {
   @ManyToOne(() => Project, { onDelete: 'CASCADE' })
   project: Project;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   createdBy: User;
 
   @CreateDateColumn()

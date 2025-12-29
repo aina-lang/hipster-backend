@@ -17,6 +17,23 @@ export const POSTE_PERMISSIONS: Record<string, string[]> = {
 };
 
 export const DEFAULT_EMPLOYEE_PERMISSIONS = [
-  'manage:projects',
-  'manage:invoices',
+  // Module Projet (Projets + Tâches)
+  'view:projects',
+  'create:projects',
+  'update:projects',
+  'delete:projects',
+  
+  'view:tasks',
+  'create:tasks',
+  'update:tasks',
+  'delete:tasks',
+  
+  // Clients (souvent nécessaire pour les projets)
+  'view:clients',
+  
+  // Support / Tickets (Gestion du support)
+  'view:tickets',
+  'create:tickets',
+  'reply:tickets',
+  'delete:tickets',
 ];

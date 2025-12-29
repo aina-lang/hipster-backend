@@ -53,7 +53,7 @@ export class ClientWebsite {
   @Column({ type: 'timestamp', nullable: true })
   lastMaintenanceDate?: Date;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'lastMaintenanceById' })
   lastMaintenanceBy?: User;
 

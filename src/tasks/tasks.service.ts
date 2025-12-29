@@ -17,6 +17,7 @@ import { ProjectsService } from 'src/projects/projects.service';
 import { MailService } from 'src/mail/mail.service';
 import { User } from 'src/users/entities/user.entity';
 
+import { Permission } from 'src/permissions/entities/permission.entity';
 @Injectable()
 export class TasksService {
   constructor(
@@ -31,6 +32,9 @@ export class TasksService {
 
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
+    @InjectRepository(Permission)
+    private readonly permissionRepo: Repository<Permission>,
 
     private readonly projectsService: ProjectsService,
     private readonly mailService: MailService,
@@ -118,6 +122,11 @@ export class TasksService {
 
     // 🔄 Mettre à jour le statut du projet automatiquement
     if (project) {
+      // 🛠️ MAINTENANCE LOGIC: Auto-assign 'manage:maintenance' permission
+      if (project.maintenanceConfig?.enabled && assignees.length > 0) {
+        await this.ensureMaintenancePermission(assignees);
+      }
+
       await this.projectsService.updateProjectStatus(project.id);
     }
 
@@ -247,7 +256,21 @@ export class TasksService {
     }
 
     Object.assign(task, data);
-    return await this.taskRepo.save(task);
+    const savedTask = await this.taskRepo.save(task);
+
+    // 🛠️ MAINTENANCE LOGIC: Auto-assign 'manage:maintenance' permission
+    // Check if project has maintenance enabled (either current project or new project if changed)
+    const currentProject = task.project;
+    if (currentProject?.maintenanceConfig?.enabled && task.assignees?.length > 0) {
+        // We need full user entities for assignees if not loaded, but task.assignees coming from save might be partial
+        // However, findOne loaded assignees with relations.
+        // It's safer to re-fetch assignees if we are unsure, but let's try using what we have.
+        // Actually, update method might have just set assignees.
+        // Helper expects EmployeeProfile[]
+        await this.ensureMaintenancePermission(task.assignees);
+    }
+
+    return savedTask;
   }
 
   // 🔹 DELETE
@@ -465,6 +488,33 @@ export class TasksService {
           return task.recurrenceDays!.includes(dayName);
         }
         return false;
+    }
+  }
+
+  private async ensureMaintenancePermission(employees: EmployeeProfile[]) {
+    const maintenanceSlug = 'manage:maintenance';
+    const permission = await this.permissionRepo.findOne({
+      where: { slug: maintenanceSlug },
+    });
+
+    if (!permission) return;
+
+    for (const employee of employees) {
+      if (!employee.user) continue;
+
+      // Need to fetch user with permissions to check
+      const user = await this.userRepo.findOne({
+        where: { id: employee.user.id },
+        relations: ['permissions'],
+      });
+
+      if (user && !user.permissions.some((p) => p.slug === maintenanceSlug)) {
+        user.permissions.push(permission);
+        await this.userRepo.save(user);
+        console.log(
+          `[TasksService] Auto-assigned '${maintenanceSlug}' to user ${user.email} (assigned to maintenance task)`,
+        );
+      }
     }
   }
 

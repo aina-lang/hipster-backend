@@ -123,8 +123,8 @@ export class UsersService {
             );
         } 
         // 2. Auto-assignment based on Poste (default behavior)
-        else if (user.employeeProfile.poste) {
-          const poste = user.employeeProfile.poste.toLowerCase();
+        else {
+          const poste = user.employeeProfile.poste?.toLowerCase() || "";
           const permissionSlugs =
             POSTE_PERMISSIONS[poste] || DEFAULT_EMPLOYEE_PERMISSIONS;
 
@@ -134,7 +134,7 @@ export class UsersService {
             });
             user.permissions = permissions;
             console.log(
-              `[UsersService] Assigned ${permissions.length} permissions for poste '${poste}'`,
+              `[UsersService] Assigned ${permissions.length} permissions (poste: '${poste || "none"}')`,
             );
           }
         }
@@ -360,8 +360,8 @@ export class UsersService {
           );
         }
         // 2. Auto-assignment only if NO manual override provided AND poste changed
-        else if (posteChanged && user.employeeProfile.poste) {
-          const poste = user.employeeProfile.poste.toLowerCase();
+        else if (posteChanged) {
+          const poste = user.employeeProfile.poste?.toLowerCase() || "";
           const permissionSlugs =
             POSTE_PERMISSIONS[poste] || DEFAULT_EMPLOYEE_PERMISSIONS;
 
@@ -371,7 +371,7 @@ export class UsersService {
             });
             user.permissions = permissions;
             console.log(
-              `[UsersService] Re-assigned ${permissions.length} permissions for new poste '${poste}'`,
+              `[UsersService] Re-assigned ${permissions.length} permissions for new poste '${poste || "none"}'`,
             );
           }
         }
