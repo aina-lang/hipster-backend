@@ -24,8 +24,15 @@ export class MailService {
     );
 
     // Dynamic URLs based on roles
-    const backofficeUrl = process.env.BACKOFFICE_URL || 'https://hipster-ia.fr/app/dashboard';
-    const frontendUrl = process.env.FRONTEND_URL || 'https://hipster-ia.fr';
+    const backofficeUrl = (process.env.BACKOFFICE_URL || 'https://hipster-ia.fr/app/dashboard').replace(/\/+$/, '');
+    const frontendUrl = (process.env.FRONTEND_URL || 'https://hipster-ia.fr').replace(/\/+$/, '');
+    
+    let apiUrl = (process.env.API_URL || 'https://hipster-api.fr').replace(/\/+$/, '');
+    // Sanity check: if apiUrl is just a protocol or too short, fallback
+    if (apiUrl.length < 10 && !apiUrl.includes('.')) {
+      apiUrl = 'https://hipster-api.fr';
+    }
+    
     const mobileUrl = process.env.MOBILE_APP_URL || 'hypster://login';
 
     // Determine the primary app URL
@@ -37,6 +44,18 @@ export class MailService {
       appUrl = mobileUrl;
     }
 
+    // Force absolute URL for logo with robust cleaning
+    let companyLogoUrl: string | null = null;
+    if (company.logoUrl) {
+      if (company.logoUrl.startsWith('http')) {
+        companyLogoUrl = company.logoUrl;
+      } else {
+        // Ensure logoUrl starts with / and apiUrl doesn't end with /
+        const cleanLogoPath = company.logoUrl.startsWith('/') ? company.logoUrl : `/${company.logoUrl}`;
+        companyLogoUrl = `${apiUrl}${cleanLogoPath}`;
+      }
+    }
+    
     const globalContext = {
       companyName: company.name,
       companyAddress: company.address,
@@ -46,7 +65,7 @@ export class MailService {
       companyPhone: company.phone,
       companyEmail: company.email,
       companyWebsite: company.website,
-      companyLogoUrl: company.logoUrl,
+      companyLogoUrl: companyLogoUrl,
       currentYear: new Date().getFullYear(),
       appUrl: appUrl,
       dashboardUrl: appUrl, // Often used interchangeably in templates
@@ -150,8 +169,10 @@ export class MailService {
 
     // TODO: Replace with actual URLs from environment variables or config
     const baseUrl = process.env.FRONTEND_URL || 'https://hipster-ia.fr';
+    const apiUrl = process.env.API_URL || 'https://hipster-api.fr';
+
     const invoiceUrl = `${baseUrl}/invoices/${invoice.id}`;
-    const pdfDownloadUrl = `${baseUrl}/api/invoices/${invoice.id}/pdf`;
+    const pdfDownloadUrl = `${apiUrl}/api/invoices/${invoice.id}/pdf`;
 
     // Mobile app URL - can be configured via environment variable
     // Format: hypster://invoice/{id} or https://app.hipster-studio.com/invoice/{id}
