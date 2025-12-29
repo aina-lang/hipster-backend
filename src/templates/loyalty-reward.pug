@@ -2,27 +2,27 @@ extends layout
 
 block content
   div(style="text-align: center; margin-bottom: 32px;")
-    div(style="width: 64px; height: 64px; background-color: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; border: 1px solid #262626;")
+    div(style="width: 64px; height: 64px; background-color: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; border: 1px solid #e4e4e7;")
       span(style="font-size: 24px;") 🏆
     h2 Félicitations !
     p Vous avez atteint un nouveau palier de fidélité.
 
-  div(style="background-color: #000000; border: 1px solid #1f1f1f; border-radius: 12px; padding: 24px; margin: 32px 0; text-align: center;")
-    h3(style="margin-top: 0; font-size: 20px; color: #ffffff;") Tier #{newTier}
-    p(style="color: #a1a1aa; font-size: 14px;") Vous avez progressé de <strong>#{oldTier}</strong> à <strong>#{newTier}</strong>.
+  div(style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 24px; margin: 32px 0; text-align: center;")
+    h3(style="margin-top: 0; font-size: 20px; color: #09090b;") Tier #{newTier}
+    p(style="color: #52525b; font-size: 14px;") Vous avez progressé de <strong>#{oldTier}</strong> à <strong>#{newTier}</strong>.
     
-    div(style="background-color: #1a1a1a; border: 1px dashed #ffffff; padding: 20px; border-radius: 8px; margin-top: 24px;")
-      span(style="font-size: 11px; color: #52525b; text-transform: uppercase; letter-spacing: 1px;") Votre nouvelle récompense
-      p(style="margin: 8px 0 0 0; color: #ffffff; font-size: 18px; font-weight: 700;") 🎁 #{reward}
+    div(style="background-color: #f8f9fa; border: 1px dashed #09090b; padding: 20px; border-radius: 8px; margin-top: 24px;")
+      span(style="font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px;") Votre nouvelle récompense
+      p(style="margin: 8px 0 0 0; color: #09090b; font-size: 18px; font-weight: 700;") 🎁 #{reward}
 
   h3 Statistiques de votre compte
-  ul(style="padding-left: 20px; margin: 0; font-size: 14px; color: #71717a;")
+  ul(style="padding-left: 20px; margin: 0; font-size: 14px; color: #3f3f46;")
     li(style="margin-bottom: 8px;") Projets complétés : #{projectCount}
     li(style="margin-bottom: 8px;") Tier actuel : #{newTier}
     if nextTier
       li Prochain tier : <strong>#{nextTier}</strong> (#{projectsToNextTier} projets restants)
     else
-      li(style="color: #ffffff; font-weight: 600;") 🏆 Vous avez atteint le niveau maximum !
+      li(style="color: #09090b; font-weight: 600;") 🏆 Vous avez atteint le niveau maximum !
 
   p Merci de votre fidélité ! Nous sommes fiers de vous accompagner dans vos projets.
 

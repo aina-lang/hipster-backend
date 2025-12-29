@@ -153,16 +153,20 @@ export class ProjectsService {
     // ✅ Send email to client (ONLY if client exists)
     if (clientUser && clientUser.email) {
       try {
-        await this.mailService.sendProjectCreatedEmail(clientUser.email, {
-          clientName: `${clientUser.firstName} ${clientUser.lastName}`,
-          projectName: project.name,
-          startDate: new Date(project.start_date).toLocaleDateString('fr-FR'),
-          endDate: project.end_date
-            ? new Date(project.end_date).toLocaleDateString('fr-FR')
-            : 'Non définie',
-          budget: project.budget,
-          projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${project.id}`,
-        });
+        await this.mailService.sendProjectCreatedEmail(
+          clientUser.email,
+          {
+            clientName: `${clientUser.firstName} ${clientUser.lastName}`,
+            projectName: project.name,
+            startDate: new Date(project.start_date).toLocaleDateString('fr-FR'),
+            endDate: project.end_date
+              ? new Date(project.end_date).toLocaleDateString('fr-FR')
+              : 'Non définie',
+            budget: project.budget,
+            projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${project.id}`,
+          },
+          clientUser.roles,
+        );
       } catch (error) {
         console.error('Failed to send project created email to client:', error);
       }
@@ -420,6 +424,7 @@ export class ProjectsService {
             progress: updatedProject.progress,
             projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${updatedProject.id}`,
           },
+          updatedProject.client.user.roles,
         );
       } catch (error) {
         console.error('Failed to send project updated email:', error);
@@ -602,6 +607,7 @@ export class ProjectsService {
               duration,
               projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${project.id}`,
             },
+            project.client.user.roles,
           );
         } catch (error) {
           console.error('Failed to send project completed email:', error);
@@ -626,6 +632,7 @@ export class ProjectsService {
               projectsToNextTier: newStatus.projectsToNextTier,
               loyaltyUrl: `${process.env.FRONTEND_URL}/app/loyalty/detail?clientId=${project.client.id}`,
             },
+            project.client.user.roles,
           );
         } catch (error) {
           console.error('Failed to send loyalty reward email:', error);

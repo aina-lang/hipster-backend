@@ -4,24 +4,24 @@ block content
   h2 Bonjour #{adminName},
   p Un nouveau ticket de support a été créé par un client.
   
-  div(style="background-color: #000000; border: 1px solid #1f1f1f; border-radius: 12px; padding: 24px; margin: 32px 0;")
+  div(style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 24px; margin: 32px 0;")
     div(style="margin-bottom: 16px;")
-      span(style="font-size: 11px; color: #52525b; text-transform: uppercase; letter-spacing: 1px;") Client
-      p(style="margin: 4px 0 0 0; color: #ffffff; font-weight: 600;") #{clientName}
+      span(style="font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px;") Client
+      p(style="margin: 4px 0 0 0; color: #09090b; font-weight: 600;") #{clientName}
     
     div(style="margin-bottom: 16px;")
-      span(style="font-size: 11px; color: #52525b; text-transform: uppercase; letter-spacing: 1px;") Sujet
-      p(style="margin: 4px 0 0 0; color: #ffffff; font-weight: 600;") #{ticketTitle}
+      span(style="font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px;") Sujet
+      p(style="margin: 4px 0 0 0; color: #09090b; font-weight: 600;") #{ticketTitle}
     
     if priority
       div(style="margin-bottom: 16px;")
-        span(style="font-size: 11px; color: #52525b; text-transform: uppercase; letter-spacing: 1px;") Priorité
-        p(style=`margin: 4px 0 0 0; color: ${priority === 'HIGH' ? '#ef4444' : '#ffffff'}; font-weight: 600;`) #{priority}
+        span(style="font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px;") Priorité
+        p(style=`margin: 4px 0 0 0; color: ${priority === 'HIGH' ? '#ef4444' : '#09090b'}; font-weight: 600;`) #{priority}
     
     if ticketDescription
       div
-        span(style="font-size: 11px; color: #52525b; text-transform: uppercase; letter-spacing: 1px;") Description du problème
-        p(style="margin: 4px 0 0 0; color: #a1a1aa; font-size: 14px;") #{ticketDescription}
+        span(style="font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px;") Description du problème
+        p(style="margin: 4px 0 0 0; color: #52525b; font-size: 14px;") #{ticketDescription}
 
   p Veuillez prendre en charge ce ticket et répondre au client dès que possible.
 

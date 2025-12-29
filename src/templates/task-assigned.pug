@@ -4,22 +4,22 @@ block content
   h2 Bonjour #{assigneeName},
   p Une nouvelle tâche vous a été assignée dans le cadre du projet <strong>#{projectName}</strong>.
   
-  div(style="background-color: #000000; border: 1px solid #1f1f1f; border-radius: 12px; padding: 24px; margin: 32px 0;")
-    h3(style="margin-top: 0; font-size: 16px; color: #ffffff;") #{taskTitle}
+  div(style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 24px; margin: 32px 0;")
+    h3(style="margin-top: 0; font-size: 16px; color: #09090b;") #{taskTitle}
     
-    div(style="margin: 16px 0; font-size: 14px; color: #a1a1aa;")
+    div(style="margin: 16px 0; font-size: 14px; color: #52525b;")
       if taskPriority
         div(style="display: flex; align-items: center; margin-bottom: 8px;")
           span(style="margin-right: 8px;") Priorité:
-          span(style=`color: ${taskPriority === 'URGENT' ? '#ef4444' : '#ffffff'}; font-weight: 600;`) #{taskPriority}
+          span(style=`color: ${taskPriority === 'URGENT' ? '#ef4444' : '#09090b'}; font-weight: 600;`) #{taskPriority}
       
       if taskDueDate
         div(style="display: flex; align-items: center;")
           span(style="margin-right: 8px;") Échéance:
-          span(style="color: #ffffff;") #{taskDueDate}
+          span(style="color: #09090b;") #{taskDueDate}
 
     if taskDescription
-      div(style="border-top: 1px solid #1f1f1f; padding-top: 16px; margin-top: 16px;")
+      div(style="border-top: 1px solid #f4f4f5; padding-top: 16px; margin-top: 16px;")
         p(style="margin: 0; font-size: 13px; color: #71717a;") #{taskDescription}
 
   p Vous pouvez maintenant commencer à travailler sur cette tâche et mettre à jour son statut au fur et à mesure de votre progression.

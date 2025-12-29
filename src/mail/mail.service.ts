@@ -15,8 +15,27 @@ export class MailService {
     template: string;
     context?: { [name: string]: any };
     attachments?: any[];
+    userRoles?: string[];
   }): Promise<void> {
     const company = await this.companyService.getProfile();
+
+    const isAdminOrEmployee = params.userRoles?.some(
+      (r) => r === 'admin' || r === 'employee',
+    );
+
+    // Dynamic URLs based on roles
+    const backofficeUrl = process.env.BACKOFFICE_URL || 'https://backoffice.hipster-studio.com';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://app.hipster-studio.com';
+    const mobileUrl = process.env.MOBILE_APP_URL || 'hypster://login';
+
+    // Determine the primary app URL
+    let appUrl = frontendUrl;
+    if (isAdminOrEmployee) {
+      appUrl = backofficeUrl;
+    } else if (params.userRoles?.includes('client_marketing')) {
+      // Prioritize mobile for marketing clients if they have the app
+      appUrl = mobileUrl;
+    }
 
     const globalContext = {
       companyName: company.name,
@@ -29,7 +48,8 @@ export class MailService {
       companyWebsite: company.website,
       companyLogoUrl: company.logoUrl,
       currentYear: new Date().getFullYear(),
-      appUrl: process.env.FRONTEND_URL || 'https://app.hipster-studio.com',
+      appUrl: appUrl,
+      dashboardUrl: appUrl, // Often used interchangeably in templates
     };
 
     await this.mailerService.sendMail({
@@ -41,61 +61,67 @@ export class MailService {
     });
   }
 
-  async sendProjectCreatedEmail(to: string, data: any): Promise<void> {
+  async sendProjectCreatedEmail(to: string, data: any, roles?: string[]): Promise<void> {
     await this.sendEmail({
       to,
       subject: '🎉 Nouveau Projet Créé',
       template: 'project-created',
       context: data,
+      userRoles: roles,
     });
   }
 
-  async sendProjectUpdatedEmail(to: string, data: any): Promise<void> {
+  async sendProjectUpdatedEmail(to: string, data: any, roles?: string[]): Promise<void> {
     await this.sendEmail({
       to,
       subject: '🔄 Mise à jour du Projet',
       template: 'project-updated',
       context: data,
+      userRoles: roles,
     });
   }
 
-  async sendProjectCompletedEmail(to: string, data: any): Promise<void> {
+  async sendProjectCompletedEmail(to: string, data: any, roles?: string[]): Promise<void> {
     await this.sendEmail({
       to,
       subject: '✅ Projet Terminé',
       template: 'project-completed',
       context: data,
+      userRoles: roles,
     });
   }
 
-  async sendLoyaltyRewardEmail(to: string, data: any): Promise<void> {
+  async sendLoyaltyRewardEmail(to: string, data: any, roles?: string[]): Promise<void> {
     await this.sendEmail({
       to,
       subject: `🎉 Nouveau tier de fidélité: ${data.newTier}!`,
       template: 'loyalty-reward',
       context: data,
+      userRoles: roles,
     });
   }
 
-  async sendTaskAssignedEmail(to: string, data: any): Promise<void> {
+  async sendTaskAssignedEmail(to: string, data: any, roles?: string[]): Promise<void> {
     await this.sendEmail({
       to,
       subject: '📋 Nouvelle Tâche Assignée',
       template: 'task-assigned',
       context: data,
+      userRoles: roles || ['employee'],
     });
   }
 
-  async sendWelcomeEmail(to: string, data: any): Promise<void> {
+  async sendWelcomeEmail(to: string, data: any, roles?: string[]): Promise<void> {
     await this.sendEmail({
       to,
       subject: 'Bienvenue chez Hipster Studio!',
       template: 'welcome-email',
       context: data,
+      userRoles: roles,
     });
   }
 
-  async sendInvoiceEmail(to: string, invoice: any, pdfBuffer: Buffer): Promise<void> {
+  async sendInvoiceEmail(to: string, invoice: any, pdfBuffer: Buffer, roles?: string[]): Promise<void> {
     const isQuote = invoice.type === 'quote';
     const typeLabel = isQuote ? 'Devis' : 'Facture';
     const filename = `${typeLabel}_${invoice.reference}.pdf`;
@@ -135,6 +161,7 @@ export class MailService {
 
     await this.sendEmail({
       to,
+      userRoles: roles,
       subject: `📄 Votre ${typeLabel} ${invoice.reference} est disponible`,
       template: 'invoice-created',
       context: {
@@ -179,6 +206,7 @@ export class MailService {
       subject: '📋 Nouveau projet soumis par un client',
       template: 'project-submission',
       context: data,
+      userRoles: ['admin'],
     });
   }
 
@@ -200,6 +228,7 @@ export class MailService {
       subject: '🎫 Nouveau ticket créé par un client',
       template: 'ticket-creation',
       context: data,
+      userRoles: ['admin'],
     });
   }
 
@@ -220,23 +249,26 @@ export class MailService {
       subject: '👥 Vous avez été assigné à un projet',
       template: 'project-assignment',
       context: data,
+      userRoles: ['employee'],
     });
   }
-  async sendOtpEmail(to: string, data: { name: string; code: string }): Promise<void> {
+  async sendOtpEmail(to: string, data: { name: string; code: string }, roles?: string[]): Promise<void> {
     await this.sendEmail({
       to,
       subject: '🔑 Votre code de vérification Hipster',
-      template: 'otp-email', // Ensure this template exists or reusing the one from register
+      template: 'otp-email',
       context: data,
+      userRoles: roles,
     });
   }
 
-  async sendNewPasswordEmail(to: string, data: { name: string; password: string }): Promise<void> {
+  async sendNewPasswordEmail(to: string, data: { name: string; password: string }, roles?: string[]): Promise<void> {
     await this.sendEmail({
       to,
       subject: '🔒 Votre nouveau mot de passe Hipster',
-      template: 'password-reset', // You might need to create this template or use a generic one
+      template: 'password-reset',
       context: data,
+      userRoles: roles,
     });
   }
 
@@ -251,6 +283,7 @@ export class MailService {
       subject: data.campaignName,
       template: 'campaign',
       context: data,
+      userRoles: ['client_marketing'],
     });
   }
 }

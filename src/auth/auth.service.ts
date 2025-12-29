@@ -87,6 +87,7 @@ export class AuthService {
       subject: 'Vérification de votre compte Hipster',
       template: 'otp-email',
       context: { name: user.firstName ?? user.email, code: otp },
+      userRoles: user.roles,
     });
 
     return {
@@ -189,6 +190,7 @@ export class AuthService {
       subject: 'Nouveau code de vérification Hipster',
       template: 'otp-email',
       context: { name: user.firstName ?? user.email, code: otp },
+      userRoles: user.roles,
     });
 
     return { message: 'Un nouveau code a été envoyé.' };
@@ -226,6 +228,7 @@ export class AuthService {
       subject: 'Réinitialisation de votre mot de passe Hipster',
       template: 'otp-email', // On peut réutiliser le même template ou un spécifique
       context: { name: user.firstName ?? user.email, code: otp },
+      userRoles: user.roles,
     });
 
     return { message: 'Un code de réinitialisation a été envoyé à votre adresse email.' };
@@ -247,17 +250,15 @@ export class AuthService {
     await this.userRepo.save(user);
 
     // Envoyer le nouveau mot de passe par email
-    await this.mailService.sendEmail({
-      to: user.email,
-      subject: 'Nouveau mot de passe Hipster',
-      template: 'welcome-email', // On peut adapter ou envoyer un mail simple
-      context: { 
-        firstName: user.firstName, 
-        email: user.email, 
-        temporaryPassword, 
-        dashboardUrl: process.env.FRONTEND_URL 
+    await this.mailService.sendWelcomeEmail(
+      user.email,
+      {
+        firstName: user.firstName,
+        email: user.email,
+        temporaryPassword,
       },
-    });
+      user.roles,
+    );
 
     return { message: 'Votre mot de passe a été réinitialisé. Vérifiez vos emails.' };
   }
@@ -273,6 +274,7 @@ export class AuthService {
       subject: '🔑 Sécurité Hipster : Code de changement d\'email',
       template: 'otp-email',
       context: { name: user.firstName ?? user.email, code: otp },
+      userRoles: user.roles,
     });
 
     return { message: 'Un code de vérification a été envoyé à votre adresse email actuelle.' };
@@ -318,15 +320,14 @@ export class AuthService {
     await this.userRepo.save(user);
 
     // Optional: send confirmation to OLD email
-    await this.mailService.sendEmail({
-      to: oldEmail,
-      subject: '✅ Votre email Hipster a été modifié',
-      template: 'welcome-email', // adapted or simple content
-      context: { 
-        firstName: user.firstName, 
-        message: `Votre adresse email a été modifiée avec succès de ${oldEmail} vers ${user.email}.`
+    await this.mailService.sendWelcomeEmail(
+      oldEmail,
+      {
+        firstName: user.firstName,
+        message: `Votre adresse email a été modifiée avec succès de ${oldEmail} vers ${user.email}.`,
       },
-    });
+      user.roles,
+    );
 
     return { message: 'Votre adresse email a été mise à jour avec succès. Veuillez vous reconnecter.' };
   }

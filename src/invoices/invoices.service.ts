@@ -129,6 +129,7 @@ export class InvoicesService {
           client.user.email,
           savedInvoice,
           pdfBuffer,
+          client.user.roles,
         );
       }
     } catch (error) {
@@ -217,6 +218,7 @@ export class InvoicesService {
           quote.client.user.email,
           savedInvoice,
           pdfBuffer,
+          quote.client.user.roles,
         );
       }
     } catch (error) {
@@ -651,6 +653,7 @@ export class InvoicesService {
           invoice.client.user.email,
           savedInvoice,
           pdfBuffer,
+          invoice.client.user.roles,
         );
       }
     } catch (error) {
