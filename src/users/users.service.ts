@@ -114,6 +114,7 @@ export class UsersService {
         // 🔹 PERMISSIONS ASSIGNMENT
         // 1. Manual assignment (overrides everything)
         if (dto.permissions && dto.permissions.length > 0) {
+           console.log(`[UsersService] Manual permissions provided:`, dto.permissions);
            const permissions = await this.permissionRepo.findBy({
               slug: In(dto.permissions),
             });
@@ -121,17 +122,26 @@ export class UsersService {
              console.log(
               `[UsersService] Assigned ${permissions.length} manual permissions`,
             );
-        } 
+        }
         // 2. Auto-assignment based on Poste (default behavior)
         else {
           const poste = user.employeeProfile.poste?.toLowerCase() || "";
+          console.log(`[UsersService] Auto-assigning permissions for poste: '${poste}'...`);
+          
           const permissionSlugs =
             POSTE_PERMISSIONS[poste] || DEFAULT_EMPLOYEE_PERMISSIONS;
+          
+          console.log(`[UsersService] Default slugs to assign:`, permissionSlugs);
 
           if (permissionSlugs.length > 0) {
             const permissions = await this.permissionRepo.findBy({
               slug: In(permissionSlugs),
             });
+            
+            if (permissions.length === 0) {
+               console.warn(`[UsersService] WARNING: No permissions found in DB for slugs:`, permissionSlugs);
+            }
+
             user.permissions = permissions;
             console.log(
               `[UsersService] Assigned ${permissions.length} permissions (poste: '${poste || "none"}')`,
@@ -353,6 +363,7 @@ export class UsersService {
         // 🔹 PERMISSIONS ASSIGNMENT (Update)
         // 1. Manual assignment overrides everything
         if (dto.permissions) {
+          console.log(`[UsersService] UPDATE: Manual permissions provided:`, dto.permissions);
           if (dto.permissions.length > 0) {
             const permissions = await this.permissionRepo.findBy({
               slug: In(dto.permissions),
@@ -369,8 +380,12 @@ export class UsersService {
         // 2. Auto-assignment only if NO manual override provided AND poste changed
         else if (posteChanged) {
           const poste = user.employeeProfile.poste?.toLowerCase() || "";
+          console.log(`[UsersService] UPDATE: Poste changed to '${poste}', auto-assigning...`);
+          
           const permissionSlugs =
             POSTE_PERMISSIONS[poste] || DEFAULT_EMPLOYEE_PERMISSIONS;
+            
+          console.log(`[UsersService] UPDATE: Slugs to assign:`, permissionSlugs);
 
           if (permissionSlugs.length > 0) {
             const permissions = await this.permissionRepo.findBy({
