@@ -24,8 +24,8 @@ export class MailService {
     );
 
     // Dynamic URLs based on roles
-    const backofficeUrl = process.env.BACKOFFICE_URL || 'https://backoffice.hipster-studio.com';
-    const frontendUrl = process.env.FRONTEND_URL || 'https://app.hipster-studio.com';
+    const backofficeUrl = process.env.BACKOFFICE_URL || 'https://hipster-ia.fr/app/dashboard';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://hipster-ia.fr';
     const mobileUrl = process.env.MOBILE_APP_URL || 'hypster://login';
 
     // Determine the primary app URL
@@ -149,7 +149,7 @@ export class MailService {
     const tax = Number(invoice.taxAmount || 0);
 
     // TODO: Replace with actual URLs from environment variables or config
-    const baseUrl = process.env.FRONTEND_URL || 'https://app.hipster-studio.com';
+    const baseUrl = process.env.FRONTEND_URL || 'https://hipster-ia.fr';
     const invoiceUrl = `${baseUrl}/invoices/${invoice.id}`;
     const pdfDownloadUrl = `${baseUrl}/api/invoices/${invoice.id}/pdf`;
 
