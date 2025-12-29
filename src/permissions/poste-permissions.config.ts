@@ -5,13 +5,20 @@ export const POSTE_PERMISSIONS: Record<string, string[]> = {
   /*
   // 🔹 GESTION DE PROJET
   'chef de projet': [
-    'manage:projects',
-    'manage:support',
+    'view:projects',
+    'create:projects',
+    'update:projects',
+    'delete:projects',
+    'view:tickets',
+    'reply:tickets',
   ],
 
   // 🔹 DÉVELOPPEURS
   'développeur': [
-    'manage:projects',
+    'view:projects',
+    'update:projects',
+    'view:tasks',
+    'update:tasks',
   ],
   */
 };
