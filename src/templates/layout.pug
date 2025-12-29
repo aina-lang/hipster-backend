@@ -1,0 +1,120 @@
+doctype html
+html(lang="fr")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title #{subject}
+    style.
+      body {
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #0a0a0a;
+        margin: 0;
+        padding: 0;
+        color: #ffffff;
+      }
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #141414;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid #262626;
+      }
+      .header {
+        background: #000000;
+        padding: 40px 20px;
+        text-align: center;
+        border-bottom: 1px solid #1f1f1f;
+      }
+      .logo {
+        max-width: 180px;
+        height: auto;
+      }
+      .brand-name {
+        font-size: 24px;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.025em;
+        margin: 0;
+      }
+      .content {
+        padding: 40px;
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      h1, h2, h3 {
+        color: #ffffff;
+        margin-top: 0;
+      }
+      p {
+        color: #a1a1aa;
+        margin-bottom: 24px;
+      }
+      .btn {
+        display: inline-block;
+        background-color: #ffffff;
+        color: #000000;
+        text-decoration: none;
+        padding: 14px 28px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        transition: background-color 0.2s;
+      }
+      .footer {
+        text-align: center;
+        padding: 40px 20px;
+        background-color: #000000;
+        border-top: 1px solid #1f1f1f;
+      }
+      .footer-text {
+        font-size: 13px;
+        color: #52525b;
+        margin-bottom: 8px;
+      }
+      .company-info {
+        font-size: 12px;
+        color: #3f3f46;
+        line-height: 1.5;
+        margin-top: 20px;
+      }
+      .social-links {
+        margin-top: 20px;
+      }
+      .divider {
+        height: 1px;
+        background-color: #1f1f1f;
+        margin: 30px 0;
+      }
+
+  body
+    .container
+      .header
+        if companyLogoUrl
+          img.logo(src=companyLogoUrl alt=companyName)
+        else
+          h1.brand-name #{companyName}
+
+      .content
+        block content
+
+      .footer
+        p.footer-text Cet email a été envoyé par #{companyName}.
+        .company-info
+          if companyAddress
+            | #{companyAddress}
+            if companyCity
+              |, #{companyCity}
+            if companyZipCode
+              |  #{companyZipCode}
+            br
+          if companyPhone
+            | Tél: #{companyPhone} | 
+          if companyEmail
+            | Email: #{companyEmail}
+          br
+          if companyWebsite
+            a(href=companyWebsite style="color: #71717a; text-decoration: none;") #{companyWebsite}
+        
+        div(style="margin-top: 24px;")
+          p(style="font-size: 11px; color: #27272a;") © #{currentYear} #{companyName}. Tous droits réservés.

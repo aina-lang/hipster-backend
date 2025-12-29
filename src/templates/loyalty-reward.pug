@@ -1,44 +1,30 @@
-doctype html
-html
-  head
-    style.
-      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-      .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
-      .content { background: #f9f9f9; padding: 20px; }
-      .tier-badge { font-size: 48px; margin: 20px 0; }
-      .reward-box { background: #FEF3C7; border: 2px solid #F59E0B; padding: 15px; border-radius: 8px; margin: 20px 0; }
-      .button { background: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }
-      .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-  body
-    .container
-      .header
-        h1 🎉 Félicitations !
-        p(style="font-size: 18px;") Vous avez atteint un nouveau tier de fidélité
-      .content
-        h2 Bonjour #{clientName},
-        p Nous sommes ravis de vous annoncer que vous avez progressé dans notre programme de fidélité !
-        
-        div(style="text-align: center;")
-          .tier-badge 🏆
-          h2(style="color: #667eea;") Tier #{newTier}
-          p Vous êtes passé de <strong>#{oldTier}</strong> à <strong>#{newTier}</strong>
-        
-        .reward-box
-          h3(style="margin-top: 0;") 🎁 Votre nouvelle récompense:
-          p(style="font-size: 18px; margin: 0;") <strong>#{reward}</strong>
-        
-        h3 Vos statistiques:
-        ul
-          li <strong>Projets complétés:</strong> #{projectCount}
-          li <strong>Tier actuel:</strong> #{newTier}
-          if nextTier
-            li <strong>Prochain tier:</strong> #{nextTier} (#{projectsToNextTier} projets restants)
-          else
-            li 🏆 <strong>Vous avez atteint le tier maximum !</strong>
-        
-        p Merci de votre fidélité ! Nous sommes impatients de continuer à travailler avec vous.
-        
-        a.button(href=loyaltyUrl) Voir mon programme de fidélité
-      .footer
-        p © 2025 Hipster Studio. Tous droits réservés.
+extends layout
+
+block content
+  div(style="text-align: center; margin-bottom: 32px;")
+    div(style="width: 64px; height: 64px; background-color: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; border: 1px solid #262626;")
+      span(style="font-size: 24px;") 🏆
+    h2 Félicitations !
+    p Vous avez atteint un nouveau palier de fidélité.
+
+  div(style="background-color: #000000; border: 1px solid #1f1f1f; border-radius: 12px; padding: 24px; margin: 32px 0; text-align: center;")
+    h3(style="margin-top: 0; font-size: 20px; color: #ffffff;") Tier #{newTier}
+    p(style="color: #a1a1aa; font-size: 14px;") Vous avez progressé de <strong>#{oldTier}</strong> à <strong>#{newTier}</strong>.
+    
+    div(style="background-color: #1a1a1a; border: 1px dashed #ffffff; padding: 20px; border-radius: 8px; margin-top: 24px;")
+      span(style="font-size: 11px; color: #52525b; text-transform: uppercase; letter-spacing: 1px;") Votre nouvelle récompense
+      p(style="margin: 8px 0 0 0; color: #ffffff; font-size: 18px; font-weight: 700;") 🎁 #{reward}
+
+  h3 Statistiques de votre compte
+  ul(style="padding-left: 20px; margin: 0; font-size: 14px; color: #71717a;")
+    li(style="margin-bottom: 8px;") Projets complétés : #{projectCount}
+    li(style="margin-bottom: 8px;") Tier actuel : #{newTier}
+    if nextTier
+      li Prochain tier : <strong>#{nextTier}</strong> (#{projectsToNextTier} projets restants)
+    else
+      li(style="color: #ffffff; font-weight: 600;") 🏆 Vous avez atteint le niveau maximum !
+
+  p Merci de votre fidélité ! Nous sommes fiers de vous accompagner dans vos projets.
+
+  div(style="text-align: center; margin-top: 40px;")
+    a.btn(href=loyaltyUrl) Consulter mes avantages

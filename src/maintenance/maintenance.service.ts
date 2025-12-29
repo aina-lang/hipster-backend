@@ -123,7 +123,7 @@ export class MaintenanceService implements OnModuleInit {
 
     const task = this.taskRepository.create({
       title: `${website.url} - ${clientName}`,
-      description: `Maintenance du site WordPress\nURL: ${website.url}\nLogin: ${website.adminLogin}\nPassword: ${website.adminPassword}\nClient: ${clientName}`,
+      description: `Maintenance du site WordPress\nURL: ${website.url}\nLogin: ${website.adminLogin}\nPassword: ${website.plainPassword || '[Non défini]'}\nClient: ${clientName}`,
       status: TaskStatus.TODO,
       priority: TaskPriority.MEDIUM,
       project,

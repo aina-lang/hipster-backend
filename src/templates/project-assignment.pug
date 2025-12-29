@@ -1,30 +1,21 @@
-doctype html
-html
-  head
-    style.
-      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-      .header { background: #4F46E5; color: white; padding: 20px; text-align: center; }
-      .content { background: #f9f9f9; padding: 20px; }
-      .button { background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }
-      .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-  body
-    .container
-      .header
-        h1 👥 Nouvelle Assignation Projet
-      .content
-        h2 Bonjour #{memberName},
-        p Vous avez été assigné au projet <strong>#{projectName}</strong>.
-        
-        if role
-          p <strong>Rôle:</strong> #{role}
-        
-        if projectDescription
-          h3 Description:
-          p #{projectDescription}
-        
-        p Connectez-vous pour voir les détails et commencer à travailler.
-        
-        a.button(href=process.env.FRONTEND_URL + '/app/projects') Voir le projet
-      .footer
-        p © 2025 Hipster Studio. Tous droits réservés.
+extends layout
+
+block content
+  h2 Bonjour #{memberName},
+  p Vous avez été assigné au projet <strong>#{projectName}</strong>.
+  
+  div(style="background-color: #000000; border: 1px solid #1f1f1f; border-radius: 12px; padding: 24px; margin: 32px 0;")
+    if role
+      div(style="margin-bottom: 16px;")
+        span(style="font-size: 11px; color: #52525b; text-transform: uppercase; letter-spacing: 1px;") Votre rôle
+        p(style="margin: 4px 0 0 0; color: #ffffff; font-weight: 600;") #{role}
+    
+    if projectDescription
+      div
+        span(style="font-size: 11px; color: #52525b; text-transform: uppercase; letter-spacing: 1px;") Description du projet
+        p(style="margin: 4px 0 0 0; color: #a1a1aa; font-size: 14px;") #{projectDescription}
+
+  p Connectez-vous à votre espace collaborateur pour consulter les détails du projet et commencer à travailler avec l'équipe.
+
+  div(style="text-align: center; margin-top: 40px;")
+    a.btn(href=appUrl + '/app/projects') Accéder au projet

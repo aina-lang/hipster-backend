@@ -10,8 +10,11 @@ import { MailController } from './mail.controller';
 //     ? join(__dirname, 'templates')
 //     : join(process.cwd(), 'src', 'mail', 'templates');
 
+import { CompanyModule } from '../company/company.module';
+
 @Module({
   imports: [
+    CompanyModule,
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {

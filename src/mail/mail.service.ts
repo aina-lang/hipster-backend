@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
+import { CompanyService } from '../company/company.service';
 
 @Injectable()
 export class MailService {
-  constructor(private readonly mailerService: MailerService) { }
+  constructor(
+    private readonly mailerService: MailerService,
+    private readonly companyService: CompanyService,
+  ) { }
 
   async sendEmail(params: {
     to: string;
@@ -12,11 +16,27 @@ export class MailService {
     context?: { [name: string]: any };
     attachments?: any[];
   }): Promise<void> {
+    const company = await this.companyService.getProfile();
+
+    const globalContext = {
+      companyName: company.name,
+      companyAddress: company.address,
+      companyCity: company.city,
+      companyZipCode: company.zipCode,
+      companyCountry: company.country,
+      companyPhone: company.phone,
+      companyEmail: company.email,
+      companyWebsite: company.website,
+      companyLogoUrl: company.logoUrl,
+      currentYear: new Date().getFullYear(),
+      appUrl: process.env.FRONTEND_URL || 'https://app.hipster-studio.com',
+    };
+
     await this.mailerService.sendMail({
       to: params.to,
       subject: params.subject,
       template: params.template,
-      context: params?.context,
+      context: { ...globalContext, ...(params.context || {}) },
       attachments: params.attachments,
     });
   }

@@ -1,33 +1,21 @@
-doctype html
-html
-  head
-    style.
-      body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-      .header { background: #10B981; color: white; padding: 20px; text-align: center; }
-      .content { background: #f9f9f9; padding: 20px; }
-      .success-badge { background: #10B981; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block; }
-      .button { background: #10B981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }
-      .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
-  body
-    .container
-      .header
-        h1 ✅ Projet Terminé
-      .content
-        h2 Félicitations #{clientName} !
-        p Nous sommes heureux de vous annoncer que votre projet <strong>#{projectName}</strong> a été complété avec succès !
-        
-        div(style="text-align: center; margin: 20px 0;")
-          span.success-badge ✨ Projet Livré
-        
-        h3 Résumé:
-        ul
-          li <strong>Date de début:</strong> #{startDate}
-          li <strong>Date de fin:</strong> #{completedDate}
-          li <strong>Durée:</strong> #{duration}
-        
-        p Merci de nous avoir fait confiance pour ce projet. Nous espérons que le résultat répond à vos attentes !
-        
-        a.button(href=projectUrl) Voir le projet
-      .footer
-        p © 2025 Hipster Studio. Tous droits réservés.
+extends layout
+
+block content
+  div(style="text-align: center; margin-bottom: 32px;")
+    div(style="width: 64px; height: 64px; background-color: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; border: 1px solid #262626;")
+      span(style="font-size: 24px;") ✅
+    h2 Félicitations !
+    p Votre projet est maintenant terminé.
+
+  div(style="background-color: #000000; border: 1px solid #1f1f1f; border-radius: 12px; padding: 24px; margin: 32px 0;")
+    h3(style="margin-top: 0; font-size: 18px; color: #ffffff; text-align: center;") #{projectName}
+    p(style="text-align: center; color: #a1a1aa; font-size: 14px;") Notre équipe a finalisé tous les travaux prévus. Nous espérons que le résultat correspond à vos attentes !
+
+  p Nous restons à votre disposition pour toute assistance supplémentaire ou pour discuter de vos futurs projets.
+
+  div(style="text-align: center; margin-top: 40px;")
+    a.btn(href=projectUrl) Consulter le projet finalisé
+
+  div.divider
+  
+  p(style="font-size: 13px; color: #52525b; text-align: center;") Merci de votre confiance en #{companyName}.
