@@ -7,13 +7,14 @@ import { ProjectsModule } from 'src/projects/projects.module';
 import { User } from 'src/users/entities/user.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
+import { Permission } from 'src/permissions/entities/permission.entity';
 
 import { MailModule } from 'src/mail/mail.module';
 import { RecurringTasksModule } from './recurring-tasks/recurring-tasks.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Task, User, Project, EmployeeProfile]),
+    TypeOrmModule.forFeature([Task, User, Project, EmployeeProfile, Permission]),
     ProjectsModule,
     MailModule,
     forwardRef(() => RecurringTasksModule),
