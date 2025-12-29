@@ -5,24 +5,26 @@ block content
   p Une nouvelle tâche vous a été assignée dans le cadre du projet <strong>#{projectName}</strong>.
   
   div(style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 24px; margin: 32px 0;")
-    h3(style="margin-top: 0; font-size: 16px; color: #09090b;") #{taskTitle}
+    h3(style="margin-top: 0; margin-bottom: 20px; font-size: 16px; color: #09090b; border-bottom: 1px solid #f4f4f5; padding-bottom: 12px;") #{taskTitle}
     
-    div(style="margin: 16px 0; font-size: 14px; color: #52525b;")
+    table(width="100%" cellpadding="0" cellspacing="0" border="0")
       if taskPriority
-        div(style="display: flex; align-items: center; margin-bottom: 8px;")
-          span(style="margin-right: 8px;") Priorité:
-          span(style=`color: ${taskPriority === 'URGENT' ? '#ef4444' : '#09090b'}; font-weight: 600;`) #{taskPriority}
+        tr
+          td(style="padding: 10px 0; font-size: 14px; color: #52525b;") Priorité
+          td(style=`padding: 10px 0; font-size: 14px; color: ${taskPriority === 'URGENT' ? '#ef4444' : '#18181b'}; font-weight: 700; text-align: right;`) #{taskPriority}
       
       if taskDueDate
-        div(style="display: flex; align-items: center;")
-          span(style="margin-right: 8px;") Échéance:
-          span(style="color: #09090b;") #{taskDueDate}
+        tr
+          td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #f9f9f9;") Échéance
+          td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right; border-top: 1px solid #f9f9f9;") #{taskDueDate}
+      
+      if taskDescription
+        tr
+          td(colspan="2" style="padding: 16px 0 0 0; font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px;") Description de la tâche
+        tr
+          td(colspan="2" style="padding: 8px 0 0 0; font-size: 14px; color: #52525b;") #{taskDescription}
 
-    if taskDescription
-      div(style="border-top: 1px solid #f4f4f5; padding-top: 16px; margin-top: 16px;")
-        p(style="margin: 0; font-size: 13px; color: #71717a;") #{taskDescription}
-
-  p Vous pouvez maintenant commencer à travailler sur cette tâche et mettre à jour son statut au fur et à mesure de votre progression.
+  p(style="margin-top: 32px;") Vous pouvez maintenant commencer à travailler sur cette tâche et mettre à jour son statut au fur et à mesure de votre progression.
 
   div(style="text-align: center; margin-top: 40px;")
     a.btn(href=appUrl + '/app/tasks') Voir mes tâches

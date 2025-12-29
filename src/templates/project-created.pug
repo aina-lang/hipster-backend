@@ -5,29 +5,24 @@ block content
   p Nous sommes ravis de vous informer que votre projet a été créé avec succès !
   
   div(style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 24px; margin: 32px 0;")
-    h3(style="margin-top: 0; font-size: 16px; color: #09090b;") Détails du projet
+    h3(style="margin-top: 0; margin-bottom: 20px; font-size: 16px; color: #09090b; border-bottom: 1px solid #f4f4f5; padding-bottom: 12px;") Détails du projet
     
-    div(style="font-size: 14px; color: #52525b;")
-      div(style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f4f4f5; padding-bottom: 8px;")
-        span Nom du projet
-        span(style="color: #18181b; font-weight: 600;") #{projectName}
+    table(width="100%" cellpadding="0" cellspacing="0" border="0")
+      tr
+        td(style="padding: 10px 0; font-size: 14px; color: #52525b;") Nom du projet
+        td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right;") #{projectName}
       
       if startDate
-        div(style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f4f4f5; padding-bottom: 8px;")
-          span Date de début
-          span(style="color: #27272a;") #{startDate}
+        tr
+          td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #f9f9f9;") Date de début
+          td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right; border-top: 1px solid #f9f9f9;") #{startDate}
       
       if endDate
-        div(style="display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f4f4f5; padding-bottom: 8px;")
-          span Échéance prévue
-          span(style="color: #27272a;") #{endDate}
-      
-      if budget
-        div(style="display: flex; justify-content: space-between;")
-          span Budget
-          span(style="color: #09090b; font-weight: 600;") #{budget}€
+        tr
+          td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #f9f9f9;") Échéance prévue
+          td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right; border-top: 1px solid #f9f9f9;") #{endDate}
 
-  p Notre équipe se prépare à démarrer les travaux. Vous recevrez des mises à jour régulières sur l'avancement de votre projet.
+  p(style="margin-top: 32px;") Notre équipe se prépare à démarrer les travaux. Vous recevrez des mises à jour régulières sur l'avancement de votre projet.
 
   div(style="text-align: center; margin-top: 40px;")
     a.btn(href=projectUrl) Suivre mon projet

@@ -19,6 +19,7 @@ import { FindUsersQueryDto } from './dto/find-users-query.dto';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
 import { Permission } from 'src/permissions/entities/permission.entity';
 import { MailService } from 'src/mail/mail.service';
+import { deleteFile } from 'src/common/utils/file.utils';
 import {
   POSTE_PERMISSIONS,
   DEFAULT_EMPLOYEE_PERMISSIONS,
@@ -296,6 +297,12 @@ export class UsersService {
       if (dto.email) user.email = dto.email;
       if (dto.phones !== undefined) user.phones = dto.phones;
       if (dto.contactEmail !== undefined) user.contactEmail = dto.contactEmail;
+      
+      // ✅ Delete old avatar if a new one is being uploaded
+      if (dto.avatarUrl && user.avatarUrl && dto.avatarUrl !== user.avatarUrl) {
+        deleteFile(user.avatarUrl);
+      }
+      
       if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl;
       if (dto.roles) {
         user.roles = dto.roles;

@@ -9,6 +9,7 @@ import { Project } from 'src/projects/entities/project.entity';
 import { Ticket } from 'src/tickets/entities/ticket.entity';
 import { QueryFilesDto } from './dto/query-files.dto';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
+import { deleteFile } from 'src/common/utils/file.utils';
 
 @Injectable()
 export class FilesService {
@@ -147,6 +148,11 @@ export class FilesService {
     const file = await this.fileRepo.findOneBy({ id });
     if (!file) throw new NotFoundException(`Fichier #${id} introuvable`);
 
+    // ✅ Delete old file if URL is being updated
+    if (dto.url && file.url && dto.url !== file.url) {
+      deleteFile(file.url);
+    }
+
     Object.assign(file, dto);
     return this.fileRepo.save(file);
   }
@@ -157,6 +163,9 @@ export class FilesService {
   async remove(id: number): Promise<{ message: string }> {
     const file = await this.fileRepo.findOneBy({ id });
     if (!file) throw new NotFoundException(`Fichier #${id} introuvable`);
+
+    // ✅ Delete physical file before removing from DB
+    deleteFile(file.url);
 
     await this.fileRepo.remove(file);
     return { message: `Fichier #${id} supprimé avec succès` };
