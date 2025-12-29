@@ -31,7 +31,7 @@ import { CompanyModule } from '../company/company.module';
           from: process.env.MAIL_FROM,
         },
         template: {
-          dir: join(process.cwd(), 'src', 'templates'),
+          dir: join(__dirname, '..', 'templates'),
           adapter: new PugAdapter(),
           options: {
             strict: true,
