@@ -300,7 +300,6 @@ export class MailService {
       role?: string;
       startDate?: string;
       endDate?: string;
-      budget?: number;
     },
   ): Promise<void> {
     await this.sendEmail({

@@ -213,7 +213,6 @@ export class ProjectsService {
                 endDate: project.end_date
                   ? new Date(project.end_date).toLocaleDateString('fr-FR')
                   : undefined,
-                budget: project.budget,
               },
             );
           } catch (error) {
@@ -305,6 +304,31 @@ export class ProjectsService {
         console.log(
           `[Maintenance] Assigned permission to ${user.firstName} ${user.lastName}`,
         );
+
+        // ✅ Send maintenance assignment email
+        if (user.email) {
+          try {
+            await this.mailService.sendMaintenanceAssignedEmail(
+              user.email,
+              {
+                assigneeName: `${user.firstName} ${user.lastName}`,
+                websiteUrl: 'Sites WordPress clients',
+                projectName: project.name,
+                taskDescription:
+                  'Vous êtes maintenant membre de l’équipe de maintenance. Vous recevrez des tâches de maintenance pour les différents sites web de nos clients.',
+                recurrenceInfo: project.recurrenceType || 'Selon planification',
+              },
+            );
+            console.log(
+              `[Maintenance] Sent assignment email to ${user.email}`,
+            );
+          } catch (error) {
+            console.error(
+              `Failed to send maintenance assignment email to ${user.email}:`,
+              error,
+            );
+          }
+        }
       }
     }
   }
