@@ -68,7 +68,7 @@ export class MailService {
       companyLogoUrl: companyLogoUrl,
       currentYear: new Date().getFullYear(),
       appUrl: appUrl,
-      dashboardUrl: appUrl, // Often used interchangeably in templates
+      // dashboardUrl: appUrl, // 🚫 DISABLED: User requested to remove all "Access Account" links by default
     };
 
     await this.mailerService.sendMail({
@@ -131,11 +131,36 @@ export class MailService {
   }
 
   async sendWelcomeEmail(to: string, data: any, roles?: string[]): Promise<void> {
+    const isClient = roles?.includes('client_marketing') || roles?.includes('client_ai');
+    const isEmployee = roles?.includes('employee');
+    const isAdmin = roles?.includes('admin');
+
+    let welcomeMessage = "Bienvenue sur la plateforme Hipster.";
+    let subMessage = "";
+
+    if (isAdmin) {
+      welcomeMessage = "Votre compte Administrateur a été créé avec succès.";
+      subMessage = "Vous avez désormais accès à l'ensemble des fonctionnalités de gestion.";
+    } else if (isEmployee) {
+      welcomeMessage = "Votre compte Employé est prêt.";
+      subMessage = "Rapprochez-vous de votre manager pour obtenir vos accès et missions.";
+    } else if (isClient) {
+      welcomeMessage = "Bienvenue chez Hipster Marketing !";
+      subMessage = "Nous sommes ravis de collaborer avec vous.";
+    }
+
     await this.sendEmail({
       to,
       subject: 'Bienvenue chez Hipster Studio!',
       template: 'welcome-email',
-      context: data,
+      context: {
+        ...data,
+        welcomeMessage,
+        subMessage,
+        // 🚫 REMOVED LINK: Explicitly removing dashboardUrl to prevents "Access Account" button
+        dashboardUrl: null, 
+        actionUrl: null,
+      },
       userRoles: roles,
     });
   }
@@ -288,7 +313,11 @@ export class MailService {
       to,
       subject: '🔒 Votre nouveau mot de passe Hipster',
       template: 'password-reset',
-      context: data,
+      context: {
+        ...data,
+         // 🚫 REMOVED LINK
+        dashboardUrl: null,
+      },
       userRoles: roles,
     });
   }

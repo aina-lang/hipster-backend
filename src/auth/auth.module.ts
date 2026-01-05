@@ -19,7 +19,7 @@ import { RefreshStrategy } from './strategies/refresh.strategy';
     JwtModule.register({
       global: true,
       secret: 'MON KEY', // TODO: Use environment variable
-      signOptions: { expiresIn: '15m' },
+      signOptions: { expiresIn: '4h' },
     }),
     OtpModule,
     MailModule,

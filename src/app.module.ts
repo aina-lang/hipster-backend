@@ -56,6 +56,12 @@ import { CompanyModule } from './company/company.module';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         autoLoadEntities: true,
         synchronize: true,
+        keepConnectionAlive: true,
+        extra: {
+          connectionLimit: 10,
+          enableKeepAlive: true,
+          keepAliveInitialDelay: 0,
+        },
       }),
     }),
     UsersModule,

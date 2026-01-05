@@ -118,8 +118,8 @@ export class AuthService {
     const payload = { sub: user.id, email: user.email, roles: user.roles };
     
     // Generate both tokens
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
-    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
+    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '4h' });
+    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '30d' });
 
     // Save refresh token to user (optional but better for security)
     user.refreshToken = refreshToken;
@@ -151,8 +151,8 @@ export class AuthService {
     }
 
     const payload = { sub: user.id, email: user.email, roles: user.roles };
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
-    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
+    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '4h' });
+    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '30d' });
 
     user.refreshToken = refreshToken;
     await this.userRepo.save(user);
