@@ -207,6 +207,13 @@ export class ProjectsService {
                 projectName: project.name,
                 projectDescription: project.description,
                 role: member.role,
+                startDate: project.start_date
+                  ? new Date(project.start_date).toLocaleDateString('fr-FR')
+                  : undefined,
+                endDate: project.end_date
+                  ? new Date(project.end_date).toLocaleDateString('fr-FR')
+                  : undefined,
+                budget: project.budget,
               },
             );
           } catch (error) {

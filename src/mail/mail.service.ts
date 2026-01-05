@@ -130,6 +130,16 @@ export class MailService {
     });
   }
 
+  async sendMaintenanceAssignedEmail(to: string, data: any, roles?: string[]): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: '🔧 Tâche de Maintenance Assignée',
+      template: 'maintenance-assigned',
+      context: data,
+      userRoles: roles || ['employee'],
+    });
+  }
+
   async sendWelcomeEmail(to: string, data: any, roles?: string[]): Promise<void> {
     const isClient = roles?.includes('client_marketing') || roles?.includes('client_ai');
     const isEmployee = roles?.includes('employee');
@@ -288,6 +298,9 @@ export class MailService {
       projectName: string;
       projectDescription?: string;
       role?: string;
+      startDate?: string;
+      endDate?: string;
+      budget?: number;
     },
   ): Promise<void> {
     await this.sendEmail({

@@ -2,24 +2,52 @@ extends layout
 
 block content
   h2 Bonjour #{memberName},
-  p Vous avez été assigné au projet <strong>#{projectName}</strong>.
+  p Vous avez été assigné(e) au projet <strong>#{projectName}</strong>.
   
-  div(style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 24px; margin: 32px 0;")
-    h3(style="margin-top: 0; margin-bottom: 20px; font-size: 16px; color: #09090b; border-bottom: 1px solid #f4f4f5; padding-bottom: 12px;") Informations d'assignation
+  if role
+    p(style="color: #52525b; font-size: 15px;") Votre rôle dans ce projet : <strong style="color: #09090b;">#{role}</strong>
+  
+  div(style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e4e4e7; border-radius: 12px; padding: 28px; margin: 32px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);")
+    h3(style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #09090b; font-weight: 700;") 📋 Détails du projet
     
     table(width="100%" cellpadding="0" cellspacing="0" border="0")
+      tr
+        td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500;") Nom du projet
+        td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right;") #{projectName}
+      
       if role
         tr
-          td(style="padding: 10px 0; font-size: 14px; color: #52525b;") Votre rôle
-          td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right;") #{role}
+          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Votre rôle
+          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") #{role}
       
       if projectDescription
         tr
-          td(colspan="2" style="padding: 16px 0 0 0; font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px;") Description du projet
+          td(colspan="2" style="padding: 20px 0 0 0; font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;") Description du projet
         tr
-          td(colspan="2" style="padding: 8px 0 0 0; font-size: 14px; color: #52525b;") #{projectDescription}
+          td(colspan="2" style="padding: 8px 0 0 0; font-size: 14px; color: #52525b; line-height: 1.6;") #{projectDescription}
+      
+      if startDate
+        tr
+          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Date de début
+          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") #{startDate}
+      
+      if endDate
+        tr
+          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Date de fin prévue
+          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") #{endDate}
+      
+      if budget
+        tr
+          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Budget
+          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") #{budget} €
 
-  p(style="margin-top: 32px;") Connectez-vous à votre espace collaborateur pour consulter les détails du projet et commencer à travailler avec l'équipe.
+  div(style="background-color: #f8f9fa; border-left: 4px solid #09090b; border-radius: 8px; padding: 20px; margin: 24px 0;")
+    p(style="margin: 0; font-size: 14px; color: #52525b; line-height: 1.6;")
+      strong(style="color: #09090b;") 💡 Prochaines étapes :
+      br
+      | Connectez-vous à votre espace collaborateur pour consulter les détails complets du projet, accéder aux fichiers partagés, et commencer à travailler avec votre équipe.
 
   div(style="text-align: center; margin-top: 40px;")
-    a.btn(href=appUrl + '/app/projects') Accéder au projet
+    a.btn(href=appUrl + '/app/projects' style="background: linear-gradient(135deg, #18181b 0%, #09090b 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.15);") 🚀 Accéder au projet
+
+  p(style="margin-top: 40px; font-size: 13px; color: #71717a; line-height: 1.6;") Si vous avez des questions concernant ce projet ou votre rôle, n'hésitez pas à contacter votre chef de projet ou l'équipe administrative.
