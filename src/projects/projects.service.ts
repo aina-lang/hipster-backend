@@ -671,15 +671,31 @@ export class ProjectsService {
       relations: ['permissions'],
     });
 
-    // if (user) {
-    //   const isAdmin = user.roles.includes('admin' as any);
-    //   const hasManagePermission = user.permissions?.some(p => p.slug === 'projects:manage');
+    if (user) {
+      const isAdmin = user.roles.includes('admin' as any);
+      const hasManagePermission = user.permissions?.some(
+        (p) => p.slug === 'projects:manage',
+      );
 
-    //   // If not admin and doesn't have manage permission, filter by membership
-    //   if (!isAdmin && !hasManagePermission) {
-    //     qb.andWhere('employee.id = :userId', { userId });
-    //   }
-    // }
+      // If not admin and doesn't have manage permission, apply filters
+      if (!isAdmin && !hasManagePermission) {
+        const isClient =
+          user.roles.includes('client_marketing' as any) ||
+          user.roles.includes('client_ai' as any);
+
+        if (isClient) {
+          // Si c'est un client, il ne voit que ses projets
+          qb.andWhere('clientUser.id = :userId', { userId });
+        } else {
+          // Sinon c'est un employé, il ne voit que les projets où il est membre
+          // On utilise un subquery pour éviter les problèmes de jointures multiples
+          qb.andWhere(
+            'project.id IN (SELECT pm.projectId FROM project_members pm WHERE pm.employeeId = :userId)',
+            { userId },
+          );
+        }
+      }
+    }
 
     if (search) {
       qb.andWhere(
