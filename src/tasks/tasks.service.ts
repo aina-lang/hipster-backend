@@ -48,7 +48,7 @@ export class TasksService {
 
     const project = await this.projectRepo.findOne({
       where: { id: projectId },
-      relations: ['client', 'client.user'],
+      relations: ['client', 'client.user', 'members', 'members.employee'],
     });
     if (!project) throw new NotFoundException('Projet introuvable');
 
@@ -73,6 +73,21 @@ export class TasksService {
       if (assignees.length !== assigneeIds.length) {
         throw new BadRequestException(
           "Un ou plusieurs utilisateurs n'ont pas de profil employé",
+        );
+      }
+
+      // ✅ VALIDATION: Vérifier que tous les assignés sont membres du projet
+      const projectMemberIds = project.members.map((m) => m.employee.id);
+      const invalidAssignees = assignees.filter(
+        (assignee) => !projectMemberIds.includes(assignee.user.id),
+      );
+
+      if (invalidAssignees.length > 0) {
+        const invalidNames = invalidAssignees
+          .map((a) => `${a.user.firstName} ${a.user.lastName}`)
+          .join(', ');
+        throw new BadRequestException(
+          `Les employés suivants ne sont pas membres du projet "${project.name}" : ${invalidNames}. Veuillez d'abord les ajouter au projet.`,
         );
       }
     }
@@ -231,6 +246,12 @@ export class TasksService {
 
     // Réassignation multiple
     if (assigneeIds) {
+      // Fetch project with members for validation
+      const projectForValidation = await this.projectRepo.findOne({
+        where: { id: task.project.id },
+        relations: ['members', 'members.employee'],
+      });
+
       // Les assigneeIds sont des User IDs, pas des EmployeeProfile IDs
       const users = await this.userRepo.find({
         where: { id: In(assigneeIds) },
@@ -250,6 +271,25 @@ export class TasksService {
         throw new BadRequestException(
           "Un ou plusieurs utilisateurs n'ont pas de profil employé",
         );
+      }
+
+      // ✅ VALIDATION: Vérifier que tous les assignés sont membres du projet
+      if (projectForValidation) {
+        const projectMemberIds = projectForValidation.members.map(
+          (m) => m.employee.id,
+        );
+        const invalidAssignees = employees.filter(
+          (assignee) => !projectMemberIds.includes(assignee.user.id),
+        );
+
+        if (invalidAssignees.length > 0) {
+          const invalidNames = invalidAssignees
+            .map((a) => `${a.user.firstName} ${a.user.lastName}`)
+            .join(', ');
+          throw new BadRequestException(
+            `Les employés suivants ne sont pas membres du projet "${projectForValidation.name}" : ${invalidNames}. Veuillez d'abord les ajouter au projet.`,
+          );
+        }
       }
 
       task.assignees = employees;
