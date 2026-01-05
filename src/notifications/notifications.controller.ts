@@ -15,6 +15,9 @@ import { QueryNotificationsDto } from './dto/query-notifications.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { User } from 'src/common/decorators/user.decorator';
+import { Role } from 'src/common/enums/role.enum';
+import { User as UserEntity } from 'src/users/entities/user.entity';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -34,7 +37,11 @@ export class NotificationsController {
     { name: 'isRead', required: false, type: Boolean },
   ])
   @Get()
-  findAll(@Query() query: QueryNotificationsDto) {
+  findAll(@Query() query: QueryNotificationsDto, @User() user: UserEntity) {
+    // Si l'utilisateur n'est pas admin, il ne peut voir que ses propres notifications
+    if (!user.roles.includes(Role.ADMIN)) {
+      query.userId = user.id;
+    }
     return this.notificationsService.findPaginated(query);
   }
 
@@ -47,7 +54,11 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Marquer toutes les notifications comme lues' })
   @ResponseMessage('Toutes les notifications ont été marquées comme lues')
   @Patch('mark-all-read')
-  markAllAsRead(@Body() body: { userId: number }) {
+  markAllAsRead(@Body() body: { userId: number }, @User() user: UserEntity) {
+    // Si l'utilisateur n'est pas admin, il ne peut marquer que ses propres notifications
+    if (!user.roles.includes(Role.ADMIN)) {
+      body.userId = user.id;
+    }
     return this.notificationsService.markAllAsRead(body.userId);
   }
 

@@ -99,7 +99,7 @@ export class AuthService {
   async login(dto: LoginAuthDto) {
     const user = await this.userRepo.findOne({
       where: { email: dto.email },
-      relations: ['clientProfile', 'employeeProfile', 'aiProfile'],
+      relations: ['clientProfile', 'employeeProfile', 'aiProfile', 'permissions'],
     });
 
     if (!user) throw new UnauthorizedException('Identifiants invalides.');
@@ -134,6 +134,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles: user.roles,
+        permissions: user.permissions, // Added permissions here
         profiles: {
           client: user.clientProfile,
           employee: user.employeeProfile,
