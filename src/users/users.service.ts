@@ -53,13 +53,13 @@ export class UsersService {
     // Si pas de mot de passe fourni OU si on veut forcer un mot de passe temporaire
     // Pour l'instant, on génère un mot de passe temporaire si aucun n'est fourni ou si c'est un client/employé
     if (!finalPassword) {
-      const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4 chiffres
-      // Nettoyer le nom de famille (enlever espaces, accents, etc pour le mot de passe)
-      const cleanLastName = dto.lastName
-        ? dto.lastName.replace(/[^a-zA-Z0-9]/g, '')
-        : 'User';
-      // Format: Nom1234!
-      temporaryPassword = `${cleanLastName}${randomDigits}!`;
+      const chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+      let password = '';
+      for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      temporaryPassword = password;
       finalPassword = temporaryPassword;
       console.log(
         `[UsersService] Generated temporary password for ${dto.email}: ${temporaryPassword}`,
@@ -492,13 +492,13 @@ export class UsersService {
     const user = await this.findOne(id);
 
     // 🔐 Génération du nouveau mot de passe temporaire
-    const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4 chiffres
-    const cleanLastName = user.lastName
-      ? user.lastName.replace(/[^a-zA-Z0-9]/g, '')
-      : 'User';
-
-    // Format: Nom1234!
-    const temporaryPassword = `${cleanLastName}${randomDigits}!`;
+    // 🔐 Génération du nouveau mot de passe temporaire (Aléatoire)
+    const chars =
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    let temporaryPassword = '';
+    for (let i = 0; i < 12; i++) {
+      temporaryPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
     // Update user password
