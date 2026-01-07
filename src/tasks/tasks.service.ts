@@ -55,23 +55,11 @@ export class TasksService {
     let assignees: EmployeeProfile[] = [];
     if (assigneeIds?.length) {
       // Les assigneeIds sont des User IDs, pas des EmployeeProfile IDs
-      // On cherche les Users et on récupère leur EmployeeProfile
-      const users = await this.userRepo.find({
-        where: { id: In(assigneeIds) },
-        relations: ['employeeProfile'],
+      // Extraire les EmployeeProfiles avec leurs relations User proprement via TypeORM
+      assignees = await this.employeeRepo.find({
+        where: { user: { id: In(assigneeIds) } },
+        relations: ['user'],
       });
-
-      if (users.length !== assigneeIds.length) {
-        throw new BadRequestException('Un ou plusieurs employés introuvables');
-      }
-
-      // Extraire les EmployeeProfiles et lier l'utilisateur pour les emails/RBAC
-      assignees = users
-        .map((u) => {
-          if (u.employeeProfile) u.employeeProfile.user = u;
-          return u.employeeProfile;
-        })
-        .filter((ep) => ep != null) as EmployeeProfile[];
 
       if (assignees.length !== assigneeIds.length) {
         throw new BadRequestException(
@@ -258,23 +246,11 @@ export class TasksService {
         relations: ['members', 'members.employee'],
       });
 
-      // Les assigneeIds sont des User IDs, pas des EmployeeProfile IDs
-      const users = await this.userRepo.find({
-        where: { id: In(assigneeIds) },
-        relations: ['employeeProfile'],
+      // Extraire les EmployeeProfiles avec leurs relations User proprement
+      const employees = await this.employeeRepo.find({
+        where: { user: { id: In(assigneeIds) } },
+        relations: ['user'],
       });
-
-      if (users.length !== assigneeIds.length) {
-        throw new BadRequestException('Un ou plusieurs employés introuvables');
-      }
-
-      // Extraire les EmployeeProfiles et lier l'utilisateur
-      const employees = users
-        .map((u) => {
-          if (u.employeeProfile) u.employeeProfile.user = u;
-          return u.employeeProfile;
-        })
-        .filter((ep) => ep != null) as EmployeeProfile[];
 
       if (employees.length !== assigneeIds.length) {
         throw new BadRequestException(

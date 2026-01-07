@@ -769,6 +769,10 @@ export class ProjectsService {
       }
     }
 
+    // 🚫 Exclude "Global" projects (projects without a client) from public/dashboard lists
+    // These are system-wide projects like "Maintenance Sites Web"
+    qb.andWhere('project.clientId IS NOT NULL');
+
     if (search) {
       qb.andWhere(
         '(project.name LIKE :search OR project.description LIKE :search)',
