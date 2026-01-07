@@ -175,9 +175,34 @@ export class AuthService {
     if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
 
     user.isEmailVerified = true;
+    
+    // Generate tokens for auto-login
+    const payload = { sub: user.id, email: user.email, roles: user.roles };
+    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '4h' });
+    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '30d' });
+
+    user.refreshToken = refreshToken;
     await this.userRepo.save(user);
 
-    return { message: 'Email vérifié avec succès. Vous pouvez maintenant vous connecter.' };
+    return {
+      message: 'Email vérifié avec succès. Connexion automatique...',
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        roles: user.roles,
+        permissions: user.permissions,
+        profiles: {
+          client: user.clientProfile,
+          employee: user.employeeProfile,
+          ai: user.aiProfile,
+        },
+        isEmailVerified: user.isEmailVerified,
+      },
+    };
   }
 
   async resendOtp(email: string) {
