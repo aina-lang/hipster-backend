@@ -20,9 +20,14 @@ export class LoyaltyService {
         if (!client) throw new NotFoundException(`Client #${clientId} not found`);
 
         // Count signed/completed projects (only COMPLETED projects count as "signed")
-        const projectCount = await this.projectRepo.count({
-            where: { client: { id: clientId }, status: ProjectStatus.COMPLETED },
+        const allProjects = await this.projectRepo.find({
+            where: { client: { id: clientId } },
         });
+        console.log(`DEBUG: Loyalty check for client ${clientId}. Found ${allProjects.length} total projects.`);
+        allProjects.forEach(p => console.log(`DEBUG: Project ID: ${p.id}, Status: ${p.status}`));
+
+        const projectCount = allProjects.filter(p => p.status === ProjectStatus.COMPLETED).length;
+        console.log(`DEBUG: Final projectCount for loyalty: ${projectCount}`);
 
         // Determine Tier
         let tier = LoyaltyTier.STANDARD;

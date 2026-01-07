@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   Res,
+  Request,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { User } from 'src/common/decorators/user.decorator';
@@ -40,8 +41,8 @@ export class InvoicesController {
     { name: 'projectId', required: false, type: Number },
   ])
   @Get()
-  findAll(@Query() query: QueryInvoicesDto) {
-    return this.invoicesService.findPaginated(query);
+  findAll(@Query() query: QueryInvoicesDto, @Request() req) {
+    return this.invoicesService.findPaginated(query, req.user.userId);
   }
 
   @ApiOperation({ summary: 'Récupérer une facture par ID' })

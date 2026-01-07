@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Request,
 } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
 import { CreateTicketDto } from './dto/create-ticket.dto';
@@ -37,8 +38,8 @@ export class TicketsController {
     { name: 'projectId', required: false, type: Number },
   ])
   @Get()
-  findAll(@Query() query: QueryTicketsDto) {
-    return this.ticketsService.findPaginated(query);
+  findAll(@Query() query: QueryTicketsDto, @Request() req) {
+    return this.ticketsService.findPaginated(query, req.user.userId);
   }
 
   @ApiOperation({ summary: 'Récupérer un ticket par ID' })

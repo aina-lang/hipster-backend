@@ -65,9 +65,12 @@ export class TasksService {
         throw new BadRequestException('Un ou plusieurs employés introuvables');
       }
 
-      // Extraire les EmployeeProfiles
+      // Extraire les EmployeeProfiles et lier l'utilisateur pour les emails/RBAC
       assignees = users
-        .map((u) => u.employeeProfile)
+        .map((u) => {
+          if (u.employeeProfile) u.employeeProfile.user = u;
+          return u.employeeProfile;
+        })
         .filter((ep) => ep != null) as EmployeeProfile[];
 
       if (assignees.length !== assigneeIds.length) {
@@ -78,13 +81,16 @@ export class TasksService {
 
       // ✅ VALIDATION: Vérifier que tous les assignés sont membres du projet
       const projectMemberIds = project.members.map((m) => m.employee.id);
-      const invalidAssignees = assignees.filter(
-        (assignee) => !projectMemberIds.includes(assignee.user.id),
+      const invalidAssigneeIds = assigneeIds.filter(
+        (id) => !projectMemberIds.includes(id),
       );
 
-      if (invalidAssignees.length > 0) {
-        const invalidNames = invalidAssignees
-          .map((a) => `${a.user.firstName} ${a.user.lastName}`)
+      if (invalidAssigneeIds.length > 0) {
+        const invalidUsers = users.filter((u) =>
+          invalidAssigneeIds.includes(u.id),
+        );
+        const invalidNames = invalidUsers
+          .map((u) => `${u.firstName} ${u.lastName}`)
           .join(', ');
         throw new BadRequestException(
           `Les employés suivants ne sont pas membres du projet "${project.name}" : ${invalidNames}. Veuillez d'abord les ajouter au projet.`,
@@ -262,9 +268,12 @@ export class TasksService {
         throw new BadRequestException('Un ou plusieurs employés introuvables');
       }
 
-      // Extraire les EmployeeProfiles
+      // Extraire les EmployeeProfiles et lier l'utilisateur
       const employees = users
-        .map((u) => u.employeeProfile)
+        .map((u) => {
+          if (u.employeeProfile) u.employeeProfile.user = u;
+          return u.employeeProfile;
+        })
         .filter((ep) => ep != null) as EmployeeProfile[];
 
       if (employees.length !== assigneeIds.length) {
@@ -278,13 +287,16 @@ export class TasksService {
         const projectMemberIds = projectForValidation.members.map(
           (m) => m.employee.id,
         );
-        const invalidAssignees = employees.filter(
-          (assignee) => !projectMemberIds.includes(assignee.user.id),
+        const invalidAssigneeIds = assigneeIds.filter(
+          (id) => !projectMemberIds.includes(id),
         );
 
-        if (invalidAssignees.length > 0) {
-          const invalidNames = invalidAssignees
-            .map((a) => `${a.user.firstName} ${a.user.lastName}`)
+        if (invalidAssigneeIds.length > 0) {
+          const invalidUsers = users.filter((u) =>
+            invalidAssigneeIds.includes(u.id),
+          );
+          const invalidNames = invalidUsers
+            .map((u) => `${u.firstName} ${u.lastName}`)
             .join(', ');
           throw new BadRequestException(
             `Les employés suivants ne sont pas membres du projet "${projectForValidation.name}" : ${invalidNames}. Veuillez d'abord les ajouter au projet.`,
