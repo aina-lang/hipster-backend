@@ -104,16 +104,19 @@ export class AuthService {
 
     if (!user) throw new UnauthorizedException('Identifiants invalides.');
 
+    const isMatch = await bcrypt.compare(dto.password, user.password);
+    if (!isMatch) throw new UnauthorizedException('Identifiants invalides.');
+
     if (!user.isEmailVerified) {
+      // Si mot de passe correct mais email non vérifié => On renvoie un OTP
+      await this.resendOtp(user.email);
+      
       throw new UnauthorizedException({
-        message: 'Veuillez vérifier votre email avant de vous connecter.',
+        message: 'Veuillez vérifier votre email avant de vous connecter. Un nouveau code vous a été envoyé.',
         needsVerification: true,
         email: user.email,
       });
     }
-
-    const isMatch = await bcrypt.compare(dto.password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Identifiants invalides.');
 
     const payload = { sub: user.id, email: user.email, roles: user.roles };
     
