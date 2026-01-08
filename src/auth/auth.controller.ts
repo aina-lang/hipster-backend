@@ -73,8 +73,17 @@ export class AuthController {
   @Public()
   @ApiOperation({ summary: 'Confirmation OTP et génération nouveau mot de passe' })
   @Post('reset-password')
-  async resetPassword(@Body() body: { email: string; code: string }) {
-    return this.authService.resetPassword(body.email, body.code);
+  async resetPassword(@Body() body: { email: string; code: string; password?: string }) {
+    return this.authService.resetPassword(body.email, body.code, body.password);
+  }
+
+  @Public()
+  @ApiOperation({
+    summary: 'Vérification OTP pour réinitialisation de mot de passe',
+  })
+  @Post('verify-reset-code')
+  async verifyResetCode(@Body() body: { email: string; code: string }) {
+    return this.authService.verifyResetCode(body.email, body.code);
   }
 
   @Public()

@@ -263,16 +263,42 @@ export class AuthService {
     return { message: 'Un code de réinitialisation a été envoyé à votre adresse email.' };
   }
 
-  async resetPassword(email: string, code: string) {
+  async verifyResetCode(email: string, code: string) {
     const user = await this.userRepo.findOne({ where: { email } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
-    const isValid = await this.otpService.verifyOtp(user, code, OtpType.PASSWORD_RESET);
+    const isValid = await this.otpService.verifyOtp(
+      user,
+      code,
+      OtpType.PASSWORD_RESET,
+    );
     if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
 
-    // Générer un nouveau mot de passe temporaire
+    return { message: 'Code vérifié avec succès.' };
+  }
+
+  async resetPassword(email: string, code: string, password?: string) {
+    const user = await this.userRepo.findOne({ where: { email } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const isValid = await this.otpService.verifyOtp(
+      user,
+      code,
+      OtpType.PASSWORD_RESET,
+    );
+    if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
+
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+      await this.userRepo.save(user);
+      return { message: 'Votre mot de passe a été réinitialisé avec succès.' };
+    }
+
+    // Générer un nouveau mot de passe temporaire (fallback)
     const randomDigits = Math.floor(1000 + Math.random() * 9000);
-    const cleanLastName = user.lastName ? user.lastName.replace(/[^a-zA-Z0-9]/g, '') : 'User';
+    const cleanLastName = user.lastName
+      ? user.lastName.replace(/[^a-zA-Z0-9]/g, '')
+      : 'User';
     const temporaryPassword = `${cleanLastName}${randomDigits}!`;
 
     user.password = await bcrypt.hash(temporaryPassword, 10);
@@ -289,7 +315,9 @@ export class AuthService {
       user.roles,
     );
 
-    return { message: 'Votre mot de passe a été réinitialisé. Vérifiez vos emails.' };
+    return {
+      message: 'Votre mot de passe a été réinitialisé. Vérifiez vos emails.',
+    };
   }
 
   async requestEmailChange(userId: number) {
