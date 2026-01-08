@@ -27,10 +27,7 @@ jobs:
             npm run build
             mkdir -p dist/src/templates
             cp -r dist/templates/* dist/src/templates/ || true
-<<<<<<< HEAD
-=======
             export STRIPE_SECRET='${{ secrets.STRIPE_SECRET }}'
->>>>>>> 1a967fb (Clean squashed commit)
             pm2 restart hipster-api || pm2 start dist/src/main.js --name hipster-api
             pm2 save
           EOF
