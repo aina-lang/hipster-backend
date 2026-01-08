@@ -58,7 +58,7 @@ export class TasksService {
       // On cherche les Users et on récupère leur EmployeeProfile
       const users = await this.userRepo.find({
         where: { id: In(assigneeIds) },
-        relations: ['employeeProfile'],
+        relations: ['employeeProfile', 'employeeProfile.user'],
       });
 
       if (users.length !== assigneeIds.length) {
@@ -68,7 +68,7 @@ export class TasksService {
       // Extraire les EmployeeProfiles
       assignees = users
         .map((u) => u.employeeProfile)
-        .filter((ep) => ep != null) as EmployeeProfile[];
+        .filter((ep) => ep != null && ep.user != null) as EmployeeProfile[];
 
       if (assignees.length !== assigneeIds.length) {
         throw new BadRequestException(
@@ -79,12 +79,12 @@ export class TasksService {
       // ✅ VALIDATION: Vérifier que tous les assignés sont membres du projet
       const projectMemberIds = project.members.map((m) => m.employee.id);
       const invalidAssignees = assignees.filter(
-        (assignee) => !projectMemberIds.includes(assignee.user.id),
+        (assignee) => assignee.user && !projectMemberIds.includes(assignee.user.id),
       );
 
       if (invalidAssignees.length > 0) {
         const invalidNames = invalidAssignees
-          .map((a) => `${a.user.firstName} ${a.user.lastName}`)
+          .map((a) => a.user ? `${a.user.firstName} ${a.user.lastName}` : 'Inconnu')
           .join(', ');
         throw new BadRequestException(
           `Les employés suivants ne sont pas membres du projet "${project.name}" : ${invalidNames}. Veuillez d'abord les ajouter au projet.`,
