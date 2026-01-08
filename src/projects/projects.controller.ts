@@ -61,6 +61,15 @@ export class ProjectsController {
   }
 
   /**
+   * 🛠️ Obtenir les sites en maintenance d'un client
+   */
+  @ApiOperation({ summary: 'Liste des sites en maintenance pour un client' })
+  @Get('maintenance/client/:clientId')
+  async getClientMaintenanceSites(@Param('clientId') clientId: string) {
+    return this.projectsService.getClientMaintenanceSites(+clientId);
+  }
+
+  /**
    * 🔍 Obtenir un projet par ID
    */
   @ApiOperation({ summary: 'Consulter un projet' })

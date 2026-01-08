@@ -904,6 +904,47 @@ export class ProjectsService {
   }
 
   // ------------------------------------------------------------
+  // 🔹 SITES EN MAINTENANCE PAR CLIENT
+  // ------------------------------------------------------------
+  async getClientMaintenanceSites(clientId: number) {
+    // 1. Trouver le projet "Maintenance Sites Web"
+    const maintenanceProject = await this.projectRepo.findOne({
+      where: { name: 'Maintenance Sites Web' },
+      relations: ['websites', 'websites.client'],
+    });
+
+    if (!maintenanceProject) {
+      return {
+        status: 'success',
+        data: {
+          sites: [],
+          message: "Vous n'avez pas de sites en maintenance",
+        },
+      };
+    }
+
+    // 2. Filtrer les sites qui appartiennent au client
+    const clientSites = maintenanceProject.websites?.filter(
+      (website) => website.client?.id === clientId,
+    ) || [];
+
+    return {
+      status: 'success',
+      data: {
+        sites: clientSites.map((site) => ({
+          id: site.id,
+          url: site.url,
+          name: site.name || site.url,
+          status: site.status,
+        })),
+        message: clientSites.length > 0
+          ? `Vous avez ${clientSites.length} site(s) en maintenance`
+          : "Vous n'avez pas de sites en maintenance",
+      },
+    };
+  }
+
+  // ------------------------------------------------------------
   // 🔹 HELPER: CALCUL DURATION
   // ------------------------------------------------------------
   private calculateDuration(startDate: Date, endDate?: Date): string {
