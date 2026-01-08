@@ -25,7 +25,7 @@ import { ResponseMessage } from 'src/common/decorators/response-message.decorato
 @ApiTags('Files')
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) { }
+  constructor(private readonly filesService: FilesService) {}
 
   @ApiOperation({ summary: 'Créer un fichier' })
   @ResponseMessage('Fichier créé avec succès')
@@ -76,7 +76,8 @@ export class FilesController {
   )
   async upload(
     @UploadedFile() file: Express.Multer.File,
-    @Body() body: { projectId?: string; ticketId?: string; uploadedById?: string },
+    @Body()
+    body: { projectId?: string; ticketId?: string; uploadedById?: string },
   ) {
     if (!file) {
       throw new BadRequestException('Fichier manquant');

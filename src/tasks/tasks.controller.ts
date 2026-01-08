@@ -23,7 +23,7 @@ import { ResponseMessage } from 'src/common/decorators/response-message.decorato
 @ApiTags('Tasks')
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) { }
+  constructor(private readonly tasksService: TasksService) {}
 
   @ApiOperation({ summary: 'Créer une tâche' })
   @ResponseMessage('Tâche créée avec succès')

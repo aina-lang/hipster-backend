@@ -28,4 +28,4 @@ import { ClientWebsitesController } from './client-websites.controller';
   providers: [ProfilesService, ClientWebsitesService],
   exports: [ProfilesService, ClientWebsitesService],
 })
-export class ProfilesModule { }
+export class ProfilesModule {}

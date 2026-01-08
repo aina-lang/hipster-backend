@@ -25,11 +25,7 @@ import { RefreshStrategy } from './strategies/refresh.strategy';
     MailModule,
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    RefreshStrategy,
-  ],
+  providers: [AuthService, JwtStrategy, RefreshStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -37,7 +37,7 @@ export class NotificationsGateway
 
   handleDisconnect(@ConnectedSocket() client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
-    
+
     // Remove socket from userSockets map
     for (const [userId, socketIds] of this.userSockets.entries()) {
       const index = socketIds.indexOf(client.id);
@@ -57,19 +57,19 @@ export class NotificationsGateway
     @MessageBody() data: { userId: number },
   ) {
     const { userId } = data;
-    
+
     if (!this.userSockets.has(userId)) {
       this.userSockets.set(userId, []);
     }
-    
+
     const sockets = this.userSockets.get(userId);
     if (sockets && !sockets.includes(client.id)) {
       sockets.push(client.id);
     }
-    
+
     client.join(`user:${userId}`);
     this.logger.log(`User ${userId} registered with socket ${client.id}`);
-    
+
     return { success: true, message: 'Registered successfully' };
   }
 

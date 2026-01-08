@@ -9,24 +9,29 @@ import { ResponseMessage } from 'src/common/decorators/response-message.decorato
 @Controller('referral')
 @UseGuards(AuthGuard)
 export class ReferralController {
-    constructor(private readonly referralService: ReferralService) { }
+  constructor(private readonly referralService: ReferralService) {}
 
-    @ApiOperation({ summary: 'Récupérer toutes les statistiques de parrainage (Admin)' })
-    @Get('admin/all-stats')
-    getAllStats() {
-        return this.referralService.getAllReferralStats();
-    }
+  @ApiOperation({
+    summary: 'Récupérer toutes les statistiques de parrainage (Admin)',
+  })
+  @Get('admin/all-stats')
+  getAllStats() {
+    return this.referralService.getAllReferralStats();
+  }
 
-    @ApiOperation({ summary: 'Récupérer les statistiques de parrainage de l’utilisateur connecté' })
-    @Get('stats')
-    getStats(@User() user: any) {
-        return this.referralService.getReferralStats(user.sub);
-    }
+  @ApiOperation({
+    summary:
+      'Récupérer les statistiques de parrainage de l’utilisateur connecté',
+  })
+  @Get('stats')
+  getStats(@User() user: any) {
+    return this.referralService.getReferralStats(user.sub);
+  }
 
-    @ApiOperation({ summary: 'Appliquer un code de parrainage' })
-    @ResponseMessage('Code de parrainage appliqué avec succès')
-    @Post('apply')
-    applyCode(@User() user: any, @Body('code') code: string) {
-        return this.referralService.applyReferralCode(user.sub, code);
-    }
+  @ApiOperation({ summary: 'Appliquer un code de parrainage' })
+  @ResponseMessage('Code de parrainage appliqué avec succès')
+  @Post('apply')
+  applyCode(@User() user: any, @Body('code') code: string) {
+    return this.referralService.applyReferralCode(user.sub, code);
+  }
 }

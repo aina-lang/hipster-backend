@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
@@ -6,89 +10,99 @@ import { randomBytes } from 'crypto';
 
 @Injectable()
 export class ReferralService {
-    constructor(
-        @InjectRepository(User)
-        private readonly userRepo: Repository<User>,
-    ) { }
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+  ) {}
 
-    async getReferralStats(userId: number) {
-        const user = await this.userRepo.findOne({ where: { id: userId } });
-        if (!user) throw new NotFoundException(`User #${userId} not found`);
+  async getReferralStats(userId: number) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException(`User #${userId} not found`);
 
-        // Generate code if missing
-        if (!user.referralCode) {
-            user.referralCode = `REF-${user.firstName.toUpperCase().substring(0, 3)}-${randomBytes(2).toString('hex').toUpperCase()}`;
-            await this.userRepo.save(user);
-        }
-
-        // Count referrals
-        const totalReferred = await this.userRepo.count({
-            where: { referredBy: user.referralCode },
-        });
-
-        // Calculate earnings (Mock logic: 50€ per referral)
-        const earnings = totalReferred * 50;
-
-        return {
-            referralCode: user.referralCode,
-            totalReferred,
-            earnings,
-            currency: 'EUR',
-        };
+    // Generate code if missing
+    if (!user.referralCode) {
+      user.referralCode = `REF-${user.firstName.toUpperCase().substring(0, 3)}-${randomBytes(2).toString('hex').toUpperCase()}`;
+      await this.userRepo.save(user);
     }
 
-    async applyReferralCode(userId: number, code: string) {
-        const user = await this.userRepo.findOne({ where: { id: userId } });
-        if (!user) throw new NotFoundException(`User #${userId} not found`);
+    // Count referrals
+    const totalReferred = await this.userRepo.count({
+      where: { referredBy: user.referralCode },
+    });
 
-        if (user.referredBy) {
-            throw new BadRequestException('User already referred');
-        }
+    // Calculate earnings (Mock logic: 50€ per referral)
+    const earnings = totalReferred * 50;
 
-        // Check if code exists (and not self-referral)
-        const referrer = await this.userRepo.findOne({ where: { referralCode: code } });
-        if (!referrer) throw new NotFoundException('Invalid referral code');
-        if (referrer.id === userId) throw new BadRequestException('Cannot refer yourself');
+    return {
+      referralCode: user.referralCode,
+      totalReferred,
+      earnings,
+      currency: 'EUR',
+    };
+  }
 
-        user.referredBy = code;
-        await this.userRepo.save(user);
+  async applyReferralCode(userId: number, code: string) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException(`User #${userId} not found`);
 
-        return { message: 'Referral code applied successfully' };
+    if (user.referredBy) {
+      throw new BadRequestException('User already referred');
     }
 
-    async getAllReferralStats() {
-        // Get all users who have a referral code or are clients
-        const users = await this.userRepo.find({
-            select: ['id', 'firstName', 'lastName', 'email', 'referralCode', 'avatarUrl'],
-        });
+    // Check if code exists (and not self-referral)
+    const referrer = await this.userRepo.findOne({
+      where: { referralCode: code },
+    });
+    if (!referrer) throw new NotFoundException('Invalid referral code');
+    if (referrer.id === userId)
+      throw new BadRequestException('Cannot refer yourself');
 
-        const results: any[] = [];
+    user.referredBy = code;
+    await this.userRepo.save(user);
 
-        for (const user of users) {
-            // If user has no referral code, skip or show 0
-            if (!user.referralCode) continue;
+    return { message: 'Referral code applied successfully' };
+  }
 
-            const totalReferred = await this.userRepo.count({
-                where: { referredBy: user.referralCode },
-            });
+  async getAllReferralStats() {
+    // Get all users who have a referral code or are clients
+    const users = await this.userRepo.find({
+      select: [
+        'id',
+        'firstName',
+        'lastName',
+        'email',
+        'referralCode',
+        'avatarUrl',
+      ],
+    });
 
-            results.push({
-                user: {
-                    id: user.id,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    email: user.email,
-                    avatarUrl: user.avatarUrl,
-                },
-                stats: {
-                    referralCode: user.referralCode,
-                    totalReferred,
-                    earnings: totalReferred * 50,
-                    currency: 'EUR',
-                },
-            });
-        }
+    const results: any[] = [];
 
-        return results;
+    for (const user of users) {
+      // If user has no referral code, skip or show 0
+      if (!user.referralCode) continue;
+
+      const totalReferred = await this.userRepo.count({
+        where: { referredBy: user.referralCode },
+      });
+
+      results.push({
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+        },
+        stats: {
+          referralCode: user.referralCode,
+          totalReferred,
+          earnings: totalReferred * 50,
+          currency: 'EUR',
+        },
+      });
     }
+
+    return results;
+  }
 }

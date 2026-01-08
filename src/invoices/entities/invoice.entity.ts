@@ -51,7 +51,7 @@ export class Invoice {
   taxAmount: number;
 
   @Column({ type: 'decimal', precision: 12, scale: 2 })
-  amount: number; 
+  amount: number;
 
   @Column({ type: 'timestamp', nullable: true })
   dueDate: Date;

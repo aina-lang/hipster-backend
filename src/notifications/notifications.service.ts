@@ -22,7 +22,7 @@ export class NotificationsService {
     @InjectRepository(ClientProfile)
     private readonly clientRepo: Repository<ClientProfile>,
     private readonly notificationsGateway: NotificationsGateway,
-  ) { }
+  ) {}
 
   async create(dto: CreateNotificationDto): Promise<Notification> {
     const user = await this.userRepo.findOneBy({ id: dto.userId });

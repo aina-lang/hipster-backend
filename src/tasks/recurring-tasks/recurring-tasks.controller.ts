@@ -26,7 +26,10 @@ export class RecurringTasksController {
   constructor(private readonly recurringTasksService: RecurringTasksService) {}
 
   @Post()
-  create(@User() user: any, @Body() createRecurringTaskDto: CreateRecurringTaskDto) {
+  create(
+    @User() user: any,
+    @Body() createRecurringTaskDto: CreateRecurringTaskDto,
+  ) {
     return this.recurringTasksService.create(createRecurringTaskDto, user.sub);
   }
 

@@ -29,7 +29,7 @@ export class InvoicesService {
     private readonly companyService: CompanyService,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   async create(createInvoiceDto: CreateInvoiceDto, user: User) {
     const { clientId, projectId, items, ...invoiceData } = createInvoiceDto;
@@ -133,20 +133,29 @@ export class InvoicesService {
           client.user.id,
         );
       } catch (notificationError) {
-        console.error('Failed to send invoice notification:', notificationError);
+        console.error(
+          'Failed to send in-app notification:',
+          notificationError,
+        );
       }
     }
 
     // Generate PDF and send email
     try {
       const pdfBuffer = await this.generatePdf(savedInvoice.id);
-      if (client.user?.email) {
+      
+      // Get the email address either from user or client contactEmail
+      const emailTo = client.user?.email || client.contactEmail;
+      
+      if (emailTo) {
         await this.mailService.sendInvoiceEmail(
-          client.user.email,
+          emailTo,
           savedInvoice,
           pdfBuffer,
-          client.user.roles,
+          client.user?.roles || [],
         );
+      } else {
+        console.warn(`No email found for client ${client.id} to send ${savedInvoice.type}`);
       }
     } catch (error) {
       console.error('Failed to send invoice email:', error);
@@ -226,15 +235,35 @@ export class InvoicesService {
     quote.convertedToInvoiceId = savedInvoice.id;
     await this.invoiceRepo.save(quote);
 
+    // Notify client via app notification
+    if (quote.client?.user?.id) {
+      try {
+        await this.notificationsService.createInvoiceNotification(
+          savedInvoice.id,
+          savedInvoice.reference,
+          savedInvoice.type,
+          quote.client.user.id,
+        );
+      } catch (notificationError) {
+        console.error(
+          'Failed to send in-app notification:',
+          notificationError,
+        );
+      }
+    }
+
     // Generate PDF and send email
     try {
       const pdfBuffer = await this.generatePdf(savedInvoice.id);
-      if (quote.client?.user?.email) {
+      
+      const emailTo = quote.client?.user?.email || quote.client?.contactEmail;
+      
+      if (emailTo) {
         await this.mailService.sendInvoiceEmail(
-          quote.client.user.email,
+          emailTo,
           savedInvoice,
           pdfBuffer,
-          quote.client.user.roles,
+          quote.client?.user?.roles || [],
         );
       }
     } catch (error) {
@@ -450,11 +479,11 @@ export class InvoicesService {
             </thead>
             <tbody>
               ${(items || [])
-        .map((item) => {
-          const qty = Number(item.quantity) || 0;
-          const price = Number(item.unitPrice) || 0;
-          const total = qty * price;
-          return `
+                .map((item) => {
+                  const qty = Number(item.quantity) || 0;
+                  const price = Number(item.unitPrice) || 0;
+                  const total = qty * price;
+                  return `
                 <tr>
                   <td>
                     <strong>${item.description || ''}</strong>
@@ -465,8 +494,8 @@ export class InvoicesService {
                   <td style="text-align: right;">${formatMoney(total)}</td>
                 </tr>
               `;
-        })
-        .join('')}
+                })
+                .join('')}
             </tbody>
           </table>
 
@@ -476,15 +505,16 @@ export class InvoicesService {
                 <span>Total HT</span>
                 <span>${formatMoney(Number(subTotal))}</span>
               </div>
-              ${invoice.tva
-        ? `
+              ${
+                invoice.tva
+                  ? `
               <div class="totals-row">
                 <span>TVA (20%)</span>
                 <span>${formatMoney(Number(taxAmount))}</span>
               </div>
               `
-        : ''
-      }
+                  : ''
+              }
               <div class="totals-row final">
                 <span>Total TTC</span>
                 <span>${formatMoney(Number(amount))}</span>
@@ -497,8 +527,9 @@ export class InvoicesService {
 
           ${notes ? `<div style="margin-bottom: 20px; font-style: italic;">${notes}</div>` : ''}
 
-          ${senderDetails?.paymentDetails
-        ? `
+          ${
+            senderDetails?.paymentDetails
+              ? `
           <div class="payment-info">
             <h3>Mode de paiement : ${senderDetails.paymentDetails.mode}</h3>
             <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px 20px;">
@@ -511,8 +542,8 @@ export class InvoicesService {
             </div>
           </div>
           `
-        : ''
-      }
+              : ''
+          }
 
           <div class="footer">
             <p>${senderDetails?.companyName} - ${senderDetails?.commercialName}</p>
@@ -626,7 +657,8 @@ export class InvoicesService {
       const hasTva = rest.tva !== undefined ? rest.tva : invoice.tva;
       const taxRate = hasTva ? 20 : 0;
       const taxAmount = (subTotal * taxRate) / 100;
-      const discount = rest.discount !== undefined ? rest.discount : (invoice.discount || 0);
+      const discount =
+        rest.discount !== undefined ? rest.discount : invoice.discount || 0;
       const amount = subTotal + taxAmount - discount;
 
       invoice.subTotal = subTotal;
@@ -637,15 +669,21 @@ export class InvoicesService {
       // Recalculate totals even if items didn't change but TVA or Discount did
       // NOTE: This assumes items are already loaded on 'invoice' from findOne
       let needsRecalc = false;
-      if (rest.tva !== undefined && rest.tva !== invoice.tva) needsRecalc = true;
-      if (rest.discount !== undefined && rest.discount !== invoice.discount) needsRecalc = true;
+      if (rest.tva !== undefined && rest.tva !== invoice.tva)
+        needsRecalc = true;
+      if (rest.discount !== undefined && rest.discount !== invoice.discount)
+        needsRecalc = true;
 
       if (needsRecalc) {
-        const subTotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
+        const subTotal = invoice.items.reduce(
+          (sum, item) => sum + item.total,
+          0,
+        );
         const hasTva = rest.tva !== undefined ? rest.tva : invoice.tva;
         const taxRate = hasTva ? 20 : 0;
         const taxAmount = (subTotal * taxRate) / 100;
-        const discount = rest.discount !== undefined ? rest.discount : (invoice.discount || 0);
+        const discount =
+          rest.discount !== undefined ? rest.discount : invoice.discount || 0;
 
         invoice.subTotal = subTotal;
         invoice.taxRate = taxRate;
@@ -664,12 +702,15 @@ export class InvoicesService {
     // Generate PDF and send email
     try {
       const pdfBuffer = await this.generatePdf(savedInvoice.id);
-      if (invoice.client?.user?.email) {
+      
+      const emailTo = invoice.client?.user?.email || invoice.client?.contactEmail;
+      
+      if (emailTo) {
         await this.mailService.sendInvoiceEmail(
-          invoice.client.user.email,
+          emailTo,
           savedInvoice,
           pdfBuffer,
-          invoice.client.user.roles,
+          invoice.client?.user?.roles || [],
         );
       }
     } catch (error) {
@@ -677,12 +718,6 @@ export class InvoicesService {
     }
 
     return savedInvoice;
-  }
-
-  async update(id: number, updateInvoiceDto: UpdateInvoiceDto): Promise<Invoice> {
-    const invoice = await this.findOne(id);
-    Object.assign(invoice, updateInvoiceDto);
-    return this.invoiceRepo.save(invoice);
   }
 
   async updateStatus(id: number, status: InvoiceStatus): Promise<Invoice> {
@@ -696,9 +731,12 @@ export class InvoicesService {
     const saved = await this.invoiceRepo.save(invoice);
 
     // Notification logic for Quote Acceptance
-    if (invoice.type === InvoiceType.QUOTE && status === InvoiceStatus.ACCEPTED) {
-       // Optional: Log or trigger further business logic
-       console.log(`Quote ${invoice.reference} accepted by client.`);
+    if (
+      invoice.type === InvoiceType.QUOTE &&
+      status === InvoiceStatus.ACCEPTED
+    ) {
+      // Optional: Log or trigger further business logic
+      console.log(`Quote ${invoice.reference} accepted by client.`);
     }
 
     return saved;

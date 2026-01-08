@@ -4,10 +4,10 @@ import { IsEnum, IsOptional } from 'class-validator';
 import { ProjectStatus } from '../entities/project.entity';
 
 export class UpdateProjectDto extends PartialType(CreateProjectDto) {
-    @IsOptional()
-    @IsEnum(ProjectStatus)
-    status?: ProjectStatus;
+  @IsOptional()
+  @IsEnum(ProjectStatus)
+  status?: ProjectStatus;
 
-    @IsOptional()
-    reset_manual_status?: boolean;
+  @IsOptional()
+  reset_manual_status?: boolean;
 }

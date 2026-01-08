@@ -11,4 +11,4 @@ import { AiUsageLog } from './entities/ai-usage-log.entity';
   providers: [AiService],
   exports: [AiService],
 })
-export class AiModule { }
+export class AiModule {}

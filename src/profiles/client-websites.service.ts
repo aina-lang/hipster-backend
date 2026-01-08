@@ -14,7 +14,7 @@ export class ClientWebsitesService {
     private readonly websiteRepo: Repository<ClientWebsite>,
     @InjectRepository(Task)
     private readonly taskRepo: Repository<Task>,
-  ) { }
+  ) {}
 
   async create(
     clientId: number,

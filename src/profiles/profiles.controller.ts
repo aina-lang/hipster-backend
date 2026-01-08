@@ -44,12 +44,17 @@ export class ProfilesController {
     return this.profilesService.createClientProfile(dto);
   }
 
-  @ApiOperation({ summary: 'Activer le profil client pour l’utilisateur connecté' })
+  @ApiOperation({
+    summary: 'Activer le profil client pour l’utilisateur connecté',
+  })
   @UseGuards(AuthGuard)
   @ResponseMessage('Profil client activé avec succès')
   @Post('client/activate')
   activateClient(@User() user: any, @Body() dto: CreateClientProfileDto) {
-    return this.profilesService.createClientProfile({ ...dto, userId: user.sub });
+    return this.profilesService.createClientProfile({
+      ...dto,
+      userId: user.sub,
+    });
   }
 
   @ApiOperation({
@@ -106,7 +111,9 @@ export class ProfilesController {
     return this.profilesService.createEmployeeProfile(dto);
   }
 
-  @ApiOperation({ summary: 'Activer le profil employé pour l’utilisateur connecté' })
+  @ApiOperation({
+    summary: 'Activer le profil employé pour l’utilisateur connecté',
+  })
   @UseGuards(AuthGuard)
   @ResponseMessage('Profil employé activé avec succès')
   @Post('employee/activate')

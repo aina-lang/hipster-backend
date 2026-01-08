@@ -81,10 +81,7 @@ export class InvoicesController {
   @ApiOperation({ summary: 'Mettre à jour le statut' })
   @ResponseMessage('Statut mis à jour avec succès')
   @Patch(':id/status')
-  updateStatus(
-    @Param('id') id: string,
-    @Body('status') status: InvoiceStatus,
-  ) {
+  updateStatus(@Param('id') id: string, @Body('status') status: InvoiceStatus) {
     return this.invoicesService.updateStatus(+id, status);
   }
 

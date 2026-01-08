@@ -12,7 +12,7 @@ export class OtpService {
   constructor(
     @InjectRepository(Otp)
     private readonly otpRepository: Repository<Otp>,
-  ) { }
+  ) {}
 
   /**
    * Génère un OTP à usage unique pour un utilisateur donné

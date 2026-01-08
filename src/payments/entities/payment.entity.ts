@@ -75,7 +75,9 @@ export class Payment {
   @ManyToOne(() => ClientProfile, (c) => c.payments, { onDelete: 'CASCADE' })
   client?: ClientProfile;
 
-  @ManyToOne(() => AiSubscriptionProfile, (a) => a.payments, { onDelete: 'CASCADE' })
+  @ManyToOne(() => AiSubscriptionProfile, (a) => a.payments, {
+    onDelete: 'CASCADE',
+  })
   aiProfile?: AiSubscriptionProfile;
 
   @OneToOne(() => Project, (p) => p.payment, { onDelete: 'CASCADE' })

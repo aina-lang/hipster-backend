@@ -40,7 +40,9 @@ export class UsersService {
   // --------------------------------------------------------
   // 🧩 CREATE USER (avec profils optionnels)
   // --------------------------------------------------------
-  async create(dto: CreateUserDto): Promise<User & { generatedPassword?: string }> {
+  async create(
+    dto: CreateUserDto,
+  ): Promise<User & { generatedPassword?: string }> {
     const existing = await this.userRepo.findOne({
       where: { email: dto.email },
     });
@@ -70,7 +72,7 @@ export class UsersService {
 
     return await this.dataSource.transaction(async (manager) => {
       const userRoles = dto.roles || [Role.CLIENT_MARKETING];
-      
+
       // 🤖 CUSTOM LOGIC: Admin and Employee MUST have CLIENT_AI role
       if (userRoles.includes(Role.ADMIN) || userRoles.includes(Role.EMPLOYEE)) {
         if (!userRoles.includes(Role.CLIENT_AI)) {
@@ -114,37 +116,48 @@ export class UsersService {
         // 🔹 PERMISSIONS ASSIGNMENT
         // 1. Manual assignment (overrides everything)
         if (dto.permissions && dto.permissions.length > 0) {
-           console.log(`[UsersService] Manual permissions provided:`, dto.permissions);
-           const permissions = await this.permissionRepo.findBy({
-              slug: In(dto.permissions),
-            });
-            user.permissions = permissions;
-             console.log(
-              `[UsersService] Assigned ${permissions.length} manual permissions`,
-            );
+          console.log(
+            `[UsersService] Manual permissions provided:`,
+            dto.permissions,
+          );
+          const permissions = await this.permissionRepo.findBy({
+            slug: In(dto.permissions),
+          });
+          user.permissions = permissions;
+          console.log(
+            `[UsersService] Assigned ${permissions.length} manual permissions`,
+          );
         }
         // 2. Auto-assignment based on Poste (default behavior)
         else {
-          const poste = user.employeeProfile.poste?.toLowerCase() || "";
-          console.log(`[UsersService] Auto-assigning permissions for poste: '${poste}'...`);
-          
+          const poste = user.employeeProfile.poste?.toLowerCase() || '';
+          console.log(
+            `[UsersService] Auto-assigning permissions for poste: '${poste}'...`,
+          );
+
           const permissionSlugs =
             POSTE_PERMISSIONS[poste] || DEFAULT_EMPLOYEE_PERMISSIONS;
-          
-          console.log(`[UsersService] Default slugs to assign:`, permissionSlugs);
+
+          console.log(
+            `[UsersService] Default slugs to assign:`,
+            permissionSlugs,
+          );
 
           if (permissionSlugs.length > 0) {
             const permissions = await this.permissionRepo.findBy({
               slug: In(permissionSlugs),
             });
-            
+
             if (permissions.length === 0) {
-               console.warn(`[UsersService] WARNING: No permissions found in DB for slugs:`, permissionSlugs);
+              console.warn(
+                `[UsersService] WARNING: No permissions found in DB for slugs:`,
+                permissionSlugs,
+              );
             }
 
             user.permissions = permissions;
             console.log(
-              `[UsersService] Assigned ${permissions.length} permissions (poste: '${poste || "none"}')`,
+              `[UsersService] Assigned ${permissions.length} permissions (poste: '${poste || 'none'}')`,
             );
           }
         }
@@ -153,7 +166,10 @@ export class UsersService {
       // Handle AI Subscription Profile
       if (dto.aiProfile) {
         user.aiProfile = manager.create(AiSubscriptionProfile, dto.aiProfile);
-      } else if (userRoles.includes(Role.ADMIN) || userRoles.includes(Role.EMPLOYEE)) {
+      } else if (
+        userRoles.includes(Role.ADMIN) ||
+        userRoles.includes(Role.EMPLOYEE)
+      ) {
         // Auto-create AI profile for staff if not provided
         user.aiProfile = manager.create(AiSubscriptionProfile, {
           accessLevel: 'FULL',
@@ -307,17 +323,20 @@ export class UsersService {
       if (dto.email) user.email = dto.email;
       if (dto.phones !== undefined) user.phones = dto.phones;
       if (dto.contactEmail !== undefined) user.contactEmail = dto.contactEmail;
-      
+
       // ✅ Delete old avatar if a new one is being uploaded
       if (dto.avatarUrl && user.avatarUrl && dto.avatarUrl !== user.avatarUrl) {
         deleteFile(user.avatarUrl);
       }
-      
+
       if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl;
       if (dto.roles) {
         user.roles = dto.roles;
         // 🤖 CUSTOM LOGIC: Enforce CLIENT_AI for staff on update
-        if (user.roles.includes(Role.ADMIN) || user.roles.includes(Role.EMPLOYEE)) {
+        if (
+          user.roles.includes(Role.ADMIN) ||
+          user.roles.includes(Role.EMPLOYEE)
+        ) {
           if (!user.roles.includes(Role.CLIENT_AI)) {
             user.roles.push(Role.CLIENT_AI);
           }
@@ -363,7 +382,10 @@ export class UsersService {
         // 🔹 PERMISSIONS ASSIGNMENT (Update)
         // 1. Manual assignment overrides everything
         if (dto.permissions) {
-          console.log(`[UsersService] UPDATE: Manual permissions provided:`, dto.permissions);
+          console.log(
+            `[UsersService] UPDATE: Manual permissions provided:`,
+            dto.permissions,
+          );
           if (dto.permissions.length > 0) {
             const permissions = await this.permissionRepo.findBy({
               slug: In(dto.permissions),
@@ -373,19 +395,24 @@ export class UsersService {
               `[UsersService] Updated permissions manually: ${permissions.length} assigned`,
             );
           } else {
-             user.permissions = [];
-             console.log(`[UsersService] Cleared all permissions manually`);
+            user.permissions = [];
+            console.log(`[UsersService] Cleared all permissions manually`);
           }
         }
         // 2. Auto-assignment only if NO manual override provided AND poste changed
         else if (posteChanged) {
-          const poste = user.employeeProfile.poste?.toLowerCase() || "";
-          console.log(`[UsersService] UPDATE: Poste changed to '${poste}', auto-assigning...`);
-          
+          const poste = user.employeeProfile.poste?.toLowerCase() || '';
+          console.log(
+            `[UsersService] UPDATE: Poste changed to '${poste}', auto-assigning...`,
+          );
+
           const permissionSlugs =
             POSTE_PERMISSIONS[poste] || DEFAULT_EMPLOYEE_PERMISSIONS;
-            
-          console.log(`[UsersService] UPDATE: Slugs to assign:`, permissionSlugs);
+
+          console.log(
+            `[UsersService] UPDATE: Slugs to assign:`,
+            permissionSlugs,
+          );
 
           if (permissionSlugs.length > 0) {
             const permissions = await this.permissionRepo.findBy({
@@ -393,7 +420,7 @@ export class UsersService {
             });
             user.permissions = permissions;
             console.log(
-              `[UsersService] Re-assigned ${permissions.length} permissions for new poste '${poste || "none"}'`,
+              `[UsersService] Re-assigned ${permissions.length} permissions for new poste '${poste || 'none'}'`,
             );
           }
         }
@@ -406,7 +433,10 @@ export class UsersService {
         } else {
           Object.assign(user.aiProfile, dto.aiProfile);
         }
-      } else if (user.roles.includes(Role.ADMIN) || user.roles.includes(Role.EMPLOYEE)) {
+      } else if (
+        user.roles.includes(Role.ADMIN) ||
+        user.roles.includes(Role.EMPLOYEE)
+      ) {
         // Ensure staff has an AI profile even if they didn't have one before
         if (!user.aiProfile) {
           user.aiProfile = manager.create(AiSubscriptionProfile, {
@@ -497,7 +527,9 @@ export class UsersService {
       'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
     let temporaryPassword = '';
     for (let i = 0; i < 12; i++) {
-      temporaryPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+      temporaryPassword += chars.charAt(
+        Math.floor(Math.random() * chars.length),
+      );
     }
     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 

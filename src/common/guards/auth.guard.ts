@@ -32,4 +32,3 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
     return user;
   }
 }
-

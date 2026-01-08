@@ -11,4 +11,4 @@ import { Project } from 'src/projects/entities/project.entity';
   providers: [LoyaltyService],
   exports: [LoyaltyService],
 })
-export class LoyaltyModule { }
+export class LoyaltyModule {}

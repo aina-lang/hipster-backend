@@ -15,4 +15,4 @@ import { AiSubscription } from './entities/ai-subscription.entity';
   controllers: [SubscriptionsController],
   providers: [SubscriptionsService],
 })
-export class SubscriptionsModule { }
+export class SubscriptionsModule {}

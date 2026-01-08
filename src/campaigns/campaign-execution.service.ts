@@ -17,12 +17,14 @@ export class CampaignExecutionService {
     private readonly userRepo: Repository<User>,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   /**
    * Exécuter une campagne et envoyer aux utilisateurs ciblés
    */
-  async executeCampaign(campaignId: number): Promise<{ sent: number; errors: number }> {
+  async executeCampaign(
+    campaignId: number,
+  ): Promise<{ sent: number; errors: number }> {
     const campaign = await this.campaignRepo.findOne({
       where: { id: campaignId },
     });
@@ -36,7 +38,9 @@ export class CampaignExecutionService {
     // Récupérer les utilisateurs ciblés selon audienceType
     const targetUsers = await this.getTargetUsers(campaign.audienceType);
 
-    this.logger.log(`Found ${targetUsers.length} target users for campaign #${campaignId}`);
+    this.logger.log(
+      `Found ${targetUsers.length} target users for campaign #${campaignId}`,
+    );
 
     let sentCount = 0;
     let errorCount = 0;
@@ -66,7 +70,9 @@ export class CampaignExecutionService {
     campaign.status = CampaignStatus.ACTIVE;
     await this.campaignRepo.save(campaign);
 
-    this.logger.log(`Campaign #${campaignId} executed: ${sentCount} sent, ${errorCount} errors`);
+    this.logger.log(
+      `Campaign #${campaignId} executed: ${sentCount} sent, ${errorCount} errors`,
+    );
 
     return { sent: sentCount, errors: errorCount };
   }
@@ -116,7 +122,9 @@ export class CampaignExecutionService {
         description: campaign.description || '',
       });
 
-      this.logger.debug(`Email sent to ${user.email} for campaign #${campaign.id}`);
+      this.logger.debug(
+        `Email sent to ${user.email} for campaign #${campaign.id}`,
+      );
     } catch (error) {
       this.logger.error(`Failed to send email to ${user.email}:`, error);
       throw error;
@@ -126,22 +134,31 @@ export class CampaignExecutionService {
   /**
    * Envoyer une notification push
    */
-  private async sendPushNotification(user: User, campaign: Campaign): Promise<void> {
+  private async sendPushNotification(
+    user: User,
+    campaign: Campaign,
+  ): Promise<void> {
     try {
       await this.notificationsService.create({
         userId: user.id,
         type: 'CAMPAIGN',
         title: campaign.name,
-        message: campaign.description || campaign.content?.substring(0, 200) || '',
+        message:
+          campaign.description || campaign.content?.substring(0, 200) || '',
         data: {
           campaignId: campaign.id,
           campaignType: campaign.type,
         },
       });
 
-      this.logger.debug(`Push notification sent to user ${user.id} for campaign #${campaign.id}`);
+      this.logger.debug(
+        `Push notification sent to user ${user.id} for campaign #${campaign.id}`,
+      );
     } catch (error) {
-      this.logger.error(`Failed to send push notification to user ${user.id}:`, error);
+      this.logger.error(
+        `Failed to send push notification to user ${user.id}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -152,6 +169,8 @@ export class CampaignExecutionService {
   async scheduleCampaign(campaignId: number, executeAt: Date): Promise<void> {
     // TODO: Implémenter avec un système de queue (Bull, BullMQ, etc.)
     // ou un cron job pour exécuter la campagne à la date prévue
-    this.logger.log(`Campaign #${campaignId} scheduled for ${executeAt.toISOString()}`);
+    this.logger.log(
+      `Campaign #${campaignId} scheduled for ${executeAt.toISOString()}`,
+    );
   }
 }

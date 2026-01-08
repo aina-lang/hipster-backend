@@ -1,4 +1,10 @@
-import { IsEnum, IsOptional, IsString, IsNumber, IsEmail } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsEmail,
+} from 'class-validator';
 import { ClientType } from 'src/common/enums/client.enum';
 
 export class UpdateClientProfileDto {

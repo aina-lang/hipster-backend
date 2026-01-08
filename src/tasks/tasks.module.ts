@@ -30,4 +30,4 @@ import { RecurringTasksModule } from './recurring-tasks/recurring-tasks.module';
   controllers: [TasksController],
   providers: [TasksService],
 })
-export class TasksModule { }
+export class TasksModule {}

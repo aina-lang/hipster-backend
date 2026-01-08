@@ -65,7 +65,7 @@ export class ProjectsService {
     private readonly mailService: MailService,
     private readonly loyaltyService: LoyaltyService,
     private readonly notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   // ------------------------------------------------------------
   // 🔹 CREATE PROJECT
@@ -74,8 +74,13 @@ export class ProjectsService {
     const { clientId, members, fileIds, taskIds, ...data } = dto;
 
     // 🛑 Prevent manual creation of Maintenance Project
-    if (data.name === 'Maintenance Sites Web' || data.name?.startsWith('Maintenance Sites Web')) {
-      throw new BadRequestException('Ce nom de projet est réservé. Veuillez utiliser le module Maintenance.');
+    if (
+      data.name === 'Maintenance Sites Web' ||
+      data.name?.startsWith('Maintenance Sites Web')
+    ) {
+      throw new BadRequestException(
+        'Ce nom de projet est réservé. Veuillez utiliser le module Maintenance.',
+      );
     }
 
     console.log('Creating project with members:', members);
@@ -290,7 +295,11 @@ export class ProjectsService {
   private async assignMaintenancePermissionToMembers(projectId: number) {
     const project = await this.projectRepo.findOne({
       where: { id: projectId },
-      relations: ['members', 'members.employee', 'members.employee.permissions'],
+      relations: [
+        'members',
+        'members.employee',
+        'members.employee.permissions',
+      ],
     });
 
     if (!project || project.name !== 'Maintenance Sites Web') return;
@@ -303,7 +312,9 @@ export class ProjectsService {
 
     for (const member of project.members) {
       const user = member.employee;
-      const hasPerm = user.permissions?.some((p) => p.id === maintenancePerm.id);
+      const hasPerm = user.permissions?.some(
+        (p) => p.id === maintenancePerm.id,
+      );
 
       if (!hasPerm) {
         if (!user.permissions) user.permissions = [];
@@ -316,20 +327,15 @@ export class ProjectsService {
         // ✅ Send maintenance assignment email
         if (user.email) {
           try {
-            await this.mailService.sendMaintenanceAssignedEmail(
-              user.email,
-              {
-                assigneeName: `${user.firstName} ${user.lastName}`,
-                websiteUrl: 'Sites WordPress clients',
-                projectName: project.name,
-                taskDescription:
-                  'Vous êtes maintenant membre de l’équipe de maintenance. Vous recevrez des tâches de maintenance pour les différents sites web de nos clients.',
-                recurrenceInfo: project.recurrenceType || 'Selon planification',
-              },
-            );
-            console.log(
-              `[Maintenance] Sent assignment email to ${user.email}`,
-            );
+            await this.mailService.sendMaintenanceAssignedEmail(user.email, {
+              assigneeName: `${user.firstName} ${user.lastName}`,
+              websiteUrl: 'Sites WordPress clients',
+              projectName: project.name,
+              taskDescription:
+                'Vous êtes maintenant membre de l’équipe de maintenance. Vous recevrez des tâches de maintenance pour les différents sites web de nos clients.',
+              recurrenceInfo: project.recurrenceType || 'Selon planification',
+            });
+            console.log(`[Maintenance] Sent assignment email to ${user.email}`);
           } catch (error) {
             console.error(
               `Failed to send maintenance assignment email to ${user.email}:`,
@@ -744,10 +750,14 @@ export class ProjectsService {
       .leftJoinAndSelect('members.employee', 'employee');
 
     // 🔐 RBAC: Check user permissions
-    console.log(`[ProjectsService] findPaginated called with query: ${JSON.stringify(query)}, userId: ${userId}`);
+    console.log(
+      `[ProjectsService] findPaginated called with query: ${JSON.stringify(query)}, userId: ${userId}`,
+    );
 
     if (!userId) {
-      console.warn('[ProjectsService] findPaginated: userId is undefined or null');
+      console.warn(
+        '[ProjectsService] findPaginated: userId is undefined or null',
+      );
       // Apply default filter to be safe
       qb.andWhere('project.name != :maintenanceName', {
         maintenanceName: 'Maintenance Sites Web',
@@ -767,7 +777,9 @@ export class ProjectsService {
         (p) => p.slug === 'projects:manage',
       );
 
-      console.log(`[ProjectsService] findPaginated internal: user found, isAdmin=${isAdmin}, hasManagePermission=${hasManagePermission}`);
+      console.log(
+        `[ProjectsService] findPaginated internal: user found, isAdmin=${isAdmin}, hasManagePermission=${hasManagePermission}`,
+      );
 
       // If not admin and doesn't have manage permission, apply filters
       if (!isAdmin && !hasManagePermission) {
@@ -793,7 +805,9 @@ export class ProjectsService {
         });
       }
     } else if (userId) {
-      console.warn(`[ProjectsService] findPaginated: No user found for userId ${userId}`);
+      console.warn(
+        `[ProjectsService] findPaginated: No user found for userId ${userId}`,
+      );
       // Safety: filter if userId was provided but no user found
       qb.andWhere('project.name != :maintenanceName', {
         maintenanceName: 'Maintenance Sites Web',
@@ -935,16 +949,20 @@ export class ProjectsService {
   // 🔹 SITES EN MAINTENANCE PAR CLIENT
   // ------------------------------------------------------------
   async getClientMaintenanceSites(clientId: number) {
-    console.log(`[ProjectsService] getClientMaintenanceSites called for clientId: ${clientId}`);
-    
-    // On récupère tous les sites du client. 
+    console.log(
+      `[ProjectsService] getClientMaintenanceSites called for clientId: ${clientId}`,
+    );
+
+    // On récupère tous les sites du client.
     // Pour l'app mobile, ces sites sont considérés comme étant "en maintenance".
-    const clientSites = await this.websiteRepo.find({ 
+    const clientSites = await this.websiteRepo.find({
       where: { clientId },
-      order: { id: 'DESC' }
+      order: { id: 'DESC' },
     });
 
-    console.log(`[ProjectsService] Found ${clientSites.length} maintenance sites for client ${clientId}`);
+    console.log(
+      `[ProjectsService] Found ${clientSites.length} maintenance sites for client ${clientId}`,
+    );
 
     return {
       sites: clientSites.map((site) => ({
@@ -953,9 +971,10 @@ export class ProjectsService {
         description: site.description,
         lastMaintenanceDate: site.lastMaintenanceDate,
       })),
-      message: clientSites.length > 0
-        ? `Vous avez ${clientSites.length} site(s) en maintenance`
-        : "Vous n'avez pas de sites en maintenance",
+      message:
+        clientSites.length > 0
+          ? `Vous avez ${clientSites.length} site(s) en maintenance`
+          : "Vous n'avez pas de sites en maintenance",
     };
   }
 
@@ -1018,7 +1037,14 @@ export class ProjectsService {
     return this.findOne(projectId);
   }
 
-  async updateProjectSchedule(projectId: number, schedule: { recurrenceType: string; recurrenceInterval?: number; recurrenceDays?: string[] }): Promise<Project> {
+  async updateProjectSchedule(
+    projectId: number,
+    schedule: {
+      recurrenceType: string;
+      recurrenceInterval?: number;
+      recurrenceDays?: string[];
+    },
+  ): Promise<Project> {
     const project = await this.projectRepo.findOne({
       where: { id: projectId },
     });
@@ -1055,7 +1081,13 @@ export class ProjectsService {
   async generatePdf(id: number): Promise<Buffer> {
     const project = await this.projectRepo.findOne({
       where: { id },
-      relations: ['client', 'client.user', 'tasks', 'members', 'members.employee'],
+      relations: [
+        'client',
+        'client.user',
+        'tasks',
+        'members',
+        'members.employee',
+      ],
     });
     if (!project) throw new NotFoundException('Project not found');
 
@@ -1159,7 +1191,7 @@ export class ProjectsService {
         <div class="info-grid">
           <div class="info-box">
             <div class="info-label">Client</div>
-            <strong>${project.client?.companyName || (project.client?.user?.firstName + ' ' + project.client?.user?.lastName)}</strong><br>
+            <strong>${project.client?.companyName || project.client?.user?.firstName + ' ' + project.client?.user?.lastName}</strong><br>
             ${project.client?.user?.email || ''}
           </div>
           <div class="info-box">
@@ -1189,13 +1221,17 @@ export class ProjectsService {
             </tr>
           </thead>
           <tbody>
-            ${project.tasks.map(task => `
+            ${project.tasks
+              .map(
+                (task) => `
               <tr>
                 <td>${task.title}</td>
                 <td class="task-status ${task.status}">${task.status}</td>
                 <td>${formatDate(task.dueDate)}</td>
               </tr>
-            `).join('')}
+            `,
+              )
+              .join('')}
           </tbody>
         </table>
 

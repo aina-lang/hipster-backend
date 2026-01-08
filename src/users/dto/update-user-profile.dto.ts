@@ -1,4 +1,12 @@
-import { IsEmail, IsOptional, IsString, IsArray, ValidateNested, ValidateIf, IsObject } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  IsArray,
+  ValidateNested,
+  ValidateIf,
+  IsObject,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateClientProfileDto } from 'src/profiles/dto/create-client-profile.dto';
 import { UpdateClientProfileDto } from '../../profiles/dto/update-client-profile.dto';

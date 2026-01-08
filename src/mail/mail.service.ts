@@ -7,7 +7,7 @@ export class MailService {
   constructor(
     private readonly mailerService: MailerService,
     private readonly companyService: CompanyService,
-  ) { }
+  ) {}
 
   async sendEmail(params: {
     to: string;
@@ -24,15 +24,22 @@ export class MailService {
     );
 
     // Dynamic URLs based on roles
-    const backofficeUrl = (process.env.BACKOFFICE_URL || 'https://hipster-ia.fr/app/dashboard').replace(/\/+$/, '');
-    const frontendUrl = (process.env.FRONTEND_URL || 'https://hipster-ia.fr').replace(/\/+$/, '');
-    
-    let apiUrl = (process.env.API_URL || 'https://hipster-api.fr').replace(/\/+$/, '');
+    const backofficeUrl = (
+      process.env.BACKOFFICE_URL || 'https://hipster-ia.fr/app/dashboard'
+    ).replace(/\/+$/, '');
+    const frontendUrl = (
+      process.env.FRONTEND_URL || 'https://hipster-ia.fr'
+    ).replace(/\/+$/, '');
+
+    let apiUrl = (process.env.API_URL || 'https://hipster-api.fr').replace(
+      /\/+$/,
+      '',
+    );
     // Sanity check: if apiUrl is just a protocol or too short, fallback
     if (apiUrl.length < 10 && !apiUrl.includes('.')) {
       apiUrl = 'https://hipster-api.fr';
     }
-    
+
     const mobileUrl = process.env.MOBILE_APP_URL || 'hypster://login';
 
     // Determine the primary app URL
@@ -51,11 +58,13 @@ export class MailService {
         companyLogoUrl = company.logoUrl;
       } else {
         // Ensure logoUrl starts with / and apiUrl doesn't end with /
-        const cleanLogoPath = company.logoUrl.startsWith('/') ? company.logoUrl : `/${company.logoUrl}`;
+        const cleanLogoPath = company.logoUrl.startsWith('/')
+          ? company.logoUrl
+          : `/${company.logoUrl}`;
         companyLogoUrl = `${apiUrl}${cleanLogoPath}`;
       }
     }
-    
+
     const globalContext = {
       companyName: company.name,
       companyAddress: company.address,
@@ -80,7 +89,11 @@ export class MailService {
     });
   }
 
-  async sendProjectCreatedEmail(to: string, data: any, roles?: string[]): Promise<void> {
+  async sendProjectCreatedEmail(
+    to: string,
+    data: any,
+    roles?: string[],
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: '🎉 Nouveau Projet Créé',
@@ -90,7 +103,11 @@ export class MailService {
     });
   }
 
-  async sendProjectUpdatedEmail(to: string, data: any, roles?: string[]): Promise<void> {
+  async sendProjectUpdatedEmail(
+    to: string,
+    data: any,
+    roles?: string[],
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: '🔄 Mise à jour du Projet',
@@ -100,7 +117,11 @@ export class MailService {
     });
   }
 
-  async sendProjectCompletedEmail(to: string, data: any, roles?: string[]): Promise<void> {
+  async sendProjectCompletedEmail(
+    to: string,
+    data: any,
+    roles?: string[],
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: '✅ Projet Terminé',
@@ -110,7 +131,11 @@ export class MailService {
     });
   }
 
-  async sendLoyaltyRewardEmail(to: string, data: any, roles?: string[]): Promise<void> {
+  async sendLoyaltyRewardEmail(
+    to: string,
+    data: any,
+    roles?: string[],
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: `🎉 Nouveau tier de fidélité: ${data.newTier}!`,
@@ -120,7 +145,11 @@ export class MailService {
     });
   }
 
-  async sendTaskAssignedEmail(to: string, data: any, roles?: string[]): Promise<void> {
+  async sendTaskAssignedEmail(
+    to: string,
+    data: any,
+    roles?: string[],
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: '📋 Nouvelle Tâche Assignée',
@@ -130,7 +159,11 @@ export class MailService {
     });
   }
 
-  async sendMaintenanceAssignedEmail(to: string, data: any, roles?: string[]): Promise<void> {
+  async sendMaintenanceAssignedEmail(
+    to: string,
+    data: any,
+    roles?: string[],
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: '🔧 Tâche de Maintenance Assignée',
@@ -140,23 +173,30 @@ export class MailService {
     });
   }
 
-  async sendWelcomeEmail(to: string, data: any, roles?: string[]): Promise<void> {
-    const isClient = roles?.includes('client_marketing') || roles?.includes('client_ai');
+  async sendWelcomeEmail(
+    to: string,
+    data: any,
+    roles?: string[],
+  ): Promise<void> {
+    const isClient =
+      roles?.includes('client_marketing') || roles?.includes('client_ai');
     const isEmployee = roles?.includes('employee');
     const isAdmin = roles?.includes('admin');
 
-    let welcomeMessage = "Bienvenue sur la plateforme Hipster.";
-    let subMessage = "";
+    let welcomeMessage = 'Bienvenue sur la plateforme Hipster.';
+    let subMessage = '';
 
     if (isAdmin) {
-      welcomeMessage = "Votre compte Administrateur a été créé avec succès.";
-      subMessage = "Vous avez désormais accès à l'ensemble des fonctionnalités de gestion.";
+      welcomeMessage = 'Votre compte Administrateur a été créé avec succès.';
+      subMessage =
+        "Vous avez désormais accès à l'ensemble des fonctionnalités de gestion.";
     } else if (isEmployee) {
-      welcomeMessage = "Votre compte Employé est prêt.";
-      subMessage = "Rapprochez-vous de votre manager pour obtenir vos accès et missions.";
+      welcomeMessage = 'Votre compte Employé est prêt.';
+      subMessage =
+        'Rapprochez-vous de votre manager pour obtenir vos accès et missions.';
     } else if (isClient) {
-      welcomeMessage = "Bienvenue chez Hipster Marketing !";
-      subMessage = "Nous sommes ravis de collaborer avec vous.";
+      welcomeMessage = 'Bienvenue chez Hipster Marketing !';
+      subMessage = 'Nous sommes ravis de collaborer avec vous.';
     }
 
     await this.sendEmail({
@@ -168,14 +208,19 @@ export class MailService {
         welcomeMessage,
         subMessage,
         // 🚫 REMOVED LINK: Explicitly removing dashboardUrl to prevents "Access Account" button
-        dashboardUrl: null, 
+        dashboardUrl: null,
         actionUrl: null,
       },
       userRoles: roles,
     });
   }
 
-  async sendInvoiceEmail(to: string, invoice: any, pdfBuffer: Buffer, roles?: string[]): Promise<void> {
+  async sendInvoiceEmail(
+    to: string,
+    invoice: any,
+    pdfBuffer: Buffer,
+    roles?: string[],
+  ): Promise<void> {
     const isQuote = invoice.type === 'quote';
     const typeLabel = isQuote ? 'Devis' : 'Facture';
     const filename = `${typeLabel}_${invoice.reference}.pdf`;
@@ -191,12 +236,13 @@ export class MailService {
     };
 
     // Prepare items for email display
-    const items = invoice.items?.map((item: any) => ({
-      description: item.description || '',
-      quantity: item.quantity || 0,
-      unitPrice: item.unitPrice || 0,
-      unit: item.unit || '',
-    })) || [];
+    const items =
+      invoice.items?.map((item: any) => ({
+        description: item.description || '',
+        quantity: item.quantity || 0,
+        unitPrice: item.unitPrice || 0,
+        unit: item.unit || '',
+      })) || [];
 
     // Calculate totals - ensure they are numbers
     const subtotal = Number(invoice.subTotal || invoice.amount || 0);
@@ -221,7 +267,10 @@ export class MailService {
       subject: `📄 Votre ${typeLabel} ${invoice.reference} est disponible`,
       template: 'invoice-created',
       context: {
-        clientName: invoice.clientSnapshot?.name || invoice.client?.user?.firstName || 'Client',
+        clientName:
+          invoice.clientSnapshot?.name ||
+          invoice.client?.user?.firstName ||
+          'Client',
         typeLabel,
         invoiceReference: invoice.reference,
         projectName: invoice.projectSnapshot?.name || invoice.project?.name,
@@ -310,7 +359,11 @@ export class MailService {
       userRoles: ['employee'],
     });
   }
-  async sendOtpEmail(to: string, data: { name: string; code: string }, roles?: string[]): Promise<void> {
+  async sendOtpEmail(
+    to: string,
+    data: { name: string; code: string },
+    roles?: string[],
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: '🔑 Votre code de vérification Hipster',
@@ -320,26 +373,33 @@ export class MailService {
     });
   }
 
-  async sendNewPasswordEmail(to: string, data: { name: string; password: string }, roles?: string[]): Promise<void> {
+  async sendNewPasswordEmail(
+    to: string,
+    data: { name: string; password: string },
+    roles?: string[],
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: '🔒 Votre nouveau mot de passe Hipster',
       template: 'password-reset',
       context: {
         ...data,
-         // 🚫 REMOVED LINK
+        // 🚫 REMOVED LINK
         dashboardUrl: null,
       },
       userRoles: roles,
     });
   }
 
-  async sendCampaignEmail(to: string, data: { 
-    userName: string; 
-    campaignName: string; 
-    content: string; 
-    description?: string;
-  }): Promise<void> {
+  async sendCampaignEmail(
+    to: string,
+    data: {
+      userName: string;
+      campaignName: string;
+      content: string;
+      description?: string;
+    },
+  ): Promise<void> {
     await this.sendEmail({
       to,
       subject: data.campaignName,

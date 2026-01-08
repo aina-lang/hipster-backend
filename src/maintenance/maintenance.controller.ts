@@ -62,7 +62,9 @@ export class MaintenanceController {
     return this.maintenanceService.getMaintenanceStats(id);
   }
 
-  @ApiOperation({ summary: 'Marquer la maintenance comme terminée pour un site' })
+  @ApiOperation({
+    summary: 'Marquer la maintenance comme terminée pour un site',
+  })
   @ResponseMessage('Maintenance marquée comme terminée')
   @Post('websites/:id/complete')
   completeWebsiteMaintenance(

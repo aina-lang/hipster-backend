@@ -49,20 +49,34 @@ export class UsersController {
   @ResponseMessage('Profil mis à jour avec succès')
   @Patch('me')
   async updateMe(@User() user: any, @Body() dto: UpdateUserProfileDto) {
-    console.log('[UsersController] updateMe called with DTO:', JSON.stringify(dto, null, 2));
+    console.log(
+      '[UsersController] updateMe called with DTO:',
+      JSON.stringify(dto, null, 2),
+    );
     return this.usersService.update(user.sub, dto);
   }
 
-  @ApiOperation({ summary: "Initier le changement d'email (envoie OTP à l'email actuel)" })
+  @ApiOperation({
+    summary: "Initier le changement d'email (envoie OTP à l'email actuel)",
+  })
   @Post('me/email/request')
   async requestEmailChange(@User() user: any) {
     return this.authService.requestEmailChange(user.sub);
   }
 
-  @ApiOperation({ summary: "Vérifier l'OTP de l'email actuel et envoyer OTP au nouvel email" })
+  @ApiOperation({
+    summary: "Vérifier l'OTP de l'email actuel et envoyer OTP au nouvel email",
+  })
   @Post('me/email/verify-current')
-  async verifyCurrentEmailOtp(@User() user: any, @Body() dto: { code: string; newEmail: string }) {
-    return this.authService.verifyCurrentEmailOtp(user.sub, dto.code, dto.newEmail);
+  async verifyCurrentEmailOtp(
+    @User() user: any,
+    @Body() dto: { code: string; newEmail: string },
+  ) {
+    return this.authService.verifyCurrentEmailOtp(
+      user.sub,
+      dto.code,
+      dto.newEmail,
+    );
   }
 
   @ApiOperation({ summary: "Confirmer le nouvel email avec l'OTP reçu" })

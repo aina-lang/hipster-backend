@@ -9,4 +9,4 @@ import { User } from 'src/users/entities/user.entity';
   controllers: [ReferralController],
   providers: [ReferralService],
 })
-export class ReferralModule { }
+export class ReferralModule {}

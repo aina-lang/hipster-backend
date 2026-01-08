@@ -3,7 +3,7 @@ import { Permission } from './entities/permission.entity';
 
 /**
  * Script de génération des permissions par défaut pour tous les modules
- * 
+ *
  * Usage:
  * - Créer un script dans package.json: "seed:permissions": "ts-node src/permissions/seed-permissions.ts"
  * - Ou l'exécuter via une commande NestJS
@@ -65,7 +65,7 @@ const DEFAULT_PERMISSIONS: PermissionDefinition[] = [
   { slug: 'view:settings', description: 'Voir les paramètres' },
   { slug: 'update:settings', description: 'Modifier les paramètres' },
   { slug: 'manage:maintenance', description: 'Gérer la maintenance' },
-  
+
   // Administration
   { slug: 'view:admins', description: 'Voir les administrateurs' },
   { slug: 'create:admins', description: 'Créer un administrateur' },
@@ -108,7 +108,9 @@ export async function seedPermissions(dataSource: DataSource) {
   console.log(`\n✨ Seeding terminé!`);
   console.log(`   ✅ ${created} permissions créées`);
   console.log(`   ⏭️  ${skipped} permissions ignorées (déjà existantes)`);
-  console.log(`   📊 Total: ${DEFAULT_PERMISSIONS.length} permissions définies\n`);
+  console.log(
+    `   📊 Total: ${DEFAULT_PERMISSIONS.length} permissions définies\n`,
+  );
 
   return { created, skipped, total: DEFAULT_PERMISSIONS.length };
 }
@@ -139,4 +141,3 @@ if (require.main === module) {
     }
   });
 }
-

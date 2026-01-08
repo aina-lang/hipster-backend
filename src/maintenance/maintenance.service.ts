@@ -20,7 +20,7 @@ export class MaintenanceService implements OnModuleInit {
     @InjectRepository(Task)
     private taskRepository: Repository<Task>,
     private notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   /**
    * ✅ Auto-cleanup duplicates on startup
@@ -43,14 +43,16 @@ export class MaintenanceService implements OnModuleInit {
     // ⚡ OPTIMIZED: Do NOT fetch relations here. It causes massive slowdowns.
     const projects = await this.projectRepository.find({
       where: { name: Like('Maintenance Sites Web%') },
-      order: { createdAt: 'ASC' } // Oldest first
+      order: { createdAt: 'ASC' }, // Oldest first
     });
 
     let project: Project;
 
     if (projects.length > 0) {
       // Pick the best candidate: exact match or the first one (oldest)
-      const exactMatch = projects.find(p => p.name === MAINTENANCE_PROJECT_NAME);
+      const exactMatch = projects.find(
+        (p) => p.name === MAINTENANCE_PROJECT_NAME,
+      );
       project = exactMatch || projects[0];
 
       // Fix name if it was a typo/variant
@@ -60,9 +62,11 @@ export class MaintenanceService implements OnModuleInit {
       }
 
       // ✅ Delete duplicates
-      const duplicates = projects.filter(p => p.id !== project.id);
+      const duplicates = projects.filter((p) => p.id !== project.id);
       if (duplicates.length > 0) {
-        console.warn(`[Maintenance] Removing ${duplicates.length} duplicate projects: ${duplicates.map(p => p.id).join(', ')}`);
+        console.warn(
+          `[Maintenance] Removing ${duplicates.length} duplicate projects: ${duplicates.map((p) => p.id).join(', ')}`,
+        );
         await this.projectRepository.remove(duplicates);
       }
 
@@ -78,7 +82,8 @@ export class MaintenanceService implements OnModuleInit {
     // Create new maintenance project if none found
     project = this.projectRepository.create({
       name: MAINTENANCE_PROJECT_NAME,
-      description: 'Projet global de maintenance des sites WordPress de tous les clients',
+      description:
+        'Projet global de maintenance des sites WordPress de tous les clients',
       start_date: new Date(),
       status: ProjectStatus.IN_PROGRESS,
       budget: 0,
@@ -91,7 +96,10 @@ export class MaintenanceService implements OnModuleInit {
   /**
    * Add a website to maintenance (creates a task)
    */
-  async addWebsiteToMaintenance(websiteId: number, userId: number): Promise<Task> {
+  async addWebsiteToMaintenance(
+    websiteId: number,
+    userId: number,
+  ): Promise<Task> {
     const website = await this.websiteRepository.findOne({
       where: { id: websiteId },
       relations: ['client', 'client.user'],
@@ -164,7 +172,13 @@ export class MaintenanceService implements OnModuleInit {
 
     return this.taskRepository.find({
       where: { project: { id: project.id } },
-      relations: ['website', 'website.client', 'website.client.user', 'assignees', 'assignees.user'],
+      relations: [
+        'website',
+        'website.client',
+        'website.client.user',
+        'assignees',
+        'assignees.user',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
@@ -178,14 +192,14 @@ export class MaintenanceService implements OnModuleInit {
     // ⚡ OPTIMIZED: Fetch full details separately only when needed
     const project = await this.projectRepository.findOne({
       where: { id: basicProject.id },
-      relations: ['members', 'members.employee']
+      relations: ['members', 'members.employee'],
     });
 
     // For the maintenance project, we want to see ALL client websites
     // so we can manage them
     const websites = await this.websiteRepository.find({
       relations: ['client', 'client.user', 'lastMaintenanceBy'],
-      order: { url: 'ASC' }
+      order: { url: 'ASC' },
     });
 
     if (project) {
@@ -197,7 +211,14 @@ export class MaintenanceService implements OnModuleInit {
   /**
    * Update global maintenance schedule
    */
-  async updateGlobalSchedule(userId: number, schedule: { recurrenceType: string; recurrenceInterval?: number; recurrenceDays?: string[] }): Promise<Project> {
+  async updateGlobalSchedule(
+    userId: number,
+    schedule: {
+      recurrenceType: string;
+      recurrenceInterval?: number;
+      recurrenceDays?: string[];
+    },
+  ): Promise<Project> {
     const project = await this.getOrCreateMaintenanceProject(userId);
 
     // Update project settings
@@ -228,7 +249,9 @@ export class MaintenanceService implements OnModuleInit {
    */
   // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleMaintenanceSchedule() {
-    console.log('[Maintenance Cron] (Global Trigger Disabled) Checking maintenance schedule...');
+    console.log(
+      '[Maintenance Cron] (Global Trigger Disabled) Checking maintenance schedule...',
+    );
 
     try {
       const project = await this.projectRepository.findOne({
@@ -243,7 +266,6 @@ export class MaintenanceService implements OnModuleInit {
       // Logic moved to TasksService.handleRecurrence()
       // This method used to reset ALL tasks based on global project settings.
       // We now prefer individual task settings.
-
     } catch (error) {
       console.error('[Maintenance Cron] Error:', error);
     }
@@ -253,7 +275,9 @@ export class MaintenanceService implements OnModuleInit {
    * Check if today matches the project's recurrence schedule
    */
   private checkScheduleMatch(project: Project, date: Date): boolean {
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const dayName = date
+      .toLocaleDateString('en-US', { weekday: 'long' })
+      .toLowerCase();
 
     switch (project.recurrenceType) {
       case 'daily':
@@ -262,7 +286,10 @@ export class MaintenanceService implements OnModuleInit {
         return project.recurrenceDays?.includes(dayName) || false;
       case 'monthly':
         // Check if today is the same day of month as start_date
-        return date.getDate() === (project.start_date ? new Date(project.start_date).getDate() : 1);
+        return (
+          date.getDate() ===
+          (project.start_date ? new Date(project.start_date).getDate() : 1)
+        );
       case 'interval':
         // Complex to check without reference, would need lastRunDate tracking
         return false;
@@ -289,14 +316,21 @@ export class MaintenanceService implements OnModuleInit {
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const websitesWithMaintenance = websites.filter(w => w.lastMaintenanceDate && w.lastMaintenanceDate > oneMonthAgo).length;
+    const websitesWithMaintenance = websites.filter(
+      (w) => w.lastMaintenanceDate && w.lastMaintenanceDate > oneMonthAgo,
+    ).length;
     const websitesNeedingMaintenance = totalWebsites - websitesWithMaintenance;
 
     // Tasks stats
-    const tasks = await this.taskRepository.find({ where: { project: { id: projectId } } });
+    const tasks = await this.taskRepository.find({
+      where: { project: { id: projectId } },
+    });
     const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(t => t.status === TaskStatus.DONE).length;
-    const completionPercentage = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+    const completedTasks = tasks.filter(
+      (t) => t.status === TaskStatus.DONE,
+    ).length;
+    const completionPercentage =
+      totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
     return {
       totalWebsites,
@@ -304,15 +338,20 @@ export class MaintenanceService implements OnModuleInit {
       websitesNeedingMaintenance,
       totalTasks,
       completedTasks,
-      completionPercentage
+      completionPercentage,
     };
   }
 
   /**
    * Mark website maintenance as completed
    */
-  async completeWebsiteMaintenance(websiteId: number, userId: number): Promise<void> {
-    const website = await this.websiteRepository.findOne({ where: { id: websiteId } });
+  async completeWebsiteMaintenance(
+    websiteId: number,
+    userId: number,
+  ): Promise<void> {
+    const website = await this.websiteRepository.findOne({
+      where: { id: websiteId },
+    });
     if (!website) throw new NotFoundException('Website not found');
 
     // Update website
@@ -326,9 +365,9 @@ export class MaintenanceService implements OnModuleInit {
       where: {
         websiteId: websiteId,
         // We look for non-completed tasks
-        status: TaskStatus.TODO // We could also check IN_PROGRESS
+        status: TaskStatus.TODO, // We could also check IN_PROGRESS
       },
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
 
     if (task) {

@@ -8,7 +8,7 @@ import { json, urlencoded } from 'express';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
-  
+
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 
@@ -41,8 +41,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-SwaggerModule.setup('docs', app, document);
-
+  SwaggerModule.setup('docs', app, document);
 
   await app.listen(process.env.PORT ?? 4000, '0.0.0.0');
 }

@@ -42,7 +42,7 @@ export class TasksService {
 
     private readonly projectsService: ProjectsService,
     private readonly mailService: MailService,
-  ) { }
+  ) {}
 
   // 🔹 CREATE
   async create(dto: CreateTaskDto, userId: number): Promise<Task> {
@@ -83,12 +83,15 @@ export class TasksService {
       // ✅ VALIDATION: Vérifier que tous les assignés sont membres du projet
       const projectMemberIds = project.members.map((m) => m.employee.id);
       const invalidAssignees = assignees.filter(
-        (assignee) => assignee.user && !projectMemberIds.includes(assignee.user.id),
+        (assignee) =>
+          assignee.user && !projectMemberIds.includes(assignee.user.id),
       );
 
       if (invalidAssignees.length > 0) {
         const invalidNames = invalidAssignees
-          .map((a) => a.user ? `${a.user.firstName} ${a.user.lastName}` : 'Inconnu')
+          .map((a) =>
+            a.user ? `${a.user.firstName} ${a.user.lastName}` : 'Inconnu',
+          )
           .join(', ');
         throw new BadRequestException(
           `Les employés suivants ne sont pas membres du projet "${project.name}" : ${invalidNames}. Veuillez d'abord les ajouter au projet.`,
@@ -283,12 +286,15 @@ export class TasksService {
           (m) => m.employee.id,
         );
         const invalidAssignees = employees.filter(
-          (assignee) => assignee.user && !projectMemberIds.includes(assignee.user.id),
+          (assignee) =>
+            assignee.user && !projectMemberIds.includes(assignee.user.id),
         );
 
         if (invalidAssignees.length > 0) {
           const invalidNames = invalidAssignees
-            .map((a) => a.user ? `${a.user.firstName} ${a.user.lastName}` : 'Inconnu')
+            .map((a) =>
+              a.user ? `${a.user.firstName} ${a.user.lastName}` : 'Inconnu',
+            )
             .join(', ');
           throw new BadRequestException(
             `Les employés suivants ne sont pas membres du projet "${projectForValidation.name}" : ${invalidNames}. Veuillez d'abord les ajouter au projet.`,
@@ -308,19 +314,24 @@ export class TasksService {
         lastMaintenanceDate: new Date(),
         lastMaintenanceById: userId,
       });
-      console.log(`[TasksService] Updated lastMaintenanceDate for website #${savedTask.websiteId}`);
+      console.log(
+        `[TasksService] Updated lastMaintenanceDate for website #${savedTask.websiteId}`,
+      );
     }
 
     // 🛠️ MAINTENANCE LOGIC: Auto-assign 'manage:maintenance' permission
     // Check if project has maintenance enabled (either current project or new project if changed)
     const currentProject = task.project;
-    if (currentProject?.maintenanceConfig?.enabled && task.assignees?.length > 0) {
-        // We need full user entities for assignees if not loaded, but task.assignees coming from save might be partial
-        // However, findOne loaded assignees with relations.
-        // It's safer to re-fetch assignees if we are unsure, but let's try using what we have.
-        // Actually, update method might have just set assignees.
-        // Helper expects EmployeeProfile[]
-        await this.ensureMaintenancePermission(task.assignees);
+    if (
+      currentProject?.maintenanceConfig?.enabled &&
+      task.assignees?.length > 0
+    ) {
+      // We need full user entities for assignees if not loaded, but task.assignees coming from save might be partial
+      // However, findOne loaded assignees with relations.
+      // It's safer to re-fetch assignees if we are unsure, but let's try using what we have.
+      // Actually, update method might have just set assignees.
+      // Helper expects EmployeeProfile[]
+      await this.ensureMaintenancePermission(task.assignees);
     }
 
     return savedTask;
@@ -387,7 +398,9 @@ export class TasksService {
         lastMaintenanceDate: new Date(),
         lastMaintenanceById: userId,
       });
-      console.log(`[TasksService] Updated lastMaintenanceDate for website #${savedTask.websiteId}`);
+      console.log(
+        `[TasksService] Updated lastMaintenanceDate for website #${savedTask.websiteId}`,
+      );
     }
 
     // 🔄 Mettre à jour le statut du projet automatiquement
@@ -494,7 +507,7 @@ export class TasksService {
 
     for (const task of maintenanceTasks) {
       let shouldReset = false;
-      let nextRun = task.nextRunAt ? new Date(task.nextRunAt) : null;
+      const nextRun = task.nextRunAt ? new Date(task.nextRunAt) : null;
 
       // If nextRunAt is not set, calculate it based on recurrence
       if (!nextRun) {
@@ -528,7 +541,8 @@ export class TasksService {
       .toLowerCase();
 
     // Normalisation : si recurrenceDays contient des jours, on vérifie
-    const hasSpecificDays = task.recurrenceDays && task.recurrenceDays.length > 0;
+    const hasSpecificDays =
+      task.recurrenceDays && task.recurrenceDays.length > 0;
 
     switch (task.recurrenceType) {
       case 'daily':
@@ -586,7 +600,8 @@ export class TasksService {
     nextDate.setDate(nextDate.getDate() + 1);
     nextDate.setHours(0, 0, 0, 0);
 
-    const hasSpecificDays = task.recurrenceDays && task.recurrenceDays.length > 0;
+    const hasSpecificDays =
+      task.recurrenceDays && task.recurrenceDays.length > 0;
 
     switch (task.recurrenceType) {
       case 'daily':
@@ -596,7 +611,7 @@ export class TasksService {
       case 'weekly':
       case 'custom':
         if (!hasSpecificDays) {
-          // Fallback default 1 week if no days set? Or just +1 day? 
+          // Fallback default 1 week if no days set? Or just +1 day?
           // Let's assume +1 week if strictly 'weekly' and empty, but here +1 day is safer if malformed
           nextDate.setDate(nextDate.getDate() + 6); // +1 (already) + 6 = +7
         } else {

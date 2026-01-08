@@ -1,4 +1,10 @@
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { TaskPriority } from 'src/tasks/entities/task.entity';
 
 export class CreateRecurringTaskDto {

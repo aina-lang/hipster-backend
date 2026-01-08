@@ -45,12 +45,14 @@ export class AuthService {
     if (existing) throw new ConflictException('Email déjà utilisé.');
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
-    
+
     // For self-registration via mobile app, we only allow certain roles
     const selectedRole = dto.selectedProfile || Role.CLIENT_MARKETING;
-    
+
     if (selectedRole === Role.ADMIN || selectedRole === Role.EMPLOYEE) {
-      throw new BadRequestException('Ce type de profil ne peut pas être créé via inscription directe.');
+      throw new BadRequestException(
+        'Ce type de profil ne peut pas être créé via inscription directe.',
+      );
     }
 
     const user = this.userRepo.create({
@@ -91,7 +93,8 @@ export class AuthService {
     });
 
     return {
-      message: 'Inscription réussie. Un code OTP a été envoyé à votre adresse email.',
+      message:
+        'Inscription réussie. Un code OTP a été envoyé à votre adresse email.',
       email: user.email,
     };
   }
@@ -99,7 +102,12 @@ export class AuthService {
   async login(dto: LoginAuthDto) {
     const user = await this.userRepo.findOne({
       where: { email: dto.email },
-      relations: ['clientProfile', 'employeeProfile', 'aiProfile', 'permissions'],
+      relations: [
+        'clientProfile',
+        'employeeProfile',
+        'aiProfile',
+        'permissions',
+      ],
     });
 
     if (!user) throw new UnauthorizedException('Identifiants invalides.');
@@ -110,19 +118,24 @@ export class AuthService {
     if (!user.isEmailVerified) {
       // Si mot de passe correct mais email non vérifié => On renvoie un OTP
       await this.resendOtp(user.email);
-      
+
       throw new UnauthorizedException({
-        message: 'Veuillez vérifier votre email avant de vous connecter. Un nouveau code vous a été envoyé.',
+        message:
+          'Veuillez vérifier votre email avant de vous connecter. Un nouveau code vous a été envoyé.',
         needsVerification: true,
         email: user.email,
       });
     }
 
     const payload = { sub: user.id, email: user.email, roles: user.roles };
-    
+
     // Generate both tokens
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '4h' });
-    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '30d' });
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '4h',
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '30d',
+    });
 
     // Save refresh token to user (optional but better for security)
     user.refreshToken = refreshToken;
@@ -155,8 +168,12 @@ export class AuthService {
     }
 
     const payload = { sub: user.id, email: user.email, roles: user.roles };
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '4h' });
-    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '30d' });
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '4h',
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '30d',
+    });
 
     user.refreshToken = refreshToken;
     await this.userRepo.save(user);
@@ -175,11 +192,15 @@ export class AuthService {
     if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
 
     user.isEmailVerified = true;
-    
+
     // Generate tokens for auto-login
     const payload = { sub: user.id, email: user.email, roles: user.roles };
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '4h' });
-    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '30d' });
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '4h',
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '30d',
+    });
 
     user.refreshToken = refreshToken;
     await this.userRepo.save(user);
@@ -239,7 +260,8 @@ export class AuthService {
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     const isMatch = await bcrypt.compare(dto.oldPassword, user.password);
-    if (!isMatch) throw new BadRequestException('Ancien mot de passe incorrect.');
+    if (!isMatch)
+      throw new BadRequestException('Ancien mot de passe incorrect.');
 
     user.password = await bcrypt.hash(dto.newPassword, 10);
     await this.userRepo.save(user);
@@ -260,7 +282,10 @@ export class AuthService {
       userRoles: user.roles,
     });
 
-    return { message: 'Un code de réinitialisation a été envoyé à votre adresse email.' };
+    return {
+      message:
+        'Un code de réinitialisation a été envoyé à votre adresse email.',
+    };
   }
 
   async verifyResetCode(email: string, code: string) {
@@ -325,34 +350,50 @@ export class AuthService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
-    const otp = await this.otpService.generateOtp(user, OtpType.EMAIL_CHANGE_CURRENT);
-    
+    const otp = await this.otpService.generateOtp(
+      user,
+      OtpType.EMAIL_CHANGE_CURRENT,
+    );
+
     await this.mailService.sendEmail({
       to: user.email,
-      subject: '🔑 Sécurité Hipster : Code de changement d\'email',
+      subject: "🔑 Sécurité Hipster : Code de changement d'email",
       template: 'otp-email',
       context: { name: user.firstName ?? user.email, code: otp },
       userRoles: user.roles,
     });
 
-    return { message: 'Un code de vérification a été envoyé à votre adresse email actuelle.' };
+    return {
+      message:
+        'Un code de vérification a été envoyé à votre adresse email actuelle.',
+    };
   }
 
   async verifyCurrentEmailOtp(userId: number, code: string, newEmail: string) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
-    const isAlreadyUsed = await this.userRepo.findOne({ where: { email: newEmail } });
-    if (isAlreadyUsed) throw new ConflictException('Cette adresse email est déjà utilisée.');
+    const isAlreadyUsed = await this.userRepo.findOne({
+      where: { email: newEmail },
+    });
+    if (isAlreadyUsed)
+      throw new ConflictException('Cette adresse email est déjà utilisée.');
 
-    const isValid = await this.otpService.verifyOtp(user, code, OtpType.EMAIL_CHANGE_CURRENT);
+    const isValid = await this.otpService.verifyOtp(
+      user,
+      code,
+      OtpType.EMAIL_CHANGE_CURRENT,
+    );
     if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
 
     user.pendingEmail = newEmail;
     await this.userRepo.save(user);
 
     // Send OTP to NEW email
-    const otp = await this.otpService.generateOtp(user, OtpType.EMAIL_CHANGE_NEW);
+    const otp = await this.otpService.generateOtp(
+      user,
+      OtpType.EMAIL_CHANGE_NEW,
+    );
     await this.mailService.sendEmail({
       to: newEmail,
       subject: '🔑 Vérification de votre nouvel email Hipster',
@@ -360,15 +401,23 @@ export class AuthService {
       context: { name: user.firstName ?? user.email, code: otp },
     });
 
-    return { message: 'Code vérifié. Un nouveau code a été envoyé à votre nouvelle adresse email.' };
+    return {
+      message:
+        'Code vérifié. Un nouveau code a été envoyé à votre nouvelle adresse email.',
+    };
   }
 
   async confirmNewEmailOtp(userId: number, code: string) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
-    if (!user.pendingEmail) throw new BadRequestException('Aucun changement d\'email en cours.');
+    if (!user.pendingEmail)
+      throw new BadRequestException("Aucun changement d'email en cours.");
 
-    const isValid = await this.otpService.verifyOtp(user, code, OtpType.EMAIL_CHANGE_NEW);
+    const isValid = await this.otpService.verifyOtp(
+      user,
+      code,
+      OtpType.EMAIL_CHANGE_NEW,
+    );
     if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
 
     const oldEmail = user.email;
@@ -387,6 +436,9 @@ export class AuthService {
       user.roles,
     );
 
-    return { message: 'Votre adresse email a été mise à jour avec succès. Veuillez vous reconnecter.' };
+    return {
+      message:
+        'Votre adresse email a été mise à jour avec succès. Veuillez vous reconnecter.',
+    };
   }
 }

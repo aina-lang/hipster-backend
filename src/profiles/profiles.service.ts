@@ -38,7 +38,7 @@ export class ProfilesService {
 
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
-  ) { }
+  ) {}
 
   // ----------------------------
   // CLIENT PROFILE
@@ -102,7 +102,9 @@ export class ProfilesService {
         let finalPassword = dto.userData.password;
         if (!finalPassword) {
           const randomDigits = Math.floor(1000 + Math.random() * 9000);
-          const cleanLastName = dto.userData.lastName ? dto.userData.lastName.replace(/[^a-zA-Z0-9]/g, '') : 'User';
+          const cleanLastName = dto.userData.lastName
+            ? dto.userData.lastName.replace(/[^a-zA-Z0-9]/g, '')
+            : 'User';
           finalPassword = `${cleanLastName}${randomDigits}!`;
         }
         passwordToSend = finalPassword;
@@ -142,15 +144,13 @@ export class ProfilesService {
       // ✅ Send welcome email if new user was created
       if (dto.userData && user.email) {
         try {
-          await this.mailService.sendWelcomeEmail(
-            user.email,
-            {
-              firstName: user.firstName,
-              email: user.email,
-              temporaryPassword: passwordToSend || 'Veuillez contacter l\'administrateur',
-              dashboardUrl: `${process.env.FRONTEND_URL}/auth/login`,
-            }
-          );
+          await this.mailService.sendWelcomeEmail(user.email, {
+            firstName: user.firstName,
+            email: user.email,
+            temporaryPassword:
+              passwordToSend || "Veuillez contacter l'administrateur",
+            dashboardUrl: `${process.env.FRONTEND_URL}/auth/login`,
+          });
         } catch (error) {
           console.error('Failed to send welcome email to client:', error);
         }
@@ -193,7 +193,9 @@ export class ProfilesService {
     }
 
     // 🚫 Exclude admins (users with role 'admin')
-    queryBuilder.andWhere('user.roles NOT LIKE :adminRole', { adminRole: '%admin%' });
+    queryBuilder.andWhere('user.roles NOT LIKE :adminRole', {
+      adminRole: '%admin%',
+    });
 
     if (search) {
       queryBuilder.andWhere(
@@ -266,7 +268,9 @@ export class ProfilesService {
       // Fallback if no user (should not happen given logic)
       await this.clientRepo.remove(profile);
     }
-    return { message: `ClientProfile #${id} et utilisateur associé supprimés avec succès` };
+    return {
+      message: `ClientProfile #${id} et utilisateur associé supprimés avec succès`,
+    };
   }
 
   // ----------------------------
@@ -335,7 +339,9 @@ export class ProfilesService {
     } else {
       await this.employeeRepo.remove(profile);
     }
-    return { message: `EmployeeProfile #${id} et utilisateur associé supprimés avec succès` };
+    return {
+      message: `EmployeeProfile #${id} et utilisateur associé supprimés avec succès`,
+    };
   }
 
   // ----------------------------

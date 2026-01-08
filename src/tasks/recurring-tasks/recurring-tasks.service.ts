@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const parser = require('cron-parser');
 import { RecurringTask } from './entities/recurring-task.entity';
 import { CreateRecurringTaskDto } from './dto/create-recurring-task.dto';
@@ -110,14 +110,15 @@ export class RecurringTasksService {
         });
 
         await this.taskRepo.save(newTask);
-        this.logger.log(`Created Task #${newTask.id} from RecurringTask #${rt.id}`);
+        this.logger.log(
+          `Created Task #${newTask.id} from RecurringTask #${rt.id}`,
+        );
 
         // 2. Update nextRunAt
         const interval = parser.parseExpression(rt.cronExpression);
         rt.lastRunAt = new Date();
         rt.nextRunAt = interval.next().toDate();
         await this.recurringTaskRepo.save(rt);
-
       } catch (error) {
         this.logger.error(`Failed to process RecurringTask #${rt.id}`, error);
       }

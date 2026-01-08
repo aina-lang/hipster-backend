@@ -27,4 +27,4 @@ import { AuthModule } from 'src/auth/auth.module';
   providers: [UsersService],
   exports: [UsersService, TypeOrmModule],
 })
-export class UsersModule { }
+export class UsersModule {}

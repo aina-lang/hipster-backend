@@ -11,13 +11,13 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { CampaignCronService } from './campaigns.cron';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Campaign, User]),
-        MailModule,
-        NotificationsModule,
-    ],
-    controllers: [CampaignsController],
-    providers: [CampaignsService, CampaignExecutionService, CampaignCronService],
-    exports: [CampaignsService, CampaignExecutionService],
+  imports: [
+    TypeOrmModule.forFeature([Campaign, User]),
+    MailModule,
+    NotificationsModule,
+  ],
+  controllers: [CampaignsController],
+  providers: [CampaignsService, CampaignExecutionService, CampaignCronService],
+  exports: [CampaignsService, CampaignExecutionService],
 })
-export class CampaignsModule { }
+export class CampaignsModule {}

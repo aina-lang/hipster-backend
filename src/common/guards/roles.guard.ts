@@ -5,7 +5,7 @@ import { Role } from '../enums/role.enum';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) { }
+  constructor(private reflector: Reflector) {}
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
       context.getHandler(),
@@ -24,11 +24,17 @@ export class RolesGuard implements CanActivate {
 
     // Nettoyage et parsing des rôles (gestion du cas double-encodage JSON)
     for (const role of userRolesRaw) {
-      if (typeof role === 'string' && role.startsWith('[') && role.endsWith(']')) {
+      if (
+        typeof role === 'string' &&
+        role.startsWith('[') &&
+        role.endsWith(']')
+      ) {
         try {
           const parsed = JSON.parse(role);
           if (Array.isArray(parsed)) {
-            parsed.forEach(r => userRoles.push(String(r).toLowerCase().trim()));
+            parsed.forEach((r) =>
+              userRoles.push(String(r).toLowerCase().trim()),
+            );
           } else {
             userRoles.push(role.toLowerCase().trim());
           }
@@ -41,7 +47,9 @@ export class RolesGuard implements CanActivate {
     }
 
     // Normalisation des rôles requis
-    const requiredRolesNormalized = requiredRoles.map(r => r.toLowerCase().trim());
+    const requiredRolesNormalized = requiredRoles.map((r) =>
+      r.toLowerCase().trim(),
+    );
 
     // Vérification
     return requiredRolesNormalized.some((role) => userRoles.includes(role));

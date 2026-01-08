@@ -13,7 +13,7 @@ import { ResponseMessage } from 'src/common/decorators/response-message.decorato
 @ApiTags('Auth')
 @Controller('')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Public()
   @ApiOperation({ summary: "Inscription d'un nouvel utilisateur" })
@@ -64,16 +64,22 @@ export class AuthController {
   }
 
   @Public()
-  @ApiOperation({ summary: 'Demande de réinitialisation de mot de passe (envoi OTP)' })
+  @ApiOperation({
+    summary: 'Demande de réinitialisation de mot de passe (envoi OTP)',
+  })
   @Post('forgot-password')
   async forgotPassword(@Body('email') email: string) {
     return this.authService.forgotPassword(email);
   }
 
   @Public()
-  @ApiOperation({ summary: 'Confirmation OTP et génération nouveau mot de passe' })
+  @ApiOperation({
+    summary: 'Confirmation OTP et génération nouveau mot de passe',
+  })
   @Post('reset-password')
-  async resetPassword(@Body() body: { email: string; code: string; password?: string }) {
+  async resetPassword(
+    @Body() body: { email: string; code: string; password?: string },
+  ) {
     return this.authService.resetPassword(body.email, body.code, body.password);
   }
 

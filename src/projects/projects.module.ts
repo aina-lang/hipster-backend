@@ -43,4 +43,4 @@ import { Payment } from 'src/payments/entities/payment.entity';
   providers: [ProjectsService],
   exports: [ProjectsService],
 })
-export class ProjectsModule { }
+export class ProjectsModule {}

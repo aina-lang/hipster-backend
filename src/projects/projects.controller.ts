@@ -24,7 +24,7 @@ import { ResponseMessage } from 'src/common/decorators/response-message.decorato
 @ApiTags('Projects')
 @Controller('projects')
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) { }
+  constructor(private readonly projectsService: ProjectsService) {}
 
   /**
    * 🧩 Créer un projet
@@ -52,7 +52,9 @@ export class ProjectsController {
   /**
    * 📋 Liste paginée de TOUS les projets (Backoffice - inclut Maintenance)
    */
-  @ApiOperation({ summary: 'Liste complète des projets pour backoffice (inclut Maintenance)' })
+  @ApiOperation({
+    summary: 'Liste complète des projets pour backoffice (inclut Maintenance)',
+  })
   @ApiPaginationQueries([
     { name: 'status', required: false, enum: ProjectStatus },
     { name: 'clientId', required: false, type: Number },
@@ -134,7 +136,12 @@ export class ProjectsController {
   @Post(':id/schedule')
   async updateSchedule(
     @Param('id') id: string,
-    @Body() schedule: { recurrenceType: string; recurrenceInterval?: number; recurrenceDays?: string[] },
+    @Body()
+    schedule: {
+      recurrenceType: string;
+      recurrenceInterval?: number;
+      recurrenceDays?: string[];
+    },
   ) {
     return this.projectsService.updateProjectSchedule(+id, schedule);
   }
@@ -144,7 +151,11 @@ export class ProjectsController {
    */
   @ApiOperation({ summary: 'Générer le rapport PDF du projet' })
   @Get(':id/pdf')
-  async generatePdf(@Param('id') id: string, @Request() req, @Res() res: Response) {
+  async generatePdf(
+    @Param('id') id: string,
+    @Request() req,
+    @Res() res: Response,
+  ) {
     const buffer = await this.projectsService.generatePdf(+id);
 
     res.set({

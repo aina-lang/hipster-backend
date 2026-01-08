@@ -79,7 +79,8 @@ export class SubscriptionsService {
 
     return {
       subscriptionId: subscription.id,
-      clientSecret: (subscription.latest_invoice as any).payment_intent.client_secret,
+      clientSecret: (subscription.latest_invoice as any).payment_intent
+        .client_secret,
     };
   }
 }
