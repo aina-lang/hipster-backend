@@ -163,6 +163,7 @@ export class ProjectsService {
           {
             clientName: `${clientUser.firstName} ${clientUser.lastName}`,
             projectName: project.name,
+            projectDescription: project.description || '',
             startDate: new Date(project.start_date).toLocaleDateString('fr-FR'),
             endDate: project.end_date
               ? new Date(project.end_date).toLocaleDateString('fr-FR')
@@ -171,6 +172,13 @@ export class ProjectsService {
             projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${project.id}`,
           },
           clientUser.roles,
+        );
+
+        // ✅ Send in-app notification
+        await this.notificationsService.sendProjectCreatedNotification(
+          clientUser.id,
+          project.id,
+          project.name,
         );
       } catch (error) {
         console.error('Failed to send project created email to client:', error);

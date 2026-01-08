@@ -314,4 +314,36 @@ export class NotificationsService {
 
     return notifications;
   }
+
+  /**
+   * Notifier le client qu'un projet a été créé pour lui
+   */
+  async sendProjectCreatedNotification(
+    userId: number,
+    projectId: number,
+    projectName: string,
+  ): Promise<Notification> {
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) {
+      throw new NotFoundException(`User #${userId} not found`);
+    }
+
+    const notification = this.notificationRepo.create({
+      user,
+      type: 'project_created',
+      title: '🎉 Nouveau projet créé',
+      message: `Votre nouveau projet "${projectName}" est prêt ! Cliquez pour voir les détails.`,
+      data: {
+        projectId,
+        projectName,
+      },
+    });
+
+    const saved = await this.notificationRepo.save(notification);
+
+    // Emit real-time notification
+    this.notificationsGateway.emitToUser(userId, 'notification:new', saved);
+
+    return saved;
+  }
 }
