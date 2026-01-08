@@ -85,6 +85,7 @@ export class Payment {
   project?: Project;
 
   @OneToOne(() => Invoice, (i) => i.payment)
+  @JoinColumn()
   invoice?: Invoice;
 
   @OneToOne(() => AiSubscription, (s) => s.payment)
