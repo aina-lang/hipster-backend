@@ -7,13 +7,20 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
+  Req,
+  Headers,
+  BadRequestException,
 } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { QueryPaymentsDto } from './dto/query-payments.dto';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
+import { AuthGuard } from '@nestjs/passport';
+import * as express from 'express';
 import {
   PaymentProvider,
   PaymentStatus,
@@ -31,6 +38,26 @@ export class PaymentsController {
   @Post()
   create(@Body() createPaymentDto: CreatePaymentDto) {
     return this.paymentsService.create(createPaymentDto);
+  }
+
+  @ApiOperation({ summary: 'Créer un PaymentIntent Stripe pour une facture' })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Post('create-payment-intent')
+  async createPaymentIntent(@Req() req, @Body() body: { invoiceId: number }) {
+    return this.paymentsService.createPaymentIntent(body.invoiceId, req.user.sub);
+  }
+
+  @ApiOperation({ summary: 'Webhook Stripe' })
+  @Post('webhook')
+  async handleWebhook(
+    @Req() req: RawBodyRequest<express.Request>,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    if (!req.rawBody) {
+      throw new BadRequestException('Raw body not available');
+    }
+    return this.paymentsService.handleWebhook(req.rawBody, signature);
   }
 
   @ApiOperation({ summary: 'Lister les paiements' })

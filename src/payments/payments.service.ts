@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -7,9 +7,12 @@ import { Payment } from './entities/payment.entity';
 import { User } from 'src/users/entities/user.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { Project } from 'src/projects/entities/project.entity';
-import { Invoice } from 'src/invoices/entities/invoice.entity';
+import { Invoice, InvoiceStatus } from 'src/invoices/entities/invoice.entity';
 import { QueryPaymentsDto } from './dto/query-payments.dto';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
+import { StripeService } from './stripe.service';
+import { PaymentProvider, PaymentStatus, PaymentType } from './entities/payment.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class PaymentsService {
@@ -24,7 +27,98 @@ export class PaymentsService {
     private readonly projectRepo: Repository<Project>,
     @InjectRepository(Invoice)
     private readonly invoiceRepo: Repository<Invoice>,
+    private readonly stripeService: StripeService,
+    private readonly configService: ConfigService,
   ) {}
+
+  async createPaymentIntent(invoiceId: number, userId: number) {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id: invoiceId },
+      relations: ['client', 'client.user'],
+    });
+
+    if (!invoice) throw new NotFoundException('Invoice not found');
+
+    if (invoice.status === InvoiceStatus.PAID) {
+      throw new BadRequestException('Invoice is already paid');
+    }
+
+    const paymentIntent = await this.stripeService.createPaymentIntent({
+      amount: Number(invoice.amount),
+      currency: 'eur',
+      metadata: {
+        invoiceId: invoiceId.toString(),
+        userId: userId.toString(),
+        reference: invoice.reference,
+      },
+    });
+
+    // Create a pending payment record
+    const payment = this.paymentRepo.create({
+      amount: invoice.amount,
+      currency: 'EUR',
+      paymentType: PaymentType.PROJECT, // Assuming project for now or add a generic one
+      provider: PaymentProvider.STRIPE,
+      status: PaymentStatus.PENDING,
+      reference: paymentIntent.id,
+      user: { id: userId } as User,
+      client: invoice.client,
+      invoice: invoice,
+    });
+
+    await this.paymentRepo.save(payment);
+
+    return {
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+    };
+  }
+
+  async handleWebhook(payload: Buffer, signature: string) {
+    const secret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
+    if (!secret) {
+      throw new BadRequestException('Stripe webhook secret is not configured');
+    }
+    let event;
+
+    try {
+      event = await this.stripeService.constructEvent(
+        payload,
+        signature,
+        secret,
+      );
+    } catch (err: any) {
+      throw new BadRequestException(`Webhook Error: ${err.message}`);
+    }
+
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object;
+      await this.updatePaymentStatus(paymentIntent.id, PaymentStatus.SUCCEEDED);
+    } else if (event.type === 'payment_intent.payment_failed') {
+      const paymentIntent = event.data.object;
+      await this.updatePaymentStatus(paymentIntent.id, PaymentStatus.FAILED);
+    }
+
+    return { received: true };
+  }
+
+  private async updatePaymentStatus(paymentIntentId: string, status: PaymentStatus) {
+    const payment = await this.paymentRepo.findOne({
+      where: { reference: paymentIntentId },
+      relations: ['invoice'],
+    });
+
+    if (payment) {
+      payment.status = status;
+      await this.paymentRepo.save(payment);
+
+      if (status === PaymentStatus.SUCCEEDED && payment.invoice) {
+        payment.invoice.status = InvoiceStatus.PAID;
+        payment.invoice.paymentDate = new Date();
+        await this.invoiceRepo.save(payment.invoice);
+      }
+    }
+  }
 
   async create(dto: CreatePaymentDto): Promise<Payment> {
     const user = await this.userRepo.findOneBy({ id: dto.userId });
