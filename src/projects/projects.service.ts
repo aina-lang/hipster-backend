@@ -1043,4 +1043,159 @@ export class ProjectsService {
     const doneCount = tasks.filter((t) => t.status === TaskStatus.DONE).length;
     return Math.round((doneCount / tasks.length) * 100);
   }
+
+  async generatePdf(id: number): Promise<Buffer> {
+    const project = await this.projectRepo.findOne({
+      where: { id },
+      relations: ['client', 'client.user', 'tasks', 'members', 'members.employee', 'members.employee.user'],
+    });
+    if (!project) throw new NotFoundException('Project not found');
+
+    const puppeteer = require('puppeteer');
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      executablePath: process.env.CHROME_BIN || undefined,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--disable-extensions',
+      ],
+    });
+
+    try {
+      const page = await browser.newPage();
+      const htmlContent = this.getProjectHtml(project);
+
+      await page.setContent(htmlContent, {
+        waitUntil: 'networkidle0',
+        timeout: 60000,
+      });
+
+      await page.emulateMediaType('screen');
+
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: {
+          top: '20px',
+          right: '20px',
+          bottom: '20px',
+          left: '20px',
+        },
+      });
+
+      await browser.close();
+      return Buffer.from(pdfBuffer);
+    } catch (error) {
+      console.error('Project PDF generation error:', error);
+      await browser.close();
+      throw error;
+    }
+  }
+
+  private getProjectHtml(project: Project): string {
+    const progress = this.calculateProgress(project.tasks);
+    const formatDate = (date: Date | string | undefined) => {
+      if (!date) return 'N/A';
+      return new Date(date).toLocaleDateString('fr-FR');
+    };
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: 'Helvetica', sans-serif; color: #333; line-height: 1.5; font-size: 14px; margin: 0; padding: 20px; }
+          .header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+          .logo { font-size: 24px; font-weight: bold; text-transform: uppercase; }
+          .project-title { font-size: 20px; font-weight: bold; margin: 0; }
+          .status { background: #000; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+          
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+          .info-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
+          .info-label { font-size: 11px; text-transform: uppercase; color: #6c757d; font-weight: bold; margin-bottom: 5px; }
+          
+          .progress-section { margin-bottom: 30px; }
+          .progress-bar-bg { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 10px; }
+          .progress-bar-fill { background: #000; height: 100%; width: ${progress}%; }
+          
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th { text-align: left; padding: 10px; background: #eee; font-size: 12px; text-transform: uppercase; }
+          td { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+          
+          .task-status { font-weight: bold; font-size: 11px; text-transform: uppercase; }
+          .task-status.done { color: green; }
+          .task-status.todo { color: #666; }
+          .task-status.in_progress { color: orange; }
+
+          .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">HIPSTER MARKETING</div>
+          <div class="status">${project.status}</div>
+        </div>
+
+        <h1 class="project-title">${project.name}</h1>
+        <p style="color: #666;">Rapport de synthèse généré le ${new Date().toLocaleDateString('fr-FR')}</p>
+
+        <div class="info-grid">
+          <div class="info-box">
+            <div class="info-label">Client</div>
+            <strong>${project.client?.companyName || (project.client?.user?.firstName + ' ' + project.client?.user?.lastName)}</strong><br>
+            ${project.client?.user?.email || ''}
+          </div>
+          <div class="info-box">
+            <div class="info-label">Dates</div>
+            Début: ${formatDate(project.start_date)}<br>
+            Fin prévue: ${formatDate(project.end_date)}
+          </div>
+        </div>
+
+        <div class="progress-section">
+          <div style="display: flex; justify-content: space-between; font-weight: bold;">
+            <span>Progression globale</span>
+            <span>${progress}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill"></div>
+          </div>
+        </div>
+
+        <h3>Liste des tâches</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Status</th>
+              <th>Échéance</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${project.tasks.map(task => `
+              <tr>
+                <td>${task.title}</td>
+                <td class="task-status ${task.status}">${task.status}</td>
+                <td>${formatDate(task.dueDate)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="footer">
+          Hypster Marketing - Rapport de projet confidentiel
+        </div>
+      </body>
+      </html>
+    `;
+  }
 }

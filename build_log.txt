@@ -1,0 +1,17 @@
+
+> nestjsapi@0.0.1 build
+> nest build
+
+[96msrc/projects/projects.service.ts[0m:[93m1160[0m:[93m38[0m - [91merror[0m[90m TS2345: [0mArgument of type 'Date | undefined' is not assignable to parameter of type 'string | Date'.
+  Type 'undefined' is not assignable to type 'string | Date'.
+
+[7m1160[0m             Fin prévue: ${formatDate(project.end_date)}
+[7m    [0m [91m                                     ~~~~~~~~~~~~~~~~[0m
+[96msrc/projects/projects.service.ts[0m:[93m1188[0m:[93m34[0m - [91merror[0m[90m TS2345: [0mArgument of type 'Date | undefined' is not assignable to parameter of type 'string | Date'.
+  Type 'undefined' is not assignable to type 'string | Date'.
+
+[7m1188[0m                 <td>${formatDate(task.dueDate)}</td>
+[7m    [0m [91m                                 ~~~~~~~~~~~~[0m
+
+Found 2 error(s).
+

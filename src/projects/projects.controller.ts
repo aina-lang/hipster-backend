@@ -7,12 +7,14 @@ import {
   Param,
   Delete,
   Query,
+  Res,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { Request } from '@nestjs/common';
+import type { Response } from 'express';
 import { FindProjectsQueryDto } from './dto/find-projects-query.dto';
 import { ProjectStatus } from './entities/project.entity';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -135,5 +137,22 @@ export class ProjectsController {
     @Body() schedule: { recurrenceType: string; recurrenceInterval?: number; recurrenceDays?: string[] },
   ) {
     return this.projectsService.updateProjectSchedule(+id, schedule);
+  }
+
+  /**
+   * 📄 Générer le rapport PDF du projet
+   */
+  @ApiOperation({ summary: 'Générer le rapport PDF du projet' })
+  @Get(':id/pdf')
+  async generatePdf(@Param('id') id: string, @Request() req, @Res() res: Response) {
+    const buffer = await this.projectsService.generatePdf(+id);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename=project-report-${id}.pdf`,
+      'Content-Length': buffer.length.toString(),
+    });
+
+    res.end(buffer);
   }
 }
