@@ -17,7 +17,8 @@ import { ProjectsService } from 'src/projects/projects.service';
 import { MailService } from 'src/mail/mail.service';
 import { User } from 'src/users/entities/user.entity';
 
-import { Permission } from 'src/permissions/entities/permission.entity';
+import { Permission } from '../permissions/entities/permission.entity';
+import { ClientWebsite } from '../profiles/entities/client-website.entity';
 @Injectable()
 export class TasksService {
   constructor(

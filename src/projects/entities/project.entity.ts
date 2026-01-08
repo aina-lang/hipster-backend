@@ -16,7 +16,7 @@ import { Payment } from 'src/payments/entities/payment.entity';
 import { ProjectMember } from './project-member.entity';
 import { Invoice } from 'src/invoices/entities/invoice.entity';
 import { User } from 'src/users/entities/user.entity';
-import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
+import { ClientWebsite } from '../../profiles/entities/client-website.entity';
 import { JoinTable, ManyToMany } from 'typeorm';
 import type { MaintenanceConfig } from '../interfaces/maintenance-config.interface';
 
