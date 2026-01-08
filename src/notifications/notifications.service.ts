@@ -333,26 +333,66 @@ export class NotificationsService {
     projectName: string,
   ): Promise<Notification> {
     const user = await this.userRepo.findOneBy({ id: userId });
-    if (!user) {
-      throw new NotFoundException(`User #${userId} not found`);
-    }
+    if (!user) throw new NotFoundException('User not found');
 
     const notification = this.notificationRepo.create({
       user,
       type: 'project_created',
-      title: '🎉 Nouveau projet créé',
-      message: `Votre nouveau projet "${projectName}" est prêt ! Cliquez pour voir les détails.`,
-      data: {
-        projectId,
-        projectName,
-      },
+      title: '🏗️ Nouveau projet créé',
+      message: `Un nouveau projet \"${projectName}\" a été créé pour vous.`,
+      data: { projectId, projectName },
     });
 
     const saved = await this.notificationRepo.save(notification);
-
-    // Emit real-time notification
     this.notificationsGateway.emitToUser(userId, 'notification:new', saved);
+    return saved;
+  }
 
+  // Notifier le client qu'une facture ou un devis a été créé
+  async createInvoiceNotification(
+    invoiceId: number,
+    reference: string,
+    type: string,
+    userId: number,
+  ): Promise<Notification | null> {
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) return null;
+
+    const typeLabel = type === 'quote' ? 'devis' : 'facture';
+    const icon = type === 'quote' ? '📄' : '💰';
+
+    const notification = this.notificationRepo.create({
+      user,
+      type: type === 'quote' ? 'quote_created' : 'invoice_created',
+      title: `${icon} Nouveau ${typeLabel} disponible`,
+      message: `Votre ${typeLabel} ${reference} est disponible sur votre espace client.`,
+      data: { invoiceId, reference, type },
+    });
+
+    const saved = await this.notificationRepo.save(notification);
+    this.notificationsGateway.emitToUser(userId, 'notification:new', saved);
+    return saved;
+  }
+
+  // Notifier le client qu'un ticket a été ouvert pour lui (via Backoffice)
+  async createTicketNotificationForClient(
+    ticketId: number,
+    ticketTitle: string,
+    userId: number,
+  ): Promise<Notification | null> {
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) return null;
+
+    const notification = this.notificationRepo.create({
+      user,
+      type: 'ticket_update',
+      title: '🎫 Nouveau ticket support',
+      message: `Un nouveau ticket support a été ouvert pour vous: \"${ticketTitle}\".`,
+      data: { ticketId, ticketTitle },
+    });
+
+    const saved = await this.notificationRepo.save(notification);
+    this.notificationsGateway.emitToUser(userId, 'notification:new', saved);
     return saved;
   }
 }

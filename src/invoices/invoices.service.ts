@@ -13,6 +13,7 @@ import { User } from 'src/users/entities/user.entity';
 import { CompanyService } from 'src/company/company.service';
 
 import { MailService } from 'src/mail/mail.service';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class InvoicesService {
@@ -27,6 +28,7 @@ export class InvoicesService {
     private readonly projectRepo: Repository<Project>,
     private readonly companyService: CompanyService,
     private readonly mailService: MailService,
+    private readonly notificationsService: NotificationsService,
   ) { }
 
   async create(createInvoiceDto: CreateInvoiceDto, user: User) {
@@ -120,6 +122,20 @@ export class InvoicesService {
     });
 
     const savedInvoice = await this.invoiceRepo.save(invoice);
+
+    // Notify client via app notification
+    if (client.user?.id) {
+      try {
+        await this.notificationsService.createInvoiceNotification(
+          savedInvoice.id,
+          savedInvoice.reference,
+          savedInvoice.type,
+          client.user.id,
+        );
+      } catch (notificationError) {
+        console.error('Failed to send invoice notification:', notificationError);
+      }
+    }
 
     // Generate PDF and send email
     try {

@@ -64,39 +64,55 @@ export class TicketsService {
       });
 
       if (clientWithUser?.user) {
-        // Get all admin users
-        const admins = await this.userRepo.find({
-          where: { roles: In(['admin']) },
-        });
-        const adminIds = admins.map(a => a.id);
+      // 1. Notify Admins
+      const admins = await this.userRepo.find({
+        where: { roles: In(['admin']) },
+      });
+      const adminIds = admins.map((a) => a.id);
 
-        // Send real-time + email notifications to admins
-        await this.notificationsService.createTicketNotification(
-          savedTicket.id,
-          savedTicket.subject,
-          client.id,
-          adminIds,
-        );
+      await this.notificationsService.createTicketNotification(
+        savedTicket.id,
+        savedTicket.subject,
+        client.id,
+        adminIds,
+      );
 
-        // Send individual emails
-        for (const admin of admins) {
-          if (admin.email) {
-            await this.mailService.sendTicketCreationEmail(
-              admin.email,
-              {
-                adminName: `${admin.firstName} ${admin.lastName}`,
-                ticketTitle: savedTicket.subject,
-                clientName: `${clientWithUser.user.firstName} ${clientWithUser.user.lastName}`,
-                ticketDescription: savedTicket.description,
-                priority: savedTicket.priority,
-              },
-            );
-          }
+      for (const admin of admins) {
+        if (admin.email) {
+          await this.mailService.sendTicketCreationEmail(admin.email, {
+            adminName: `${admin.firstName} ${admin.lastName}`,
+            ticketTitle: savedTicket.subject,
+            clientName: `${clientWithUser.user.firstName} ${clientWithUser.user.lastName}`,
+            ticketDescription: savedTicket.description,
+            priority: savedTicket.priority,
+          });
         }
       }
-    } catch (error) {
-      console.error('Failed to send ticket creation notifications:', error);
+
+      // 2. Notify Client (especially if created via Backoffice)
+      await this.notificationsService.createTicketNotificationForClient(
+        savedTicket.id,
+        savedTicket.subject,
+        clientWithUser.user.id,
+      );
+
+      // (Optional) Send email to client too
+      if (clientWithUser.user.email) {
+        await this.mailService.sendTicketCreationEmail(
+          clientWithUser.user.email,
+          {
+            adminName: `${clientWithUser.user.firstName} ${clientWithUser.user.lastName}`, // Using client name as placeholder or custom template
+            ticketTitle: savedTicket.subject,
+            clientName: "Support Hipster",
+            ticketDescription: savedTicket.description,
+            priority: savedTicket.priority,
+          },
+        );
+      }
     }
+  } catch (error) {
+    console.error('Failed to send ticket creation notifications:', error);
+  }
 
     return savedTicket;
   }
