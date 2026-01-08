@@ -9,12 +9,14 @@ import { Project } from 'src/projects/entities/project.entity';
 
 import { CompanyModule } from 'src/company/company.module';
 import { MailModule } from 'src/mail/mail.module';
+import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Invoice, InvoiceItem, ClientProfile, Project]),
     CompanyModule,
     MailModule,
+    NotificationsModule,
   ],
   controllers: [InvoicesController],
   providers: [InvoicesService],
