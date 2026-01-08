@@ -55,11 +55,20 @@ export class TasksService {
     let assignees: EmployeeProfile[] = [];
     if (assigneeIds?.length) {
       // Les assigneeIds sont des User IDs, pas des EmployeeProfile IDs
-      // Extraire les EmployeeProfiles avec leurs relations User proprement via TypeORM
-      assignees = await this.employeeRepo.find({
-        where: { user: { id: In(assigneeIds) } },
-        relations: ['user'],
+      // On cherche les Users et on récupère leur EmployeeProfile
+      const users = await this.userRepo.find({
+        where: { id: In(assigneeIds) },
+        relations: ['employeeProfile'],
       });
+
+      if (users.length !== assigneeIds.length) {
+        throw new BadRequestException('Un ou plusieurs employés introuvables');
+      }
+
+      // Extraire les EmployeeProfiles
+      assignees = users
+        .map((u) => u.employeeProfile)
+        .filter((ep) => ep != null) as EmployeeProfile[];
 
       if (assignees.length !== assigneeIds.length) {
         throw new BadRequestException(
@@ -69,16 +78,13 @@ export class TasksService {
 
       // ✅ VALIDATION: Vérifier que tous les assignés sont membres du projet
       const projectMemberIds = project.members.map((m) => m.employee.id);
-      const invalidAssigneeIds = assigneeIds.filter(
-        (id) => !projectMemberIds.includes(id),
+      const invalidAssignees = assignees.filter(
+        (assignee) => !projectMemberIds.includes(assignee.user.id),
       );
 
-      if (invalidAssigneeIds.length > 0) {
-        const invalidUsers = users.filter((u) =>
-          invalidAssigneeIds.includes(u.id),
-        );
-        const invalidNames = invalidUsers
-          .map((u) => `${u.firstName} ${u.lastName}`)
+      if (invalidAssignees.length > 0) {
+        const invalidNames = invalidAssignees
+          .map((a) => `${a.user.firstName} ${a.user.lastName}`)
           .join(', ');
         throw new BadRequestException(
           `Les employés suivants ne sont pas membres du projet "${project.name}" : ${invalidNames}. Veuillez d'abord les ajouter au projet.`,
@@ -246,11 +252,20 @@ export class TasksService {
         relations: ['members', 'members.employee'],
       });
 
-      // Extraire les EmployeeProfiles avec leurs relations User proprement
-      const employees = await this.employeeRepo.find({
-        where: { user: { id: In(assigneeIds) } },
-        relations: ['user'],
+      // Les assigneeIds sont des User IDs, pas des EmployeeProfile IDs
+      const users = await this.userRepo.find({
+        where: { id: In(assigneeIds) },
+        relations: ['employeeProfile'],
       });
+
+      if (users.length !== assigneeIds.length) {
+        throw new BadRequestException('Un ou plusieurs employés introuvables');
+      }
+
+      // Extraire les EmployeeProfiles
+      const employees = users
+        .map((u) => u.employeeProfile)
+        .filter((ep) => ep != null) as EmployeeProfile[];
 
       if (employees.length !== assigneeIds.length) {
         throw new BadRequestException(
@@ -263,16 +278,13 @@ export class TasksService {
         const projectMemberIds = projectForValidation.members.map(
           (m) => m.employee.id,
         );
-        const invalidAssigneeIds = assigneeIds.filter(
-          (id) => !projectMemberIds.includes(id),
+        const invalidAssignees = employees.filter(
+          (assignee) => !projectMemberIds.includes(assignee.user.id),
         );
 
-        if (invalidAssigneeIds.length > 0) {
-          const invalidUsers = users.filter((u) =>
-            invalidAssigneeIds.includes(u.id),
-          );
-          const invalidNames = invalidUsers
-            .map((u) => `${u.firstName} ${u.lastName}`)
+        if (invalidAssignees.length > 0) {
+          const invalidNames = invalidAssignees
+            .map((a) => `${a.user.firstName} ${a.user.lastName}`)
             .join(', ');
           throw new BadRequestException(
             `Les employés suivants ne sont pas membres du projet "${projectForValidation.name}" : ${invalidNames}. Veuillez d'abord les ajouter au projet.`,

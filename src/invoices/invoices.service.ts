@@ -510,7 +510,6 @@ export class InvoicesService {
 
   async findPaginated(
     query: QueryInvoicesDto,
-    userId: number,
   ): Promise<PaginatedResult<Invoice>> {
     const {
       page = 1,
@@ -529,21 +528,6 @@ export class InvoicesService {
       .leftJoinAndSelect('invoice.client', 'client')
       .leftJoinAndSelect('invoice.project', 'project')
       .leftJoinAndSelect('client.user', 'user');
-
-    // 🔐 RBAC: Filter by user role/ownership
-    const currentUser = await this.invoiceRepo.manager
-      .getRepository(User)
-      .findOne({
-        where: { id: userId },
-      });
-
-    if (currentUser) {
-      const isAdmin = currentUser.roles.includes('admin' as any);
-      if (!isAdmin) {
-        // If not admin, must be own invoice
-        qb.andWhere('user.id = :userId', { userId });
-      }
-    }
 
     if (search) {
       qb.andWhere(

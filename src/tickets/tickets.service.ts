@@ -103,7 +103,6 @@ export class TicketsService {
 
   async findPaginated(
     query: QueryTicketsDto,
-    userId: number,
   ): Promise<PaginatedResult<Ticket>> {
     const {
       page = 1,
@@ -116,26 +115,12 @@ export class TicketsService {
       sortBy = 'createdAt',
       sortOrder = 'DESC',
     } = query;
- 
+
     const qb = this.ticketRepo
       .createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.client', 'client')
-      .leftJoinAndSelect('client.user', 'clientUser')
       .leftJoinAndSelect('ticket.project', 'project');
- 
-    // 🔐 RBAC: Filter by user role/ownership
-    const user = await this.userRepo.findOne({
-      where: { id: userId },
-    });
- 
-    if (user) {
-      const isAdmin = user.roles.includes('admin' as any);
-      if (!isAdmin) {
-        // If not admin, must be own ticket
-        qb.andWhere('clientUser.id = :userId', { userId });
-      }
-    }
- 
+
     if (search) {
       qb.andWhere(
         '(ticket.subject LIKE :search OR ticket.description LIKE :search)',
@@ -144,18 +129,18 @@ export class TicketsService {
         },
       );
     }
- 
+
     if (status) qb.andWhere('ticket.status = :status', { status });
     if (priority) qb.andWhere('ticket.priority = :priority', { priority });
     if (clientId) qb.andWhere('client.id = :clientId', { clientId });
     if (projectId) qb.andWhere('project.id = :projectId', { projectId });
- 
+
     const [data, total] = await qb
       .orderBy(`ticket.${sortBy}`, sortOrder)
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
- 
+
     return {
       data,
       meta: {

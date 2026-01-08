@@ -741,10 +741,7 @@ export class ProjectsService {
       relations: ['permissions'],
     });
 
-    if (!user) {
-        // Security fallback: If user not found, return empty results
-        qb.andWhere('1 = 0'); 
-    } else {
+    if (user) {
       const isAdmin = user.roles.includes('admin' as any);
       const hasManagePermission = user.permissions?.some(
         (p) => p.slug === 'projects:manage',
@@ -761,6 +758,7 @@ export class ProjectsService {
           qb.andWhere('clientUser.id = :userId', { userId });
         } else {
           // Sinon c'est un employé, il ne voit que les projets où il est membre
+          // On utilise un subquery pour éviter les problèmes de jointures multiples
           qb.andWhere(
             'project.id IN (SELECT pm.projectId FROM project_members pm WHERE pm.employeeId = :userId)',
             { userId },
@@ -768,10 +766,6 @@ export class ProjectsService {
         }
       }
     }
-
-    // 🚫 Exclude "Global" projects (projects without a client) from public/dashboard lists
-    // These are system-wide projects like "Maintenance Sites Web"
-    qb.andWhere('project.clientId IS NOT NULL');
 
     if (search) {
       qb.andWhere(
