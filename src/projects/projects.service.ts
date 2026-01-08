@@ -736,10 +736,22 @@ export class ProjectsService {
       .leftJoinAndSelect('members.employee', 'employee');
 
     // 🔐 RBAC: Check user permissions
-    const user = await this.userRepo.findOne({
-      where: { id: userId },
-      relations: ['permissions'],
-    });
+    console.log(`[ProjectsService] findPaginated called with query: ${JSON.stringify(query)}, userId: ${userId}`);
+
+    if (!userId) {
+      console.warn('[ProjectsService] findPaginated: userId is undefined or null');
+      // Apply default filter to be safe
+      qb.andWhere('project.name != :maintenanceName', {
+        maintenanceName: 'Maintenance Sites Web',
+      });
+    }
+
+    const user = userId
+      ? await this.userRepo.findOne({
+          where: { id: userId },
+          relations: ['permissions'],
+        })
+      : null;
 
     if (user) {
       const isAdmin = user.roles.includes('admin' as any);
@@ -747,7 +759,7 @@ export class ProjectsService {
         (p) => p.slug === 'projects:manage',
       );
 
-      console.log(`[ProjectsService] findPaginated: userId=${userId}, isAdmin=${isAdmin}, hasManagePermission=${hasManagePermission}`);
+      console.log(`[ProjectsService] findPaginated internal: user found, isAdmin=${isAdmin}, hasManagePermission=${hasManagePermission}`);
 
       // If not admin and doesn't have manage permission, apply filters
       if (!isAdmin && !hasManagePermission) {
@@ -772,6 +784,12 @@ export class ProjectsService {
           maintenanceName: 'Maintenance Sites Web',
         });
       }
+    } else if (userId) {
+      console.warn(`[ProjectsService] findPaginated: No user found for userId ${userId}`);
+      // Safety: filter if userId was provided but no user found
+      qb.andWhere('project.name != :maintenanceName', {
+        maintenanceName: 'Maintenance Sites Web',
+      });
     }
 
     if (search) {
