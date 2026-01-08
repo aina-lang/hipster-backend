@@ -36,6 +36,9 @@ export class TasksService {
     @InjectRepository(Permission)
     private readonly permissionRepo: Repository<Permission>,
 
+    @InjectRepository(ClientWebsite)
+    private readonly websiteRepo: Repository<ClientWebsite>,
+
     private readonly projectsService: ProjectsService,
     private readonly mailService: MailService,
   ) { }
@@ -298,6 +301,15 @@ export class TasksService {
     Object.assign(task, data);
     const savedTask = await this.taskRepo.save(task);
 
+    // ✅ If status is DONE and website is linked, update website.lastMaintenanceDate
+    if (savedTask.status === TaskStatus.DONE && savedTask.websiteId) {
+      await this.websiteRepo.update(savedTask.websiteId, {
+        lastMaintenanceDate: new Date(),
+        lastMaintenanceById: userId,
+      });
+      console.log(`[TasksService] Updated lastMaintenanceDate for website #${savedTask.websiteId}`);
+    }
+
     // 🛠️ MAINTENANCE LOGIC: Auto-assign 'manage:maintenance' permission
     // Check if project has maintenance enabled (either current project or new project if changed)
     const currentProject = task.project;
@@ -367,6 +379,15 @@ export class TasksService {
 
     const savedTask = await this.taskRepo.save(task);
     console.log(`[Task #${id}] Status saved successfully`);
+
+    // ✅ If status is DONE and website is linked, update website.lastMaintenanceDate
+    if (savedTask.status === TaskStatus.DONE && savedTask.websiteId) {
+      await this.websiteRepo.update(savedTask.websiteId, {
+        lastMaintenanceDate: new Date(),
+        lastMaintenanceById: userId,
+      });
+      console.log(`[TasksService] Updated lastMaintenanceDate for website #${savedTask.websiteId}`);
+    }
 
     // 🔄 Mettre à jour le statut du projet automatiquement
     if (task.project) {

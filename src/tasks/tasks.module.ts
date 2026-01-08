@@ -8,13 +8,21 @@ import { User } from 'src/users/entities/user.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
 import { Permission } from 'src/permissions/entities/permission.entity';
+import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
 
 import { MailModule } from 'src/mail/mail.module';
 import { RecurringTasksModule } from './recurring-tasks/recurring-tasks.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Task, User, Project, EmployeeProfile, Permission]),
+    TypeOrmModule.forFeature([
+      Task,
+      User,
+      Project,
+      EmployeeProfile,
+      Permission,
+      ClientWebsite,
+    ]),
     ProjectsModule,
     MailModule,
     forwardRef(() => RecurringTasksModule),
