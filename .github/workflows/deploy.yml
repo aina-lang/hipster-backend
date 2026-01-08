@@ -23,11 +23,11 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd ~/hipster-backend
             git pull origin main
+            export STRIPE_SECRET="${{ secrets.STRIPE_SECRET }}"
             npm install
             npm run build
             mkdir -p dist/src/templates
             cp -r dist/templates/* dist/src/templates/ || true
-            export STRIPE_SECRET='${{ secrets.STRIPE_SECRET }}'
             pm2 restart hipster-api || pm2 start dist/src/main.js --name hipster-api
             pm2 save
           EOF

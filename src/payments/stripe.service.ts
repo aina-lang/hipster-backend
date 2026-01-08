@@ -13,7 +13,7 @@ export class StripeService {
         apiVersion: '2025-11-17.clover',
       });
     } else {
-      console.error('STRIPE_SECRET_KEY is not defined in environment variables');
+      console.error('STRIPE_SECRET is not defined in environment variables');
     }
   }
 
