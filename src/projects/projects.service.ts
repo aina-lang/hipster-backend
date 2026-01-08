@@ -1047,7 +1047,7 @@ export class ProjectsService {
   async generatePdf(id: number): Promise<Buffer> {
     const project = await this.projectRepo.findOne({
       where: { id },
-      relations: ['client', 'client.user', 'tasks', 'members', 'members.employee', 'members.employee.user'],
+      relations: ['client', 'client.user', 'tasks', 'members', 'members.employee'],
     });
     if (!project) throw new NotFoundException('Project not found');
 
