@@ -764,6 +764,11 @@ export class ProjectsService {
             { userId },
           );
         }
+
+        // 🚫 Exclure le projet Maintenance pour les clients et employés
+        qb.andWhere('project.name != :maintenanceName', {
+          maintenanceName: 'Maintenance Sites Web',
+        });
       }
     }
 
