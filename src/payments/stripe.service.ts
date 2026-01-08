@@ -1,19 +1,27 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 
 @Injectable()
-export class StripeService implements OnModuleInit {
+export class StripeService {
   private stripe: Stripe;
 
-  constructor(private readonly configService: ConfigService) {}
-
-  onModuleInit() {
+  constructor(private readonly configService: ConfigService) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (apiKey) {
       this.stripe = new Stripe(apiKey, {
         apiVersion: '2025-11-17.clover',
       });
+    } else {
+      console.error('STRIPE_SECRET_KEY is not defined in environment variables');
+    }
+  }
+
+  private checkStripe() {
+    if (!this.stripe) {
+      throw new Error(
+        'Stripe is not configured. Please check STRIPE_SECRET_KEY in your .env file.',
+      );
     }
   }
 
@@ -23,6 +31,7 @@ export class StripeService implements OnModuleInit {
     metadata?: Record<string, string>;
     customerId?: string;
   }) {
+    this.checkStripe();
     return this.stripe.paymentIntents.create({
       amount: Math.round(params.amount * 100), // Convert to cents
       currency: params.currency.toLowerCase(),
@@ -35,6 +44,7 @@ export class StripeService implements OnModuleInit {
   }
 
   async constructEvent(payload: Buffer, signature: string, secret: string) {
+    this.checkStripe();
     return this.stripe.webhooks.constructEvent(payload, signature, secret);
   }
 
