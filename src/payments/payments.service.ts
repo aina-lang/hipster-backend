@@ -43,6 +43,28 @@ export class PaymentsService {
       throw new BadRequestException('Invoice is already paid');
     }
 
+    // Check if there is already a pending payment for this invoice
+    const existingPayment = await this.paymentRepo.findOne({
+      where: {
+        invoice: { id: invoiceId },
+        status: PaymentStatus.PENDING,
+      },
+      relations: ['invoice'],
+    });
+
+    if (existingPayment) {
+      // Return existing client secret if valid
+      // Note: We need to retrieve the client_secret from Stripe because we don't store it in the DB
+      // We stored the paymentIntentId in existingPayment.reference
+      const intent = await this.stripeService.instance.paymentIntents.retrieve(
+        existingPayment.reference,
+      );
+      return {
+        clientSecret: intent.client_secret,
+        paymentIntentId: intent.id,
+      };
+    }
+
     const paymentIntent = await this.stripeService.createPaymentIntent({
       amount: Number(invoice.amount),
       currency: 'eur',
