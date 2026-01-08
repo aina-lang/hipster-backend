@@ -10,6 +10,7 @@ import { QueryNotificationsDto } from './dto/query-notifications.dto';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
 import { LoyaltyTier, LOYALTY_RULES } from 'src/loyalty/loyalty.types';
 import { NotificationsGateway } from './notifications.gateway';
+import { Role } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class NotificationsService {
@@ -293,6 +294,14 @@ export class NotificationsService {
     for (const memberId of memberIds) {
       const member = await this.userRepo.findOneBy({ id: memberId });
       if (!member) continue;
+
+      // 🚫 Ne pas notifier les clients (marketing ou AI) pour une assignation interne
+      if (
+        member.roles.includes(Role.CLIENT_MARKETING) ||
+        member.roles.includes(Role.CLIENT_AI)
+      ) {
+        continue;
+      }
 
       const notification = this.notificationRepo.create({
         user: member,
