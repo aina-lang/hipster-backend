@@ -928,47 +928,47 @@ export class ProjectsService {
   // ------------------------------------------------------------
   async getClientMaintenanceSites(clientId: number) {
     console.log(`[ProjectsService] getClientMaintenanceSites called for clientId: ${clientId}`);
-    // 1. Trouver le projet "Maintenance Sites Web"
-    const maintenanceProject = await this.projectRepo.findOne({
-      where: { name: 'Maintenance Sites Web' },
-      relations: ['websites'], // website.clientId column is enough, no need for full client relation
-    });
+    
+    // 0. Diagnostic: Voir tous les sites du client en base
+    const allClientWebsites = await this.websiteRepo.find({ where: { clientId } });
+    console.log(`[ProjectsService] Diagnostic: Total websites for client ${clientId} in DB: ${allClientWebsites.length}`);
+    if (allClientWebsites.length > 0) {
+      console.log(`[ProjectsService] Diagnostic: Website IDs: ${allClientWebsites.map(w => w.id).join(', ')}`);
+    }
+
+    // 1. Trouver les sites du client via le projet "Maintenance Sites Web"
+    // On part du projet pour être sûr de passer par la table de jointure ManyToMany
+    const maintenanceProject = await this.projectRepo.createQueryBuilder('project')
+      .leftJoinAndSelect('project.websites', 'site')
+      .where('project.name = :name', { name: 'Maintenance Sites Web' })
+      .getOne();
 
     if (!maintenanceProject) {
+      console.warn(`[ProjectsService] Maintenance project "Maintenance Sites Web" NOT FOUND`);
       return {
-        status: 'success',
-        data: {
-          sites: [],
-          message: "Vous n'avez pas de sites en maintenance",
-        },
+        sites: [],
+        message: "Projet de maintenance introuvable",
       };
     }
 
-    // 2. Filtrer les sites qui appartiennent au client
-    console.log(`[ProjectsService] maintenanceProject websites count: ${maintenanceProject.websites?.length || 0}`);
-    
-    const clientSites = maintenanceProject.websites?.filter(
-      (website) => {
-        console.log(`[ProjectsService] Checking website ${website.id}: clientId=${website.clientId} vs requested=${clientId}`);
-        return website.clientId === clientId;
-      }
-    ) || [];
+    // 2. Extraire et filtrer les sites chargés par la relation
+    const clientSites = (maintenanceProject.websites || []).filter(
+      (site) => site.clientId === clientId
+    );
 
-    console.log(`[ProjectsService] Filtered clientSites count: ${clientSites.length}`);
+    console.log(`[ProjectsService] Project "${maintenanceProject.name}" has ${maintenanceProject.websites?.length || 0} total sites.`);
+    console.log(`[ProjectsService] Found ${clientSites.length} sites specifically for client ${clientId}`);
 
     return {
-      status: 'success',
-      data: {
-        sites: clientSites.map((site) => ({
-          id: site.id,
-          url: site.url,
-          description: site.description,
-          lastMaintenanceDate: site.lastMaintenanceDate,
-        })),
-        message: clientSites.length > 0
-          ? `Vous avez ${clientSites.length} site(s) en maintenance`
-          : "Vous n'avez pas de sites en maintenance",
-      },
+      sites: clientSites.map((site) => ({
+        id: site.id,
+        url: site.url,
+        description: site.description,
+        lastMaintenanceDate: site.lastMaintenanceDate,
+      })),
+      message: clientSites.length > 0
+        ? `Vous avez ${clientSites.length} site(s) en maintenance`
+        : "Vous n'avez pas de sites en maintenance",
     };
   }
 
