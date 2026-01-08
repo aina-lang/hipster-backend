@@ -929,35 +929,14 @@ export class ProjectsService {
   async getClientMaintenanceSites(clientId: number) {
     console.log(`[ProjectsService] getClientMaintenanceSites called for clientId: ${clientId}`);
     
-    // 0. Diagnostic: Voir tous les sites du client en base
-    const allClientWebsites = await this.websiteRepo.find({ where: { clientId } });
-    console.log(`[ProjectsService] Diagnostic: Total websites for client ${clientId} in DB: ${allClientWebsites.length}`);
-    if (allClientWebsites.length > 0) {
-      console.log(`[ProjectsService] Diagnostic: Website IDs: ${allClientWebsites.map(w => w.id).join(', ')}`);
-    }
+    // On récupère tous les sites du client. 
+    // Pour l'app mobile, ces sites sont considérés comme étant "en maintenance".
+    const clientSites = await this.websiteRepo.find({ 
+      where: { clientId },
+      order: { id: 'DESC' }
+    });
 
-    // 1. Trouver les sites du client via le projet "Maintenance Sites Web"
-    // On part du projet pour être sûr de passer par la table de jointure ManyToMany
-    const maintenanceProject = await this.projectRepo.createQueryBuilder('project')
-      .leftJoinAndSelect('project.websites', 'site')
-      .where('project.name = :name', { name: 'Maintenance Sites Web' })
-      .getOne();
-
-    if (!maintenanceProject) {
-      console.warn(`[ProjectsService] Maintenance project "Maintenance Sites Web" NOT FOUND`);
-      return {
-        sites: [],
-        message: "Projet de maintenance introuvable",
-      };
-    }
-
-    // 2. Extraire et filtrer les sites chargés par la relation
-    const clientSites = (maintenanceProject.websites || []).filter(
-      (site) => site.clientId === clientId
-    );
-
-    console.log(`[ProjectsService] Project "${maintenanceProject.name}" has ${maintenanceProject.websites?.length || 0} total sites.`);
-    console.log(`[ProjectsService] Found ${clientSites.length} sites specifically for client ${clientId}`);
+    console.log(`[ProjectsService] Found ${clientSites.length} maintenance sites for client ${clientId}`);
 
     return {
       sites: clientSites.map((site) => ({
