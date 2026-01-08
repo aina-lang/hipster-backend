@@ -934,8 +934,8 @@ export class ProjectsService {
         sites: clientSites.map((site) => ({
           id: site.id,
           url: site.url,
-          name: site.name || site.url,
-          status: site.status,
+          description: site.description,
+          lastMaintenanceDate: site.lastMaintenanceDate,
         })),
         message: clientSites.length > 0
           ? `Vous avez ${clientSites.length} site(s) en maintenance`
