@@ -38,7 +38,12 @@ export class OtpService {
     return code;
   }
 
-  async verifyOtp(user: User, code: string, type: OtpType): Promise<boolean> {
+  async verifyOtp(
+    user: User,
+    code: string,
+    type: OtpType,
+    consume: boolean = true,
+  ): Promise<boolean> {
     const otp = await this.otpRepository.findOne({
       where: { user: { id: user.id }, type },
       order: { createdAt: 'DESC' }, // Get the latest one
@@ -53,7 +58,9 @@ export class OtpService {
 
     const isValid = await bcrypt.compare(code, otp.token);
     if (isValid) {
-      await this.otpRepository.remove(otp); // Consume OTP
+      if (consume) {
+        await this.otpRepository.remove(otp); // Consume OTP
+      }
       return true;
     }
 

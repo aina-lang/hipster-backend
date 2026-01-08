@@ -271,6 +271,7 @@ export class AuthService {
       user,
       code,
       OtpType.PASSWORD_RESET,
+      false, // Do not consume the OTP yet
     );
     if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
 
