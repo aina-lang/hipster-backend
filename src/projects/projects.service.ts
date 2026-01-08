@@ -747,6 +747,8 @@ export class ProjectsService {
         (p) => p.slug === 'projects:manage',
       );
 
+      console.log(`[ProjectsService] findPaginated: userId=${userId}, isAdmin=${isAdmin}, hasManagePermission=${hasManagePermission}`);
+
       // If not admin and doesn't have manage permission, apply filters
       if (!isAdmin && !hasManagePermission) {
         const isClient =
@@ -907,6 +909,7 @@ export class ProjectsService {
   // 🔹 SITES EN MAINTENANCE PAR CLIENT
   // ------------------------------------------------------------
   async getClientMaintenanceSites(clientId: number) {
+    console.log(`[ProjectsService] getClientMaintenanceSites called for clientId: ${clientId}`);
     // 1. Trouver le projet "Maintenance Sites Web"
     const maintenanceProject = await this.projectRepo.findOne({
       where: { name: 'Maintenance Sites Web' },
