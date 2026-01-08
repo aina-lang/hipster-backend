@@ -931,7 +931,7 @@ export class ProjectsService {
     // 1. Trouver le projet "Maintenance Sites Web"
     const maintenanceProject = await this.projectRepo.findOne({
       where: { name: 'Maintenance Sites Web' },
-      relations: ['websites', 'websites.client'],
+      relations: ['websites'], // website.clientId column is enough, no need for full client relation
     });
 
     if (!maintenanceProject) {
@@ -945,9 +945,16 @@ export class ProjectsService {
     }
 
     // 2. Filtrer les sites qui appartiennent au client
+    console.log(`[ProjectsService] maintenanceProject websites count: ${maintenanceProject.websites?.length || 0}`);
+    
     const clientSites = maintenanceProject.websites?.filter(
-      (website) => website.client?.id === clientId,
+      (website) => {
+        console.log(`[ProjectsService] Checking website ${website.id}: clientId=${website.clientId} vs requested=${clientId}`);
+        return website.clientId === clientId;
+      }
     ) || [];
+
+    console.log(`[ProjectsService] Filtered clientSites count: ${clientSites.length}`);
 
     return {
       status: 'success',
