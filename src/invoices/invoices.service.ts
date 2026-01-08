@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { Invoice, InvoiceType, InvoiceStatus } from './entities/invoice.entity';
@@ -677,6 +677,31 @@ export class InvoicesService {
     }
 
     return savedInvoice;
+  }
+
+  async update(id: number, updateInvoiceDto: UpdateInvoiceDto): Promise<Invoice> {
+    const invoice = await this.findOne(id);
+    Object.assign(invoice, updateInvoiceDto);
+    return this.invoiceRepo.save(invoice);
+  }
+
+  async updateStatus(id: number, status: InvoiceStatus): Promise<Invoice> {
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id },
+      relations: ['client', 'client.user'],
+    });
+    if (!invoice) throw new NotFoundException('Invoice not found');
+
+    invoice.status = status;
+    const saved = await this.invoiceRepo.save(invoice);
+
+    // Notification logic for Quote Acceptance
+    if (invoice.type === InvoiceType.QUOTE && status === InvoiceStatus.ACCEPTED) {
+       // Optional: Log or trigger further business logic
+       console.log(`Quote ${invoice.reference} accepted by client.`);
+    }
+
+    return saved;
   }
 
   async remove(id: number): Promise<{ message: string }> {

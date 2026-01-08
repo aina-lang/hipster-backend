@@ -78,6 +78,16 @@ export class InvoicesController {
     return this.invoicesService.update(+id, updateInvoiceDto);
   }
 
+  @ApiOperation({ summary: 'Mettre à jour le statut' })
+  @ResponseMessage('Statut mis à jour avec succès')
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id') id: string,
+    @Body('status') status: InvoiceStatus,
+  ) {
+    return this.invoicesService.updateStatus(+id, status);
+  }
+
   @ApiOperation({ summary: 'Supprimer une facture' })
   @ResponseMessage('Facture supprimée avec succès')
   @Delete(':id')
