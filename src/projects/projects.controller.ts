@@ -35,9 +35,9 @@ export class ProjectsController {
   }
 
   /**
-   * 📋 Liste paginée des projets
+   * 📋 Liste paginée des projets (Mobile App - exclut Maintenance)
    */
-  @ApiOperation({ summary: 'Liste paginée des projets' })
+  @ApiOperation({ summary: 'Liste paginée des projets pour app mobile' })
   @ApiPaginationQueries([
     { name: 'status', required: false, enum: ProjectStatus },
     { name: 'clientId', required: false, type: Number },
@@ -45,6 +45,19 @@ export class ProjectsController {
   @Get()
   async findAll(@Query() query: FindProjectsQueryDto, @Request() req) {
     return this.projectsService.findPaginated(query, req.user.userId);
+  }
+
+  /**
+   * 📋 Liste paginée de TOUS les projets (Backoffice - inclut Maintenance)
+   */
+  @ApiOperation({ summary: 'Liste complète des projets pour backoffice (inclut Maintenance)' })
+  @ApiPaginationQueries([
+    { name: 'status', required: false, enum: ProjectStatus },
+    { name: 'clientId', required: false, type: Number },
+  ])
+  @Get('admin/all')
+  async findAllAdmin(@Query() query: FindProjectsQueryDto, @Request() req) {
+    return this.projectsService.findPaginatedAdmin(query, req.user.userId);
   }
 
   /**

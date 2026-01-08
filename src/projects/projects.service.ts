@@ -810,6 +810,100 @@ export class ProjectsService {
   }
 
   // ------------------------------------------------------------
+  // 🔹 PAGINATION ADMIN (inclut Maintenance)
+  // ------------------------------------------------------------
+  async findPaginatedAdmin(
+    query: FindProjectsQueryDto,
+    userId: number,
+  ): Promise<PaginatedResult<Project>> {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      status,
+      clientId,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
+    } = query;
+
+    const qb = this.projectRepo
+      .createQueryBuilder('project')
+      .leftJoinAndSelect('project.client', 'client')
+      .leftJoinAndSelect('client.user', 'clientUser')
+      .leftJoinAndSelect('project.members', 'members')
+      .leftJoinAndSelect('members.employee', 'employee');
+
+    // 🔐 RBAC: Check user permissions (same as findPaginated but WITHOUT Maintenance exclusion)
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['permissions'],
+    });
+
+    if (user) {
+      const isAdmin = user.roles.includes('admin' as any);
+      const hasManagePermission = user.permissions?.some(
+        (p) => p.slug === 'projects:manage',
+      );
+
+      // If not admin and doesn't have manage permission, apply filters
+      if (!isAdmin && !hasManagePermission) {
+        const isClient =
+          user.roles.includes('client_marketing' as any) ||
+          user.roles.includes('client_ai' as any);
+
+        if (isClient) {
+          // Si c'est un client, il ne voit que ses projets
+          qb.andWhere('clientUser.id = :userId', { userId });
+        } else {
+          // Sinon c'est un employé, il ne voit que les projets où il est membre
+          qb.andWhere(
+            'project.id IN (SELECT pm.projectId FROM project_members pm WHERE pm.employeeId = :userId)',
+            { userId },
+          );
+        }
+
+        // ⚠️ NOTE: On N'exclut PAS le projet Maintenance ici (pour le backoffice)
+      }
+    }
+
+    if (search) {
+      qb.andWhere(
+        '(project.name LIKE :search OR project.description LIKE :search)',
+        {
+          search: `%${search}%`,
+        },
+      );
+    }
+
+    if (status) {
+      qb.andWhere('project.status = :status', { status });
+    }
+
+    if (clientId) {
+      qb.andWhere('client.id = :clientId', { clientId });
+    }
+
+    const [data, total] = await qb
+      .orderBy(`project.${sortBy}`, sortOrder)
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: data.map((p) => {
+        p.progress = this.calculateProgress(p.tasks || []);
+        return p;
+      }),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // ------------------------------------------------------------
   // 🔹 HELPER: CALCUL DURATION
   // ------------------------------------------------------------
   private calculateDuration(startDate: Date, endDate?: Date): string {
