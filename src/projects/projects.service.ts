@@ -85,7 +85,11 @@ export class ProjectsService {
 
     console.log('Creating project with members:', members);
 
-    const currentUser = await this.userRepo.findOneBy({ id: userId });
+    const currentUser = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['clientProfile'],
+    });
+
     if (!currentUser) {
       throw new NotFoundException('Utilisateur introuvable');
     }
@@ -93,8 +97,26 @@ export class ProjectsService {
     let clientUser: User | null = null;
     let client: ClientProfile | null = null;
 
-    // Vérifier le client (clientId est un User ID) SI fourni
-    if (clientId) {
+    // 🔹 Déterminer si l'utilisateur est un client
+    const isClient =
+      currentUser.roles.includes('client_marketing' as any) ||
+      currentUser.roles.includes('client_ai' as any);
+
+    // 🔹 Si aucun clientId fourni ET que currentUser est un client, auto-assigner
+    if (!clientId && isClient) {
+      // Auto-assign: le client crée son propre projet
+      if (!currentUser.clientProfile) {
+        throw new NotFoundException(
+          'Profil client introuvable pour cet utilisateur',
+        );
+      }
+      clientUser = currentUser;
+      client = currentUser.clientProfile;
+      console.log(
+        `[Project Creation] Auto-assigned client: ${clientUser.firstName} ${clientUser.lastName} (ID: ${clientUser.id})`,
+      );
+    } else if (clientId) {
+      // Admin ou autre utilisateur spécifie un clientId
       clientUser = await this.userRepo.findOne({
         where: { id: clientId },
         relations: ['clientProfile'],
@@ -106,12 +128,22 @@ export class ProjectsService {
         );
       }
       client = clientUser.clientProfile;
+      console.log(
+        `[Project Creation] Assigned specified client: ${clientUser.firstName} ${clientUser.lastName} (ID: ${clientUser.id})`,
+      );
     }
+
+
+    // Determine default status: CLIENT -> PENDING, ADMIN -> PLANNED
+    const isAdmin = currentUser.roles.includes('admin' as any);
+    const initialStatus = isAdmin
+      ? ProjectStatus.PLANNED
+      : ProjectStatus.PENDING;
 
     // Créer le projet
     const project = this.projectRepo.create({
       ...data,
-      status: ProjectStatus.PLANNED,
+      status: initialStatus,
       createdBy: currentUser,
       updatedBy: currentUser,
     });
@@ -516,6 +548,91 @@ export class ProjectsService {
     }
 
     return updatedProject;
+  }
+
+
+  // ------------------------------------------------------------
+  // 🔹 VALIDATE PROJECT (Admin Only)
+  // ------------------------------------------------------------
+  async validateProject(id: number, userId: number): Promise<Project> {
+    const project = await this.findOne(id);
+    if (!project) throw new NotFoundException('Projet introuvable');
+
+    if (project.status !== ProjectStatus.PENDING) {
+      throw new BadRequestException(
+        "Ce projet n'est pas en attente de validation",
+      );
+    }
+
+    const currentUser = await this.userRepo.findOneBy({ id: userId });
+    if (!currentUser) throw new NotFoundException('Utilisateur introuvable');
+    project.status = ProjectStatus.PLANNED;
+    project.updatedBy = currentUser;
+    project.is_manual_status = false;
+
+    await this.projectRepo.save(project);
+
+    // Notify Client
+    if (project.client?.user?.email) {
+      try {
+        await this.mailService.sendProjectUpdatedEmail(
+          project.client.user.email,
+          {
+            clientName: `${project.client.user.firstName} ${project.client.user.lastName}`,
+            projectName: project.name,
+            status: project.status,
+            progress: 0,
+            projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${project.id}`,
+          },
+          project.client.user.roles,
+        );
+      } catch (error) {
+        console.error('Failed to send project validation email:', error);
+      }
+    }
+
+    return project;
+  }
+
+  // ------------------------------------------------------------
+  // 🔹 REFUSE PROJECT (Admin Only)
+  // ------------------------------------------------------------
+  async refuseProject(id: number, userId: number): Promise<Project> {
+    const project = await this.findOne(id);
+    if (!project) throw new NotFoundException('Projet introuvable');
+
+    if (project.status === ProjectStatus.CANCELED) {
+      throw new BadRequestException('Ce projet est déjà annulé');
+    }
+
+    const currentUser = await this.userRepo.findOneBy({ id: userId });
+    if (!currentUser) throw new NotFoundException('Utilisateur introuvable');
+    project.status = ProjectStatus.REFUSED;
+    project.updatedBy = currentUser;
+    project.is_manual_status = true;
+
+    await this.projectRepo.save(project);
+
+    // Notify Client
+    if (project.client?.user?.email) {
+      try {
+        await this.mailService.sendProjectUpdatedEmail(
+          project.client.user.email,
+          {
+            clientName: `${project.client.user.firstName} ${project.client.user.lastName}`,
+            projectName: project.name,
+            status: project.status,
+            progress: 0,
+            projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${project.id}`,
+          },
+          project.client.user.roles,
+        );
+      } catch (error) {
+        console.error('Failed to send project refusal email:', error);
+      }
+    }
+
+    return project;
   }
 
   // ------------------------------------------------------------

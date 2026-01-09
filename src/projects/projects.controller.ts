@@ -97,6 +97,26 @@ export class ProjectsController {
   }
 
   /**
+   * ✅ Valider un projet (Admin)
+   */
+  @ApiOperation({ summary: 'Valider un projet (Admin uniquement)' })
+  @ResponseMessage('Projet validé avec succès')
+  @Patch(':id/validate')
+  async validate(@Param('id') id: string, @Request() req) {
+    return this.projectsService.validateProject(+id, req.user.userId);
+  }
+
+  /**
+   * 🚫 Refuser un projet (Admin)
+   */
+  @ApiOperation({ summary: 'Refuser un projet (Admin uniquement)' })
+  @ResponseMessage('Projet refusé')
+  @Patch(':id/refuse')
+  async refuse(@Param('id') id: string, @Request() req) {
+    return this.projectsService.refuseProject(+id, req.user.userId);
+  }
+
+  /**
    * ❌ Suppression d’un projet
    */
   @ApiOperation({ summary: 'Supprimer un projet' })

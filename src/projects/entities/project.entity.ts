@@ -21,11 +21,13 @@ import { JoinTable, ManyToMany } from 'typeorm';
 import type { MaintenanceConfig } from '../interfaces/maintenance-config.interface';
 
 export enum ProjectStatus {
+  PENDING = 'pending',
   PLANNED = 'planned',
   IN_PROGRESS = 'in_progress',
   ON_HOLD = 'on_hold',
   COMPLETED = 'completed',
   CANCELED = 'canceled',
+  REFUSED = 'refused',
 }
 
 @Entity('projects')
