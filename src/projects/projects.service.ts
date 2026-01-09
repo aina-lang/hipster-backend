@@ -322,6 +322,218 @@ export class ProjectsService {
   }
 
   // ------------------------------------------------------------
+  // 🔹 CREATE CLIENT PROJECT (Client Submission)
+  // ------------------------------------------------------------
+  async createClientProject(
+    dto: CreateProjectDto,
+    userId: number,
+  ): Promise<Project> {
+    const { members, fileIds, taskIds, ...data } = dto;
+
+    // 🛑 Prevent manual creation of Maintenance Project
+    if (
+      data.name === 'Maintenance Sites Web' ||
+      data.name?.startsWith('Maintenance Sites Web')
+    ) {
+      throw new BadRequestException(
+        'Ce nom de projet est réservé. Veuillez utiliser le module Maintenance.',
+      );
+    }
+
+    console.log('[Client Project] Creating project with members:', members);
+
+    // 🔹 Get current user (must be a client)
+    const currentUser = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['clientProfile'],
+    });
+
+    if (!currentUser) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
+    // 🔹 Verify user is a client
+    const isClient =
+      currentUser.roles.includes('client_marketing' as any) ||
+      currentUser.roles.includes('client_ai' as any);
+
+    if (!isClient) {
+      throw new BadRequestException(
+        'Cet endpoint est réservé aux clients uniquement',
+      );
+    }
+
+    if (!currentUser.clientProfile) {
+      throw new NotFoundException(
+        'Profil client introuvable pour cet utilisateur',
+      );
+    }
+
+    const client = currentUser.clientProfile;
+    console.log(
+      `[Client Project] Auto-assigned client: ${currentUser.firstName} ${currentUser.lastName} (ID: ${currentUser.id})`,
+    );
+
+    // 🔹 Create project with PENDING status (always)
+    const project = this.projectRepo.create({
+      ...data,
+      status: ProjectStatus.PENDING, // ✅ Always PENDING for client submissions
+      createdBy: currentUser,
+      updatedBy: currentUser,
+      client: client,
+    });
+
+    await this.projectRepo.save(project);
+
+    // ✅ Add members
+    const memberUsers: { user: User; role: string }[] = [];
+    if (members && members.length > 0) {
+      for (const m of members) {
+        const user = await this.userRepo.findOneBy({ id: m.employeeId });
+
+        if (!user)
+          throw new BadRequestException(
+            `Utilisateur ${m.employeeId} introuvable`,
+          );
+
+        const membership = this.memberRepo.create({
+          project,
+          employee: user,
+          role: m.role,
+        });
+        await this.memberRepo.save(membership);
+        memberUsers.push({ user, role: m.role });
+      }
+    }
+
+    // ✅ Link files
+    if (fileIds?.length) {
+      const files = await this.fileRepo.findBy({ id: In(fileIds) });
+      project.files = files;
+    }
+
+    // ✅ Link tasks
+    if (taskIds?.length) {
+      const tasks = await this.taskRepo.findBy({ id: In(taskIds) });
+      project.tasks = tasks;
+    }
+
+    await this.projectRepo.save(project);
+
+    // ✅ Send email to client
+    if (currentUser.email) {
+      try {
+        await this.mailService.sendProjectCreatedEmail(
+          currentUser.email,
+          {
+            clientName: `${currentUser.firstName} ${currentUser.lastName}`,
+            projectName: project.name,
+            projectDescription: project.description || '',
+            startDate: new Date(project.start_date).toLocaleDateString('fr-FR'),
+            endDate: project.end_date
+              ? new Date(project.end_date).toLocaleDateString('fr-FR')
+              : 'Non définie',
+            budget: project.budget,
+            projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${project.id}`,
+          },
+          currentUser.roles,
+        );
+
+        // ✅ Send in-app notification
+        await this.notificationsService.sendProjectCreatedNotification(
+          currentUser.id,
+          project.id,
+          project.name,
+        );
+      } catch (error) {
+        console.error('Failed to send project created email to client:', error);
+      }
+    }
+
+    // ✅ Send email to members
+    if (memberUsers.length > 0) {
+      const memberIds = memberUsers.map((m) => m.user.id);
+
+      try {
+        await this.notificationsService.notifyProjectMembers(
+          project.id,
+          project.name,
+          memberIds,
+          'Vous avez été assigné au projet',
+        );
+      } catch (error) {
+        console.error(
+          'Failed to send project assignment notifications:',
+          error,
+        );
+      }
+
+      for (const member of memberUsers) {
+        if (member.user.email) {
+          try {
+            await this.mailService.sendProjectAssignmentEmail(
+              member.user.email,
+              {
+                memberName: `${member.user.firstName} ${member.user.lastName}`,
+                projectName: project.name,
+                projectDescription: project.description,
+                role: member.role,
+                startDate: project.start_date
+                  ? new Date(project.start_date).toLocaleDateString('fr-FR')
+                  : undefined,
+                endDate: project.end_date
+                  ? new Date(project.end_date).toLocaleDateString('fr-FR')
+                  : undefined,
+              },
+            );
+          } catch (error) {
+            console.error(
+              `Failed to send project assignment email to member ${member.user.email}:`,
+              error,
+            );
+          }
+        }
+      }
+    }
+
+    // ✅ Notify all admins about the client submission
+    try {
+      const admins = await this.userRepo.find({
+        where: { roles: Like('%admin%') as any },
+      });
+
+      const adminIds = admins
+        .filter((a) => a.roles.includes('admin' as any))
+        .map((a) => a.id);
+
+      if (adminIds.length > 0) {
+        await this.notificationsService.createProjectSubmissionNotification(
+          project.id,
+          project.name,
+          currentUser.id,
+          adminIds,
+        );
+
+        for (const admin of admins) {
+          if (admin.roles.includes('admin' as any) && admin.email) {
+            await this.mailService.sendProjectSubmissionEmail(admin.email, {
+              adminName: `${admin.firstName} ${admin.lastName}`,
+              projectName: project.name,
+              clientName: `${currentUser.firstName} ${currentUser.lastName}`,
+              projectDescription: project.description,
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send project submission notifications:', error);
+    }
+
+    return this.findOne(project.id);
+  }
+
+
+  // ------------------------------------------------------------
   // 🔹 ASSIGN MAINTENANCE PERMISSION
   // ------------------------------------------------------------
   private async assignMaintenancePermissionToMembers(projectId: number) {

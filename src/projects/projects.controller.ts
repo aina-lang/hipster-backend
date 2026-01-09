@@ -37,6 +37,22 @@ export class ProjectsController {
   }
 
   /**
+   * 📝 Soumettre un projet (Client uniquement)
+   */
+  @ApiOperation({ summary: 'Soumettre un projet (Client uniquement)' })
+  @ResponseMessage('Projet soumis avec succès. En attente de validation.')
+  @Post('client/submit')
+  async submitClientProject(
+    @Body() createProjectDto: CreateProjectDto,
+    @Request() req,
+  ) {
+    return this.projectsService.createClientProject(
+      createProjectDto,
+      req.user.userId,
+    );
+  }
+
+  /**
    * 📋 Liste paginée des projets (Mobile App - exclut Maintenance)
    */
   @ApiOperation({ summary: 'Liste paginée des projets pour app mobile' })
