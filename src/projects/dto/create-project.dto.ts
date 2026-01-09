@@ -57,6 +57,10 @@ export class CreateProjectDto {
   taskIds?: number[];
 
   @IsOptional()
+  @IsInt() // Or IsNumber if decimal is allowed, entity says decimal 12,2. So IsNumber preferable.
+  budget?: number; // Actually better to use IsNumber() for float.
+
+  @IsOptional()
   @IsObject()
   maintenanceConfig?: MaintenanceConfig;
 }
