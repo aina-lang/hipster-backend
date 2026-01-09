@@ -395,4 +395,29 @@ export class NotificationsService {
     this.notificationsGateway.emitToUser(userId, 'notification:new', saved);
     return saved;
   }
+
+  /**
+   * Notifier le client qu'un projet a été refusé avec le motif
+   */
+  async createProjectRefusalNotification(
+    userId: number,
+    projectId: number,
+    projectName: string,
+    reason: string,
+  ): Promise<Notification> {
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('User not found');
+
+    const notification = this.notificationRepo.create({
+      user,
+      type: 'project_refused',
+      title: '❌ Projet refusé',
+      message: `Votre projet "${projectName}" a été refusé. Motif: ${reason}`,
+      data: { projectId, projectName, reason },
+    });
+
+    const saved = await this.notificationRepo.save(notification);
+    this.notificationsGateway.emitToUser(userId, 'notification:new', saved);
+    return saved;
+  }
 }

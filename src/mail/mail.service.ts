@@ -408,4 +408,26 @@ export class MailService {
       userRoles: ['client_marketing'],
     });
   }
+
+  /**
+   * Email pour le refus d'un projet avec motif
+   */
+  async sendProjectRefusalEmail(
+    to: string,
+    data: {
+      clientName: string;
+      projectName: string;
+      reason: string;
+      projectUrl: string;
+    },
+    roles?: string[],
+  ): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: `Projet refusé - ${data.projectName}`,
+      template: 'project-refusal',
+      context: data,
+      userRoles: roles,
+    });
+  }
 }

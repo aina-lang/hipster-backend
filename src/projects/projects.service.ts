@@ -134,11 +134,11 @@ export class ProjectsService {
     }
 
 
-    // Determine default status: CLIENT -> PENDING, ADMIN -> PLANNED
-    const isAdmin = currentUser.roles.includes('admin' as any);
-    const initialStatus = isAdmin
-      ? ProjectStatus.PLANNED
-      : ProjectStatus.PENDING;
+    // Determine default status: If client exists -> PENDING, otherwise -> PLANNED
+    // This ensures client-submitted projects require validation
+    const initialStatus = client
+      ? ProjectStatus.PENDING
+      : ProjectStatus.PLANNED;
 
     // Créer le projet
     const project = this.projectRepo.create({
@@ -597,7 +597,11 @@ export class ProjectsService {
   // ------------------------------------------------------------
   // 🔹 REFUSE PROJECT (Admin Only)
   // ------------------------------------------------------------
-  async refuseProject(id: number, userId: number): Promise<Project> {
+  async refuseProject(
+    id: number,
+    userId: number,
+    reason?: string,
+  ): Promise<Project> {
     const project = await this.findOne(id);
     if (!project) throw new NotFoundException('Projet introuvable');
 
@@ -613,22 +617,30 @@ export class ProjectsService {
 
     await this.projectRepo.save(project);
 
-    // Notify Client
+    // Notify Client with refusal reason
     if (project.client?.user?.email) {
       try {
-        await this.mailService.sendProjectUpdatedEmail(
+        // Send in-app notification with reason
+        await this.notificationsService.createProjectRefusalNotification(
+          project.client.user.id,
+          project.id,
+          project.name,
+          reason || 'Aucun motif spécifié',
+        );
+
+        // Send email with reason
+        await this.mailService.sendProjectRefusalEmail(
           project.client.user.email,
           {
             clientName: `${project.client.user.firstName} ${project.client.user.lastName}`,
             projectName: project.name,
-            status: project.status,
-            progress: 0,
+            reason: reason || 'Aucun motif spécifié',
             projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${project.id}`,
           },
           project.client.user.roles,
         );
       } catch (error) {
-        console.error('Failed to send project refusal email:', error);
+        console.error('Failed to send project refusal notification:', error);
       }
     }
 

@@ -112,8 +112,16 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Refuser un projet (Admin uniquement)' })
   @ResponseMessage('Projet refusé')
   @Patch(':id/refuse')
-  async refuse(@Param('id') id: string, @Request() req) {
-    return this.projectsService.refuseProject(+id, req.user.userId);
+  async refuse(
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+    @Request() req,
+  ) {
+    return this.projectsService.refuseProject(
+      +id,
+      req.user.userId,
+      body.reason,
+    );
   }
 
   /**
