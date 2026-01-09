@@ -325,6 +325,44 @@ export class TasksService {
       );
     }
 
+    // ✅ If status is DONE, resolve linked ticket
+    if (savedTask.status === TaskStatus.DONE) {
+      const linkedTicket = await this.ticketRepo.findOne({
+        where: { task: { id: savedTask.id } },
+        relations: ['client', 'client.user'],
+      });
+
+      if (linkedTicket && linkedTicket.status !== TicketStatus.CLOSED) {
+        linkedTicket.status = TicketStatus.CLOSED;
+        await this.ticketRepo.save(linkedTicket);
+
+        // Notify client (Push + Email)
+        if (linkedTicket.client?.user) {
+          // Push
+          await this.notificationsService.create({
+            userId: linkedTicket.client.user.id,
+            type: 'ticket_resolved',
+            title: '✅ Ticket Résolu',
+            message: `Votre ticket "${linkedTicket.subject}" a été résolu suite à la finalisation de la tâche associée.`,
+            data: { ticketId: linkedTicket.id, taskId: savedTask.id },
+          });
+
+          // Email
+          if (linkedTicket.client.user.email) {
+            await this.mailService.sendTicketResolvedEmail(
+              linkedTicket.client.user.email,
+              {
+                clientName: `${linkedTicket.client.user.firstName} ${linkedTicket.client.user.lastName}`,
+                ticketTitle: linkedTicket.subject,
+                projectName: task.project?.name,
+              },
+              linkedTicket.client.user.roles,
+            );
+          }
+        }
+      }
+    }
+
     // 🛠️ MAINTENANCE LOGIC: Auto-assign 'manage:maintenance' permission
     // Check if project has maintenance enabled (either current project or new project if changed)
     const currentProject = task.project;
@@ -407,6 +445,47 @@ export class TasksService {
       console.log(
         `[TasksService] Updated lastMaintenanceDate for website #${savedTask.websiteId}`,
       );
+    }
+
+    // ✅ If status is DONE, resolve linked ticket
+    if (savedTask.status === TaskStatus.DONE) {
+      const linkedTicket = await this.ticketRepo.findOne({
+        where: { task: { id: savedTask.id } },
+        relations: ['client', 'client.user'],
+      });
+
+      if (linkedTicket && linkedTicket.status !== TicketStatus.CLOSED) {
+        linkedTicket.status = TicketStatus.CLOSED;
+        await this.ticketRepo.save(linkedTicket);
+
+        // Notify client (Push + Email)
+        if (linkedTicket.client?.user) {
+          // Push
+          await this.notificationsService.create({
+            userId: linkedTicket.client.user.id,
+            type: 'ticket_resolved',
+            title: '✅ Ticket Résolu',
+            message: `Votre ticket "${linkedTicket.subject}" a été résolu suite à la finalisation de la tâche associée.`,
+            data: { ticketId: linkedTicket.id, taskId: savedTask.id },
+          });
+
+          // Email
+          if (linkedTicket.client.user.email) {
+            await this.mailService.sendTicketResolvedEmail(
+              linkedTicket.client.user.email,
+              {
+                clientName: `${linkedTicket.client.user.firstName} ${linkedTicket.client.user.lastName}`,
+                ticketTitle: linkedTicket.subject,
+                projectName: task.project?.name,
+              },
+              linkedTicket.client.user.roles,
+            );
+          }
+        }
+        console.log(
+          `[Task #${id}] Auto-closed linked ticket #${linkedTicket.id} and notified client`,
+        );
+      }
     }
 
     // 🔄 Mettre à jour le statut du projet automatiquement

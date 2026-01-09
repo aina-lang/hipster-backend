@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  h1(style="font-size: 24px; font-weight: 700; color: #18181b; margin-bottom: 24px;") Ticket Résolu !
+
+  p(style="font-size: 16px; color: #52525b; margin-bottom: 24px;") Bonjour #{clientName},
+
+  p(style="font-size: 16px; color: #52525b; margin-bottom: 24px;")
+    | Nous sommes heureux de vous informer que votre ticket 
+    strong "#{ticketTitle}"
+    |  a été résolu suite à la finalisation de la tâche associée.
+
+  div(style="background-color: #f9f9f9; border-radius: 8px; padding: 20px; margin-bottom: 24px;")
+    table(style="width: 100%; border-collapse: collapse;")
+      tr
+        td(style="padding: 10px 0; font-size: 14px; color: #52525b;") Ticket
+        td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right;") #{ticketTitle}
+      tr
+        td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #e5e7eb;") Projet
+        td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right; border-top: 1px solid #e5e7eb;") #{projectName || 'N/A'}
+      tr
+        td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #e5e7eb;") État
+        td(style="padding: 10px 0; font-size: 14px; color: #10b981; font-weight: 700; text-align: right; border-top: 1px solid #e5e7eb;") RÉSOLU
+
+  p(style="font-size: 16px; color: #52525b; margin-bottom: 32px;")
+    | Si vous avez d'autres questions ou si le problème persiste, n'hésitez pas à rouvrir un ticket.
+
+  a(href=appUrl + "/client/tickets", style="display: inline-block; padding: 12px 24px; background-color: #000000; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;") Voir mes tickets

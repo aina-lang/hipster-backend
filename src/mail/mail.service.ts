@@ -476,6 +476,24 @@ export class MailService {
   /**
    * Email pour le refus d'un ticket
    */
+  async sendTicketResolvedEmail(
+    to: string,
+    data: {
+      clientName: string;
+      ticketTitle: string;
+      projectName?: string;
+    },
+    roles?: string[],
+  ): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: `✅ Ticket Résolu - ${data.ticketTitle}`,
+      template: 'ticket-resolved',
+      context: data,
+      userRoles: roles,
+    });
+  }
+
   async sendTicketRejectedEmail(
     to: string,
     data: {
