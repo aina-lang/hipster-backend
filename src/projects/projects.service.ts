@@ -510,7 +510,7 @@ export class ProjectsService {
         await this.notificationsService.createProjectSubmissionNotification(
           project.id,
           project.name,
-          currentUser.id,
+          client.id, // ✅ Use client profile ID, not user ID
           adminIds,
         );
 
