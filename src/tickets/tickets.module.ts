@@ -8,12 +8,14 @@ import { Project } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { MailModule } from 'src/mail/mail.module';
+import { TasksModule } from 'src/tasks/tasks.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Ticket, ClientProfile, Project, User]),
     NotificationsModule,
     MailModule,
+    TasksModule,
   ],
   controllers: [TicketsController],
   providers: [TicketsService],

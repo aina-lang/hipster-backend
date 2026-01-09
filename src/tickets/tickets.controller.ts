@@ -16,6 +16,10 @@ import { TicketPriority, TicketStatus } from './entities/ticket.entity';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { ValidateTicketDto } from './dto/validate-ticket.dto';
+import { User } from 'src/common/decorators/user.decorator';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { Role } from 'src/common/enums/role.enum';
 
 @ApiTags('Tickets')
 @Controller('tickets')
@@ -52,6 +56,18 @@ export class TicketsController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateTicketDto: UpdateTicketDto) {
     return this.ticketsService.update(+id, updateTicketDto);
+  }
+
+  @ApiOperation({ summary: 'Valider ou refuser un ticket' })
+  @ResponseMessage('Ticket validé/refusé avec succès')
+  @Roles(Role.ADMIN)
+  @Post(':id/validate')
+  validate(
+    @Param('id') id: string,
+    @Body() dto: ValidateTicketDto,
+    @User('id') adminId: number,
+  ) {
+    return this.ticketsService.validateTicket(+id, dto, adminId);
   }
 
   @ApiOperation({ summary: 'Supprimer un ticket' })

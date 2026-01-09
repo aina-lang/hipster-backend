@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { Ticket } from './entities/ticket.entity';
@@ -11,7 +15,9 @@ import { PaginatedResult } from 'src/common/types/paginated-result.type';
 import { User } from 'src/users/entities/user.entity';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { MailService } from 'src/mail/mail.service';
-import { In } from 'typeorm';
+import { TasksService } from 'src/tasks/tasks.service';
+import { ValidateTicketDto } from './dto/validate-ticket.dto';
+import { TicketStatus } from './entities/ticket.entity';
 
 @Injectable()
 export class TicketsService {
@@ -26,7 +32,72 @@ export class TicketsService {
     private readonly userRepo: Repository<User>,
     private readonly notificationsService: NotificationsService,
     private readonly mailService: MailService,
+    private readonly tasksService: TasksService,
   ) {}
+
+  async validateTicket(
+    id: number,
+    dto: ValidateTicketDto,
+    adminId: number,
+  ): Promise<Ticket> {
+    const ticket = await this.findOne(id);
+
+    if (dto.status === TicketStatus.ACCEPTED) {
+      if (!ticket.project) {
+        throw new BadRequestException(
+          'Le ticket doit être lié à un projet pour être accepté.',
+        );
+      }
+
+      // 1. Créer la tâche
+      const task = await this.tasksService.create(
+        {
+          title: `[TICKET #${ticket.id}] ${ticket.subject}`,
+          description: ticket.description,
+          projectId: ticket.project.id,
+          assigneeIds: dto.assigneeIds,
+          priority: ticket.priority as any,
+        },
+        adminId,
+      );
+
+      // 2. Lier le ticket à la tâche
+      ticket.task = task;
+      ticket.status = TicketStatus.ACCEPTED;
+    } else if (dto.status === TicketStatus.REJECTED) {
+      ticket.status = TicketStatus.REJECTED;
+    }
+
+    const savedTicket = await this.ticketRepo.save(ticket);
+
+    // 📩 Notification Client
+    try {
+      const clientWithUser = await this.clientRepo.findOne({
+        where: { id: ticket.client.id },
+        relations: ['user'],
+      });
+
+      if (clientWithUser?.user) {
+        const title =
+          dto.status === TicketStatus.ACCEPTED
+            ? 'Ticket Accepté'
+            : 'Ticket Refusé';
+        const message = `Votre ticket "${ticket.subject}" a été ${dto.status === TicketStatus.ACCEPTED ? 'accepté et converti en tâche' : 'refusé'}.`;
+
+        await this.notificationsService.create({
+          userId: clientWithUser.user.id,
+          title,
+          message,
+          type: 'ticket_status_update',
+          data: { ticketId: ticket.id, status: ticket.status },
+        });
+      }
+    } catch (e) {
+      console.error('Failed to notify client about ticket validation:', e);
+    }
+
+    return savedTicket;
+  }
 
   async create(dto: CreateTicketDto): Promise<Ticket> {
     const client = await this.clientRepo.findOneBy({ id: dto.clientId });
@@ -135,7 +206,10 @@ export class TicketsService {
     const qb = this.ticketRepo
       .createQueryBuilder('ticket')
       .leftJoinAndSelect('ticket.client', 'client')
-      .leftJoinAndSelect('ticket.project', 'project');
+      .leftJoinAndSelect('client.user', 'clientUser')
+      .leftJoinAndSelect('ticket.project', 'project')
+      .leftJoinAndSelect('project.members', 'members')
+      .leftJoinAndSelect('members.employee', 'employee');
 
     if (search) {
       qb.andWhere(
