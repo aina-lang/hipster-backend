@@ -18,8 +18,8 @@ export class LoyaltyController {
   
   @ApiOperation({ summary: 'Récupérer le détail de fidélité du client connecté' })
   @Get('mine')
-  async getMine(@User() user: any) {
-    return this.loyaltyService.getLoyaltyDetailByUserId(user.id);
+  async getMyLoyalty(@User() user: any) {
+    return this.loyaltyService.getLoyaltyDetailByUserId(user.sub);
   }
 
   @ApiOperation({ summary: 'Récupérer tous les statuts de fidélité' })
