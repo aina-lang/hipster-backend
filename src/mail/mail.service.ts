@@ -430,4 +430,25 @@ export class MailService {
       userRoles: roles,
     });
   }
+
+  /**
+   * Email pour l'annulation d'un projet
+   */
+  async sendProjectCancelledEmail(
+    to: string,
+    data: {
+      clientName: string;
+      projectName: string;
+      projectUrl: string;
+    },
+    roles?: string[],
+  ): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: `Projet annulé - ${data.projectName}`,
+      template: 'project-cancelled',
+      context: data,
+      userRoles: roles,
+    });
+  }
 }

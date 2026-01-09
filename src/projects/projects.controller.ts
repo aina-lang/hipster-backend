@@ -141,6 +141,16 @@ export class ProjectsController {
   }
 
   /**
+   * ❌ Annuler un projet
+   */
+  @ApiOperation({ summary: 'Annuler un projet' })
+  @ResponseMessage('Projet annulé avec succès')
+  @Patch(':id/cancel')
+  async cancel(@Param('id') id: string, @Request() req) {
+    return this.projectsService.cancelProject(+id, req.user.userId);
+  }
+
+  /**
    * ❌ Suppression d’un projet
    */
   @ApiOperation({ summary: 'Supprimer un projet' })

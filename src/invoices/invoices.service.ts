@@ -44,6 +44,13 @@ export class InvoicesService {
       where: { id: projectId },
     });
     if (!project) throw new NotFoundException('Project not found');
+    
+    // Check if project is validated (not PENDING) before any billing
+    if (project.status === 'pending') {
+      throw new Error(
+        'Impossible de générer un document pour un projet en attente de validation',
+      );
+    }
 
     // Calculate totals
     let subTotal = 0;
@@ -168,7 +175,7 @@ export class InvoicesService {
   /**
    * Convert an accepted quote to an invoice
    */
-  async convertQuoteToInvoice(quoteId: number, user: User): Promise<Invoice> {
+  async convertQuoteToInvoice(quoteId: number, user?: User): Promise<Invoice> {
     // Fetch the quote with all relations
     const quote = await this.invoiceRepo.findOne({
       where: { id: quoteId },
@@ -735,8 +742,12 @@ export class InvoicesService {
       invoice.type === InvoiceType.QUOTE &&
       status === InvoiceStatus.ACCEPTED
     ) {
-      // Optional: Log or trigger further business logic
-      console.log(`Quote ${invoice.reference} accepted by client.`);
+      console.log(`Quote ${invoice.reference} accepted by client. Generating invoice...`);
+      try {
+        await this.convertQuoteToInvoice(invoice.id);
+      } catch (error) {
+        console.error('Failed to automatically generate invoice:', error);
+      }
     }
 
     return saved;

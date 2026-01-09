@@ -718,6 +718,18 @@ export class ProjectsService {
     if (dto.status) {
       project.status = dto.status;
       project.is_manual_status = true;
+    } else if (
+      project.status === ProjectStatus.REFUSED &&
+      currentUser &&
+      (currentUser.roles.includes('client_marketing' as any) ||
+        currentUser.roles.includes('client_ai' as any))
+    ) {
+      // 🔄 Si un client modifie un projet REFUSÉ, on le repasse en PENDING
+      project.status = ProjectStatus.PENDING;
+      project.is_manual_status = false;
+      console.log(
+        `Project #${id} status reset to PENDING due to client update`,
+      );
     }
 
     // 🔄 Reset du statut manuel
@@ -860,6 +872,60 @@ export class ProjectsService {
   }
 
   // ------------------------------------------------------------
+  // 🔹 CANCEL PROJECT (Admin or Automatic)
+  // ------------------------------------------------------------
+  async cancelProject(id: number, userId?: number): Promise<Project> {
+    const project = await this.findOne(id);
+    if (!project) throw new NotFoundException('Projet introuvable');
+
+    if (
+      project.status === ProjectStatus.CANCELED ||
+      project.status === ProjectStatus.COMPLETED
+    ) {
+      throw new BadRequestException('Ce projet est déjà annulé ou terminé');
+    }
+
+    if (userId) {
+      const currentUser = await this.userRepo.findOneBy({ id: userId });
+      if (!currentUser) throw new NotFoundException('Utilisateur introuvable');
+      project.updatedBy = currentUser;
+    }
+
+    project.status = ProjectStatus.CANCELED;
+    project.is_manual_status = true;
+
+    await this.projectRepo.save(project);
+
+    // Notify Client
+    if (project.client?.user?.email) {
+      try {
+        await this.notificationsService.createProjectCancellationNotification(
+          project.client.user.id,
+          project.id,
+          project.name,
+        );
+
+        await this.mailService.sendProjectCancelledEmail(
+          project.client.user.email,
+          {
+            clientName: `${project.client.user.firstName} ${project.client.user.lastName}`,
+            projectName: project.name,
+            projectUrl: `${process.env.FRONTEND_URL}/app/project/show?id=${project.id}`,
+          },
+          project.client.user.roles,
+        );
+      } catch (error) {
+        console.error(
+          'Failed to send project cancellation notification:',
+          error,
+        );
+      }
+    }
+
+    return project;
+  }
+
+  // ------------------------------------------------------------
   // 🔹 DELETE PROJECT
   // ------------------------------------------------------------
   async remove(id: number): Promise<{ message: string }> {
@@ -935,10 +1001,16 @@ export class ProjectsService {
       `[Project #${projectId}] Reloaded ${tasks.length} tasks from database`,
     );
 
-    // Cas 1: Aucune tâche → PLANNED
+    // Cas 1: Aucune tâche → PLANNED (uniquement si le projet n'est pas en attente ou refusé)
     if (tasks.length === 0) {
-      project.status = ProjectStatus.PLANNED;
-      console.log(`[Project #${projectId}] No tasks → PLANNED`);
+      if (
+        project.status !== ProjectStatus.PENDING &&
+        project.status !== ProjectStatus.REFUSED &&
+        project.status !== ProjectStatus.CANCELED
+      ) {
+        project.status = ProjectStatus.PLANNED;
+        console.log(`[Project #${projectId}] No tasks → PLANNED`);
+      }
     } else {
       const total = tasks.length;
       const doneCount = tasks.filter(

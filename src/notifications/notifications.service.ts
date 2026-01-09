@@ -420,4 +420,28 @@ export class NotificationsService {
     this.notificationsGateway.emitToUser(userId, 'notification:new', saved);
     return saved;
   }
+
+  /**
+   * Notifier le client qu'un projet a été annulé
+   */
+  async createProjectCancellationNotification(
+    userId: number,
+    projectId: number,
+    projectName: string,
+  ): Promise<Notification> {
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('User not found');
+
+    const notification = this.notificationRepo.create({
+      user,
+      type: 'project_canceled',
+      title: '🚫 Projet annulé',
+      message: `Votre projet "${projectName}" a été annulé.`,
+      data: { projectId, projectName },
+    });
+
+    const saved = await this.notificationRepo.save(notification);
+    this.notificationsGateway.emitToUser(userId, 'notification:new', saved);
+    return saved;
+  }
 }
