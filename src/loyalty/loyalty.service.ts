@@ -37,26 +37,48 @@ export class LoyaltyService {
     return this.getClientLoyaltyDetail(client.id);
   }
 
+  /**
+   * Helper method to check if a project is fully paid
+   * A project is considered fully paid if ALL its invoices have status PAID
+   */
+  private isProjectFullyPaid(project: Project): boolean {
+    // If no invoices, project is not considered paid
+    if (!project.invoices || project.invoices.length === 0) {
+      return false;
+    }
+
+    // Check if ALL invoices are PAID
+    return project.invoices.every((invoice) => invoice.status === 'paid');
+  }
+
   async getLoyaltyStatus(clientId: number): Promise<LoyaltyStatus> {
     // Check if client exists
     const client = await this.clientRepo.findOne({ where: { id: clientId } });
     if (!client) throw new NotFoundException(`Client #${clientId} not found`);
 
-    // Count signed/completed projects (only COMPLETED projects count as "signed")
+    // Load all projects with their invoices
     const allProjects = await this.projectRepo.find({
       where: { client: { id: clientId } },
+      relations: ['invoices'],
     });
     console.log(
       `DEBUG: Loyalty check for client ${clientId}. Found ${allProjects.length} total projects.`,
     );
-    allProjects.forEach((p) =>
-      console.log(`DEBUG: Project ID: ${p.id}, Status: ${p.status}`),
-    );
 
-    const projectCount = allProjects.filter(
-      (p) => p.status === ProjectStatus.COMPLETED,
-    ).length;
-    console.log(`DEBUG: Final projectCount for loyalty: ${projectCount}`);
+    // Count only COMPLETED projects with ALL invoices PAID
+    const fullyPaidProjects = allProjects.filter((p) => {
+      const isCompleted = p.status === ProjectStatus.COMPLETED;
+      const isFullyPaid = this.isProjectFullyPaid(p);
+      
+      console.log(
+        `DEBUG: Project ID: ${p.id}, Status: ${p.status}, Completed: ${isCompleted}, Fully Paid: ${isFullyPaid}, Invoices: ${p.invoices?.length || 0}`,
+      );
+      
+      return isCompleted && isFullyPaid;
+    });
+
+    const projectCount = fullyPaidProjects.length;
+    console.log(`DEBUG: Final projectCount for loyalty (completed + paid): ${projectCount}`);
 
     // Determine Tier
     let tier = LoyaltyTier.STANDARD;
@@ -114,14 +136,14 @@ export class LoyaltyService {
   async getClientLoyaltyDetail(clientId: number) {
     const client = await this.clientRepo.findOne({
       where: { id: clientId },
-      relations: ['user', 'projects'],
+      relations: ['user', 'projects', 'projects.invoices'],
     });
 
     if (!client) throw new NotFoundException(`Client #${clientId} not found`);
 
-    // Get completed projects sorted by completion date
+    // Get completed AND fully paid projects sorted by completion date
     const completedProjects = client.projects
-      .filter((p) => p.status === ProjectStatus.COMPLETED)
+      .filter((p) => p.status === ProjectStatus.COMPLETED && this.isProjectFullyPaid(p))
       .sort((a, b) => {
         const dateA = a.real_end_date || a.updatedAt;
         const dateB = b.real_end_date || b.updatedAt;

@@ -14,6 +14,7 @@ import { CompanyService } from 'src/company/company.service';
 
 import { MailService } from 'src/mail/mail.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
+import { LoyaltyService } from 'src/loyalty/loyalty.service';
 
 @Injectable()
 export class InvoicesService {
@@ -29,6 +30,7 @@ export class InvoicesService {
     private readonly companyService: CompanyService,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   async create(createInvoiceDto: CreateInvoiceDto, user: User) {
@@ -68,7 +70,48 @@ export class InvoicesService {
     const taxRate = invoiceData.tva ? 20 : 0;
     const taxAmount = (subTotal * taxRate) / 100;
     const discountAmount = invoiceData.discount || 0;
-    const totalAmount = subTotal + taxAmount - discountAmount;
+
+    // ===== LOYALTY DISCOUNT LOGIC =====
+    let loyaltyDiscountPercent = 0;
+    let loyaltyDiscountAmount = 0;
+    let usedLoyaltyDiscount = false;
+
+    // Check if client is eligible for Bronze discount
+    try {
+      const loyaltyStatus = await this.loyaltyService.getLoyaltyStatus(clientId);
+      
+      // Client is eligible if:
+      // 1. Has 3+ fully paid projects (Bronze tier or higher)
+      // 2. Hasn't used the Bronze discount yet
+      if (loyaltyStatus.projectCount >= 3 && !client.hasUsedBronzeDiscount) {
+        loyaltyDiscountPercent = 10;
+        loyaltyDiscountAmount = (subTotal * loyaltyDiscountPercent) / 100;
+        usedLoyaltyDiscount = true;
+
+        console.log(
+          `[InvoicesService] Applying Bronze discount to client ${clientId}: ${loyaltyDiscountPercent}% = ${loyaltyDiscountAmount}€`,
+        );
+
+        // Mark client as having used the discount
+        await this.clientRepo.update(clientId, {
+          hasUsedBronzeDiscount: true,
+        });
+
+        // Reset loyalty points to 0 (restart the cycle)
+        await this.clientRepo.update(clientId, {
+          loyaltyPoints: 0,
+        });
+
+        console.log(
+          `[InvoicesService] Reset loyalty points for client ${clientId} to 0`,
+        );
+      }
+    } catch (error) {
+      console.error('[InvoicesService] Error calculating loyalty discount:', error);
+      // Continue without discount if there's an error
+    }
+
+    const totalAmount = subTotal + taxAmount - discountAmount - loyaltyDiscountAmount;
 
     // Create snapshots
     const clientSnapshot = {
@@ -120,12 +163,20 @@ export class InvoicesService {
       taxRate,
       taxAmount,
       amount: totalAmount,
+      loyaltyDiscountPercent,
+      loyaltyDiscountAmount,
+      usedLoyaltyDiscount,
       clientSnapshot,
       projectSnapshot,
       senderDetails,
       reference:
         invoiceData.reference || this.generateReference(invoiceData.type),
       notes: invoiceData.notes || 'TVA non applicable - Art. 293 B du CGI', // Default note if no TVA
+      terms:
+        invoiceData.terms ||
+        (invoiceData.type === InvoiceType.QUOTE
+          ? 'Validité du devis : 30 jours.'
+          : 'Paiement à réception de facture.'),
     });
 
     const savedInvoice = await this.invoiceRepo.save(invoice);

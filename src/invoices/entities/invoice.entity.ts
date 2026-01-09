@@ -88,6 +88,16 @@ export class Invoice {
   @Column({ type: 'json', nullable: true })
   senderDetails?: any;
 
+  // Loyalty discount tracking
+  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  loyaltyDiscountPercent: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  loyaltyDiscountAmount: number;
+
+  @Column({ default: false })
+  usedLoyaltyDiscount: boolean;
+
   @Column({ type: 'timestamp', nullable: true })
   sentAt?: Date;
 
