@@ -19,6 +19,8 @@ import { User } from 'src/users/entities/user.entity';
 
 import { Permission } from '../permissions/entities/permission.entity';
 import { ClientWebsite } from '../profiles/entities/client-website.entity';
+import { Ticket, TicketStatus } from 'src/tickets/entities/ticket.entity';
+import { NotificationsService } from 'src/notifications/notifications.service';
 @Injectable()
 export class TasksService {
   constructor(
@@ -40,8 +42,12 @@ export class TasksService {
     @InjectRepository(ClientWebsite)
     private readonly websiteRepo: Repository<ClientWebsite>,
 
+    @InjectRepository(Ticket)
+    private readonly ticketRepo: Repository<Ticket>,
+
     private readonly projectsService: ProjectsService,
     private readonly mailService: MailService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   // 🔹 CREATE
