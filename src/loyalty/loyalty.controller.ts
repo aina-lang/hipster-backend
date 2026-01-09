@@ -8,12 +8,19 @@ import {
 import { LoyaltyService } from './loyalty.service';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { User } from 'src/common/decorators/user.decorator';
 
 @ApiTags('Loyalty')
 @Controller('loyalty')
 @UseGuards(AuthGuard)
 export class LoyaltyController {
   constructor(private readonly loyaltyService: LoyaltyService) {}
+  
+  @ApiOperation({ summary: 'Récupérer le détail de fidélité du client connecté' })
+  @Get('mine')
+  async getMine(@User() user: any) {
+    return this.loyaltyService.getLoyaltyDetailByUserId(user.id);
+  }
 
   @ApiOperation({ summary: 'Récupérer tous les statuts de fidélité' })
   @Get('')

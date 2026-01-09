@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { Project, ProjectStatus } from 'src/projects/entities/project.entity';
+import { User } from 'src/users/entities/user.entity';
 import { LOYALTY_RULES, LoyaltyStatus, LoyaltyTier } from './loyalty.types';
 
 @Injectable()
@@ -12,7 +13,20 @@ export class LoyaltyService {
     private readonly clientRepo: Repository<ClientProfile>,
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
+  
+  async getLoyaltyDetailByUserId(userId: number) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['clientProfile'],
+    });
+    if (!user || !user.clientProfile) {
+      throw new NotFoundException('Client profile not found for this user');
+    }
+    return this.getClientLoyaltyDetail(user.clientProfile.id);
+  }
 
   async getLoyaltyStatus(clientId: number): Promise<LoyaltyStatus> {
     // Check if client exists
