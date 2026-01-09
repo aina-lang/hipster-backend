@@ -40,7 +40,7 @@ export class MailService {
       apiUrl = 'https://hipster-api.fr';
     }
 
-    const mobileUrl = process.env.MOBILE_APP_URL || 'hypster://login';
+    const mobileUrl = process.env.MOBILE_APP_URL || 'hipster://login';
 
     // Determine the primary app URL
     let appUrl = frontendUrl;

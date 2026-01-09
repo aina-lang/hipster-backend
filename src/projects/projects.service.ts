@@ -1236,7 +1236,7 @@ export class ProjectsService {
         </table>
 
         <div class="footer">
-          Hypster Marketing - Rapport de projet confidentiel
+          Hipster Marketing - Rapport de projet confidentiel
         </div>
       </body>
       </html>
