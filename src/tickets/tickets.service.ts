@@ -70,30 +70,102 @@ export class TicketsService {
 
     const savedTicket = await this.ticketRepo.save(ticket);
 
-    // 📩 Notification Client
+    // 📩 Notification & Emails
     try {
-      const clientWithUser = await this.clientRepo.findOne({
-        where: { id: ticket.client.id },
-        relations: ['user'],
+      // 1. Fetch relations for notification data
+      const t = await this.ticketRepo.findOne({
+        where: { id: savedTicket.id },
+        relations: [
+          'client',
+          'client.user',
+          'project',
+          'task',
+          'task.assignees',
+          'task.assignees.user',
+        ],
       });
 
-      if (clientWithUser?.user) {
+      if (!t) return savedTicket;
+
+      // 2. Notify Client (Accepted / Rejected)
+      if (t.client?.user) {
         const title =
           dto.status === TicketStatus.ACCEPTED
-            ? 'Ticket Accepté'
-            : 'Ticket Refusé';
-        const message = `Votre ticket "${ticket.subject}" a été ${dto.status === TicketStatus.ACCEPTED ? 'accepté et converti en tâche' : 'refusé'}.`;
+            ? '✅ Ticket Accepté'
+            : '❌ Ticket Refusé';
+        const message =
+          dto.status === TicketStatus.ACCEPTED
+            ? `Votre ticket "${t.subject}" a été accepté et converti en tâche.`
+            : `Votre ticket "${t.subject}" a été refusé par l'équipe technique.`;
 
+        // Push
         await this.notificationsService.create({
-          userId: clientWithUser.user.id,
+          userId: t.client.user.id,
           title,
           message,
           type: 'ticket_status_update',
-          data: { ticketId: ticket.id, status: ticket.status },
+          data: { ticketId: t.id, status: t.status },
         });
+
+        // Email
+        if (t.client.user.email) {
+          if (dto.status === TicketStatus.ACCEPTED) {
+            await this.mailService.sendTicketAcceptedEmail(
+              t.client.user.email,
+              {
+                clientName: `${t.client.user.firstName} ${t.client.user.lastName}`,
+                ticketTitle: t.subject,
+                projectName: t.project?.name,
+              },
+              t.client.user.roles,
+            );
+          } else {
+            await this.mailService.sendTicketRejectedEmail(
+              t.client.user.email,
+              {
+                clientName: `${t.client.user.firstName} ${t.client.user.lastName}`,
+                ticketTitle: t.subject,
+              },
+              t.client.user.roles,
+            );
+          }
+        }
+      }
+
+      // 3. Notify Employees (Task Assigned)
+      if (dto.status === TicketStatus.ACCEPTED && t.task?.assignees) {
+        for (const employeeProfile of t.task.assignees) {
+          const employeeUser = employeeProfile.user;
+          if (!employeeUser) continue;
+
+          // Push
+          await this.notificationsService.create({
+            userId: employeeUser.id,
+            title: '📋 Nouvelle tâche (Ticket)',
+            message: `Une nouvelle tâche a été créée pour vous à partir du ticket #${t.id}: "${t.subject}"`,
+            type: 'task_assigned',
+            data: { taskId: t.task.id, ticketId: t.id },
+          });
+
+          // Email
+          if (employeeUser.email) {
+            await this.mailService.sendTaskAssignedEmail(
+              employeeUser.email,
+              {
+                assigneeName: `${employeeUser.firstName} ${employeeUser.lastName}`,
+                taskTitle: t.task.title,
+                projectName: t.project?.name,
+                taskPriority: t.task.priority,
+                taskDescription: t.task.description,
+                clientName: `${t.client.user.firstName} ${t.client.user.lastName}`,
+              },
+              employeeUser.roles,
+            );
+          }
+        }
       }
     } catch (e) {
-      console.error('Failed to notify client about ticket validation:', e);
+      console.error('Failed to send ticket validation notifications:', e);
     }
 
     return savedTicket;

@@ -451,4 +451,45 @@ export class MailService {
       userRoles: roles,
     });
   }
+
+  /**
+   * Email pour l'acceptation d'un ticket
+   */
+  async sendTicketAcceptedEmail(
+    to: string,
+    data: {
+      clientName: string;
+      ticketTitle: string;
+      projectName?: string;
+    },
+    roles?: string[],
+  ): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: `🎟️ Ticket Accepté - ${data.ticketTitle}`,
+      template: 'ticket-accepted',
+      context: data,
+      userRoles: roles,
+    });
+  }
+
+  /**
+   * Email pour le refus d'un ticket
+   */
+  async sendTicketRejectedEmail(
+    to: string,
+    data: {
+      clientName: string;
+      ticketTitle: string;
+    },
+    roles?: string[],
+  ): Promise<void> {
+    await this.sendEmail({
+      to,
+      subject: `🎟️ Ticket Refusé - ${data.ticketTitle}`,
+      template: 'ticket-rejected',
+      context: data,
+      userRoles: roles,
+    });
+  }
 }

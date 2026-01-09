@@ -1160,7 +1160,8 @@ export class ProjectsService {
       .leftJoinAndSelect('project.client', 'client')
       .leftJoinAndSelect('client.user', 'clientUser')
       .leftJoinAndSelect('project.members', 'members')
-      .leftJoinAndSelect('members.employee', 'employee');
+      .leftJoinAndSelect('members.employee', 'employee')
+      .leftJoinAndSelect('project.tasks', 'tasks');
 
     // 🔐 RBAC: Check user permissions
     console.log(
@@ -1286,7 +1287,8 @@ export class ProjectsService {
       .leftJoinAndSelect('project.client', 'client')
       .leftJoinAndSelect('client.user', 'clientUser')
       .leftJoinAndSelect('project.members', 'members')
-      .leftJoinAndSelect('members.employee', 'employee');
+      .leftJoinAndSelect('members.employee', 'employee')
+      .leftJoinAndSelect('project.tasks', 'tasks');
 
     // 🔐 RBAC: Check user permissions (same as findPaginated but WITHOUT Maintenance exclusion)
     const user = await this.userRepo.findOne({
