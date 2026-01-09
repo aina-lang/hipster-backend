@@ -17,15 +17,24 @@ export class LoyaltyService {
     private readonly userRepo: Repository<User>,
   ) {}
   
-  async getLoyaltyDetailByUserId(userId: number) {
-    const user = await this.userRepo.findOne({
-      where: { id: userId },
-      relations: ['clientProfile'],
+  async getLoyaltyDetailByUserId(userId: any) {
+    console.log(`[LoyaltyService] getLoyaltyDetailByUserId called with userId: ${userId} (type: ${typeof userId})`);
+    const numericUserId = Number(userId);
+    if (isNaN(numericUserId)) {
+      throw new NotFoundException('Invalid user ID');
+    }
+
+    // Direct query to ClientProfile using the user relation
+    const client = await this.clientRepo.findOne({
+      where: { user: { id: numericUserId } },
     });
-    if (!user || !user.clientProfile) {
+
+    if (!client) {
+      console.error(`[LoyaltyService] No ClientProfile found for user ID: ${numericUserId}`);
       throw new NotFoundException('Client profile not found for this user');
     }
-    return this.getClientLoyaltyDetail(user.clientProfile.id);
+
+    return this.getClientLoyaltyDetail(client.id);
   }
 
   async getLoyaltyStatus(clientId: number): Promise<LoyaltyStatus> {
