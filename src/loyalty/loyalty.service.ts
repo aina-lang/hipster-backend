@@ -5,6 +5,7 @@ import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { Project, ProjectStatus } from 'src/projects/entities/project.entity';
 import { User } from 'src/users/entities/user.entity';
 import { LOYALTY_RULES, LoyaltyStatus, LoyaltyTier } from './loyalty.types';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class LoyaltyService {
@@ -15,6 +16,7 @@ export class LoyaltyService {
     private readonly projectRepo: Repository<Project>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly mailService: MailService,
   ) {}
   
   async getLoyaltyDetailByUserId(userId: any) {
@@ -320,10 +322,78 @@ export class LoyaltyService {
     const newStatus = await this.getLoyaltyStatus(clientId);
     const newTier = newStatus.tier;
 
+    const tierUpgraded = oldTier !== newTier;
+
+    // 8. Envoyer des emails de félicitations si le tier a changé
+    if (tierUpgraded && newTier !== LoyaltyTier.STANDARD) {
+      try {
+        // Récupérer les informations du client pour l'email
+        const client = await this.clientRepo.findOne({
+          where: { id: clientId },
+          relations: ['user'],
+        });
+
+        if (client?.user?.email) {
+          const tierRewards = {
+            [LoyaltyTier.BRONZE]: '10% de réduction sur votre prochain devis',
+            [LoyaltyTier.SILVER]: '1 mois de maintenance offerte',
+            [LoyaltyTier.GOLD]: 'Réduction VIP permanente sur tous vos projets',
+          };
+
+          const clientName = `${client.user.firstName} ${client.user.lastName}`;
+          const reward = tierRewards[newTier] || 'Avantages exclusifs';
+
+          // Email au client
+          await this.mailService.sendLoyaltyRewardEmail(
+            client.user.email,
+            {
+              clientName,
+              oldTier,
+              newTier,
+              reward,
+              projectCount: newStatus.projectCount,
+            },
+            client.user.roles,
+          );
+
+          console.log(
+            `[LoyaltyService] Sent tier achievement email to ${client.user.email} for reaching ${newTier}`,
+          );
+
+          // Email à l'admin (optionnel)
+          const adminEmail = process.env.ADMIN_EMAIL || 'lise.devert@gmail.com';
+          await this.mailService.sendEmail({
+            to: adminEmail,
+            subject: `🎉 Client ${clientName} a atteint le tier ${newTier}`,
+            template: 'loyalty-reward',
+            context: {
+              clientName,
+              oldTier,
+              newTier,
+              reward,
+              projectCount: newStatus.projectCount,
+              isAdminNotification: true,
+            },
+            userRoles: ['admin'],
+          });
+
+          console.log(
+            `[LoyaltyService] Sent tier achievement notification to admin for client ${clientName}`,
+          );
+        }
+      } catch (emailError) {
+        console.error(
+          '[LoyaltyService] Error sending tier achievement emails:',
+          emailError,
+        );
+        // Ne pas bloquer le processus si l'email échoue
+      }
+    }
+
     return {
       oldTier,
       newTier,
-      tierUpgraded: oldTier !== newTier,
+      tierUpgraded,
     };
   }
 }
