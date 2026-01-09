@@ -65,7 +65,11 @@ export class TicketsService {
       ticket.task = task;
       ticket.status = TicketStatus.ACCEPTED;
     } else if (dto.status === TicketStatus.REJECTED) {
-      ticket.status = TicketStatus.REJECTED;
+      // Update ticket status & reason
+      ticket.status = dto.status;
+      if (dto.status === TicketStatus.REJECTED && dto.reason) {
+        ticket.rejectionReason = dto.reason;
+      }
     }
 
     const savedTicket = await this.ticketRepo.save(ticket);
@@ -89,42 +93,46 @@ export class TicketsService {
 
       // 2. Notify Client (Accepted / Rejected)
       if (t.client?.user) {
-        const title =
-          dto.status === TicketStatus.ACCEPTED
-            ? '✅ Ticket Accepté'
-            : '❌ Ticket Refusé';
-        const message =
-          dto.status === TicketStatus.ACCEPTED
-            ? `Votre ticket "${t.subject}" a été accepté et converti en tâche.`
-            : `Votre ticket "${t.subject}" a été refusé par l'équipe technique.`;
+        if (dto.status === TicketStatus.REJECTED) {
+          // Push
+          await this.notificationsService.createTicketRefusalNotification(
+            t.client.user.id,
+            t.id,
+            t.subject,
+            dto.reason || 'Aucun motif fourni',
+          );
 
-        // Push
-        await this.notificationsService.create({
-          userId: t.client.user.id,
-          title,
-          message,
-          type: 'ticket_status_update',
-          data: { ticketId: t.id, status: t.status },
-        });
+          // Email
+          if (t.client.user.email) {
+            await this.mailService.sendTicketRejectedEmail(
+              t.client.user.email,
+              {
+                clientName: `${t.client.user.firstName} ${t.client.user.lastName}`,
+                ticketTitle: t.subject,
+                reason: dto.reason,
+              },
+              t.client.user.roles,
+            );
+          }
+        } else if (dto.status === TicketStatus.ACCEPTED) {
+          // Push
+          await this.notificationsService.create({
+            userId: t.client.user.id,
+            title: '✅ Ticket Accepté',
+            message: `Votre ticket "${t.subject}" a été accepté et converti en tâche.`
+            ,
+            type: 'ticket_status_update',
+            data: { ticketId: t.id, status: t.status },
+          });
 
-        // Email
-        if (t.client.user.email) {
-          if (dto.status === TicketStatus.ACCEPTED) {
+          // Email
+          if (t.client.user.email) {
             await this.mailService.sendTicketAcceptedEmail(
               t.client.user.email,
               {
                 clientName: `${t.client.user.firstName} ${t.client.user.lastName}`,
                 ticketTitle: t.subject,
                 projectName: t.project?.name,
-              },
-              t.client.user.roles,
-            );
-          } else {
-            await this.mailService.sendTicketRejectedEmail(
-              t.client.user.email,
-              {
-                clientName: `${t.client.user.firstName} ${t.client.user.lastName}`,
-                ticketTitle: t.subject,
               },
               t.client.user.roles,
             );

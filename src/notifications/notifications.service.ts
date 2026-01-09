@@ -422,6 +422,31 @@ export class NotificationsService {
   }
 
   /**
+   * Notifier le client qu'un ticket a été refusé avec le motif
+   */
+  async createTicketRefusalNotification(
+    userId: number,
+    ticketId: number,
+    ticketTitle: string,
+    reason: string,
+  ): Promise<Notification> {
+    const user = await this.userRepo.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('User not found');
+
+    const notification = this.notificationRepo.create({
+      user,
+      type: 'ticket_rejected',
+      title: '❌ Ticket refusé',
+      message: `Votre ticket "${ticketTitle}" a été refusé. Motif: ${reason}`,
+      data: { ticketId, ticketTitle, reason },
+    });
+
+    const saved = await this.notificationRepo.save(notification);
+    this.notificationsGateway.emitToUser(userId, 'notification:new', saved);
+    return saved;
+  }
+
+  /**
    * Notifier le client qu'un projet a été annulé
    */
   async createProjectCancellationNotification(

@@ -481,6 +481,7 @@ export class MailService {
     data: {
       clientName: string;
       ticketTitle: string;
+      reason?: string;
     },
     roles?: string[],
   ): Promise<void> {

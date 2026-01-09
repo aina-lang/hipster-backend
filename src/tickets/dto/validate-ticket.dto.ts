@@ -1,4 +1,4 @@
-import { IsEnum, IsArray, IsNumber, IsOptional } from 'class-validator';
+import { IsEnum, IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 import { TicketStatus } from '../entities/ticket.entity';
 
 export class ValidateTicketDto {
@@ -10,4 +10,8 @@ export class ValidateTicketDto {
   @IsArray()
   @IsNumber({}, { each: true })
   assigneeIds?: number[];
+
+  @IsOptional()
+  @IsString()
+  reason?: string;
 }

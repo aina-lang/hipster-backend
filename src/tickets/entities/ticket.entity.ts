@@ -63,6 +63,9 @@ export class Ticket {
   })
   status: TicketStatus;
 
+  @Column({ type: 'text', nullable: true })
+  rejectionReason?: string;
+
   // -------------------------------
   // 🔗 RELATIONS
   // -------------------------------

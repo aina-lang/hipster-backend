@@ -15,6 +15,11 @@ block content
       tr
         td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #f9f9f9;") État
         td(style="padding: 10px 0; font-size: 14px; color: #ef4444; font-weight: 700; text-align: right; border-top: 1px solid #f9f9f9;") REFUSÉ
+      
+      if reason
+        tr
+          td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #f9f9f9;") Motif du refus
+          td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right; border-top: 1px solid #f9f9f9;") #{reason}
 
   p(style="margin-top: 32px;") Si vous pensez qu'il s'agit d'une erreur ou si vous avez besoin de plus de précisions, n'hésitez pas à nous recontacter.
 
