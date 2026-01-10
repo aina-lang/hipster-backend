@@ -169,10 +169,13 @@ export class NotificationsService {
    * Marquer toutes les notifications d'un utilisateur comme lues
    */
   async markAllAsRead(userId: number): Promise<{ count: number }> {
-    const result = await this.notificationRepo.update(
-      { user: { id: userId }, isRead: false },
-      { isRead: true },
-    );
+    const result = await this.notificationRepo
+      .createQueryBuilder()
+      .update(Notification)
+      .set({ isRead: true })
+      .where('userId = :userId', { userId })
+      .andWhere('isRead = :isRead', { isRead: false })
+      .execute();
 
     // Emit real-time event
     this.notificationsGateway.emitToUser(userId, 'notifications:allRead', {
