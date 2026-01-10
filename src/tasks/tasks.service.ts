@@ -327,14 +327,18 @@ export class TasksService {
 
     // ✅ If status is DONE, resolve linked ticket
     if (savedTask.status === TaskStatus.DONE) {
-      console.log(`[TasksService] Task #${savedTask.id} is DONE. Checking for linked ticket...`);
+      console.log(
+        `[TasksService] Task #${savedTask.id} is DONE. Checking for linked ticket...`,
+      );
       const linkedTicket = await this.ticketRepo.findOne({
         where: { task: { id: savedTask.id } },
         relations: ['client', 'client.user'],
       });
 
       if (linkedTicket) {
-        console.log(`[TasksService] Found linked ticket #${linkedTicket.id} with status ${linkedTicket.status}`);
+        console.log(
+          `[TasksService] Found linked ticket #${linkedTicket.id} with status ${linkedTicket.status}`,
+        );
         if (linkedTicket.status !== TicketStatus.CLOSED) {
           linkedTicket.status = TicketStatus.CLOSED;
           await this.ticketRepo.save(linkedTicket);
@@ -342,7 +346,9 @@ export class TasksService {
 
           // Notify client (Push + Email)
           if (linkedTicket.client?.user) {
-             console.log(`[TasksService] Notifying client user #${linkedTicket.client.user.id}`);
+            console.log(
+              `[TasksService] Notifying client user #${linkedTicket.client.user.id}`,
+            );
             // Push
             try {
               await this.notificationsService.create({
@@ -369,21 +375,29 @@ export class TasksService {
                   },
                   linkedTicket.client.user.roles,
                 );
-                console.log(`[TasksService] Email sent to ${linkedTicket.client.user.email}`);
+                console.log(
+                  `[TasksService] Email sent to ${linkedTicket.client.user.email}`,
+                );
               } catch (e) {
-                 console.error(`[TasksService] Failed to send email:`, e);
+                console.error(`[TasksService] Failed to send email:`, e);
               }
             } else {
-               console.log(`[TasksService] Client user has no email.`);
+              console.log(`[TasksService] Client user has no email.`);
             }
           } else {
-             console.log(`[TasksService] Ticket #${linkedTicket.id} has no client user linked.`);
+            console.log(
+              `[TasksService] Ticket #${linkedTicket.id} has no client user linked.`,
+            );
           }
         } else {
-           console.log(`[TasksService] Ticket #${linkedTicket.id} is already CLOSED.`);
+          console.log(
+            `[TasksService] Ticket #${linkedTicket.id} is already CLOSED.`,
+          );
         }
       } else {
-         console.log(`[TasksService] No linked ticket found for task #${savedTask.id}`);
+        console.log(
+          `[TasksService] No linked ticket found for task #${savedTask.id}`,
+        );
       }
     }
 
@@ -473,22 +487,30 @@ export class TasksService {
 
     // ✅ If status is DONE, resolve linked ticket
     if (savedTask.status === TaskStatus.DONE) {
-      console.log(`[TasksService - StatusUpdate] Task #${savedTask.id} moved to DONE. Checking ticket...`);
+      console.log(
+        `[TasksService - StatusUpdate] Task #${savedTask.id} moved to DONE. Checking ticket...`,
+      );
       const linkedTicket = await this.ticketRepo.findOne({
         where: { task: { id: savedTask.id } },
         relations: ['client', 'client.user'],
       });
 
       if (linkedTicket) {
-        console.log(`[TasksService - StatusUpdate] Found ticket #${linkedTicket.id} (Status: ${linkedTicket.status})`);
+        console.log(
+          `[TasksService - StatusUpdate] Found ticket #${linkedTicket.id} (Status: ${linkedTicket.status})`,
+        );
         if (linkedTicket.status !== TicketStatus.CLOSED) {
           linkedTicket.status = TicketStatus.CLOSED;
           await this.ticketRepo.save(linkedTicket);
-          console.log(`[TasksService - StatusUpdate] Ticket #${linkedTicket.id} closed.`);
+          console.log(
+            `[TasksService - StatusUpdate] Ticket #${linkedTicket.id} closed.`,
+          );
 
           // Notify client (Push + Email)
           if (linkedTicket.client?.user) {
-             console.log(`[TasksService - StatusUpdate] Notifying user #${linkedTicket.client.user.id}`);
+            console.log(
+              `[TasksService - StatusUpdate] Notifying user #${linkedTicket.client.user.id}`,
+            );
             // Push
             try {
               await this.notificationsService.create({
@@ -500,7 +522,7 @@ export class TasksService {
               });
               console.log(`[TasksService - StatusUpdate] Push sent.`);
             } catch (e) {
-               console.error(`[TasksService - StatusUpdate] Push failed:`, e);
+              console.error(`[TasksService - StatusUpdate] Push failed:`, e);
             }
 
             // Email
@@ -515,17 +537,19 @@ export class TasksService {
                   },
                   linkedTicket.client.user.roles,
                 );
-                console.log(`[TasksService - StatusUpdate] Email sent to ${linkedTicket.client.user.email}`);
+                console.log(
+                  `[TasksService - StatusUpdate] Email sent to ${linkedTicket.client.user.email}`,
+                );
               } catch (e) {
-                 console.error(`[TasksService - StatusUpdate] Email failed:`, e);
+                console.error(`[TasksService - StatusUpdate] Email failed:`, e);
               }
             }
           }
         } else {
-           console.log(`[TasksService - StatusUpdate] Ticket already closed.`);
+          console.log(`[TasksService - StatusUpdate] Ticket already closed.`);
         }
       } else {
-         console.log(`[TasksService - StatusUpdate] No ticket found.`);
+        console.log(`[TasksService - StatusUpdate] No ticket found.`);
       }
     }
 

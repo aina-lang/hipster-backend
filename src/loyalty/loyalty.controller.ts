@@ -15,8 +15,10 @@ import { User } from 'src/common/decorators/user.decorator';
 @UseGuards(AuthGuard)
 export class LoyaltyController {
   constructor(private readonly loyaltyService: LoyaltyService) {}
-  
-  @ApiOperation({ summary: 'Récupérer le détail de fidélité du client connecté' })
+
+  @ApiOperation({
+    summary: 'Récupérer le détail de fidélité du client connecté',
+  })
   @Get('mine')
   async getMyLoyalty(@User() user: any) {
     return this.loyaltyService.getLoyaltyDetailByUserId(user.sub);

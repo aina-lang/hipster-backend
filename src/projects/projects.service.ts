@@ -131,7 +131,6 @@ export class ProjectsService {
       );
     }
 
-
     // Determine default status: If client exists -> PENDING, otherwise -> PLANNED
     // This ensures client-submitted projects require validation
     const initialStatus = client
@@ -528,7 +527,6 @@ export class ProjectsService {
     return this.findOne(project.id);
   }
 
-
   // ------------------------------------------------------------
   // 🔹 ASSIGN MAINTENANCE PERMISSION
   // ------------------------------------------------------------
@@ -768,7 +766,6 @@ export class ProjectsService {
 
     return updatedProject;
   }
-
 
   // ------------------------------------------------------------
   // 🔹 VALIDATE PROJECT (Admin Only)

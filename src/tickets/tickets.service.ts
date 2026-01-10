@@ -119,8 +119,7 @@ export class TicketsService {
           await this.notificationsService.create({
             userId: t.client.user.id,
             title: '✅ Ticket Accepté',
-            message: `Votre ticket "${t.subject}" a été accepté et converti en tâche.`
-            ,
+            message: `Votre ticket "${t.subject}" a été accepté et converti en tâche.`,
             type: 'ticket_status_update',
             data: { ticketId: t.id, status: t.status },
           });

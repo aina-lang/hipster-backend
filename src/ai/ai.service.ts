@@ -1,9 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { AiUser } from './entities/ai-user.entity';
 
 @Injectable()
 export class AiService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    @InjectRepository(AiUser)
+    private readonly aiUserRepo: Repository<AiUser>,
+  ) {}
+
+  async getAiUserWithProfile(id: number) {
+    return this.aiUserRepo.findOne({
+      where: { id },
+      relations: ['aiProfile'],
+    });
+  }
 
   async generateText(
     prompt: string,

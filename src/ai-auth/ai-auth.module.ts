@@ -8,9 +8,14 @@ import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-pro
 import { OtpModule } from 'src/otp/otp.module';
 import { MailModule } from 'src/mail/mail.module';
 
+import { AiJwtStrategy } from './strategies/ai-jwt.strategy';
+import { AiRefreshStrategy } from './strategies/ai-refresh.strategy';
+import { PassportModule } from '@nestjs/passport';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([AiUser, AiSubscriptionProfile]),
+    PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secretKey',
       signOptions: { expiresIn: '4h' },
@@ -19,7 +24,7 @@ import { MailModule } from 'src/mail/mail.module';
     MailModule,
   ],
   controllers: [AiAuthController],
-  providers: [AiAuthService],
-  exports: [AiAuthService],
+  providers: [AiAuthService, AiJwtStrategy, AiRefreshStrategy],
+  exports: [AiAuthService, AiJwtStrategy, AiRefreshStrategy],
 })
 export class AiAuthModule {}

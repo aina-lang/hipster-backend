@@ -18,9 +18,11 @@ export class LoyaltyService {
     private readonly userRepo: Repository<User>,
     private readonly mailService: MailService,
   ) {}
-  
+
   async getLoyaltyDetailByUserId(userId: any) {
-    console.log(`[LoyaltyService] getLoyaltyDetailByUserId called with userId: ${userId} (type: ${typeof userId})`);
+    console.log(
+      `[LoyaltyService] getLoyaltyDetailByUserId called with userId: ${userId} (type: ${typeof userId})`,
+    );
     const numericUserId = Number(userId);
     if (isNaN(numericUserId)) {
       throw new NotFoundException('Invalid user ID');
@@ -32,7 +34,9 @@ export class LoyaltyService {
     });
 
     if (!client) {
-      console.error(`[LoyaltyService] No ClientProfile found for user ID: ${numericUserId}`);
+      console.error(
+        `[LoyaltyService] No ClientProfile found for user ID: ${numericUserId}`,
+      );
       throw new NotFoundException('Client profile not found for this user');
     }
 
@@ -71,16 +75,18 @@ export class LoyaltyService {
     const fullyPaidProjects = allProjects.filter((p) => {
       const isCompleted = p.status === ProjectStatus.COMPLETED;
       const isFullyPaid = this.isProjectFullyPaid(p);
-      
+
       console.log(
         `DEBUG: Project ID: ${p.id}, Status: ${p.status}, Completed: ${isCompleted}, Fully Paid: ${isFullyPaid}, Invoices: ${p.invoices?.length || 0}`,
       );
-      
+
       return isCompleted && isFullyPaid;
     });
 
     const projectCount = fullyPaidProjects.length;
-    console.log(`DEBUG: Final projectCount for loyalty (completed + paid): ${projectCount}`);
+    console.log(
+      `DEBUG: Final projectCount for loyalty (completed + paid): ${projectCount}`,
+    );
 
     // Determine Tier
     let tier = LoyaltyTier.STANDARD;
@@ -145,7 +151,10 @@ export class LoyaltyService {
 
     // Get completed AND fully paid projects sorted by completion date
     const completedProjects = client.projects
-      .filter((p) => p.status === ProjectStatus.COMPLETED && this.isProjectFullyPaid(p))
+      .filter(
+        (p) =>
+          p.status === ProjectStatus.COMPLETED && this.isProjectFullyPaid(p),
+      )
       .sort((a, b) => {
         const dateA = a.real_end_date || a.updatedAt;
         const dateB = b.real_end_date || b.updatedAt;

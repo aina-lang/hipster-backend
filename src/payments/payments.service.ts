@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -11,7 +15,11 @@ import { Invoice, InvoiceStatus } from 'src/invoices/entities/invoice.entity';
 import { QueryPaymentsDto } from './dto/query-payments.dto';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
 import { StripeService } from './stripe.service';
-import { PaymentProvider, PaymentStatus, PaymentType } from './entities/payment.entity';
+import {
+  PaymentProvider,
+  PaymentStatus,
+  PaymentType,
+} from './entities/payment.entity';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -124,7 +132,10 @@ export class PaymentsService {
     return { received: true };
   }
 
-  private async updatePaymentStatus(paymentIntentId: string, status: PaymentStatus) {
+  private async updatePaymentStatus(
+    paymentIntentId: string,
+    status: PaymentStatus,
+  ) {
     const payment = await this.paymentRepo.findOne({
       where: { reference: paymentIntentId },
       relations: ['invoice'],

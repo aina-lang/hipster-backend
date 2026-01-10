@@ -1,7 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Put, Req } from '@nestjs/common';
 import { AiAuthService } from './ai-auth.service';
 import { Public } from 'src/common/decorators/public.decorator';
-import { ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiOperation, ApiTags, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 
 @ApiTags('AI-Auth')
@@ -23,5 +24,43 @@ export class AiAuthController {
   @Post('login')
   async login(@Body() dto: any) {
     return this.aiAuthService.login(dto);
+  }
+
+  @UseGuards(AuthGuard('jwt-refresh-ai'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Rafraîchir le token IA' })
+  @Post('refresh')
+  async refresh(@Req() req) {
+    return this.aiAuthService.refreshToken(req.user.sub, req.user.refreshToken);
+  }
+
+  @Public()
+  @ApiOperation({ summary: 'Vérification email IA' })
+  @Post('verify-email')
+  async verifyEmail(@Body() body: { email: string; code: string }) {
+    return this.aiAuthService.verifyEmail(body.email, body.code);
+  }
+
+  @Public()
+  @ApiOperation({ summary: 'Renvoyer le code OTP IA' })
+  @Post('resend-otp')
+  async resendOtp(@Body('email') email: string) {
+    return this.aiAuthService.resendOtp(email);
+  }
+
+  @UseGuards(AuthGuard('jwt-ai'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mettre à jour le profil IA' })
+  @Put('profile')
+  async updateProfile(@Req() req, @Body() dto: any) {
+    return this.aiAuthService.updateProfile(req.user.sub, dto);
+  }
+
+  @UseGuards(AuthGuard('jwt-ai'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Déconnexion utilisateur IA' })
+  @Post('logout')
+  async logout(@Req() req) {
+    return this.aiAuthService.logout(req.user.sub);
   }
 }

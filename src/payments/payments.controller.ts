@@ -45,7 +45,10 @@ export class PaymentsController {
   @UseGuards(AuthGuard('jwt'))
   @Post('create-payment-intent')
   async createPaymentIntent(@Req() req, @Body() body: { invoiceId: number }) {
-    return this.paymentsService.createPaymentIntent(body.invoiceId, req.user.sub);
+    return this.paymentsService.createPaymentIntent(
+      body.invoiceId,
+      req.user.sub,
+    );
   }
 
   @ApiOperation({ summary: 'Webhook Stripe' })

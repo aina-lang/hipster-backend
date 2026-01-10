@@ -1,4 +1,10 @@
-import { IsEnum, IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { TicketStatus } from '../entities/ticket.entity';
 
 export class ValidateTicketDto {

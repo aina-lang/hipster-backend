@@ -16,14 +16,14 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('AI')
 @Controller('ai')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseGuards(AuthGuard('jwt-ai'), RolesGuard)
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 
   @ApiOperation({ summary: 'Générer du texte via IA' })
   @ResponseMessage('Texte généré avec succès')
   @Post('text')
-  @Roles(Role.CLIENT_MARKETING, Role.EMPLOYEE)
+  @Roles(Role.AI_USER)
   async generateText(
     @Body() body: { prompt: string; type: 'blog' | 'social' | 'ad' },
   ) {
@@ -35,27 +35,31 @@ export class AiController {
   @ApiOperation({ summary: 'Générer une image via IA' })
   @ResponseMessage('Image générée avec succès')
   @Post('image')
-  @Roles(Role.CLIENT_MARKETING, Role.EMPLOYEE)
+  @Roles(Role.AI_USER)
   async generateImage(
     @Body() body: { prompt: string; style: 'realistic' | 'cartoon' | 'sketch' },
     @Req() req,
   ) {
-    const user = req.user;
-    // Check subscription status here if needed, or rely on guards
     const imageUrl = await this.aiService.generateImage(
       body.prompt,
       body.style,
     );
-    // Mock subscription check for watermark
+
+    // AI isolation: we don't fetch roles from standard user.
+    // We check the AI subscription profile linked to this AI account.
+    // Fetch user with profile to check planType
+    const aiUser = await this.aiService.getAiUserWithProfile(req.user.sub);
     const isPremium =
-      user.roles.includes(Role.ADMIN) || user.roles.includes(Role.EMPLOYEE);
+      aiUser?.aiProfile?.planType === 'pro' ||
+      aiUser?.aiProfile?.planType === 'enterprise';
+
     return { url: await this.aiService.applyWatermark(imageUrl, isPremium) };
   }
 
   @ApiOperation({ summary: 'Générer un document via IA' })
   @ResponseMessage('Document généré avec succès')
   @Post('document')
-  @Roles(Role.CLIENT_MARKETING, Role.EMPLOYEE)
+  @Roles(Role.AI_USER)
   async generateDocument(
     @Body() body: { type: 'legal' | 'business'; params: any },
   ) {

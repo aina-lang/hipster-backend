@@ -187,11 +187,7 @@ export class UsersService {
   async findOne(id: number): Promise<User> {
     const user = await this.userRepo.findOne({
       where: { id },
-      relations: [
-        'clientProfile',
-        'employeeProfile',
-        'permissions',
-      ],
+      relations: ['clientProfile', 'employeeProfile', 'permissions'],
     });
 
     if (!user) throw new NotFoundException(`Utilisateur #${id} introuvable`);

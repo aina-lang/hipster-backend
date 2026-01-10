@@ -10,7 +10,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AiUser } from 'src/ai/entities/ai-user.entity';
-import { AiSubscriptionProfile, AiAccessLevel } from 'src/profiles/entities/ai-subscription-profile.entity';
+import {
+  AiSubscriptionProfile,
+  AiAccessLevel,
+} from 'src/profiles/entities/ai-subscription-profile.entity';
 import { OtpService } from 'src/otp/otp.service';
 import { OtpType } from 'src/common/enums/otp.enum';
 import { MailService } from 'src/mail/mail.service';
@@ -58,7 +61,7 @@ export class AiAuthService {
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
       context: { name: user.firstName ?? user.email, code: otp },
-      userRoles: ['client_ai'], // For email template purposes
+      userRoles: ['ai_user'], // Standardized AI role
     });
 
     return {
@@ -86,9 +89,18 @@ export class AiAuthService {
       });
     }
 
-    const payload = { sub: user.id, email: user.email, type: 'ai' };
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '4h' });
-    const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '30d' });
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      type: 'ai',
+      roles: ['ai_user'],
+    };
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '4h',
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '30d',
+    });
 
     user.refreshToken = refreshToken;
     await this.aiUserRepo.save(user);
@@ -103,7 +115,90 @@ export class AiAuthService {
         lastName: user.lastName,
         profile: user.aiProfile,
         isEmailVerified: user.isEmailVerified,
+        roles: ['ai_user'],
+        type: 'ai',
       },
     };
+  }
+
+  async refreshToken(userId: number, token: string) {
+    const user = await this.aiUserRepo.findOne({ where: { id: userId } });
+    if (!user || user.refreshToken !== token) {
+      throw new UnauthorizedException('Refresh token invalide ou expiré.');
+    }
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      type: 'ai',
+      roles: ['ai_user'],
+    };
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '4h',
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '30d',
+    });
+
+    user.refreshToken = refreshToken;
+    await this.aiUserRepo.save(user);
+
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    };
+  }
+
+  async verifyEmail(email: string, code: string) {
+    const user = await this.aiUserRepo.findOne({ where: { email } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const isValid = await this.otpService.verifyOtp(
+      user as any,
+      code,
+      OtpType.OTP,
+    );
+    if (!isValid) throw new BadRequestException('Code invalide ou expiré.');
+
+    user.isEmailVerified = true;
+    await this.aiUserRepo.save(user);
+
+    return { message: 'Email vérifié avec succès.' };
+  }
+
+  async resendOtp(email: string) {
+    const user = await this.aiUserRepo.findOne({ where: { email } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const otp = await this.otpService.generateOtp(user as any, OtpType.OTP);
+    await this.mailService.sendEmail({
+      to: user.email,
+      subject: 'Vérification de votre compte AI Hipster',
+      template: 'otp-email',
+      context: { name: user.firstName ?? user.email, code: otp },
+      userRoles: ['client_ai'],
+    });
+
+    return { message: 'Nouveau code OTP envoyé.' };
+  }
+
+  async updateProfile(id: number, dto: any) {
+    const user = await this.aiUserRepo.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    if (dto.firstName) user.firstName = dto.firstName;
+    if (dto.lastName) user.lastName = dto.lastName;
+
+    await this.aiUserRepo.save(user);
+    return user;
+  }
+
+  async logout(userId: number) {
+    const user = await this.aiUserRepo.findOne({ where: { id: userId } });
+    if (user) {
+      user.refreshToken = null;
+      await this.aiUserRepo.save(user);
+    }
+    return { message: 'Déconnexion AI réussie' };
   }
 }

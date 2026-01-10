@@ -46,7 +46,7 @@ export class InvoicesService {
       where: { id: projectId },
     });
     if (!project) throw new NotFoundException('Project not found');
-    
+
     // Check if project is validated (not PENDING) before any billing
     if (project.status === 'pending') {
       throw new Error(
@@ -78,8 +78,9 @@ export class InvoicesService {
 
     // Check if client is eligible for Bronze discount
     try {
-      const loyaltyStatus = await this.loyaltyService.getLoyaltyStatus(clientId);
-      
+      const loyaltyStatus =
+        await this.loyaltyService.getLoyaltyStatus(clientId);
+
       // Client is eligible if:
       // 1. Has 3+ fully paid projects (Bronze tier or higher)
       // 2. Hasn't used the Bronze discount yet
@@ -107,11 +108,15 @@ export class InvoicesService {
         );
       }
     } catch (error) {
-      console.error('[InvoicesService] Error calculating loyalty discount:', error);
+      console.error(
+        '[InvoicesService] Error calculating loyalty discount:',
+        error,
+      );
       // Continue without discount if there's an error
     }
 
-    const totalAmount = subTotal + taxAmount - discountAmount - loyaltyDiscountAmount;
+    const totalAmount =
+      subTotal + taxAmount - discountAmount - loyaltyDiscountAmount;
 
     // Create snapshots
     const clientSnapshot = {
@@ -191,20 +196,17 @@ export class InvoicesService {
           client.user.id,
         );
       } catch (notificationError) {
-        console.error(
-          'Failed to send in-app notification:',
-          notificationError,
-        );
+        console.error('Failed to send in-app notification:', notificationError);
       }
     }
 
     // Generate PDF and send email
     try {
       const pdfBuffer = await this.generatePdf(savedInvoice.id);
-      
+
       // Get the email address either from user or client contactEmail
       const emailTo = client.user?.email || client.contactEmail;
-      
+
       if (emailTo) {
         await this.mailService.sendInvoiceEmail(
           emailTo,
@@ -213,7 +215,9 @@ export class InvoicesService {
           client.user?.roles || [],
         );
       } else {
-        console.warn(`No email found for client ${client.id} to send ${savedInvoice.type}`);
+        console.warn(
+          `No email found for client ${client.id} to send ${savedInvoice.type}`,
+        );
       }
     } catch (error) {
       console.error('Failed to send invoice email:', error);
@@ -303,19 +307,16 @@ export class InvoicesService {
           quote.client.user.id,
         );
       } catch (notificationError) {
-        console.error(
-          'Failed to send in-app notification:',
-          notificationError,
-        );
+        console.error('Failed to send in-app notification:', notificationError);
       }
     }
 
     // Generate PDF and send email
     try {
       const pdfBuffer = await this.generatePdf(savedInvoice.id);
-      
+
       const emailTo = quote.client?.user?.email || quote.client?.contactEmail;
-      
+
       if (emailTo) {
         await this.mailService.sendInvoiceEmail(
           emailTo,
@@ -760,9 +761,10 @@ export class InvoicesService {
     // Generate PDF and send email
     try {
       const pdfBuffer = await this.generatePdf(savedInvoice.id);
-      
-      const emailTo = invoice.client?.user?.email || invoice.client?.contactEmail;
-      
+
+      const emailTo =
+        invoice.client?.user?.email || invoice.client?.contactEmail;
+
       if (emailTo) {
         await this.mailService.sendInvoiceEmail(
           emailTo,
@@ -793,7 +795,9 @@ export class InvoicesService {
       invoice.type === InvoiceType.QUOTE &&
       status === InvoiceStatus.ACCEPTED
     ) {
-      console.log(`Quote ${invoice.reference} accepted by client. Generating invoice...`);
+      console.log(
+        `Quote ${invoice.reference} accepted by client. Generating invoice...`,
+      );
       try {
         await this.convertQuoteToInvoice(invoice.id);
       } catch (error) {
