@@ -26,6 +26,7 @@ export class AiAuthController {
     return this.aiAuthService.login(dto);
   }
 
+  @Public()
   @UseGuards(AuthGuard('jwt-refresh-ai'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Rafraîchir le token IA' })
@@ -48,6 +49,7 @@ export class AiAuthController {
     return this.aiAuthService.resendOtp(email);
   }
 
+  @Public()
   @UseGuards(AuthGuard('jwt-ai'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mettre à jour le profil IA' })
@@ -56,6 +58,7 @@ export class AiAuthController {
     return this.aiAuthService.updateProfile(req.user.sub, dto);
   }
 
+  @Public()
   @UseGuards(AuthGuard('jwt-ai'))
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Déconnexion utilisateur IA' })
