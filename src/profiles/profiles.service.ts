@@ -16,6 +16,7 @@ import { UpdateEmployeeProfileDto } from './dto/update-employee-profile.dto';
 import { UpdateAiProfileDto } from './dto/update-ai-profile.dto';
 import { CreateIaClientProfileDto } from './dto/create-ia-client-profile.dto';
 import { User } from 'src/users/entities/user.entity';
+import { AiUser } from 'src/ai/entities/ai-user.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
 import { ClientType } from 'src/common/enums/client.enum';
@@ -35,6 +36,9 @@ export class ProfilesService {
 
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+
+    @InjectRepository(AiUser)
+    private readonly aiUserRepo: Repository<AiUser>,
 
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
@@ -351,42 +355,42 @@ export class ProfilesService {
     dto: CreateIaClientProfileDto,
   ): Promise<AiSubscriptionProfile> {
     const { userId, ...profileData } = dto;
-    let user: User | null = null;
+    let aiUser: AiUser | null = null;
 
     if (userId) {
-      user = await this.userRepo.findOne({
+      aiUser = await this.aiUserRepo.findOne({
         where: { id: userId },
         relations: ['aiProfile'],
       });
 
-      if (!user) {
-        throw new NotFoundException(`User with ID ${userId} not found`);
+      if (!aiUser) {
+        throw new NotFoundException(`AiUser with ID ${userId} not found`);
       }
 
-      if (user.aiProfile) {
+      if (aiUser.aiProfile) {
         throw new ConflictException(
-          `User with ID ${userId} already has an AI profile`,
+          `AiUser with ID ${userId} already has an AI profile`,
         );
       }
     }
 
     const profile = this.aiProfileRepo.create({
       ...profileData,
-      user: user || undefined,
+      aiUser: aiUser || undefined,
     });
     return this.aiProfileRepo.save(profile);
   }
 
   async findAllAiProfiles(): Promise<AiSubscriptionProfile[]> {
     return this.aiProfileRepo.find({
-      relations: ['user', 'subscriptions', 'usageLogs', 'payments'],
+      relations: ['aiUser', 'subscriptions', 'usageLogs', 'payments'],
     });
   }
 
   async findAiProfileById(id: number): Promise<AiSubscriptionProfile> {
     const profile = await this.aiProfileRepo.findOne({
       where: { id },
-      relations: ['user', 'subscriptions'],
+      relations: ['aiUser', 'subscriptions'],
     });
     if (!profile)
       throw new NotFoundException(`AiSubscriptionProfile #${id} introuvable`);

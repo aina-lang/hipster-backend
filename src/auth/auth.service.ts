@@ -19,10 +19,6 @@ import { MailService } from 'src/mail/mail.service';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { ClientType } from 'src/common/enums/client.enum';
 import { Role } from 'src/common/enums/role.enum';
-import {
-  AiSubscriptionProfile,
-  AiAccessLevel,
-} from 'src/profiles/entities/ai-subscription-profile.entity';
 
 @Injectable()
 export class AuthService {
@@ -31,8 +27,6 @@ export class AuthService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(ClientProfile)
     private readonly clientProfileRepo: Repository<ClientProfile>,
-    @InjectRepository(AiSubscriptionProfile)
-    private readonly aiProfileRepo: Repository<AiSubscriptionProfile>,
     private readonly jwtService: JwtService,
     private readonly otpService: OtpService,
     private readonly mailService: MailService,
@@ -66,21 +60,12 @@ export class AuthService {
     });
     await this.userRepo.save(user);
 
-    if (selectedRole === Role.CLIENT_AI) {
-      const profile = this.aiProfileRepo.create({
-        user,
-        accessLevel: AiAccessLevel.GUEST,
-        credits: 5,
-      });
-      await this.aiProfileRepo.save(profile);
-    } else {
-      const profile = this.clientProfileRepo.create({
-        companyName: dto.companyName || `${dto.firstName}'s Company`,
-        clientType: dto.clientType || ClientType.INDIVIDUAL,
-        user,
-      });
-      await this.clientProfileRepo.save(profile);
-    }
+    const profile = this.clientProfileRepo.create({
+      companyName: dto.companyName || `${dto.firstName}'s Company`,
+      clientType: dto.clientType || ClientType.INDIVIDUAL,
+      user,
+    });
+    await this.clientProfileRepo.save(profile);
 
     // 🔑 Generate and send OTP for self-registration
     const otp = await this.otpService.generateOtp(user, OtpType.OTP);
@@ -105,7 +90,6 @@ export class AuthService {
       relations: [
         'clientProfile',
         'employeeProfile',
-        'aiProfile',
         'permissions',
       ],
     });
@@ -154,7 +138,6 @@ export class AuthService {
         profiles: {
           client: user.clientProfile,
           employee: user.employeeProfile,
-          ai: user.aiProfile,
         },
         isEmailVerified: user.isEmailVerified,
       },
@@ -219,7 +202,6 @@ export class AuthService {
         profiles: {
           client: user.clientProfile,
           employee: user.employeeProfile,
-          ai: user.aiProfile,
         },
         isEmailVerified: user.isEmailVerified,
       },

@@ -1,7 +1,7 @@
 import { AiUsageLog } from 'src/ai/entities/ai-usage-log.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
-import { User } from 'src/users/entities/user.entity';
+import { AiUser } from 'src/ai/entities/ai-user.entity';
 import {
   Column,
   Entity,
@@ -68,9 +68,9 @@ export class AiSubscriptionProfile {
   nextRenewalDate?: Date;
 
   // Relations
-  @OneToOne(() => User, (u) => u.aiProfile, { onDelete: 'CASCADE' })
+  @OneToOne(() => AiUser, (u) => u.aiProfile, { onDelete: 'CASCADE' })
   @JoinColumn()
-  user: User;
+  aiUser: AiUser;
 
   @OneToMany(() => AiSubscription, (s) => s.aiProfile)
   subscriptions: AiSubscription[];

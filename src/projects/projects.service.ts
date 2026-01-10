@@ -98,9 +98,7 @@ export class ProjectsService {
     let client: ClientProfile | null = null;
 
     // 🔹 Déterminer si l'utilisateur est un client
-    const isClient =
-      currentUser.roles.includes('client_marketing' as any) ||
-      currentUser.roles.includes('client_ai' as any);
+    const isClient = currentUser.roles.includes('client_marketing' as any);
 
     // 🔹 Si aucun clientId fourni ET que currentUser est un client, auto-assigner
     if (!clientId && isClient) {
@@ -353,9 +351,7 @@ export class ProjectsService {
     }
 
     // 🔹 Verify user is a client
-    const isClient =
-      currentUser.roles.includes('client_marketing' as any) ||
-      currentUser.roles.includes('client_ai' as any);
+    const isClient = currentUser.roles.includes('client_marketing' as any);
 
     if (!isClient) {
       throw new BadRequestException(
@@ -721,8 +717,7 @@ export class ProjectsService {
     } else if (
       project.status === ProjectStatus.REFUSED &&
       currentUser &&
-      (currentUser.roles.includes('client_marketing' as any) ||
-        currentUser.roles.includes('client_ai' as any))
+      currentUser.roles.includes('client_marketing' as any)
     ) {
       // 🔄 Si un client modifie un projet REFUSÉ, on le repasse en PENDING
       project.status = ProjectStatus.PENDING;

@@ -295,11 +295,8 @@ export class NotificationsService {
       const member = await this.userRepo.findOneBy({ id: memberId });
       if (!member) continue;
 
-      // 🚫 Ne pas notifier les clients (marketing ou AI) pour une assignation interne
-      if (
-        member.roles.includes(Role.CLIENT_MARKETING) ||
-        member.roles.includes(Role.CLIENT_AI)
-      ) {
+      // 🚫 Ne pas notifier les clients pour une assignation interne
+      if (member.roles.includes(Role.CLIENT_MARKETING)) {
         continue;
       }
 

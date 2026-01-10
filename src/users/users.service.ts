@@ -10,7 +10,6 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
-import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AssignAccessDto } from './dto/assign-access.dto';
@@ -72,13 +71,6 @@ export class UsersService {
 
     return await this.dataSource.transaction(async (manager) => {
       const userRoles = dto.roles || [Role.CLIENT_MARKETING];
-
-      // 🤖 CUSTOM LOGIC: Admin and Employee MUST have CLIENT_AI role
-      if (userRoles.includes(Role.ADMIN) || userRoles.includes(Role.EMPLOYEE)) {
-        if (!userRoles.includes(Role.CLIENT_AI)) {
-          userRoles.push(Role.CLIENT_AI);
-        }
-      }
 
       // 🚫 VALIDATION: Admin cannot have client profile
       if (userRoles.includes(Role.ADMIN) && dto.clientProfile) {
@@ -163,22 +155,6 @@ export class UsersService {
         }
       }
 
-      // Handle AI Subscription Profile
-      if (dto.aiProfile) {
-        user.aiProfile = manager.create(AiSubscriptionProfile, dto.aiProfile);
-      } else if (
-        userRoles.includes(Role.ADMIN) ||
-        userRoles.includes(Role.EMPLOYEE)
-      ) {
-        // Auto-create AI profile for staff if not provided
-        user.aiProfile = manager.create(AiSubscriptionProfile, {
-          accessLevel: 'FULL',
-          credits: 999999,
-          planType: 'enterprise',
-          subscriptionStatus: 'active',
-        } as any);
-      }
-
       // Save user (cascades to profiles)
       const savedUser = await manager.save(user);
 
@@ -214,7 +190,6 @@ export class UsersService {
       relations: [
         'clientProfile',
         'employeeProfile',
-        'aiProfile',
         'permissions',
       ],
     });
@@ -235,7 +210,6 @@ export class UsersService {
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.clientProfile', 'clientProfile')
       .leftJoinAndSelect('user.employeeProfile', 'employeeProfile')
-      .leftJoinAndSelect('user.aiProfile', 'aiProfile')
       .leftJoinAndSelect('user.permissions', 'permissions');
 
     // Filter by role
@@ -332,15 +306,6 @@ export class UsersService {
       if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl;
       if (dto.roles) {
         user.roles = dto.roles;
-        // 🤖 CUSTOM LOGIC: Enforce CLIENT_AI for staff on update
-        if (
-          user.roles.includes(Role.ADMIN) ||
-          user.roles.includes(Role.EMPLOYEE)
-        ) {
-          if (!user.roles.includes(Role.CLIENT_AI)) {
-            user.roles.push(Role.CLIENT_AI);
-          }
-        }
       }
       if (dto.isActive !== undefined) user.isActive = dto.isActive;
 
@@ -423,28 +388,6 @@ export class UsersService {
               `[UsersService] Re-assigned ${permissions.length} permissions for new poste '${poste || 'none'}'`,
             );
           }
-        }
-      }
-
-      // Update AI Subscription Profile
-      if (dto.aiProfile) {
-        if (!user.aiProfile) {
-          user.aiProfile = manager.create(AiSubscriptionProfile, dto.aiProfile);
-        } else {
-          Object.assign(user.aiProfile, dto.aiProfile);
-        }
-      } else if (
-        user.roles.includes(Role.ADMIN) ||
-        user.roles.includes(Role.EMPLOYEE)
-      ) {
-        // Ensure staff has an AI profile even if they didn't have one before
-        if (!user.aiProfile) {
-          user.aiProfile = manager.create(AiSubscriptionProfile, {
-            accessLevel: 'FULL',
-            credits: 999999,
-            planType: 'enterprise',
-            subscriptionStatus: 'active',
-          } as any);
         }
       }
 

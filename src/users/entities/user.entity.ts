@@ -12,7 +12,6 @@ import {
 import { Role } from 'src/common/enums/role.enum';
 import { ChatRoom } from 'src/chats/entities/chat-room.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
-import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
 import { Notification } from 'src/notifications/entities/notification.entity';
@@ -85,13 +84,6 @@ export class User {
     nullable: true,
   })
   clientProfile?: ClientProfile;
-
-  /** Profil IA */
-  @OneToOne(() => AiSubscriptionProfile, (p) => p.user, {
-    cascade: true,
-    nullable: true,
-  })
-  aiProfile?: AiSubscriptionProfile;
 
   /** Profil employé */
   @OneToOne(() => EmployeeProfile, (p) => p.user, {

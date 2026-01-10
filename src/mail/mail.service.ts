@@ -178,8 +178,7 @@ export class MailService {
     data: any,
     roles?: string[],
   ): Promise<void> {
-    const isClient =
-      roles?.includes('client_marketing') || roles?.includes('client_ai');
+    const isClient = roles?.includes('client_marketing');
     const isEmployee = roles?.includes('employee');
     const isAdmin = roles?.includes('admin');
 

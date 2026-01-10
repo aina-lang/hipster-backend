@@ -31,6 +31,7 @@ import { join } from 'path';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { ReferralModule } from './referral/referral.module';
 import { CompanyModule } from './company/company.module';
+import { AiAuthModule } from './ai-auth/ai-auth.module';
 
 @Module({
   imports: [
@@ -86,6 +87,7 @@ import { CompanyModule } from './company/company.module';
     ReferralModule,
     CompanyModule,
     MaintenanceModule,
+    AiAuthModule,
   ],
 
   controllers: [],

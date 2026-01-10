@@ -13,7 +13,6 @@ import {
 import { Type } from 'class-transformer';
 import { CreateClientProfileDto } from 'src/profiles/dto/create-client-profile.dto';
 import { CreateEmployeeProfileDto } from 'src/profiles/dto/create-employee-profile.dto';
-import { CreateIaClientProfileDto } from 'src/profiles/dto/create-ia-client-profile.dto';
 import { Role } from 'src/common/enums/role.enum';
 
 export class CreateUserDto {
@@ -105,13 +104,6 @@ export class CreateUserDto {
   @ValidateNested()
   @Type(() => CreateEmployeeProfileDto)
   employeeProfile?: CreateEmployeeProfileDto;
-
-  @IsOptional()
-  @ValidateNested()
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => CreateIaClientProfileDto)
-  aiProfile?: CreateIaClientProfileDto;
 
   @IsOptional()
   @IsArray()

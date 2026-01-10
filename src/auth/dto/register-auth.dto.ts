@@ -24,7 +24,7 @@ export class RegisterAuthDto {
   password: string;
 
   @IsEnum(Role, {
-    message: 'Le rôle doit être client_marketing ou client_ai',
+    message: 'Le rôle doit être client_marketing',
   })
   @IsNotEmpty({ message: 'Le profil est obligatoire' })
   selectedProfile: Role;

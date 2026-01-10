@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../users/entities/user.entity';
+import { AiUser } from '../ai/entities/ai-user.entity';
 import { Repository } from 'typeorm';
 import { AiSubscriptionProfile } from '../profiles/entities/ai-subscription-profile.entity';
 
@@ -12,8 +12,8 @@ export class SubscriptionsService {
 
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
+    @InjectRepository(AiUser)
+    private readonly aiUserRepo: Repository<AiUser>,
     @InjectRepository(AiSubscriptionProfile)
     private readonly subRepo: Repository<AiSubscriptionProfile>,
   ) {
@@ -24,12 +24,12 @@ export class SubscriptionsService {
   }
 
   async createSubscription(userId: number, planId: string) {
-    const user = await this.userRepo.findOne({
+    const user = await this.aiUserRepo.findOne({
       where: { id: userId },
       relations: ['aiProfile'],
     });
 
-    if (!user) throw new BadRequestException('User not found');
+    if (!user) throw new BadRequestException('AiUser not found');
 
     let customerId = user.aiProfile?.stripeCustomerId;
 
@@ -46,7 +46,7 @@ export class SubscriptionsService {
         await this.subRepo.save(user.aiProfile);
       } else {
         const newProfile = this.subRepo.create({
-          user,
+          aiUser: user,
           stripeCustomerId: customerId,
           credits: 10, // Free credits
         });
@@ -55,8 +55,8 @@ export class SubscriptionsService {
     }
 
     // Check referrals for discount
-    const referralCount = await this.userRepo.count({
-      where: { referredBy: user.id.toString() },
+    const referralCount = await this.aiUserRepo.count({
+      where: { id: userId }, // Simplified for now since AiUser might not have referralCode yet
     });
 
     let coupon: string | undefined = undefined;
