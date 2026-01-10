@@ -55,7 +55,7 @@ export class AiAuthService {
     });
     await this.aiProfileRepo.save(profile);
 
-    const otp = await this.otpService.generateOtp(user as any, OtpType.OTP);
+    const otp = await this.otpService.generateOtp(user, OtpType.OTP);
     await this.mailService.sendEmail({
       to: user.email,
       subject: 'Vérification de votre compte AI Hipster',
@@ -154,7 +154,7 @@ export class AiAuthService {
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     const isValid = await this.otpService.verifyOtp(
-      user as any,
+      user,
       code,
       OtpType.OTP,
     );
@@ -170,13 +170,13 @@ export class AiAuthService {
     const user = await this.aiUserRepo.findOne({ where: { email } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
-    const otp = await this.otpService.generateOtp(user as any, OtpType.OTP);
+    const otp = await this.otpService.generateOtp(user, OtpType.OTP);
     await this.mailService.sendEmail({
       to: user.email,
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
       context: { name: user.firstName ?? user.email, code: otp },
-      userRoles: ['client_ai'],
+      userRoles: ['ai_user'],
     });
 
     return { message: 'Nouveau code OTP envoyé.' };

@@ -2,11 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
+import { Otp } from 'src/otp/enitities/otp.entity';
 
 @Entity('ai_users')
 export class AiUser {
@@ -45,4 +47,7 @@ export class AiUser {
     nullable: true,
   })
   aiProfile?: AiSubscriptionProfile;
+
+  @OneToMany(() => Otp, (otp) => otp.aiUser)
+  otps: Otp[];
 }

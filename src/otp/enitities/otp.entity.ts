@@ -1,5 +1,6 @@
 import { OtpType } from 'src/common/enums/otp.enum';
 import { User } from 'src/users/entities/user.entity';
+import { AiUser } from 'src/ai/entities/ai-user.entity';
 import {
   Column,
   CreateDateColumn,
@@ -19,12 +20,20 @@ export class Otp {
   id: number;
 
   @ManyToOne(() => User, (user) => user.otps, {
-    nullable: false,
-    onDelete: 'CASCADE', // ✅ Si user supprimé → OTP supprimés
+    nullable: true,
+    onDelete: 'CASCADE',
     onUpdate: 'CASCADE',
   })
   @JoinColumn({ name: 'userId' })
-  user: User;
+  user?: User;
+
+  @ManyToOne(() => AiUser, (aiUser) => aiUser.otps, {
+    nullable: true,
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
+  @JoinColumn({ name: 'aiUserId' })
+  aiUser?: AiUser;
 
   @Column()
   token: string; // 🔐 valeur hachée de l’OTP
