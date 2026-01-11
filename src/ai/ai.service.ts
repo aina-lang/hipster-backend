@@ -20,7 +20,7 @@ export class AiService {
     private readonly aiGenRepo: Repository<AiGeneration>,
   ) {
     // DIRECT KEY USAGE (TEMPORARY FOR DEBUGGING)
-    const apiKey = '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';
+    const apiKey = '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';
     
     this.openai = new OpenAI({
       apiKey: apiKey,
