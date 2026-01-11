@@ -1,0 +1,1 @@
+TSFILE: /home/mercia/PROJETS/MOBILE/Hypster/API/nestjsapi/tsconfig.build.tsbuildinfo

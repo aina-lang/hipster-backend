@@ -2,3 +2,7 @@
 > nestjsapi@0.0.1 build
 > nest build
 
+[91merror[0m[90m TS5098: [0mOption 'resolvePackageJsonExports' can only be used when 'moduleResolution' is set to 'node16', 'nodenext', or 'bundler'.
+
+Found 1 error(s).
+
