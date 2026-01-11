@@ -5,9 +5,10 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AiUsageLog } from './entities/ai-usage-log.entity';
 import { AiUser } from './entities/ai-user.entity';
+import { AiGeneration } from './entities/ai-generation.entity';
 
 @Module({
-  imports: [ConfigModule, TypeOrmModule.forFeature([AiUsageLog, AiUser])],
+  imports: [ConfigModule, TypeOrmModule.forFeature([AiUsageLog, AiUser, AiGeneration])],
   controllers: [AiController],
   providers: [AiService],
   exports: [AiService],

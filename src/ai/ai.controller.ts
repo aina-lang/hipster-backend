@@ -35,12 +35,19 @@ export class AiController {
     return this.aiService.getAiUserWithProfile(req.user.sub);
   }
 
+  @ApiOperation({ summary: 'Récupérer mon historique AI' })
+  @Get('history')
+  @Roles(Role.AI_USER)
+  async getHistory(@Req() req) {
+    return this.aiService.getHistory(req.user.sub);
+  }
+
   @ApiOperation({ summary: 'Chat avec l\'IA (GPT-5)' })
   @Post('chat')
   @Roles(Role.AI_USER)
-  async chat(@Body() body: { messages: any[] }) {
+  async chat(@Body() body: { messages: any[] }, @Req() req) {
     return {
-      message: await this.aiService.chat(body.messages),
+      message: await this.aiService.chat(body.messages, req.user.sub),
     };
   }
 
@@ -50,9 +57,10 @@ export class AiController {
   @Roles(Role.AI_USER)
   async generateText(
     @Body() body: { prompt: string; type: 'blog' | 'social' | 'ad' },
+    @Req() req,
   ) {
     return {
-      content: await this.aiService.generateText(body.prompt, body.type),
+      content: await this.aiService.generateText(body.prompt, body.type, req.user.sub),
     };
   }
 
@@ -77,7 +85,7 @@ export class AiController {
       aiUser?.aiProfile?.planType === 'pro' ||
       aiUser?.aiProfile?.planType === 'enterprise';
 
-    return { url: await this.aiService.applyWatermark(imageUrl, isPremium) };
+    return { url: await this.aiService.applyWatermark(imageUrl, isPremium), rawUrl: imageUrl };
   }
 
   @ApiOperation({ summary: 'Générer un document via IA' })
@@ -86,9 +94,10 @@ export class AiController {
   @Roles(Role.AI_USER)
   async generateDocument(
     @Body() body: { type: 'legal' | 'business'; params: any },
+    @Req() req,
   ) {
     return {
-      content: await this.aiService.generateDocument(body.type, body.params),
+      content: await this.aiService.generateDocument(body.type, body.params, req.user.sub),
     };
   }
 }
