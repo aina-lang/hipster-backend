@@ -35,6 +35,9 @@ jobs:
             echo "--- Build de l'application ---"
             npm run build
             
+            mkdir -p dist/src/templates
+            cp -r dist/templates/* dist/src/templates/ || true
+           
             echo "--- Redémarrage PM2 ---"
             # Note: On utilise dist/main.js car le nouveau tsconfig évite l'imbrication dist/src/
             pm2 restart hipster-api --update-env || pm2 start dist/main.js --name hipster-api
