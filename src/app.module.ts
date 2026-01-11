@@ -11,7 +11,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OtpModule } from './otp/otp.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
-import { AiModule } from './ai/ai.module';
+
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ProjectsModule } from './projects/projects.module';
@@ -32,6 +32,7 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
 import { ReferralModule } from './referral/referral.module';
 import { CompanyModule } from './company/company.module';
 import { AiAuthModule } from './ai-auth/ai-auth.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -70,7 +71,7 @@ import { AiAuthModule } from './ai-auth/ai-auth.module';
     MailModule,
     OtpModule,
     TasksModule,
-    AiModule,
+
     SubscriptionsModule,
     PaymentsModule,
     ProjectsModule,
@@ -88,6 +89,7 @@ import { AiAuthModule } from './ai-auth/ai-auth.module';
     CompanyModule,
     MaintenanceModule,
     AiAuthModule,
+    AiModule,
   ],
 
   controllers: [],

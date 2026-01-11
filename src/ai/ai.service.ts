@@ -22,6 +22,7 @@ export class AiService {
     this.openai = new OpenAI({
       apiKey: apiKey,
     });
+    this.logger.log('--- AiService Loaded ---');
   }
 
   async getAiUserWithProfile(id: number) {

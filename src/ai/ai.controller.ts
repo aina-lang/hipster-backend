@@ -13,11 +13,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
-import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ResponseMessage } from '../common/decorators/response-message.decorator';
+import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('AI')
 @Controller('ai')
+@UseGuards(RolesGuard)
+@ApiBearerAuth()
 export class AiController {
   private readonly logger = new Logger(AiController.name);
 
