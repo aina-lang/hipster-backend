@@ -15,10 +15,13 @@ export class AiService {
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
   ) {
-    // Key is now loaded from environment variables for security
-    const apiKey = this.configService.get<string>('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');
+    // DIRECT KEY USAGE (TEMPORARY FOR DEBUGGING - DO NOT COMMIT TO PROD)
+    const apiKey = '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';
+    
     if (!apiKey) {
-      console.warn('OPENAI_API_KEY not found in environment variables');
+      console.error('CRITICAL: API Key is missing');
+    } else {
+      console.log('AI Service initialized with Key: ', apiKey.substring(0, 10) + '...');
     }
     
     this.openai = new OpenAI({
@@ -34,15 +37,25 @@ export class AiService {
   }
 
   async chat(messages: any[]): Promise<string> {
+    console.log('--- START AI CHAT REQUEST ---');
+    console.log('Messages:', JSON.stringify(messages, null, 2));
+    
     try {
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
         messages: messages,
       });
-      return completion.choices[0].message.content || '';
+      
+      const content = completion.choices[0].message.content || '';
+      console.log('--- AI RESPONSE RECEIVED ---');
+      // console.log('Content:', content); // Optional: log full content
+      return content;
+      
     } catch (error) {
-      console.error('OpenAI Chat Error:', error);
-      throw new Error('Erreur lors de la communication avec l\'IA.');
+      console.error('--- OPENAI ERROR ---');
+      console.error(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      throw new Error(`Erreur AI: ${errorMessage}`);
     }
   }
 
