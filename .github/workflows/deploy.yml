@@ -22,9 +22,17 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd ~/hipster-backend
+            
+            echo "--- Nettoyage Git ---"
+            git checkout package-lock.json
             git pull origin main
+            
             export STRIPE_SECRET="${{ secrets.STRIPE_SECRET }}"
-            npm install
+            
+            echo "--- Installation des dépendances ---"
+            npm install --legacy-peer-deps
+            
+            echo "--- Build de l'application ---"
             npm run build
             mkdir -p dist/src/templates
             cp -r dist/templates/* dist/src/templates/ || true
