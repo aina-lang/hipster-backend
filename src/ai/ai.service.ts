@@ -15,9 +15,14 @@ export class AiService {
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
   ) {
-    // TODO: Move key to .env variable for security in production
+    // Key is now loaded from environment variables for security
+    const apiKey = this.configService.get<string>('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');
+    if (!apiKey) {
+      console.warn('OPENAI_API_KEY not found in environment variables');
+    }
+    
     this.openai = new OpenAI({
-      apiKey: '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',
+      apiKey: apiKey,
     });
   }
 
