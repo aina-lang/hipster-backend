@@ -5,6 +5,7 @@ import {
   UseGuards,
   Req,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -17,7 +18,11 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 @ApiTags('AI')
 @Controller('ai')
 export class AiController {
-  constructor(private readonly aiService: AiService) {}
+  private readonly logger = new Logger(AiController.name);
+
+  constructor(private readonly aiService: AiService) {
+    this.logger.log('AiController initialized');
+  }
 
   @ApiOperation({ summary: 'Chat avec l\'IA (GPT-5)' })
   @Post('chat')

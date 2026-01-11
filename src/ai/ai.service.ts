@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,6 +8,7 @@ import OpenAI from 'openai';
 
 @Injectable()
 export class AiService {
+  private readonly logger = new Logger(AiService.name);
   private openai: OpenAI;
 
   constructor(
@@ -19,9 +20,9 @@ export class AiService {
     const apiKey = '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';
     
     if (!apiKey) {
-      console.error('CRITICAL: API Key is missing');
+      this.logger.error('CRITICAL: API Key is missing');
     } else {
-      console.log('AI Service initialized with Key: ', apiKey.substring(0, 10) + '...');
+      this.logger.log('AI Service initialized with Key: ' + apiKey.substring(0, 10) + '...');
     }
     
     this.openai = new OpenAI({
