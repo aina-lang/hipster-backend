@@ -16,9 +16,17 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('AI')
 @Controller('ai')
-@UseGuards(AuthGuard('jwt-ai'), RolesGuard)
 export class AiController {
   constructor(private readonly aiService: AiService) {}
+
+  @ApiOperation({ summary: 'Chat avec l\'IA (GPT-5)' })
+  @Post('chat')
+  @Roles(Role.AI_USER)
+  async chat(@Body() body: { messages: any[] }) {
+    return {
+      message: await this.aiService.chat(body.messages),
+    };
+  }
 
   @ApiOperation({ summary: 'Générer du texte via IA' })
   @ResponseMessage('Texte généré avec succès')
