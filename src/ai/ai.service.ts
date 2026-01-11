@@ -81,7 +81,15 @@ export class AiService {
     type: string,
     userId?: number,
   ): Promise<string> {
-    const systemPrompt = `You are an expert copywriter for ${type} content.`;
+    let userName = 'l\'utilisateur';
+    if (userId) {
+      const userObj = await this.aiUserRepo.findOne({ where: { id: userId } });
+      if (userObj?.firstName) {
+        userName = userObj.firstName;
+      }
+    }
+
+    const systemPrompt = `Tu es Hipster IA, l'expert assistant créatif de ${userName}. Ton but est de générer du contenu ${type} de haute qualité, original et percutant. Sois amical, professionnel et n'hésite pas à t'adresser directement à ${userName} si le format le permet.`;
     const messages = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: prompt }
