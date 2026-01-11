@@ -1,9 +1,9 @@
 import { Controller, Post, Body, UseGuards, Put, Req } from '@nestjs/common';
 import { AiAuthService } from './ai-auth.service';
-import { Public } from 'src/common/decorators/public.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiTags, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
-import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { ResponseMessage } from '../common/decorators/response-message.decorator';
 
 @ApiTags('AI-Auth')
 @Controller('ai/auth')

@@ -35,6 +35,12 @@ export class AiController {
     return this.aiService.getAiUserWithProfile(req.user.sub);
   }
 
+  @Public()
+  @Get('ping')
+  async ping() {
+    return { status: 'ok', message: 'AiController is reachable' };
+  }
+
   @ApiOperation({ summary: 'Récupérer mon historique AI' })
   @Get('history')
   @Roles(Role.AI_USER)
