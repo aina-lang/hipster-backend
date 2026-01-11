@@ -41,6 +41,7 @@ export class AiController {
     return { status: 'ok', message: 'AiController is reachable' };
   }
 
+  // DOIT ETRE VISIBLE PAR TOUS
   @ApiOperation({ summary: 'Récupérer mon historique AI' })
   @Get('history')
   @Roles(Role.AI_USER)
