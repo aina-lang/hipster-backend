@@ -201,4 +201,18 @@ export class AiAuthService {
     }
     return { message: 'Déconnexion AI réussie' };
   }
+
+  async changePassword(userId: number, dto: any) {
+    const user = await this.aiUserRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const isMatch = await bcrypt.compare(dto.oldPassword, user.password);
+    if (!isMatch) throw new UnauthorizedException('Mot de passe actuel incorrect.');
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    user.password = hashedPassword;
+    await this.aiUserRepo.save(user);
+
+    return { message: 'Mot de passe modifié avec succès.' };
+  }
 }

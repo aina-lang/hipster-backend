@@ -61,6 +61,15 @@ export class AiAuthController {
   @Public()
   @UseGuards(AuthGuard('jwt-ai'))
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Changer le mot de passe utilisateur IA' })
+  @Put('change-password')
+  async changePassword(@Req() req, @Body() dto: any) {
+    return this.aiAuthService.changePassword(req.user.sub, dto);
+  }
+
+  @Public()
+  @UseGuards(AuthGuard('jwt-ai'))
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Déconnexion utilisateur IA' })
   @Post('logout')
   async logout(@Req() req) {
