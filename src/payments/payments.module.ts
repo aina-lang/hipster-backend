@@ -9,11 +9,21 @@ import { Project } from 'src/projects/entities/project.entity';
 import { Invoice } from 'src/invoices/entities/invoice.entity';
 import { ConfigModule } from '@nestjs/config';
 import { StripeService } from './stripe.service';
+import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
+import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([Payment, User, ClientProfile, Project, Invoice]),
+    TypeOrmModule.forFeature([
+      Payment,
+      User,
+      ClientProfile,
+      Project,
+      Invoice,
+      AiSubscriptionProfile,
+      AiSubscription,
+    ]),
   ],
   controllers: [PaymentsController],
   providers: [PaymentsService, StripeService],

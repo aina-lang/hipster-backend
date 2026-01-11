@@ -21,6 +21,8 @@ import {
   PaymentType,
 } from './entities/payment.entity';
 import { ConfigService } from '@nestjs/config';
+import { AiSubscriptionProfile, PlanType, SubscriptionStatus } from 'src/profiles/entities/ai-subscription-profile.entity';
+import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
 
 @Injectable()
 export class PaymentsService {
@@ -35,6 +37,10 @@ export class PaymentsService {
     private readonly projectRepo: Repository<Project>,
     @InjectRepository(Invoice)
     private readonly invoiceRepo: Repository<Invoice>,
+    @InjectRepository(AiSubscriptionProfile)
+    private readonly aiProfileRepo: Repository<AiSubscriptionProfile>,
+    @InjectRepository(AiSubscription)
+    private readonly aiSubscriptionRepo: Repository<AiSubscription>,
     private readonly stripeService: StripeService,
     private readonly configService: ConfigService,
   ) {}
@@ -127,9 +133,93 @@ export class PaymentsService {
     } else if (event.type === 'payment_intent.payment_failed') {
       const paymentIntent = event.data.object;
       await this.updatePaymentStatus(paymentIntent.id, PaymentStatus.FAILED);
+    } else if (
+      event.type === 'customer.subscription.created' ||
+      event.type === 'customer.subscription.updated' ||
+      event.type === 'customer.subscription.deleted'
+    ) {
+      const subscription = event.data.object;
+      await this.syncAiSubscription(subscription.id);
+    } else if (event.type === 'invoice.payment_succeeded') {
+      const invoice = event.data.object;
+      if (invoice.subscription) {
+        await this.syncAiSubscription(invoice.subscription as string);
+      }
     }
 
     return { received: true };
+  }
+
+  private async syncAiSubscription(stripeSubscriptionId: string) {
+    const subscription = await this.stripeService.instance.subscriptions.retrieve(stripeSubscriptionId);
+    const customerId = subscription.customer as string;
+
+    const profile = await this.aiProfileRepo.findOne({
+      where: { stripeCustomerId: customerId },
+      relations: ['aiUser'],
+    });
+
+    if (!profile) {
+      console.warn(`No AI profile found for Stripe customer ${customerId}`);
+      return;
+    }
+
+    // Map Stripe status to local status
+    let status: SubscriptionStatus;
+    switch (subscription.status) {
+      case 'active':
+        status = SubscriptionStatus.ACTIVE;
+        break;
+      case 'trialing':
+        status = SubscriptionStatus.TRIAL;
+        break;
+      case 'past_due':
+      case 'unpaid':
+        status = SubscriptionStatus.PAUSED;
+        break;
+      case 'canceled':
+      case 'incomplete_expired':
+        status = SubscriptionStatus.CANCELED;
+        break;
+      default:
+        status = SubscriptionStatus.PAUSED;
+    }
+
+    // Determine Plan Type from Stripe Price ID
+    // Note: In real app, you'd map price IDs to plans
+    let planType = PlanType.BASIC;
+    const priceId = subscription.items.data[0].price.id;
+
+    if (priceId === 'price_HpsPro123') {
+      planType = PlanType.PRO;
+    } else if (priceId === 'price_HpsEnt456') {
+      planType = PlanType.ENTERPRISE;
+    }
+
+    profile.subscriptionStatus = status;
+    profile.planType = planType;
+    profile.lastRenewalDate = new Date((subscription as any).current_period_start * 1000);
+    profile.nextRenewalDate = new Date((subscription as any).current_period_end * 1000);
+
+    // Update credits based on plan upgrade
+    if (status === SubscriptionStatus.ACTIVE) {
+      if (planType === PlanType.PRO) profile.credits = 500;
+      if (planType === PlanType.ENTERPRISE) profile.credits = 9999;
+    }
+
+    await this.aiProfileRepo.save(profile);
+
+    // Also record the subscription period in AiSubscription entity
+    const aiSub = this.aiSubscriptionRepo.create({
+      aiProfile: profile,
+      planName: planType.toUpperCase(),
+      startDate: profile.lastRenewalDate,
+      endDate: profile.nextRenewalDate,
+      amount: subscription.items.data[0].plan.amount! / 100,
+      status: status === SubscriptionStatus.ACTIVE ? 'active' : 'canceled',
+    });
+
+    await this.aiSubscriptionRepo.save(aiSub);
   }
 
   private async updatePaymentStatus(

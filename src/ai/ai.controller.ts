@@ -6,6 +6,7 @@ import {
   Req,
   ForbiddenException,
   Logger,
+  Get,
 } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -22,6 +23,13 @@ export class AiController {
 
   constructor(private readonly aiService: AiService) {
     this.logger.log('AiController initialized');
+  }
+
+  @ApiOperation({ summary: 'Récupérer mon profil AI' })
+  @Get('me')
+  @Roles(Role.AI_USER)
+  async getMe(@Req() req) {
+    return this.aiService.getAiUserWithProfile(req.user.sub);
   }
 
   @ApiOperation({ summary: 'Chat avec l\'IA (GPT-5)' })

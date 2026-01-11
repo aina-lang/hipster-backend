@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AiUser } from '../ai/entities/ai-user.entity';
 import { Repository } from 'typeorm';
-import { AiSubscriptionProfile } from '../profiles/entities/ai-subscription-profile.entity';
+import { AiSubscriptionProfile, PlanType, SubscriptionStatus } from '../profiles/entities/ai-subscription-profile.entity';
 
 @Injectable()
 export class SubscriptionsService {
@@ -21,6 +21,55 @@ export class SubscriptionsService {
     if (apiKey) {
       this.stripe = new Stripe(apiKey, { apiVersion: '2025-11-17.clover' });
     }
+  }
+
+  async getSubscriptionProfile(userId: number): Promise<AiSubscriptionProfile> {
+    const profile = await this.subRepo.findOne({
+      where: { aiUser: { id: userId } },
+      relations: ['subscriptions'],
+    });
+
+    if (!profile) {
+      // Create a default free profile if none exists
+      const user = await this.aiUserRepo.findOneBy({ id: userId });
+      if (!user) throw new BadRequestException('AiUser not found');
+
+      const newProfile = this.subRepo.create({
+        aiUser: user,
+        credits: 10,
+        planType: PlanType.BASIC,
+        subscriptionStatus: SubscriptionStatus.ACTIVE,
+      });
+      return this.subRepo.save(newProfile);
+    }
+
+    return profile;
+  }
+
+  async getPlans() {
+    return [
+      {
+        id: 'basic',
+        name: 'Basic',
+        price: 0,
+        features: ['10 crédits/mois', 'Support standard', 'Qualité standard'],
+        stripePriceId: null,
+      },
+      {
+        id: 'pro',
+        name: 'Pro',
+        price: 19.99,
+        features: ['500 crédits/mois', 'Support prioritaire', 'Qualité HD', 'Pas de filigrane'],
+        stripePriceId: 'price_HpsPro123', // Placeholder until configured
+      },
+      {
+        id: 'enterprise',
+        name: 'Enterprise',
+        price: 49.99,
+        features: ['Illimité', 'Support 24/7', 'Qualité 4K', 'API Access'],
+        stripePriceId: 'price_HpsEnt456', // Placeholder until configured
+      },
+    ];
   }
 
   async createSubscription(userId: number, planId: string) {
@@ -56,16 +105,13 @@ export class SubscriptionsService {
 
     // Check referrals for discount
     const referralCount = await this.aiUserRepo.count({
-      where: { id: userId }, // Simplified for now since AiUser might not have referralCode yet
+      where: { id: userId }, 
     });
 
     let coupon: string | undefined = undefined;
     if (referralCount >= 2) {
-      // 1 month free
-      // In real stripe, you'd create a coupon or use a predefined one
       coupon = 'FREE_MONTH_REFERRAL';
     } else if (referralCount === 1) {
-      // 50% off
       coupon = 'HALF_OFF_REFERRAL';
     }
 
@@ -74,6 +120,7 @@ export class SubscriptionsService {
       items: [{ price: planId }],
       discounts: coupon ? [{ coupon }] : undefined,
       payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
     });
 

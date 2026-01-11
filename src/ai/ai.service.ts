@@ -17,7 +17,7 @@ export class AiService {
     private readonly aiUserRepo: Repository<AiUser>,
   ) {
     // DIRECT KEY USAGE (TEMPORARY FOR DEBUGGING - DO NOT COMMIT TO PROD)
-    const apiKey = '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';
+    const apiKey = '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';
     
     if (!apiKey) {
       this.logger.error('CRITICAL: API Key is missing');
