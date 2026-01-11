@@ -17,6 +17,7 @@ import {
 import { OtpService } from 'src/otp/otp.service';
 import { OtpType } from 'src/common/enums/otp.enum';
 import { MailService } from 'src/mail/mail.service';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Injectable()
 export class AiAuthService {
@@ -30,6 +31,7 @@ export class AiAuthService {
     private readonly mailService: MailService,
   ) {}
 
+  @Public()
   async register(dto: any) {
     const existing = await this.aiUserRepo.findOne({
       where: { email: dto.email },
