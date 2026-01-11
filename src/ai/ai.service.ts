@@ -16,14 +16,8 @@ export class AiService {
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
   ) {
-    // DIRECT KEY USAGE (TEMPORARY FOR DEBUGGING - DO NOT COMMIT TO PROD)
+    // DIRECT KEY USAGE (TEMPORARY FOR DEBUGGING)
     const apiKey = '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';
-    
-    if (!apiKey) {
-      this.logger.error('CRITICAL: API Key is missing');
-    } else {
-      this.logger.log('AI Service initialized with Key: ' + apiKey.substring(0, 10) + '...');
-    }
     
     this.openai = new OpenAI({
       apiKey: apiKey,
