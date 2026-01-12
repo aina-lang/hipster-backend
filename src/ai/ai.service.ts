@@ -228,6 +228,7 @@ export class AiService {
     console.log(`Found ${toonBlocks.length} TOON blocks`);
     
     if (toonBlocks.length > 0) {
+      console.log('Raw TOON Block:', toonBlocks[0]);
       try {
         const decoded = decode(toonBlocks[0]);
         console.log('TOON Decoding Successful:', JSON.stringify(decoded, null, 2));
