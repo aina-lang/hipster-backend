@@ -237,6 +237,7 @@ export class AiAuthService {
 
     if (dto.firstName) user.firstName = dto.firstName;
     if (dto.lastName) user.lastName = dto.lastName;
+    if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl;
 
     await this.aiUserRepo.save(user);
     return user;

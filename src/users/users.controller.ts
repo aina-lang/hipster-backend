@@ -16,6 +16,7 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { UsersService } from './users.service';
 import { AuthService } from '../auth/auth.service';
+import { AiAuthService } from '../ai-auth/ai-auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from 'src/common/enums/role.enum';
@@ -34,12 +35,16 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly authService: AuthService,
+    private readonly aiAuthService: AiAuthService,
   ) {}
 
   // 🔹 Profil de l'utilisateur connecté
   @ApiOperation({ summary: "Récupérer le profil de l'utilisateur connecté" })
   @Get('me')
   async getMe(@User() user: any) {
+    if (user.type === 'ai') {
+      return this.aiAuthService.updateProfile(user.sub, {});
+    }
     return this.usersService.findOne(user.sub);
   }
 
@@ -50,9 +55,14 @@ export class UsersController {
   @Patch('me')
   async updateMe(@User() user: any, @Body() dto: UpdateUserProfileDto) {
     console.log(
-      '[UsersController] updateMe called with DTO:',
+      '[UsersController] updateMe called for user type:',
+      user.type,
+      'DTO:',
       JSON.stringify(dto, null, 2),
     );
+    if (user.type === 'ai') {
+      return this.aiAuthService.updateProfile(user.sub, dto);
+    }
     return this.usersService.update(user.sub, dto);
   }
 
@@ -111,6 +121,9 @@ export class UsersController {
     }
 
     const avatarUrl = `/uploads/${file.filename}`;
+    if (user.type === 'ai') {
+      return this.aiAuthService.updateProfile(user.sub, { avatarUrl });
+    }
     return this.usersService.update(user.sub, { avatarUrl });
   }
 

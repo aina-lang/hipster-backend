@@ -10,6 +10,7 @@ import { Permission } from 'src/permissions/entities/permission.entity';
 
 import { MailModule } from 'src/mail/mail.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { AiAuthModule } from 'src/ai-auth/ai-auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from 'src/auth/auth.module';
     ]),
     MailModule,
     forwardRef(() => AuthModule),
+    AiAuthModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],
