@@ -223,6 +223,8 @@ export class AiService {
 
   private parseDocumentContent(text: string): any {
     console.log('--- Parsing Document Content ---');
+    console.log('Raw AI Output:', text); // Log the full output
+    
     // Try to decode TOON first
     const toonBlocks = this.extractToonBlocks(text);
     console.log(`Found ${toonBlocks.length} TOON blocks`);
@@ -247,7 +249,8 @@ export class AiService {
   }
 
   private extractToonBlocks(text: string): string[] {
-    const regex = /toon\{[\s\S]*?\}/g;
+    // Allow optional whitespace and case insensitivity
+    const regex = /toon\s*\{[\s\S]*?\}/gi;
     return text.match(regex) || [];
   }
 
