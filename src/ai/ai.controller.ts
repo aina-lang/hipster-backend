@@ -103,8 +103,6 @@ export class AiController {
     @Body() body: { type: 'legal' | 'business'; params: any },
     @Req() req,
   ) {
-    return {
-      content: await this.aiService.generateDocument(body.type, body.params, req.user.sub),
-    };
+    return await this.aiService.generateDocument(body.type, body.params, req.user.sub);
   }
 }

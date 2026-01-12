@@ -32,6 +32,9 @@ export class AiGeneration {
   @Column({ nullable: true })
   imageUrl?: string;
 
+  @Column({ nullable: true })
+  fileUrl?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
