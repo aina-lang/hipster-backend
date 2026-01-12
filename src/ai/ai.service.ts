@@ -222,17 +222,26 @@ export class AiService {
   }
 
   private parseDocumentContent(text: string): any {
+    console.log('--- Parsing Document Content ---');
     // Try to decode TOON first
     const toonBlocks = this.extractToonBlocks(text);
+    console.log(`Found ${toonBlocks.length} TOON blocks`);
+    
     if (toonBlocks.length > 0) {
       try {
-        return decode(toonBlocks[0]);
+        const decoded = decode(toonBlocks[0]);
+        console.log('TOON Decoding Successful:', JSON.stringify(decoded, null, 2));
+        return decoded;
       } catch (e) {
-        this.logger.warn('Failed to decode TOON block in document content');
+        this.logger.warn('Failed to decode TOON block in document content', e);
+        console.error('TOON Decode Error:', e);
       }
+    } else {
+      console.log('No TOON blocks found, regex failed?');
     }
     
     // Fallback: simple split or return as is
+    console.log('Fallback to raw text wrapping');
     return { title: 'Document Généré', sections: [{ title: 'Contenu', text }] };
   }
 
