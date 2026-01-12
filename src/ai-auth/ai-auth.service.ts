@@ -78,10 +78,10 @@ export class AiAuthService {
       relations: ['aiProfile'],
     });
 
-    if (!user) throw new UnauthorizedException('Identifiants invalides.');
+    if (!user) throw new NotFoundException("L'utilisateur AI n'existe pas.");
 
     const isMatch = await bcrypt.compare(dto.password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Identifiants invalides.');
+    if (!isMatch) throw new UnauthorizedException('Mot de passe incorrect.');
 
     if (!user.isEmailVerified) {
       throw new UnauthorizedException({
@@ -115,7 +115,7 @@ export class AiAuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        profile: user.aiProfile,
+        aiProfile: user.aiProfile,
         isEmailVerified: user.isEmailVerified,
         roles: ['ai_user'],
         type: 'ai',

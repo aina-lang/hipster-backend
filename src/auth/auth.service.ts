@@ -90,10 +90,10 @@ export class AuthService {
       relations: ['clientProfile', 'employeeProfile', 'permissions'],
     });
 
-    if (!user) throw new UnauthorizedException('Identifiants invalides.');
+    if (!user) throw new NotFoundException("L'utilisateur n'existe pas.");
 
     const isMatch = await bcrypt.compare(dto.password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Identifiants invalides.');
+    if (!isMatch) throw new UnauthorizedException('Mot de passe incorrect.');
 
     if (!user.isEmailVerified) {
       // Si mot de passe correct mais email non vérifié => On renvoie un OTP
