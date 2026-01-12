@@ -149,50 +149,76 @@ export class AiService {
     type: 'legal' | 'business',
     params: any,
     userId?: number,
-  ): Promise<{ content: string; fileUrl?: string }> {
-    const toonParams = encode(params);
+  ): Promise<{ content: string; generationId?: number }> {
+    const { format: requestedFormat, function: funcName, ...restParams } = params;
+    
+    // Clean format hints from function name (e.g., "(PDF / DOCX)")
+    const cleanFunctionName = funcName ? funcName.replace(/\s*\(.*?\)\s*/g, '').trim() : funcName;
+    
+    const toonParams = encode({
+      ...restParams,
+      function: cleanFunctionName,
+    });
+
     const prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être structurée pour que je puisse en extraire les sections (Titre, Sections avec contenu). Utilise un format TOON pour la structure du document.`;
     const result = await this.generateText(prompt, 'business', userId);
 
-    let fileUrl: string | undefined;
+    let generationId: number | undefined;
 
     if (userId) {
       try {
-        // Simple heuristic to determine format or default to PDF
-        const format = params.format || 'pdf';
-        const fileName = `${type}_${crypto.randomUUID()}.${format}`;
-        const filePath = path.join('uploads', 'documents', fileName);
-        
-        // Extract structured data if possible, or use raw text
-        const contentData = this.parseDocumentContent(result);
+        // We just save the text result. The file is generated on demand.
+        const latestGen = await this.aiGenRepo.findOne({
+          where: { user: { id: userId }, type: AiGenerationType.TEXT },
+          order: { createdAt: 'DESC' },
+        });
 
-        if (format === 'pdf') {
-          fileUrl = await this.generatePdf(contentData, filePath);
-        } else if (format === 'docx') {
-          fileUrl = await this.generateDocx(contentData, filePath);
-        } else if (format === 'xlsx' || format === 'excel') {
-          fileUrl = await this.generateExcel(contentData, filePath);
-        }
-
-        if (fileUrl) {
-          // Update the last generation record with the fileUrl
-          const latestGen = await this.aiGenRepo.findOne({
-            where: { user: { id: userId }, type: AiGenerationType.TEXT },
-            order: { createdAt: 'DESC' },
-          });
-
-          if (latestGen) {
-            latestGen.fileUrl = fileUrl;
-            latestGen.type = AiGenerationType.DOCUMENT;
-            await this.aiGenRepo.save(latestGen);
-          }
+        if (latestGen) {
+          latestGen.type = AiGenerationType.DOCUMENT;
+          const savedGen = await this.aiGenRepo.save(latestGen);
+          generationId = savedGen.id;
         }
       } catch (error) {
-        this.logger.error('Error generating file:', error);
+        this.logger.error('Error updating generation record:', error);
       }
     }
 
-    return { content: result, fileUrl };
+    return { content: result, generationId };
+  }
+
+  async exportDocument(id: number, format: string, userId: number): Promise<{ buffer: Buffer; fileName: string; mimeType: string }> {
+    const generation = await this.aiGenRepo.findOne({
+      where: { id, user: { id: userId } }
+    });
+
+    if (!generation) {
+      throw new Error('Document non trouvé');
+    }
+
+    const contentData = this.parseDocumentContent(generation.result);
+    const fileName = `document_${id}.${format}`;
+    let buffer: Buffer;
+    let mimeType: string;
+
+    switch (format.toLowerCase()) {
+      case 'pdf':
+        buffer = await this.generatePdfBuffer(contentData);
+        mimeType = 'application/pdf';
+        break;
+      case 'docx':
+        buffer = await this.generateDocxBuffer(contentData);
+        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        break;
+      case 'xlsx':
+      case 'excel':
+        buffer = await this.generateExcelBuffer(contentData);
+        mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        break;
+      default:
+        throw new Error('Format non supporté');
+    }
+
+    return { buffer, fileName, mimeType };
   }
 
   private parseDocumentContent(text: string): any {
@@ -215,12 +241,15 @@ export class AiService {
     return text.match(regex) || [];
   }
 
-  private async generatePdf(data: any, filePath: string): Promise<string> {
+  private async generatePdfBuffer(data: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument();
-      const stream = fs.createWriteStream(filePath);
+      const chunks: any[] = [];
 
-      doc.pipe(stream);
+      doc.on('data', (chunk) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
       doc.fontSize(20).text(data.title || 'Document', { align: 'center' });
       doc.moveDown();
 
@@ -237,12 +266,10 @@ export class AiService {
       }
 
       doc.end();
-      stream.on('finish', () => resolve(filePath));
-      stream.on('error', reject);
     });
   }
 
-  private async generateDocx(data: any, filePath: string): Promise<string> {
+  private async generateDocxBuffer(data: any): Promise<Buffer> {
     const children = [
       new Paragraph({
         children: [new TextRun({ text: data.title || 'Document', bold: true, size: 32 })],
@@ -264,12 +291,10 @@ export class AiService {
     }
 
     const doc = new Document({ sections: [{ children }] });
-    const buffer = await Packer.toBuffer(doc);
-    fs.writeFileSync(filePath, buffer);
-    return filePath;
+    return await Packer.toBuffer(doc) as Buffer;
   }
 
-  private async generateExcel(data: any, filePath: string): Promise<string> {
+  private async generateExcelBuffer(data: any): Promise<Buffer> {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet('Document');
 
@@ -286,8 +311,8 @@ export class AiService {
       sheet.addRow({ section: 'Contenu', content: JSON.stringify(data) });
     }
 
-    await workbook.xlsx.writeFile(filePath);
-    return filePath;
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
   }
 
   async applyWatermark(imageUrl: string, isPremium: boolean): Promise<string> {

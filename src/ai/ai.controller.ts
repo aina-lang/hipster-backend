@@ -7,6 +7,9 @@ import {
   ForbiddenException,
   Logger,
   Get,
+  Param,
+  Query,
+  Res,
 } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -104,5 +107,34 @@ export class AiController {
     @Req() req,
   ) {
     return await this.aiService.generateDocument(body.type, body.params, req.user.sub);
+  }
+
+  @ApiOperation({ summary: 'Exporter un document (PDF, Word, Excel)' })
+  @Get('export/:id')
+  @Roles(Role.AI_USER)
+  async exportDocument(
+    @Req() req,
+    @Param('id') id: string,
+    @Query('format') format: string,
+    @Res() res,
+  ) {
+    try {
+      const { buffer, fileName, mimeType } = await this.aiService.exportDocument(
+        parseInt(id),
+        format,
+        req.user.sub,
+      );
+
+      res.set({
+        'Content-Type': mimeType,
+        'Content-Disposition': `attachment; filename="${fileName}"`,
+        'Content-Length': buffer.length,
+      });
+
+      res.end(buffer);
+    } catch (error) {
+      this.logger.error('Export error:', error);
+      res.status(500).json({ message: 'Erreur lors de l\'exportation' });
+    }
   }
 }
