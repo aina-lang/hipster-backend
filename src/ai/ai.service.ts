@@ -154,7 +154,7 @@ export class AiService {
     
     // Clean format hints from function name (e.g., "(PDF / DOCX)")
     const cleanFunctionName = funcName ? funcName.replace(/\s*\(.*?\)\s*/g, '').trim() : funcName;
-    const isInvoiceOrQuote = /devis|facture/i.test(cleanFunctionName || type);
+    const isInvoiceOrQuote = /devis|facture/i.test(cleanFunctionName || params.type);
     
     const toonParams = encode({
       ...restParams,
@@ -164,6 +164,17 @@ export class AiService {
     let prompt = '';
 
     if (isInvoiceOrQuote) {
+      // 1. Generate Invoice Number
+      let docNumber = 'DOC-001';
+      if (userId) {
+        const count = await this.aiGenRepo.count({
+          where: { user: { id: userId }, type: AiGenerationType.DOCUMENT }
+        });
+        const prefix = /devis/i.test(cleanFunctionName) ? 'DEVIS' : 'FACT';
+        const year = new Date().getFullYear();
+        docNumber = `${prefix}-${year}-${(count + 1).toString().padStart(3, '0')}`;
+      }
+
       const senderInfo = userProfile ? {
         company: userProfile.companyName || `${userProfile.firstName} ${userProfile.lastName}`,
         address: userProfile.professionalAddress,
@@ -178,19 +189,31 @@ export class AiService {
         ? `Voici les infos de l'émetteur (Moi) : ${JSON.stringify(senderInfo)}` 
         : 'Invente les infos de l\'émetteur (Entreprise fictive) si non fournies (nom, adresse, siret).';
 
-      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants (format TOON) :\n${toonParams}\n\n${senderContext}\n\nIMPORTANT: Réponds UNIQUEMENT avec un JSON valide et structuré pour un logiciel de facturation (PAS DE MARKDOWN, PAS DE TOON en réponse).\nStructure JSON requise :\n{
+      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants (format TOON) :\n${toonParams}\n\n${senderContext}\n\nINSTRUCTIONS SPÉCIFIQUES :
+1. Numéro de document : Utilise "${docNumber}".
+2. **Prestations Détaillées** : La description doit être riche et précise (ex: "Installation lavabo : pose, raccordement, joints..."). Mentionne la main d'œuvre (heures) et les fournitures.
+3. **Quantités** : Estime les quantités réalistes (heures, m², unités).
+4. **Prix Marché** : Utilise des tarifs moyens réalistes du marché (ex: 40-60€/h main d'œuvre).
+5. **Mentions Légales** : TVA 20% (sauf exception), validité 30 jours, "TVA non applicable" si auto-entrepreneur.
+
+IMPORTANT: Réponds UNIQUEMENT avec un JSON valide et structuré pour un logiciel de facturation (PAS DE MARKDOWN, PAS DE TOON en réponse).
+Structure JSON requise :
+{
   "type": "invoice",
   "sender": { "name": "...", "address": "...", "contact": "...", "siret": "...", "bank": "..." },
   "client": { "name": "...", "address": "..." },
-  "items": [ { "description": "...", "quantity": 1, "unitPrice": 0, "total": 0 } ],
+  "items": [ 
+    { "description": "Description détaillée...", "quantity": 1, "unitPrice": 50, "total": 50 } 
+  ],
   "totals": { "subtotal": 0, "taxRate": 20, "taxAmount": 0, "total": 0 },
-  "meta": { "date": "JJ/MM/AAAA", "dueDate": "JJ/MM/AAAA", "number": "FACT-001" },
-  "legal": "Mentions légales, conditions..."
-}\nCalcule les totaux. Sois précis et professionnel.`;
+  "meta": { "date": "JJ/MM/AAAA", "dueDate": "JJ/MM/AAAA", "number": "${docNumber}" },
+  "legal": "Mentions légales, conditions, pénalités retard..."
+}
+Calcule scrupuleusement les totaux.`;
 
     } else {
       // Generic Document (Keep Markdown as fallback)
-      prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
+      prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé (pas de JSON).\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
     }
 
     const result = await this.generateText(prompt, 'business', userId);
