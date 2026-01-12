@@ -6,6 +6,7 @@ import { AiUser } from './entities/ai-user.entity';
 import { AiGeneration, AiGenerationType } from './entities/ai-generation.entity';
 
 import OpenAI from 'openai';
+import { encode } from '@toon-format/toon';
 
 @Injectable()
 export class AiService {
@@ -89,9 +90,15 @@ export class AiService {
       }
     }
 
-    const systemPrompt = `Tu es Hipster IA, l'expert assistant créatif de ${userName}. Ton but est de générer du contenu ${type} de haute qualité, original et percutant. Sois amical, professionnel et n'hésite pas à t'adresser directement à ${userName} si le format le permet.`;
+    const systemToon = encode({
+      identity: 'Hipster IA',
+      role: 'Expert assistant créatif',
+      target: userName,
+      context: `Génération de contenu ${type}`
+    });
+
     const messages = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: `Tu es Hipster IA. Voici ta configuration en format TOON:\n${systemToon}` },
       { role: 'user', content: prompt }
     ];
     
@@ -137,8 +144,9 @@ export class AiService {
     params: any,
     userId?: number,
   ): Promise<string> {
-    const prompt = `Generate a ${type} document with these parameters: ${JSON.stringify(params)}`;
-    const result = await this.generateText(prompt, 'business');
+    const toonParams = encode(params);
+    const prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}`;
+    const result = await this.generateText(prompt, 'business', userId);
 
     if (userId) {
       await this.aiGenRepo.save({
