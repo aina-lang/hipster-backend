@@ -61,6 +61,9 @@ export class AiSubscriptionProfile {
   @Column({ default: 'particulier' })
   profileType: 'particulier' | 'entreprise';
 
+  @Column({ default: false })
+  isSetupComplete: boolean;
+
   @Column({ nullable: true })
   companyName?: string;
 
