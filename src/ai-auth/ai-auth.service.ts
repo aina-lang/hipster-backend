@@ -19,6 +19,7 @@ import { OtpService } from 'src/otp/otp.service';
 import { OtpType } from 'src/common/enums/otp.enum';
 import { MailService } from 'src/mail/mail.service';
 import { Public } from 'src/common/decorators/public.decorator';
+import { deleteFile } from 'src/common/utils/file.utils';
 
 @Injectable()
 export class AiAuthService {
@@ -237,6 +238,11 @@ export class AiAuthService {
 
     if (dto.firstName) user.firstName = dto.firstName;
     if (dto.lastName) user.lastName = dto.lastName;
+
+    if (dto.avatarUrl && user.avatarUrl && dto.avatarUrl !== user.avatarUrl) {
+      deleteFile(user.avatarUrl);
+    }
+
     if (dto.avatarUrl !== undefined) user.avatarUrl = dto.avatarUrl;
 
     await this.aiUserRepo.save(user);
