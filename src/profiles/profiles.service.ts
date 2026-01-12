@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Like, ILike } from 'typeorm';
@@ -39,10 +40,12 @@ export class ProfilesService {
 
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
-
+ 
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
   ) {}
+ 
+  private readonly logger = new Logger(ProfilesService.name);
 
   // ----------------------------
   // CLIENT PROFILE
@@ -401,9 +404,12 @@ export class ProfilesService {
     id: number,
     dto: UpdateAiProfileDto,
   ): Promise<AiSubscriptionProfile> {
+    this.logger.log(`Updating AI Profile #${id} with data: ${JSON.stringify(dto)}`);
     const profile = await this.findAiProfileById(id);
     Object.assign(profile, dto);
-    return this.aiProfileRepo.save(profile);
+    const saved = await this.aiProfileRepo.save(profile);
+    this.logger.log(`AI Profile #${id} updated successfully`);
+    return saved;
   }
 
   async removeAiProfile(id: number): Promise<{ message: string }> {

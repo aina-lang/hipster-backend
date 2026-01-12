@@ -21,6 +21,9 @@ export class AiUser {
   @Column({ nullable: true })
   lastName: string;
 
+  @Column({ nullable: true })
+  avatarUrl?: string;
+
   @Column({ unique: true })
   email: string;
 

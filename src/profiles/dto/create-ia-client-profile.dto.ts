@@ -4,6 +4,9 @@ import {
   IsNumber,
   IsOptional,
   IsDateString,
+  IsIn,
+  IsString,
+  IsEmail,
 } from 'class-validator';
 import {
   SubscriptionStatus,
@@ -30,6 +33,62 @@ export class CreateIaClientProfileDto {
   @IsOptional()
   @IsDateString()
   nextRenewalDate?: string;
+
+  @IsOptional()
+  @IsIn(['particulier', 'entreprise'])
+  profileType?: 'particulier' | 'entreprise';
+
+  @IsOptional()
+  @IsString()
+  companyName?: string;
+
+  @IsOptional()
+  @IsEmail()
+  professionalEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  professionalAddress?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  postalCode?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+
+  @IsOptional()
+  @IsString()
+  professionalPhone?: string;
+
+  @IsOptional()
+  @IsString()
+  professionalPhone2?: string;
+
+  @IsOptional()
+  @IsString()
+  siret?: string;
+
+  @IsOptional()
+  @IsString()
+  vatNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  bankDetails?: string;
+
+  @IsOptional()
+  @IsString()
+  websiteUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  logoUrl?: string;
 
   @IsNotEmpty()
   userId: number; // Relation OneToOne avec User

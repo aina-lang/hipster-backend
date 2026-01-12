@@ -58,6 +58,48 @@ export class AiSubscriptionProfile {
   @Column({ default: 1000 })
   credits: number;
 
+  @Column({ default: 'particulier' })
+  profileType: 'particulier' | 'entreprise';
+
+  @Column({ nullable: true })
+  companyName?: string;
+
+  @Column({ nullable: true })
+  professionalEmail?: string;
+
+  @Column({ nullable: true })
+  professionalAddress?: string;
+
+  @Column({ nullable: true })
+  city?: string;
+
+  @Column({ nullable: true })
+  postalCode?: string;
+
+  @Column({ nullable: true })
+  country?: string;
+
+  @Column({ nullable: true })
+  professionalPhone?: string;
+
+  @Column({ nullable: true })
+  professionalPhone2?: string;
+
+  @Column({ nullable: true })
+  siret?: string;
+
+  @Column({ nullable: true })
+  vatNumber?: string;
+
+  @Column({ nullable: true })
+  bankDetails?: string;
+
+  @Column({ nullable: true })
+  websiteUrl?: string;
+
+  @Column({ nullable: true })
+  logoUrl?: string;
+
   @Column({ nullable: true })
   stripeCustomerId?: string;
 
