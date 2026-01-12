@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -32,9 +33,12 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
+  private readonly logger = new Logger(AuthService.name);
+
   async register(dto: RegisterAuthDto) {
+    const email = dto.email.trim().toLowerCase();
     const existing = await this.userRepo.findOne({
-      where: { email: dto.email },
+      where: { email },
     });
     if (existing) throw new ConflictException('Email déjà utilisé.');
 
@@ -50,7 +54,7 @@ export class AuthService {
     }
 
     const user = this.userRepo.create({
-      email: dto.email,
+      email,
       password: hashedPassword,
       firstName: dto.firstName,
       lastName: dto.lastName || '',
@@ -85,17 +89,27 @@ export class AuthService {
   }
 
   async login(dto: LoginAuthDto) {
+    const email = dto.email.trim().toLowerCase();
+    this.logger.log(`Attempting login for user: ${email}`);
+
     const user = await this.userRepo.findOne({
-      where: { email: dto.email },
+      where: { email },
       relations: ['clientProfile', 'employeeProfile', 'permissions'],
     });
 
-    if (!user) throw new NotFoundException("L'utilisateur n'existe pas.");
+    if (!user) {
+      this.logger.warn(`Login failed: User not found (${email})`);
+      throw new NotFoundException("L'utilisateur n'existe pas.");
+    }
 
     const isMatch = await bcrypt.compare(dto.password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Mot de passe incorrect.');
+    if (!isMatch) {
+      this.logger.warn(`Login failed: Incorrect password for user ${email}`);
+      throw new UnauthorizedException('Mot de passe incorrect.');
+    }
 
     if (!user.isEmailVerified) {
+      this.logger.log(`Login incomplete: Email not verified for ${email}`);
       // Si mot de passe correct mais email non vérifié => On renvoie un OTP
       await this.resendOtp(user.email);
 
@@ -106,6 +120,8 @@ export class AuthService {
         email: user.email,
       });
     }
+
+    this.logger.log(`Login successful for user: ${email} (ID: ${user.id})`);
 
     const payload = { sub: user.id, email: user.email, roles: user.roles };
 
@@ -165,7 +181,8 @@ export class AuthService {
   }
 
   async verifyEmail(email: string, code: string) {
-    const user = await this.userRepo.findOne({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.userRepo.findOne({ where: { email: normalizedEmail } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     const isValid = await this.otpService.verifyOtp(user, code, OtpType.OTP);
@@ -207,7 +224,8 @@ export class AuthService {
   }
 
   async resendOtp(email: string) {
-    const user = await this.userRepo.findOne({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.userRepo.findOne({ where: { email: normalizedEmail } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     if (user.isEmailVerified) {
@@ -250,7 +268,8 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await this.userRepo.findOne({ where: { email } });
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.userRepo.findOne({ where: { email: normalizedEmail } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     const otp = await this.otpService.generateOtp(user, OtpType.PASSWORD_RESET);
