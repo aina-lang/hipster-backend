@@ -47,7 +47,7 @@ export class AiAuthService {
     const user = this.aiUserRepo.create({
       email,
       password: hashedPassword,
-      firstName: dto.firstName,
+      firstName: dto.firstName || '',
       lastName: dto.lastName || '',
       isActive: true,
       isEmailVerified: false,
@@ -66,7 +66,7 @@ export class AiAuthService {
       to: user.email,
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
-      context: { name: user.firstName ?? user.email, code: otp },
+      context: { name: user.lastName || user.firstName || user.email, code: otp },
       userRoles: ['ai_user'], // Standardized AI role
     });
 
@@ -195,7 +195,7 @@ export class AiAuthService {
       to: user.email,
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
-      context: { name: user.firstName ?? user.email, code: otp },
+      context: { name: user.lastName || user.firstName || user.email, code: otp },
       userRoles: ['ai_user'],
     });
 
