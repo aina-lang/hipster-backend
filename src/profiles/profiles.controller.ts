@@ -8,6 +8,8 @@ import {
   Delete,
   Query,
   UseGuards,
+  ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { ClientWebsitesService } from './client-websites.service';
@@ -23,6 +25,10 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { User } from 'src/common/decorators/user.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 import { Public } from 'src/common/decorators/public.decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 
 @ApiTags('Profiles')
 @ApiBearerAuth()
@@ -192,6 +198,35 @@ export class ProfilesController {
   @Delete('ai/:id')
   removeAi(@Param('id') id: string) {
     return this.profilesService.removeAiProfile(+id);
+  }
+
+  @ApiOperation({ summary: 'Uploader un logo pour le profil IA' })
+  @ResponseMessage('Logo mis à jour avec succès')
+  @Post('ai/:id/logo')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: join(process.cwd(), 'uploads'),
+        filename: (req, file, cb) => {
+          const randomName = Array(32)
+            .fill(null)
+            .map(() => Math.round(Math.random() * 16).toString(16))
+            .join('');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
+  async uploadAiLogo(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Fichier manquant');
+    }
+
+    const logoUrl = `/uploads/${file.filename}`;
+    return this.profilesService.updateAiProfile(+id, { logoUrl } as any);
   }
 
   // --------------------

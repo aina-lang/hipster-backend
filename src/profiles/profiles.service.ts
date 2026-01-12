@@ -5,6 +5,7 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
+import { deleteFile } from 'src/common/utils/file.utils';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, Like, ILike } from 'typeorm';
 import { ClientProfile } from './entities/client-profile.entity';
@@ -406,6 +407,12 @@ export class ProfilesService {
   ): Promise<AiSubscriptionProfile> {
     this.logger.log(`Updating AI Profile #${id} with data: ${JSON.stringify(dto)}`);
     const profile = await this.findAiProfileById(id);
+
+    // ✅ Delete old logo if a new one is being uploaded
+    if (dto.logoUrl && profile.logoUrl && dto.logoUrl !== profile.logoUrl) {
+      deleteFile(profile.logoUrl);
+    }
+
     Object.assign(profile, dto);
     const saved = await this.aiProfileRepo.save(profile);
     this.logger.log(`AI Profile #${id} updated successfully`);
