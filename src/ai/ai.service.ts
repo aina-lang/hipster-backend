@@ -189,27 +189,31 @@ export class AiService {
         ? `Voici les infos de l'émetteur (Moi) : ${JSON.stringify(senderInfo)}` 
         : 'Invente les infos de l\'émetteur (Entreprise fictive) si non fournies (nom, adresse, siret).';
 
-      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants (format TOON) :\n${toonParams}\n\n${senderContext}\n\nINSTRUCTIONS SPÉCIFIQUES :
+      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants (format TOON) :\n${toonParams}\n\n${senderContext}\n\nINSTRUCTIONS CRITIQUES (Data Extraction) :
 1. Numéro de document : Utilise "${docNumber}".
-2. **Prestations Détaillées** : La description doit être riche et précise (ex: "Installation lavabo : pose, raccordement, joints..."). Mentionne la main d'œuvre (heures) et les fournitures.
-3. **Quantités** : Estime les quantités réalistes (heures, m², unités).
-4. **Prix Marché** : Utilise des tarifs moyens réalistes du marché (ex: 40-60€/h main d'œuvre).
-5. **Mentions Légales** : TVA 20% (sauf exception), validité 30 jours, "TVA non applicable" si auto-entrepreneur.
+2. **EXTRACTION STRICTE** : Le champ "details" contient une liste sous "PRESTATIONS:".
+   - Tu dois extraire CHAQUE ligne commençant par "- ".
+   - La description, la quantité (Qté) et le prix (Prix) DOIVENT être repris EXACTEMENT tels quels.
+   - NE CHANGE PAS LES PRIX fournis par l'utilisateur. C'est une obligation absolue.
+   - Si l'utilisateur a écrit "Prix: 25", le prix unitaire EST 25. Point final.
+   
+3. **Complétion** : Uniquement si un prix est ABSENT ou vide, alors seulement tu peux l'estimer.
+4. **Calculs** : Recalcule les totaux (Qté x Prix) toi-même pour garantir la cohérence mathématique.
+5. **Mentions Légales** : TVA 20% (sauf exception), validité 30 jours.
 
-IMPORTANT: Réponds UNIQUEMENT avec un JSON valide et structuré pour un logiciel de facturation (PAS DE MARKDOWN, PAS DE TOON en réponse).
+IMPORTANT: Réponds UNIQUEMENT avec un JSON valide.
 Structure JSON requise :
 {
   "type": "invoice",
   "sender": { "name": "...", "address": "...", "contact": "...", "siret": "...", "bank": "..." },
   "client": { "name": "...", "address": "..." },
   "items": [ 
-    { "description": "Description détaillée...", "quantity": 1, "unitPrice": 50, "total": 50 } 
+    { "description": "Reprendre texte user exactement...", "quantity": 1, "unitPrice": 25, "total": 25 } 
   ],
   "totals": { "subtotal": 0, "taxRate": 20, "taxAmount": 0, "total": 0 },
   "meta": { "date": "JJ/MM/AAAA", "dueDate": "JJ/MM/AAAA", "number": "${docNumber}" },
-  "legal": "Mentions légales, conditions, pénalités retard..."
-}
-Calcule scrupuleusement les totaux.`;
+  "legal": "Mentions légales..."
+}`;
 
     } else {
       // Generic Document (Keep Markdown as fallback)
