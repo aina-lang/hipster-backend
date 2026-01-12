@@ -150,17 +150,49 @@ export class AiService {
     params: any,
     userId?: number,
   ): Promise<{ content: string; generationId?: number }> {
-    const { format: requestedFormat, function: funcName, ...restParams } = params;
+    const { format: requestedFormat, function: funcName, userProfile, ...restParams } = params;
     
     // Clean format hints from function name (e.g., "(PDF / DOCX)")
     const cleanFunctionName = funcName ? funcName.replace(/\s*\(.*?\)\s*/g, '').trim() : funcName;
+    const isInvoiceOrQuote = /devis|facture/i.test(cleanFunctionName || type);
     
     const toonParams = encode({
       ...restParams,
       function: cleanFunctionName,
     });
 
-    const prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Réponds UNIQUEMENT avec un JSON minifié pour économiser des tokens. Utilise cette structure stricte avec clés courtes :\n{"t": "Titre du document", "s": [{"st": "Titre Section", "c": "Contenu rédigé..."}]}`;
+    let prompt = '';
+
+    if (isInvoiceOrQuote) {
+      const senderInfo = userProfile ? {
+        company: userProfile.companyName || `${userProfile.firstName} ${userProfile.lastName}`,
+        address: userProfile.professionalAddress,
+        city: `${userProfile.postalCode || ''} ${userProfile.city || ''}`.trim(),
+        phone: userProfile.professionalPhone,
+        email: userProfile.professionalEmail,
+        siret: userProfile.siret,
+        bank: userProfile.bankDetails
+      } : {};
+
+      const senderContext = Object.keys(senderInfo).length > 0 
+        ? `Voici les infos de l'émetteur (Moi) : ${JSON.stringify(senderInfo)}` 
+        : 'Invente les infos de l\'émetteur (Entreprise fictive) si non fournies (nom, adresse, siret).';
+
+      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants (format TOON) :\n${toonParams}\n\n${senderContext}\n\nIMPORTANT: Réponds UNIQUEMENT avec un JSON valide et structuré pour un logiciel de facturation (PAS DE MARKDOWN, PAS DE TOON en réponse).\nStructure JSON requise :\n{
+  "type": "invoice",
+  "sender": { "name": "...", "address": "...", "contact": "...", "siret": "...", "bank": "..." },
+  "client": { "name": "...", "address": "..." },
+  "items": [ { "description": "...", "quantity": 1, "unitPrice": 0, "total": 0 } ],
+  "totals": { "subtotal": 0, "taxRate": 20, "taxAmount": 0, "total": 0 },
+  "meta": { "date": "JJ/MM/AAAA", "dueDate": "JJ/MM/AAAA", "number": "FACT-001" },
+  "legal": "Mentions légales, conditions..."
+}\nCalcule les totaux. Sois précis et professionnel.`;
+
+    } else {
+      // Generic Document (Keep Markdown as fallback)
+      prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
+    }
+
     const result = await this.generateText(prompt, 'business', userId);
 
     let generationId: number | undefined;
@@ -224,12 +256,12 @@ export class AiService {
   }
 
   private parseDocumentContent(text: string): any {
-    console.log('--- Parsing Document Content (JSON) ---');
+    console.log('--- Parsing Document Content ---');
     console.log('Raw AI Output:', text);
 
-    // 1. Try JSON Parsing with Short Keys
+    // 1. Try JSON Parsing
     try {
-      // Find JSON object boundaries in case of extra text
+      // Find JSON object boundaries
       const jsonStart = text.indexOf('{');
       const jsonEnd = text.lastIndexOf('}');
       
@@ -237,11 +269,13 @@ export class AiService {
         const jsonStr = text.substring(jsonStart, jsonEnd + 1);
         const data = JSON.parse(jsonStr);
 
-        // Map short keys to internal structure
-        // t -> title
-        // s -> sections
-        // st -> sections.title
-        // c -> sections.text
+        // Case A: Structured Invoice/Quote
+        if (data.items || data.sender || data.type === 'invoice' || data.type === 'quote') {
+            console.log('Detected Structured Invoice/Quote JSON');
+            return data;
+        }
+
+        // Case B: Minified Generic JSON (Legacy/Other)
         if (data.t || data.s) {
           return {
             title: data.t || 'Document',
@@ -258,7 +292,7 @@ export class AiService {
       console.warn('JSON parsing failed, falling back to Markdown/Text parser', e);
     }
 
-    // 2. Fallback: Markdown Parser (previous logic)
+    // 2. Fallback: Markdown Parser
     const docData: any = {
       title: 'Document',
       sections: []
@@ -300,11 +334,13 @@ export class AiService {
       docData.sections.push(currentSection);
     }
     
+    // Clean up text
     docData.sections.forEach((sec: any) => {
         sec.text = sec.text.trim();
     });
 
     if (docData.sections.length === 0) {
+        // Fallback if no markdown structure found
         return { title: 'Document Généré', sections: [{ title: 'Contenu', text }] };
     }
 
@@ -319,26 +355,134 @@ export class AiService {
 
   private async generatePdfBuffer(data: any): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      const doc = new PDFDocument();
+      const doc = new PDFDocument({ margin: 50 });
       const chunks: any[] = [];
 
       doc.on('data', (chunk) => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      doc.fontSize(20).text(data.title || 'Document', { align: 'center' });
-      doc.moveDown();
+      // --- INVOICE / QUOTE LAYOUT ---
+      if (data.items && Array.isArray(data.items)) {
+        const isQuote = data.type === 'quote' || (data.title && data.title.toLowerCase().includes('devis'));
+        const titleText = isQuote ? 'DEVIS' : 'FACTURE';
+        const primaryColor = '#333333';
+        const secondaryColor = '#666666';
 
-      if (data.sections && Array.isArray(data.sections)) {
-        data.sections.forEach((section: any) => {
-          doc.fontSize(14).text(section.title || '', { underline: true });
-          doc.fontSize(12).text(section.text || '');
-          doc.moveDown();
+        // 1. HEADER
+        doc.fontSize(20).text(titleText, { align: 'right' });
+        doc.fontSize(10).text(`N° ${data.meta?.number || '---'}`, { align: 'right' });
+        doc.text(`Date : ${data.meta?.date || new Date().toLocaleDateString()}`, { align: 'right' });
+        doc.moveDown();
+
+        // Sender (Left) vs Client (Right)
+        const startY = doc.y;
+        
+        // Sender
+        doc.fontSize(10).font('Helvetica-Bold').text('ÉMETTEUR', 50, startY);
+        doc.font('Helvetica').fillColor(secondaryColor);
+        if (data.sender) {
+            doc.text(data.sender.name || '', 50, startY + 15);
+            doc.text(data.sender.address || '', 50, startY + 30);
+            doc.text(data.sender.contact || '', 50, startY + 45);
+            doc.text(data.sender.email || '', 50, startY + 60);
+        }
+
+        // Client
+        doc.fillColor('black').font('Helvetica-Bold').text('CLIENT', 300, startY);
+        doc.font('Helvetica').fillColor(secondaryColor);
+        if (data.client) {
+            doc.text(data.client.name || 'Client', 300, startY + 15);
+            doc.text(data.client.address || '', 300, startY + 30);
+        }
+
+        doc.moveDown(4);
+
+        // 2. TABLE HEADERS
+        const tableTop = doc.y + 20;
+        const colDesc = 50;
+        const colQty = 350;
+        const colPrice = 410;
+        const colTotal = 490;
+
+        doc.font('Helvetica-Bold').fillColor('black');
+        doc.text('Description', colDesc, tableTop);
+        doc.text('Qté', colQty, tableTop);
+        doc.text('Prix U.', colPrice, tableTop);
+        doc.text('Total', colTotal, tableTop);
+
+        doc.lineWidth(1).moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+
+        // 3. TABLE ROWS
+        let y = tableTop + 25;
+        doc.font('Helvetica').fontSize(10);
+
+        data.items.forEach((item: any) => {
+            const desc = item.description || 'Service';
+            const qty = item.quantity || 1;
+            const price = item.unitPrice || 0;
+            const total = item.total || (qty * price);
+
+            doc.text(desc, colDesc, y, { width: 280 });
+            doc.text(qty.toString(), colQty, y);
+            doc.text(`${price} €`, colPrice, y);
+            doc.text(`${total} €`, colTotal, y);
+            
+            y += 20;
+            // Simple validation for page break could be added here
         });
-      } else if (typeof data === 'string') {
-        doc.fontSize(12).text(data);
+
+        doc.lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
+        y += 10;
+
+        // 4. TOTALS
+        if (data.totals) {
+            const offsetRight = 400;
+            doc.font('Helvetica-Bold');
+            doc.text('Total HT:', offsetRight, y);
+            doc.font('Helvetica').text(`${data.totals.subtotal || 0} €`, colTotal, y);
+            y += 15;
+            
+            doc.font('Helvetica-Bold');
+            doc.text('TVA (20%):', offsetRight, y);
+            doc.font('Helvetica').text(`${data.totals.taxAmount || 0} €`, colTotal, y);
+            y += 15;
+
+            doc.rect(offsetRight - 10, y - 5, 200, 25).fill('#f0f0f0');
+            doc.fillColor('black');
+            doc.fontSize(12).text('TOTAL TTC:', offsetRight, y);
+            doc.text(`${data.totals.total || 0} €`, colTotal, y);
+        }
+
+        // 5. FOOTER / LEGAL
+        doc.moveDown(4);
+        doc.fontSize(9).fillColor('#888888');
+        if (data.legal) {
+            doc.text('Conditions & Mentions Légales :', 50);
+            doc.text(data.legal, { width: 500 });
+        }
+
+        if (data.sender?.bank) {
+            doc.moveDown();
+            doc.text(`Informations Bancaires : ${data.sender.bank}`, 50);
+        }
+
       } else {
-        doc.fontSize(12).text(JSON.stringify(data, null, 2));
+        // --- GENERIC LAYOUT ---
+        doc.fontSize(20).text(data.title || 'Document', { align: 'center' });
+        doc.moveDown();
+
+        if (data.sections && Array.isArray(data.sections)) {
+          data.sections.forEach((section: any) => {
+            doc.fontSize(14).font('Helvetica-Bold').text(section.title || '', { underline: true });
+            doc.fontSize(12).font('Helvetica').text(section.text || '');
+            doc.moveDown();
+          });
+        } else if (typeof data === 'string') {
+          doc.fontSize(12).text(data);
+        } else {
+          doc.fontSize(12).text(JSON.stringify(data, null, 2));
+        }
       }
 
       doc.end();
