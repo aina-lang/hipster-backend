@@ -160,7 +160,7 @@ export class AiService {
       function: cleanFunctionName,
     });
 
-    const prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être structurée pour que je puisse en extraire les sections (Titre, Sections avec contenu). Utilise un format TOON pour la structure du document.`;
+    const prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être structurée pour que je puisse en extraire les sections. Utilise le format TOON suivant :\ntoon{\n  title: "Titre du document",\n  sections: [\n    { title: "Titre section 1", text: "Contenu rédigé..." },\n    { title: "Titre section 2", text: "Contenu rédigé..." }\n  ]\n}\n\nATTENTION : Le champ "text" doit contenir du texte rédigé, lisible et professionnel (pas de JSON, pas de markdown complexe). Fais des paragraphes clairs.`;
     const result = await this.generateText(prompt, 'business', userId);
 
     let generationId: number | undefined;
