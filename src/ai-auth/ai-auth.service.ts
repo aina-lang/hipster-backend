@@ -169,20 +169,49 @@ export class AiAuthService {
 
   async verifyEmail(email: string, code: string) {
     const normalizedEmail = email.trim().toLowerCase();
-    const user = await this.aiUserRepo.findOne({ where: { email: normalizedEmail } });
+    const user = await this.aiUserRepo.findOne({
+      where: { email: normalizedEmail },
+      relations: ['aiProfile'],
+    });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
-    const isValid = await this.otpService.verifyOtp(
-      user,
-      code,
-      OtpType.OTP,
-    );
+    const isValid = await this.otpService.verifyOtp(user, code, OtpType.OTP);
     if (!isValid) throw new BadRequestException('Code invalide ou expiré.');
 
     user.isEmailVerified = true;
+
+    // Generate tokens for auto-login
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      type: 'ai',
+      roles: ['ai_user'],
+    };
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '4h',
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: '30d',
+    });
+
+    user.refreshToken = refreshToken;
     await this.aiUserRepo.save(user);
 
-    return { message: 'Email vérifié avec succès.' };
+    return {
+      message: 'Email vérifié avec succès.',
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        aiProfile: user.aiProfile,
+        isEmailVerified: user.isEmailVerified,
+        roles: ['ai_user'],
+        type: 'ai',
+      },
+    };
   }
 
   async resendOtp(email: string) {
