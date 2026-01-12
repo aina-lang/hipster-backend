@@ -160,7 +160,7 @@ export class AiService {
       function: cleanFunctionName,
     });
 
-    const prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être structurée pour que je puisse en extraire les sections. Utilise le format TOON suivant :\ntoon{\n  title: "Titre du document",\n  sections: [\n    { title: "Titre section 1", text: "Contenu rédigé..." },\n    { title: "Titre section 2", text: "Contenu rédigé..." }\n  ]\n}\n\nCRUCIAL: Respecte la syntaxe TOON à la lettre.\n1. Chaque clé doit être suivie de deux-points (title: "...")\n2. Les chaînes de caractères longues DOIVENT être entre guillemets doubles.\n3. Échappe les guillemets internes (\\") si nécessaire.\n4. Le champ "text" doit contenir du texte rédigé, lisible et professionnel (pas de JSON, pas de markdown complexe).`;
+    const prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
     const result = await this.generateText(prompt, 'business', userId);
 
     let generationId: number | undefined;
@@ -196,6 +196,8 @@ export class AiService {
     }
 
     const contentData = this.parseDocumentContent(generation.result);
+    console.log('Parsed Content Data:', JSON.stringify(contentData, null, 2));
+
     const fileName = `document_${id}.${format}`;
     let buffer: Buffer;
     let mimeType: string;
@@ -222,30 +224,65 @@ export class AiService {
   }
 
   private parseDocumentContent(text: string): any {
-    console.log('--- Parsing Document Content ---');
-    console.log('Raw AI Output:', text); // Log the full output
+    console.log('--- Parsing Document Content (Markdown) ---');
     
-    // Try to decode TOON first
-    const toonBlocks = this.extractToonBlocks(text);
-    console.log(`Found ${toonBlocks.length} TOON blocks`);
-    
-    if (toonBlocks.length > 0) {
-      console.log('Raw TOON Block:', toonBlocks[0]);
-      try {
-        const decoded = decode(toonBlocks[0]);
-        console.log('TOON Decoding Successful:', JSON.stringify(decoded, null, 2));
-        return decoded;
-      } catch (e) {
-        this.logger.warn('Failed to decode TOON block in document content', e);
-        console.error('TOON Decode Error:', e);
+    // Default structure
+    const docData: any = {
+      title: 'Document',
+      sections: []
+    };
+
+    const lines = text.split('\n');
+    let currentSection: any = null;
+
+    lines.forEach(line => {
+      const trimmedLine = line.trim();
+      
+      if (trimmedLine.startsWith('# ')) {
+        // Main Title
+        docData.title = trimmedLine.substring(2).trim();
+      } else if (trimmedLine.startsWith('## ')) {
+        // New Section
+        if (currentSection) {
+          docData.sections.push(currentSection);
+        }
+        currentSection = {
+          title: trimmedLine.substring(3).trim(),
+          text: ''
+        };
+      } else {
+        // Content
+        if (currentSection) {
+          currentSection.text += line + '\n';
+        } else if (!trimmedLine.startsWith('#') && trimmedLine.length > 0) {
+            // Content before first section (intro?)
+            // If no section exists yet, treat as generic section or append to a default one?
+            // Let's create an implicit first section if needed or just ignore if it's just preamble.
+            // Actually, usually text flows into the first section.
+             if (docData.sections.length === 0 && !currentSection) {
+                 currentSection = { title: 'Introduction', text: line + '\n' };
+             } else if (currentSection) {
+                 currentSection.text += line + '\n';
+             }
+        }
       }
-    } else {
-      console.log('No TOON blocks found, regex failed?');
+    });
+
+    if (currentSection) {
+      docData.sections.push(currentSection);
     }
     
-    // Fallback: simple split or return as is
-    console.log('Fallback to raw text wrapping');
-    return { title: 'Document Généré', sections: [{ title: 'Contenu', text }] };
+    // Clean up text
+    docData.sections.forEach((sec: any) => {
+        sec.text = sec.text.trim();
+    });
+
+    if (docData.sections.length === 0) {
+        // Fallback if no markdown structure found
+        return { title: 'Document Généré', sections: [{ title: 'Contenu', text }] };
+    }
+
+    return docData;
   }
 
   private extractToonBlocks(text: string): string[] {
