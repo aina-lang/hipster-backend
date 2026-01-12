@@ -7,6 +7,7 @@ import {
   IsIn,
   IsString,
   IsEmail,
+  IsBoolean,
 } from 'class-validator';
 import {
   SubscriptionStatus,
@@ -37,6 +38,10 @@ export class CreateIaClientProfileDto {
   @IsOptional()
   @IsIn(['particulier', 'entreprise'])
   profileType?: 'particulier' | 'entreprise';
+
+  @IsOptional()
+  @IsBoolean()
+  isSetupComplete?: boolean;
 
   @IsOptional()
   @IsString()
