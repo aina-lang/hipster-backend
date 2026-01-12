@@ -160,7 +160,7 @@ export class AiService {
       function: cleanFunctionName,
     });
 
-    const prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
+    const prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Réponds UNIQUEMENT avec un JSON minifié pour économiser des tokens. Utilise cette structure stricte avec clés courtes :\n{"t": "Titre du document", "s": [{"st": "Titre Section", "c": "Contenu rédigé..."}]}`;
     const result = await this.generateText(prompt, 'business', userId);
 
     let generationId: number | undefined;
@@ -224,9 +224,41 @@ export class AiService {
   }
 
   private parseDocumentContent(text: string): any {
-    console.log('--- Parsing Document Content (Markdown) ---');
-    
-    // Default structure
+    console.log('--- Parsing Document Content (JSON) ---');
+    console.log('Raw AI Output:', text);
+
+    // 1. Try JSON Parsing with Short Keys
+    try {
+      // Find JSON object boundaries in case of extra text
+      const jsonStart = text.indexOf('{');
+      const jsonEnd = text.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1) {
+        const jsonStr = text.substring(jsonStart, jsonEnd + 1);
+        const data = JSON.parse(jsonStr);
+
+        // Map short keys to internal structure
+        // t -> title
+        // s -> sections
+        // st -> sections.title
+        // c -> sections.text
+        if (data.t || data.s) {
+          return {
+            title: data.t || 'Document',
+            sections: Array.isArray(data.s) 
+              ? data.s.map((sec: any) => ({
+                  title: sec.st || '',
+                  text: sec.c || ''
+                }))
+              : []
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('JSON parsing failed, falling back to Markdown/Text parser', e);
+    }
+
+    // 2. Fallback: Markdown Parser (previous logic)
     const docData: any = {
       title: 'Document',
       sections: []
@@ -255,10 +287,6 @@ export class AiService {
         if (currentSection) {
           currentSection.text += line + '\n';
         } else if (!trimmedLine.startsWith('#') && trimmedLine.length > 0) {
-            // Content before first section (intro?)
-            // If no section exists yet, treat as generic section or append to a default one?
-            // Let's create an implicit first section if needed or just ignore if it's just preamble.
-            // Actually, usually text flows into the first section.
              if (docData.sections.length === 0 && !currentSection) {
                  currentSection = { title: 'Introduction', text: line + '\n' };
              } else if (currentSection) {
@@ -272,13 +300,11 @@ export class AiService {
       docData.sections.push(currentSection);
     }
     
-    // Clean up text
     docData.sections.forEach((sec: any) => {
         sec.text = sec.text.trim();
     });
 
     if (docData.sections.length === 0) {
-        // Fallback if no markdown structure found
         return { title: 'Document Généré', sections: [{ title: 'Contenu', text }] };
     }
 
