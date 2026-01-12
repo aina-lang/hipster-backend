@@ -154,7 +154,7 @@ export class AiService {
     
     // Clean format hints from function name (e.g., "(PDF / DOCX)")
     const cleanFunctionName = funcName ? funcName.replace(/\s*\(.*?\)\s*/g, '').trim() : funcName;
-    const isInvoiceOrQuote = /devis|facture/i.test(cleanFunctionName || params.type);
+    const isQuoteEstimate = /devis|estimation/i.test(cleanFunctionName || params.type);
     
     const toonParams = encode({
       ...restParams,
@@ -163,14 +163,14 @@ export class AiService {
 
     let prompt = '';
 
-    if (isInvoiceOrQuote) {
+    if (isQuoteEstimate) {
       // 1. Generate Invoice Number
       let docNumber = 'DOC-001';
       if (userId) {
         const count = await this.aiGenRepo.count({
           where: { user: { id: userId }, type: AiGenerationType.DOCUMENT }
         });
-        const prefix = /devis/i.test(cleanFunctionName) ? 'DEVIS' : 'FACT';
+        const prefix = 'DEVIS';
         const year = new Date().getFullYear();
         docNumber = `${prefix}-${year}-${(count + 1).toString().padStart(3, '0')}`;
       }
@@ -187,28 +187,25 @@ export class AiService {
 
       const senderContext = Object.keys(senderInfo).length > 0 
         ? `Voici les infos de l'émetteur (Moi) : ${JSON.stringify(senderInfo)}` 
-        : 'Invente les infos de l\'émetteur (Entreprise fictive) si non fournies (nom, adresse, siret).';
+        : 'Invente les infos de l\'émetteur (Entreprise fictive) si non fournies.';
 
-      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants (format TOON) :\n${toonParams}\n\n${senderContext}\n\nINSTRUCTIONS CRITIQUES (Data Extraction) :
+      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants (format TOON) :\n${toonParams}\n\n${senderContext}\n\nMODE ESTIMATEUR INTELLIGENT :
 1. Numéro de document : Utilise "${docNumber}".
-2. **EXTRACTION STRICTE** : Le champ "details" contient une liste sous "PRESTATIONS:".
-   - Tu dois extraire CHAQUE ligne commençant par "- ".
-   - La description, la quantité (Qté) et le prix (Prix) DOIVENT être repris EXACTEMENT tels quels.
-   - NE CHANGE PAS LES PRIX fournis par l'utilisateur. C'est une obligation absolue.
-   - Si l'utilisateur a écrit "Prix: 25", le prix unitaire EST 25. Point final.
-   
-3. **Complétion** : Uniquement si un prix est ABSENT ou vide, alors seulement tu peux l'estimer.
-4. **Calculs** : Recalcule les totaux (Qté x Prix) toi-même pour garantir la cohérence mathématique.
-5. **Mentions Légales** : TVA 20% (sauf exception), validité 30 jours.
+2. **Estimation des Coûts** : L'utilisateur n'a peut-être donné qu'une description vague (ex: "Rénovation salle de bain 5m2").
+   - À TOI D'ESTIMER les matériaux, la main d'œuvre et la durée.
+   - Détaille les postes de dépenses (ex: "Carrelage", "Plomberie", "Main d'œuvre 3 jours").
+   - Utilise des prix du marché réalistes.
+3. **Structure** : Présente cela sous forme de devis professionnel.
+4. **Mentions Légales** : TVA 20% (sauf exception), validité 30 jours.
 
-IMPORTANT: Réponds UNIQUEMENT avec un JSON valide.
+IMPORTANT: Réponds UNIQUEMENT avec un JSON valide pour générer le PDF.
 Structure JSON requise :
 {
   "type": "invoice",
   "sender": { "name": "...", "address": "...", "contact": "...", "siret": "...", "bank": "..." },
-  "client": { "name": "...", "address": "..." },
+  "client": { "name": "Client (ou à compléter)", "address": "..." },
   "items": [ 
-    { "description": "Reprendre texte user exactement...", "quantity": 1, "unitPrice": 25, "total": 25 } 
+    { "description": "Description estimée...", "quantity": 1, "unitPrice": 100, "total": 100 } 
   ],
   "totals": { "subtotal": 0, "taxRate": 20, "taxAmount": 0, "total": 0 },
   "meta": { "date": "JJ/MM/AAAA", "dueDate": "JJ/MM/AAAA", "number": "${docNumber}" },
@@ -217,7 +214,7 @@ Structure JSON requise :
 
     } else {
       // Generic Document (Keep Markdown as fallback)
-      prompt = `Génère un document ${type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé (pas de JSON).\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
+      prompt = `Génère un document ${params.type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
     }
 
     const result = await this.generateText(prompt, 'business', userId);
