@@ -6,7 +6,7 @@ import { AiUser } from './entities/ai-user.entity';
 import { AiGeneration, AiGenerationType } from './entities/ai-generation.entity';
 
 import OpenAI from 'openai';
-import { encode, decode } from '@toon-format/toon';
+
 import * as PDFDocument from 'pdfkit';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import * as ExcelJS from 'exceljs';
@@ -96,15 +96,15 @@ export class AiService {
       }
     }
 
-    const systemToon = encode({
-      identity: 'Hipster IA',
-      role: 'Expert assistant créatif',
-      target: userName,
-      context: `Génération de contenu ${type}`
-    });
+    const systemContext = `
+      Identité: Hipster IA
+      Rôle: Expert assistant créatif
+      Cible: ${userName}
+      Contexte: Génération de contenu ${type}
+    `;
 
     const messages = [
-      { role: 'system', content: `Tu es Hipster IA. Voici ta configuration en format TOON:\n${systemToon}` },
+      { role: 'system', content: `Tu es Hipster IA. Voici ta configuration :\n${systemContext}\n\nRéponds en Markdown standard.` },
       { role: 'user', content: prompt }
     ];
     
@@ -156,10 +156,10 @@ export class AiService {
     const cleanFunctionName = funcName ? funcName.replace(/\s*\(.*?\)\s*/g, '').trim() : funcName;
     const isQuoteEstimate = /devis|estimation/i.test(cleanFunctionName || params.type);
     
-    const toonParams = encode({
+    const paramsStr = JSON.stringify({
       ...restParams,
       function: cleanFunctionName,
-    });
+    }, null, 2);
 
     let prompt = '';
 
@@ -189,7 +189,7 @@ export class AiService {
         ? `Voici les infos de l'émetteur (Moi) : ${JSON.stringify(senderInfo)}` 
         : 'Invente les infos de l\'émetteur (Entreprise fictive) si non fournies.';
 
-      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants (format TOON) :\n${toonParams}\n\n${senderContext}\n\nMODE ESTIMATEUR INTELLIGENT :
+      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants :\n${paramsStr}\n\n${senderContext}\n\nMODE ESTIMATEUR INTELLIGENT :
 1. Numéro de document : Utilise "${docNumber}".
 2. **Estimation des Coûts** : L'utilisateur n'a peut-être donné qu'une description vague (ex: "Rénovation salle de bain 5m2").
    - À TOI D'ESTIMER les matériaux, la main d'œuvre et la durée.
@@ -211,10 +211,9 @@ Structure JSON requise :
   "meta": { "date": "JJ/MM/AAAA", "dueDate": "JJ/MM/AAAA", "number": "${docNumber}" },
   "legal": "Mentions légales..."
 }`;
-
     } else {
       // Generic Document (Keep Markdown as fallback)
-      prompt = `Génère un document ${params.type} avec les paramètres suivants (format TOON) :\n${toonParams}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
+      prompt = `Génère un document ${params.type} avec les paramètres suivants :\n${paramsStr}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
     }
 
     const result = await this.generateText(prompt, 'business', userId);
