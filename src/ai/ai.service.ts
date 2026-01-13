@@ -128,21 +128,60 @@ export class AiService {
     style: 'realistic' | 'cartoon' | 'sketch',
     userId?: number,
   ): Promise<string> {
-    // Mock implementation
-    const url = `https://via.placeholder.com/1024x1024.png?text=${encodeURIComponent(prompt)}+(${style})`;
+    console.log(`--- GENERATE IMAGE (DALL-E 3) ---`);
+    console.log(`Prompt: ${prompt}`);
+    console.log(`Style param: ${style}`);
 
-    if (userId) {
-      await this.aiGenRepo.save({
-        user: { id: userId } as AiUser,
-        type: AiGenerationType.IMAGE,
-        prompt: prompt,
-        result: 'Image generated',
-        imageUrl: url,
-        title: prompt.substring(0, 30) + '...',
-      });
+    // Map legacy styles to DALL-E 3 compatible prompt enhancements
+    // DALL-E 3 supports 'style': 'vivid' | 'natural'.
+    // We will use 'vivid' for most marketing content to make it pop.
+    let enhancedPrompt = prompt;
+    let dalleStyle: 'vivid' | 'natural' = 'vivid';
+
+    if (style === 'cartoon') {
+      enhancedPrompt += ' . Style: Cartoon, vibrant colors, flat design.';
+      dalleStyle = 'vivid';
+    } else if (style === 'sketch') {
+      enhancedPrompt += ' . Style: Pencil sketch, artistic, black and white.';
+      dalleStyle = 'natural';
+    } else {
+      // realistic
+      enhancedPrompt += ' . Style: Photorealistic, high quality, 4k, professional photography.';
+      dalleStyle = 'natural'; // Natural often looks more realistic for photos
     }
 
-    return url;
+    try {
+      const response = await this.openai.images.generate({
+        model: 'dall-e-3',
+        prompt: enhancedPrompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'standard', // or 'hd' ($0.08 vs $0.04)
+        style: dalleStyle,
+        response_format: 'url',
+      });
+
+      const url = response.data[0].url;
+      console.log('--- IMAGE GENERATED ---');
+      console.log('URL:', url);
+
+      if (userId && url) {
+        await this.aiGenRepo.save({
+          user: { id: userId } as AiUser,
+          type: AiGenerationType.IMAGE,
+          prompt: enhancedPrompt,
+          result: 'Image DALL-E 3',
+          imageUrl: url,
+          title: prompt.substring(0, 30) + '...',
+        });
+      }
+
+      return url || '';
+    } catch (error) {
+      console.error('--- OPENAI IMAGE ERROR ---');
+      console.error(error);
+      throw new Error('Erreur lors de la génération d\'image');
+    }
   }
 
   async generateDocument(
