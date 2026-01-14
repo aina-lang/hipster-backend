@@ -134,8 +134,8 @@ export class AiService {
         role: 'system',
         content: `Tu es Hipster IA. Voici ta configuration :\n${systemContext}\n\n${
           type === 'social'
-            ? 'Réponds avec un format clair et structuré (pas de JSON).'
-            : 'Réponds au format JSON si possible pour une meilleure extraction des données, sinon utilise un format clair et structuré.'
+            ? "Réponds avec un format clair et structuré (pas de JSON). IMPORTANT: N'utilise JAMAIS de mise en forme Markdown comme les doubles astérisques (**) pour le gras. Produis du texte brut et propre."
+            : 'Réponds au format JSON si possible pour une meilleure extraction des données, sinon utilise un format clair et structuré. IMPORTANT: Pas de mise en forme Markdown (**) dans les valeurs textuelles.'
         }`,
       },
       { role: 'user', content: prompt },
@@ -238,7 +238,7 @@ export class AiService {
       Sujet: ${prompt}
       Inclus des hashtags pertinents. N'inclus pas de suggestions d'images.
       IMPORTANT: Inclus les coordonnées de contact (adresse, téléphone, site) si elles sont fournies dans le contexte.
-      RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE. PAS DE JSON. PAS DE BLOC DE CODE.`;
+      IMPORTANT: N'UTILISE JAMAIS DE GRAS (**) OU DE MISE EN FORME MARKDOWN. RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE BRUT. PAS DE JSON. PAS DE BLOC DE CODE.`;
 
     const textRes = await this.generateText(textPrompt, 'social', userId);
 
