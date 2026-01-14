@@ -69,12 +69,14 @@ export class AiController {
     @Body() body: { prompt: string; type: 'blog' | 'social' | 'ad' },
     @Req() req,
   ) {
+    const result = await this.aiService.generateText(
+      body.prompt,
+      body.type,
+      req.user.sub,
+    );
     return {
-      content: await this.aiService.generateText(
-        body.prompt,
-        body.type,
-        req.user.sub,
-      ),
+      content: result.content,
+      generationId: result.generationId,
     };
   }
 
@@ -86,11 +88,6 @@ export class AiController {
     @Body() body: { prompt: string; style: 'realistic' | 'cartoon' | 'sketch' },
     @Req() req,
   ) {
-    const imageUrl = await this.aiService.generateImage(
-      body.prompt,
-      body.style,
-    );
-
     // AI isolation: we don't fetch roles from standard user.
     // We check the AI subscription profile linked to this AI account.
     // Fetch user with profile to check planType
@@ -99,9 +96,15 @@ export class AiController {
       aiUser?.aiProfile?.planType === 'pro' ||
       aiUser?.aiProfile?.planType === 'enterprise';
 
+    const result = await this.aiService.generateImage(
+      body.prompt,
+      body.style,
+      req.user.sub,
+    );
     return {
-      url: await this.aiService.applyWatermark(imageUrl, isPremium),
-      rawUrl: imageUrl,
+      url: await this.aiService.applyWatermark(result.url, isPremium),
+      rawUrl: result.url,
+      generationId: result.generationId,
     };
   }
 

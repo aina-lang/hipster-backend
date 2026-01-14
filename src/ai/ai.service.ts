@@ -90,7 +90,7 @@ export class AiService {
     prompt: string,
     type: string,
     userId?: number,
-  ): Promise<string> {
+  ): Promise<{ content: string; generationId?: number }> {
     let userName = "l'utilisateur";
     if (userId) {
       const userObj = await this.aiUserRepo.findOne({ where: { id: userId } });
@@ -116,24 +116,26 @@ export class AiService {
 
     const result = await this.chat(messages);
 
+    let generationId: number | undefined;
     if (userId) {
-      await this.aiGenRepo.save({
+      const saved = await this.aiGenRepo.save({
         user: { id: userId } as AiUser,
         type: AiGenerationType.TEXT,
         prompt: prompt,
         result: result,
         title: prompt.substring(0, 30) + '...',
       });
+      generationId = saved.id;
     }
 
-    return result;
+    return { content: result, generationId };
   }
 
   async generateImage(
     prompt: string,
     style: 'realistic' | 'cartoon' | 'sketch',
     userId?: number,
-  ): Promise<string> {
+  ): Promise<{ url: string; generationId?: number }> {
     console.log(`--- GENERATE IMAGE (DALL-E 3) ---`);
     console.log(`Prompt: ${prompt}`);
     console.log(`Style param: ${style}`);
@@ -172,8 +174,9 @@ export class AiService {
       console.log('--- IMAGE GENERATED ---');
       console.log('URL:', url);
 
+      let generationId: number | undefined;
       if (userId && url) {
-        await this.aiGenRepo.save({
+        const saved = await this.aiGenRepo.save({
           user: { id: userId } as AiUser,
           type: AiGenerationType.IMAGE,
           prompt: enhancedPrompt,
@@ -181,9 +184,10 @@ export class AiService {
           imageUrl: url,
           title: prompt.substring(0, 30) + '...',
         });
+        generationId = saved.id;
       }
 
-      return url || '';
+      return { url: url || '', generationId };
     } catch (error) {
       console.error('--- OPENAI IMAGE ERROR ---');
       console.error(error);
@@ -331,7 +335,8 @@ Règles de rédaction :
     /* -------------------------------------------------------------------------- */
     /*                              GENERATION AI                                 */
     /* -------------------------------------------------------------------------- */
-    const result = await this.generateText(prompt, 'business', userId);
+    const { content: resultText, generationId: textGenId } =
+      await this.generateText(prompt, 'business', userId);
 
     /* -------------------------------------------------------------------------- */
     /*                        SAVE GENERATION HISTORY                              */
