@@ -35,10 +35,10 @@ export class AiGeneration {
   @Column({ type: 'text', nullable: true })
   result: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   imageUrl?: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   fileUrl?: string;
 
   @Column({ type: 'json', nullable: true })
