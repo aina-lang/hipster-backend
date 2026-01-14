@@ -3,7 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AiUser } from './entities/ai-user.entity';
-import { AiGeneration, AiGenerationType } from './entities/ai-generation.entity';
+import {
+  AiGeneration,
+  AiGenerationType,
+} from './entities/ai-generation.entity';
 
 import OpenAI from 'openai';
 
@@ -27,7 +30,7 @@ export class AiService {
     private readonly aiGenRepo: Repository<AiGeneration>,
   ) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
-    
+
     this.openai = new OpenAI({
       apiKey: apiKey,
     });
@@ -51,19 +54,19 @@ export class AiService {
   async chat(messages: any[], userId?: number): Promise<string> {
     console.log('--- START AI CHAT REQUEST ---');
     console.log('Messages:', JSON.stringify(messages, null, 2));
-    
+
     try {
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
         messages: messages,
       });
-      
+
       const content = completion.choices[0].message.content || '';
       console.log('--- AI RESPONSE RECEIVED ---');
 
       // PERSIST IF USER ID PROVIDED
       if (userId) {
-        const lastUserMsg = messages.filter(m => m.role === 'user').pop();
+        const lastUserMsg = messages.filter((m) => m.role === 'user').pop();
         await this.aiGenRepo.save({
           user: { id: userId } as AiUser,
           type: AiGenerationType.CHAT,
@@ -74,11 +77,11 @@ export class AiService {
       }
 
       return content;
-      
     } catch (error) {
       console.error('--- OPENAI ERROR ---');
       console.error(error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       throw new Error(`Erreur AI: ${errorMessage}`);
     }
   }
@@ -88,7 +91,7 @@ export class AiService {
     type: string,
     userId?: number,
   ): Promise<string> {
-    let userName = 'l\'utilisateur';
+    let userName = "l'utilisateur";
     if (userId) {
       const userObj = await this.aiUserRepo.findOne({ where: { id: userId } });
       if (userObj?.firstName) {
@@ -104,10 +107,13 @@ export class AiService {
     `;
 
     const messages = [
-      { role: 'system', content: `Tu es Hipster IA. Voici ta configuration :\n${systemContext}\n\nRéponds en Markdown standard.` },
-      { role: 'user', content: prompt }
+      {
+        role: 'system',
+        content: `Tu es Hipster IA. Voici ta configuration :\n${systemContext}\n\nRéponds en Markdown standard.`,
+      },
+      { role: 'user', content: prompt },
     ];
-    
+
     const result = await this.chat(messages);
 
     if (userId) {
@@ -146,7 +152,8 @@ export class AiService {
       dalleStyle = 'natural';
     } else {
       // realistic
-      enhancedPrompt += ' . Style: Photorealistic, high quality, 4k, professional photography.';
+      enhancedPrompt +=
+        ' . Style: Photorealistic, high quality, 4k, professional photography.';
       dalleStyle = 'natural'; // Natural often looks more realistic for photos
     }
 
@@ -180,7 +187,7 @@ export class AiService {
     } catch (error) {
       console.error('--- OPENAI IMAGE ERROR ---');
       console.error(error);
-      throw new Error('Erreur lors de la génération d\'image');
+      throw new Error("Erreur lors de la génération d'image");
     }
   }
 
@@ -189,77 +196,114 @@ export class AiService {
     params: any,
     userId?: number,
   ): Promise<{ content: string; generationId?: number }> {
-    const { format: requestedFormat, function: funcName, userProfile, ...restParams } = params;
-    
-    // Clean format hints from function name (e.g., "(PDF / DOCX)")
-    const cleanFunctionName = funcName ? funcName.replace(/\s*\(.*?\)\s*/g, '').trim() : funcName;
-    const isQuoteEstimate = /devis|estimation/i.test(cleanFunctionName || params.type);
-    
-    const entityName = userProfile?.companyName || (userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : null);
+    const {
+      format: requestedFormat,
+      function: funcName,
+      userProfile,
+      ...restParams
+    } = params;
 
-    const paramsStr = JSON.stringify({
-      ...restParams,
-      function: cleanFunctionName,
-      entityName: entityName,
-    }, null, 2);
+    // Clean format hints like "(PDF / DOCX)"
+    const cleanFunctionName = funcName
+      ? funcName.replace(/\s*\(.*?\)\s*/g, '').trim()
+      : 'Document';
+
+    const isQuoteEstimate = /devis|estimation|estimate/i.test(
+      cleanFunctionName,
+    );
+
+    // Entity name (Company or User)
+    const entityName =
+      userProfile?.companyName ||
+      (userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : null);
+
+    const paramsStr = JSON.stringify(
+      { ...restParams, function: cleanFunctionName, entityName },
+      null,
+      2,
+    );
 
     let prompt = '';
 
+    /* -------------------------------------------------------------------------- */
+    /*                         CASE A — QUOTE / ESTIMATION                        */
+    /* -------------------------------------------------------------------------- */
     if (isQuoteEstimate) {
-      // 1. Generate Invoice Number
       let docNumber = 'DOC-001';
+
+      // Generate incremental document number
       if (userId) {
         const count = await this.aiGenRepo.count({
-          where: { user: { id: userId }, type: AiGenerationType.DOCUMENT }
+          where: { user: { id: userId }, type: AiGenerationType.DOCUMENT },
         });
+
         const prefix = 'DEVIS';
         const year = new Date().getFullYear();
-        docNumber = `${prefix}-${year}-${(count + 1).toString().padStart(3, '0')}`;
+        docNumber = `${prefix}-${year}-${String(count + 1).padStart(3, '0')}`;
       }
 
-      const senderInfo = userProfile ? {
-        company: userProfile.companyName || `${userProfile.firstName} ${userProfile.lastName}`,
-        address: userProfile.professionalAddress,
-        city: `${userProfile.postalCode || ''} ${userProfile.city || ''}`.trim(),
-        phone: userProfile.professionalPhone,
-        email: userProfile.professionalEmail,
-        siret: userProfile.siret,
-        bank: userProfile.bankDetails
-      } : {};
+      // Sender details
+      const senderInfo = userProfile
+        ? {
+            company:
+              userProfile.companyName ||
+              `${userProfile.firstName} ${userProfile.lastName}`,
+            address: userProfile.professionalAddress,
+            city: `${userProfile.postalCode || ''} ${userProfile.city || ''}`.trim(),
+            phone: userProfile.professionalPhone,
+            email: userProfile.professionalEmail,
+            siret: userProfile.siret,
+            bank: userProfile.bankDetails,
+          }
+        : {};
 
-      const senderContext = Object.keys(senderInfo).length > 0 
-        ? `Voici les infos de l'émetteur (Moi) : ${JSON.stringify(senderInfo)}` 
-        : 'Invente les infos de l\'émetteur (Entreprise fictive) si non fournies.';
+      const senderContext =
+        Object.keys(senderInfo).length > 0
+          ? `Voici les infos de l'émetteur : ${JSON.stringify(senderInfo)}`
+          : 'Invente des informations réalistes d’entreprise si non fournies.';
 
-      prompt = `Génère un document ${cleanFunctionName} avec les paramètres suivants :\n${paramsStr}\n\n${senderContext}\n\nMODE ESTIMATEUR INTELLIGENT :
-1. Numéro de document : Utilise "${docNumber}".
-2. **Estimation des Coûts** : L'utilisateur n'a peut-être donné qu'une description vague (ex: "Rénovation salle de bain 5m2").
-   - À TOI D'ESTIMER les matériaux, la main d'œuvre et la durée.
-   - Détaille les postes de dépenses (ex: "Carrelage", "Plomberie", "Main d'œuvre 3 jours").
-   - Utilise des prix du marché réalistes.
-3. **Structure** : Présente cela sous forme de devis professionnel.
-4. **Mentions Légales** : TVA 20% (sauf exception), validité 30 jours.
+      /* ----------------------------- QUOTE PROMPT ----------------------------- */
+      prompt = `
+Génère un document "${cleanFunctionName}" avec les paramètres suivants :
+${paramsStr}
 
-IMPORTANT: Réponds UNIQUEMENT avec un JSON valide pour générer le PDF.
-Structure JSON requise :
+${senderContext}
+
+MODE ESTIMATEUR INTELLIGENT :
+1. Numéro du document : "${docNumber}"
+2. Estimation automatique des coûts :
+   - Analyse la demande même si elle est vague.
+   - Estime matériaux, main d'œuvre, temps, quantités.
+   - Utilise des prix réalistes basés sur le marché.
+3. Structure : Document professionnel de type DEVIS.
+4. TVA : 20%
+5. Validité : 30 jours
+
+IMPORTANT : Tu dois répondre UNIQUEMENT avec ce JSON valide :
+
 {
   "type": "invoice",
   "sender": { "name": "...", "address": "...", "contact": "...", "siret": "...", "bank": "..." },
-  "client": { "name": "Client (ou à compléter)", "address": "..." },
-  "items": [ 
-    { "description": "Description estimée...", "quantity": 1, "unitPrice": 100, "total": 100 } 
+  "client": { "name": "Client", "address": "..." },
+  "items": [
+    { "description": "Description...", "quantity": 1, "unitPrice": 100, "total": 100 }
   ],
   "totals": { "subtotal": 0, "taxRate": 20, "taxAmount": 0, "total": 0 },
   "meta": { "date": "JJ/MM/AAAA", "dueDate": "JJ/MM/AAAA", "number": "${docNumber}" },
   "legal": "Mentions légales..."
-}`;
+}
+`.trim();
     } else {
-      // Generic Document (Strictly Enforced Markdown Structure)
-      const docTypeLabel = (cleanFunctionName || params.type || 'Document').toUpperCase();
-      prompt = `Tu dois impérativement répondre en suivant EXACTEMENT cette structure Markdown. 
-Elle ne doit JAMAIS changer, quel que soit le métier, la demande ou les détails.
+      /* -------------------------------------------------------------------------- */
+      /*                  CASE B — GENERIC BUSINESS DOCUMENT (UNIFORM)              */
+      /* -------------------------------------------------------------------------- */
+      const docTitle = cleanFunctionName.toUpperCase();
 
-# ${docTypeLabel}
+      prompt = `
+Tu dois impérativement répondre en suivant EXACTEMENT cette structure Markdown.
+Elle ne doit JAMAIS changer.
+
+# ${docTitle}
 
 ## Présentation générale
 (Brève introduction. 3 à 5 phrases maximum.)
@@ -271,21 +315,31 @@ Elle ne doit JAMAIS changer, quel que soit le métier, la demande ou les détail
 (Zone texte libre expliquant conditions, variantes, informations utiles.)
 
 ## Conclusion
-(Petite phrase courte et professionnelle pour clôturer le document.)
+(Phrase courte et professionnelle pour clôturer le document.)
 
 Paramètres de génération :
 ${paramsStr}
 
-IMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé. N'inclus PAS de code, ni de balises XML/JSON. Respecte strictement les titres (H1 et H2) fournis.`;
+IMPORTANT :
+- Le contenu doit être professionnel, complet, et intégralement rédigé.
+- AUCUN code, AUCUNE balise XML/JSON.
+- Respect STRICT des titres et sections.
+- INTERDICTION D'INVENTER : N'ajoute AUCUNE prestation, service ou prix qui n'a pas été explicitement mentionné dans les paramètres ci-dessus. Si une liste est fournie, utilise-la fidèlement sans rien ajouter.
+`.trim();
     }
 
+    /* -------------------------------------------------------------------------- */
+    /*                              GENERATION AI                                 */
+    /* -------------------------------------------------------------------------- */
     const result = await this.generateText(prompt, 'business', userId);
 
+    /* -------------------------------------------------------------------------- */
+    /*                        SAVE GENERATION HISTORY                              */
+    /* -------------------------------------------------------------------------- */
     let generationId: number | undefined;
 
     if (userId) {
       try {
-        // We just save the text result. The file is generated on demand.
         const latestGen = await this.aiGenRepo.findOne({
           where: { user: { id: userId }, type: AiGenerationType.TEXT },
           order: { createdAt: 'DESC' },
@@ -304,9 +358,13 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
     return { content: result, generationId };
   }
 
-  async exportDocument(id: number, format: string, userId: number): Promise<{ buffer: Buffer; fileName: string; mimeType: string }> {
+  async exportDocument(
+    id: number,
+    format: string,
+    userId: number,
+  ): Promise<{ buffer: Buffer; fileName: string; mimeType: string }> {
     const generation = await this.aiGenRepo.findOne({
-      where: { id, user: { id: userId } }
+      where: { id, user: { id: userId } },
     });
 
     if (!generation) {
@@ -327,12 +385,14 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
         break;
       case 'docx':
         buffer = await this.generateDocxBuffer(contentData);
-        mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        mimeType =
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
         break;
       case 'xlsx':
       case 'excel':
         buffer = await this.generateExcelBuffer(contentData);
-        mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        mimeType =
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         break;
       default:
         throw new Error('Format non supporté');
@@ -350,46 +410,54 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
       // Find JSON object boundaries
       const jsonStart = text.indexOf('{');
       const jsonEnd = text.lastIndexOf('}');
-      
+
       if (jsonStart !== -1 && jsonEnd !== -1) {
         const jsonStr = text.substring(jsonStart, jsonEnd + 1);
         const data = JSON.parse(jsonStr);
 
         // Case A: Structured Invoice/Quote
-        if (data.items || data.sender || data.type === 'invoice' || data.type === 'quote') {
-            console.log('Detected Structured Invoice/Quote JSON');
-            return data;
+        if (
+          data.items ||
+          data.sender ||
+          data.type === 'invoice' ||
+          data.type === 'quote'
+        ) {
+          console.log('Detected Structured Invoice/Quote JSON');
+          return data;
         }
 
         // Case B: Minified Generic JSON (Legacy/Other)
         if (data.t || data.s) {
           return {
             title: data.t || 'Document',
-            sections: Array.isArray(data.s) 
+            sections: Array.isArray(data.s)
               ? data.s.map((sec: any) => ({
                   title: sec.st || '',
-                  text: sec.c || ''
+                  text: sec.c || '',
                 }))
-              : []
+              : [],
           };
         }
       }
     } catch (e) {
-      console.warn('JSON parsing failed, falling back to Markdown/Text parser', e);
+      console.warn(
+        'JSON parsing failed, falling back to Markdown/Text parser',
+        e,
+      );
     }
 
     // 2. Fallback: Markdown Parser
     const docData: any = {
       title: 'Document',
-      sections: []
+      sections: [],
     };
 
     const lines = text.split('\n');
     let currentSection: any = null;
 
-    lines.forEach(line => {
+    lines.forEach((line) => {
       const trimmedLine = line.trim();
-      
+
       if (trimmedLine.startsWith('# ')) {
         // Main Title
         docData.title = trimmedLine.substring(2).trim();
@@ -400,18 +468,18 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
         }
         currentSection = {
           title: trimmedLine.substring(3).trim(),
-          text: ''
+          text: '',
         };
       } else {
         // Content
         if (currentSection) {
           currentSection.text += line + '\n';
         } else if (!trimmedLine.startsWith('#') && trimmedLine.length > 0) {
-             if (docData.sections.length === 0 && !currentSection) {
-                 currentSection = { title: 'Introduction', text: line + '\n' };
-             } else if (currentSection) {
-                 currentSection.text += line + '\n';
-             }
+          if (docData.sections.length === 0 && !currentSection) {
+            currentSection = { title: 'Introduction', text: line + '\n' };
+          } else if (currentSection) {
+            currentSection.text += line + '\n';
+          }
         }
       }
     });
@@ -419,15 +487,18 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
     if (currentSection) {
       docData.sections.push(currentSection);
     }
-    
+
     // Clean up text
     docData.sections.forEach((sec: any) => {
-        sec.text = sec.text.trim();
+      sec.text = sec.text.trim();
     });
 
     if (docData.sections.length === 0) {
-        // Fallback if no markdown structure found
-        return { title: 'Document Généré', sections: [{ title: 'Contenu', text }] };
+      // Fallback if no markdown structure found
+      return {
+        title: 'Document Généré',
+        sections: [{ title: 'Contenu', text }],
+      };
     }
 
     return docData;
@@ -450,36 +521,46 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
 
       // --- INVOICE / QUOTE LAYOUT ---
       if (data.items && Array.isArray(data.items)) {
-        const isQuote = data.type === 'quote' || (data.title && data.title.toLowerCase().includes('devis'));
+        const isQuote =
+          data.type === 'quote' ||
+          (data.title && data.title.toLowerCase().includes('devis'));
         const titleText = isQuote ? 'DEVIS' : 'FACTURE';
         const primaryColor = '#333333';
         const secondaryColor = '#666666';
 
         // 1. HEADER
         doc.fontSize(20).text(titleText, { align: 'right' });
-        doc.fontSize(10).text(`N° ${data.meta?.number || '---'}`, { align: 'right' });
-        doc.text(`Date : ${data.meta?.date || new Date().toLocaleDateString()}`, { align: 'right' });
+        doc
+          .fontSize(10)
+          .text(`N° ${data.meta?.number || '---'}`, { align: 'right' });
+        doc.text(
+          `Date : ${data.meta?.date || new Date().toLocaleDateString()}`,
+          { align: 'right' },
+        );
         doc.moveDown();
 
         // Sender (Left) vs Client (Right)
         const startY = doc.y;
-        
+
         // Sender
         doc.fontSize(10).font('Helvetica-Bold').text('ÉMETTEUR', 50, startY);
         doc.font('Helvetica').fillColor(secondaryColor);
         if (data.sender) {
-            doc.text(data.sender.name || '', 50, startY + 15);
-            doc.text(data.sender.address || '', 50, startY + 30);
-            doc.text(data.sender.contact || '', 50, startY + 45);
-            doc.text(data.sender.email || '', 50, startY + 60);
+          doc.text(data.sender.name || '', 50, startY + 15);
+          doc.text(data.sender.address || '', 50, startY + 30);
+          doc.text(data.sender.contact || '', 50, startY + 45);
+          doc.text(data.sender.email || '', 50, startY + 60);
         }
 
         // Client
-        doc.fillColor('black').font('Helvetica-Bold').text('CLIENT', 300, startY);
+        doc
+          .fillColor('black')
+          .font('Helvetica-Bold')
+          .text('CLIENT', 300, startY);
         doc.font('Helvetica').fillColor(secondaryColor);
         if (data.client) {
-            doc.text(data.client.name || 'Client', 300, startY + 15);
-            doc.text(data.client.address || '', 300, startY + 30);
+          doc.text(data.client.name || 'Client', 300, startY + 15);
+          doc.text(data.client.address || '', 300, startY + 30);
         }
 
         doc.moveDown(4);
@@ -497,25 +578,29 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
         doc.text('Prix U.', colPrice, tableTop);
         doc.text('Total', colTotal, tableTop);
 
-        doc.lineWidth(1).moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+        doc
+          .lineWidth(1)
+          .moveTo(50, tableTop + 15)
+          .lineTo(550, tableTop + 15)
+          .stroke();
 
         // 3. TABLE ROWS
         let y = tableTop + 25;
         doc.font('Helvetica').fontSize(10);
 
         data.items.forEach((item: any) => {
-            const desc = item.description || 'Service';
-            const qty = item.quantity || 1;
-            const price = item.unitPrice || 0;
-            const total = item.total || (qty * price);
+          const desc = item.description || 'Service';
+          const qty = item.quantity || 1;
+          const price = item.unitPrice || 0;
+          const total = item.total || qty * price;
 
-            doc.text(desc, colDesc, y, { width: 280 });
-            doc.text(qty.toString(), colQty, y);
-            doc.text(`${price} €`, colPrice, y);
-            doc.text(`${total} €`, colTotal, y);
-            
-            y += 20;
-            // Simple validation for page break could be added here
+          doc.text(desc, colDesc, y, { width: 280 });
+          doc.text(qty.toString(), colQty, y);
+          doc.text(`${price} €`, colPrice, y);
+          doc.text(`${total} €`, colTotal, y);
+
+          y += 20;
+          // Simple validation for page break could be added here
         });
 
         doc.lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
@@ -523,36 +608,39 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
 
         // 4. TOTALS
         if (data.totals) {
-            const offsetRight = 400;
-            doc.font('Helvetica-Bold');
-            doc.text('Total HT:', offsetRight, y);
-            doc.font('Helvetica').text(`${data.totals.subtotal || 0} €`, colTotal, y);
-            y += 15;
-            
-            doc.font('Helvetica-Bold');
-            doc.text('TVA (20%):', offsetRight, y);
-            doc.font('Helvetica').text(`${data.totals.taxAmount || 0} €`, colTotal, y);
-            y += 15;
+          const offsetRight = 400;
+          doc.font('Helvetica-Bold');
+          doc.text('Total HT:', offsetRight, y);
+          doc
+            .font('Helvetica')
+            .text(`${data.totals.subtotal || 0} €`, colTotal, y);
+          y += 15;
 
-            doc.rect(offsetRight - 10, y - 5, 200, 25).fill('#f0f0f0');
-            doc.fillColor('black');
-            doc.fontSize(12).text('TOTAL TTC:', offsetRight, y);
-            doc.text(`${data.totals.total || 0} €`, colTotal, y);
+          doc.font('Helvetica-Bold');
+          doc.text('TVA (20%):', offsetRight, y);
+          doc
+            .font('Helvetica')
+            .text(`${data.totals.taxAmount || 0} €`, colTotal, y);
+          y += 15;
+
+          doc.rect(offsetRight - 10, y - 5, 200, 25).fill('#f0f0f0');
+          doc.fillColor('black');
+          doc.fontSize(12).text('TOTAL TTC:', offsetRight, y);
+          doc.text(`${data.totals.total || 0} €`, colTotal, y);
         }
 
         // 5. FOOTER / LEGAL
         doc.moveDown(4);
         doc.fontSize(9).fillColor('#888888');
         if (data.legal) {
-            doc.text('Conditions & Mentions Légales :', 50);
-            doc.text(data.legal, { width: 500 });
+          doc.text('Conditions & Mentions Légales :', 50);
+          doc.text(data.legal, { width: 500 });
         }
 
         if (data.sender?.bank) {
-            doc.moveDown();
-            doc.text(`Informations Bancaires : ${data.sender.bank}`, 50);
+          doc.moveDown();
+          doc.text(`Informations Bancaires : ${data.sender.bank}`, 50);
         }
-
       } else {
         // --- GENERIC LAYOUT ---
         doc.fontSize(20).text(data.title || 'Document', { align: 'center' });
@@ -560,8 +648,14 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
 
         if (data.sections && Array.isArray(data.sections)) {
           data.sections.forEach((section: any) => {
-            doc.fontSize(14).font('Helvetica-Bold').text(section.title || '', { underline: true });
-            doc.fontSize(12).font('Helvetica').text(section.text || '');
+            doc
+              .fontSize(14)
+              .font('Helvetica-Bold')
+              .text(section.title || '', { underline: true });
+            doc
+              .fontSize(12)
+              .font('Helvetica')
+              .text(section.text || '');
             doc.moveDown();
           });
         } else if (typeof data === 'string') {
@@ -578,7 +672,9 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
   private async generateDocxBuffer(data: any): Promise<Buffer> {
     const children = [
       new Paragraph({
-        children: [new TextRun({ text: data.title || 'Document', bold: true, size: 32 })],
+        children: [
+          new TextRun({ text: data.title || 'Document', bold: true, size: 32 }),
+        ],
       }),
     ];
 
@@ -587,7 +683,9 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
         children.push(new Paragraph({ text: '' }));
         children.push(
           new Paragraph({
-            children: [new TextRun({ text: section.title || '', bold: true, size: 28 })],
+            children: [
+              new TextRun({ text: section.title || '', bold: true, size: 28 }),
+            ],
           }),
         );
         children.push(new Paragraph({ text: section.text || '' }));
@@ -597,7 +695,7 @@ IMPORTANT: Ta réponse doit être un document professionnel entièrement rédig�
     }
 
     const doc = new Document({ sections: [{ children }] });
-    return await Packer.toBuffer(doc) as Buffer;
+    return (await Packer.toBuffer(doc)) as Buffer;
   }
 
   private async generateExcelBuffer(data: any): Promise<Buffer> {
