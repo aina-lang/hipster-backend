@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+} from 'typeorm';
 import { AiUser } from './ai-user.entity';
 
 export enum AiGenerationType {
@@ -34,6 +40,9 @@ export class AiGeneration {
 
   @Column({ nullable: true })
   fileUrl?: string;
+
+  @Column({ type: 'json', nullable: true })
+  attributes?: Record<string, any>;
 
   @CreateDateColumn()
   createdAt: Date;

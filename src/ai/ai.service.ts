@@ -347,6 +347,9 @@ Règles de rédaction :
 
         if (latestGen) {
           latestGen.type = AiGenerationType.DOCUMENT;
+          if (params.workflowAnswers) {
+            latestGen.attributes = params.workflowAnswers;
+          }
           const savedGen = await this.aiGenRepo.save(latestGen);
           generationId = savedGen.id;
         }
@@ -372,7 +375,8 @@ Règles de rédaction :
     }
 
     const contentData = this.parseDocumentContent(generation.result);
-    console.log('Parsed Content Data:', JSON.stringify(contentData, null, 2));
+    const model = generation.attributes?.model || 'Moderne';
+    console.log('Exporting with model:', model);
 
     const fileName = `document_${id}.${format}`;
     let buffer: Buffer;
@@ -380,7 +384,7 @@ Règles de rédaction :
 
     switch (format.toLowerCase()) {
       case 'pdf':
-        buffer = await this.generatePdfBuffer(contentData);
+        buffer = await this.generatePdfBuffer(contentData, model);
         mimeType = 'application/pdf';
         break;
       case 'docx':
@@ -396,7 +400,7 @@ Règles de rédaction :
         break;
       case 'image':
       case 'png':
-        buffer = await this.generateImageBuffer(contentData);
+        buffer = await this.generateImageBuffer(contentData, model);
         mimeType = 'image/png';
         break;
       default:
@@ -532,222 +536,34 @@ Règles de rédaction :
     return text.match(regex) || [];
   }
 
-  private async generatePdfBuffer(data: any): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ margin: 50 });
-      const chunks: any[] = [];
-
-      doc.on('data', (chunk) => chunks.push(chunk));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
-
-      // --- INVOICE / QUOTE LAYOUT ---
-      if (data.items && Array.isArray(data.items)) {
-        const isQuote =
-          data.type === 'quote' ||
-          (data.title && data.title.toLowerCase().includes('devis'));
-        const titleText = isQuote ? 'DEVIS' : 'FACTURE';
-        const primaryColor = '#333333';
-        const secondaryColor = '#666666';
-
-        // 1. HEADER
-        doc.fontSize(20).text(titleText, { align: 'right' });
-        doc
-          .fontSize(10)
-          .text(`N° ${data.meta?.number || '---'}`, { align: 'right' });
-        doc.text(
-          `Date : ${data.meta?.date || new Date().toLocaleDateString()}`,
-          { align: 'right' },
-        );
-        doc.moveDown();
-
-        // Sender (Left) vs Client (Right)
-        const startY = doc.y;
-
-        // Sender
-        doc.fontSize(10).font('Helvetica-Bold').text('ÉMETTEUR', 50, startY);
-        doc.font('Helvetica').fillColor(secondaryColor);
-        if (data.sender) {
-          doc.text(data.sender.name || '', 50, startY + 15);
-          doc.text(data.sender.address || '', 50, startY + 30);
-          doc.text(data.sender.contact || '', 50, startY + 45);
-          doc.text(data.sender.email || '', 50, startY + 60);
-        }
-
-        // Client
-        doc
-          .fillColor('black')
-          .font('Helvetica-Bold')
-          .text('CLIENT', 300, startY);
-        doc.font('Helvetica').fillColor(secondaryColor);
-        if (data.client) {
-          doc.text(data.client.name || 'Client', 300, startY + 15);
-          doc.text(data.client.address || '', 300, startY + 30);
-        }
-
-        doc.moveDown(4);
-
-        // 2. TABLE HEADERS
-        const tableTop = doc.y + 20;
-        const colDesc = 50;
-        const colQty = 350;
-        const colPrice = 410;
-        const colTotal = 490;
-
-        doc.font('Helvetica-Bold').fillColor('black');
-        doc.text('Description', colDesc, tableTop);
-        doc.text('Qté', colQty, tableTop);
-        doc.text('Prix U.', colPrice, tableTop);
-        doc.text('Total', colTotal, tableTop);
-
-        doc
-          .lineWidth(1)
-          .moveTo(50, tableTop + 15)
-          .lineTo(550, tableTop + 15)
-          .stroke();
-
-        // 3. TABLE ROWS
-        let y = tableTop + 25;
-        doc.font('Helvetica').fontSize(10);
-
-        data.items.forEach((item: any) => {
-          const desc = item.description || 'Service';
-          const qty = item.quantity || 1;
-          const price = item.unitPrice || 0;
-          const total = item.total || qty * price;
-
-          doc.text(desc, colDesc, y, { width: 280 });
-          doc.text(qty.toString(), colQty, y);
-          doc.text(`${price} €`, colPrice, y);
-          doc.text(`${total} €`, colTotal, y);
-
-          y += 20;
-          // Simple validation for page break could be added here
-        });
-
-        doc.lineWidth(1).moveTo(50, y).lineTo(550, y).stroke();
-        y += 10;
-
-        // 4. TOTALS
-        if (data.totals) {
-          const offsetRight = 400;
-          doc.font('Helvetica-Bold');
-          doc.text('Total HT:', offsetRight, y);
-          doc
-            .font('Helvetica')
-            .text(`${data.totals.subtotal || 0} €`, colTotal, y);
-          y += 15;
-
-          doc.font('Helvetica-Bold');
-          doc.text('TVA (20%):', offsetRight, y);
-          doc
-            .font('Helvetica')
-            .text(`${data.totals.taxAmount || 0} €`, colTotal, y);
-          y += 15;
-
-          doc.rect(offsetRight - 10, y - 5, 200, 25).fill('#f0f0f0');
-          doc.fillColor('black');
-          doc.fontSize(12).text('TOTAL TTC:', offsetRight, y);
-          doc.text(`${data.totals.total || 0} €`, colTotal, y);
-        }
-
-        // 5. FOOTER / LEGAL
-        doc.moveDown(4);
-        doc.fontSize(9).fillColor('#888888');
-        if (data.legal) {
-          doc.text('Conditions & Mentions Légales :', 50);
-          doc.text(data.legal, { width: 500 });
-        }
-
-        if (data.sender?.bank) {
-          doc.moveDown();
-          doc.text(`Informations Bancaires : ${data.sender.bank}`, 50);
-        }
-      } else {
-        // --- GENERIC LAYOUT ---
-        doc
-          .fontSize(22)
-          .font('Helvetica-Bold')
-          .text(data.title || 'Document', { align: 'center' });
-        doc.moveDown();
-
-        // Presentation
-        if (data.presentation) {
-          doc.fontSize(12).font('Helvetica').text(data.presentation);
-          doc.moveDown(2);
-        }
-
-        if (data.sections && Array.isArray(data.sections)) {
-          data.sections.forEach((section: any) => {
-            if (section.title) {
-              doc
-                .fontSize(16)
-                .font('Helvetica-Bold')
-                .fillColor('#00FFAA')
-                .text(section.title);
-              doc.moveDown(0.5);
-              doc
-                .lineWidth(1)
-                .moveTo(50, doc.y)
-                .lineTo(150, doc.y)
-                .stroke('#ccc');
-              doc.moveDown();
-            }
-
-            doc
-              .fontSize(12)
-              .font('Helvetica')
-              .fillColor('black')
-              .text(section.text || '');
-
-            // Handle Table in Section
-            if (section.table && Array.isArray(section.table)) {
-              doc.moveDown();
-              const tableX = 60;
-              let tableY = doc.y;
-              const colWidth = 150;
-
-              section.table.forEach((row: any[], rowIndex: number) => {
-                if (rowIndex === 0) doc.font('Helvetica-Bold');
-                else doc.font('Helvetica');
-
-                row.forEach((cell, cellIndex) => {
-                  doc.text(
-                    String(cell),
-                    tableX + cellIndex * colWidth,
-                    tableY,
-                    { width: colWidth - 10 },
-                  );
-                });
-
-                const rowHeight = 20; // Simplified
-                tableY += rowHeight;
-                doc.y = tableY;
-              });
-            }
-
-            doc.moveDown(2);
-          });
-        }
-
-        // Conclusion
-        if (data.conclusion) {
-          doc.moveDown();
-          doc
-            .fontSize(12)
-            .font('Helvetica-Bold')
-            .text('Conclusion', { underline: true });
-          doc.moveDown(0.5);
-          doc.fontSize(12).font('Helvetica').text(data.conclusion);
-        } else if (typeof data === 'string') {
-          doc.fontSize(12).text(data);
-        } else {
-          doc.fontSize(12).text(JSON.stringify(data, null, 2));
-        }
-      }
-
-      doc.end();
+  private async generatePdfBuffer(
+    data: any,
+    model: string = 'Moderne',
+  ): Promise<Buffer> {
+    const puppeteer = require('puppeteer');
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
+
+    try {
+      const page = await browser.newPage();
+      const htmlContent = this.getDocumentHtml(data, model);
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
+      });
+
+      await browser.close();
+      return Buffer.from(pdfBuffer);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      if (browser) await browser.close();
+      throw error;
+    }
   }
 
   private async generateDocxBuffer(data: any): Promise<Buffer> {
@@ -808,7 +624,10 @@ Règles de rédaction :
     return `${imageUrl}&watermark=hipster_studio`;
   }
 
-  private async generateImageBuffer(data: any): Promise<Buffer> {
+  private async generateImageBuffer(
+    data: any,
+    model: string = 'Moderne',
+  ): Promise<Buffer> {
     const puppeteer = require('puppeteer');
     const browser = await puppeteer.launch({
       headless: true,
@@ -817,7 +636,7 @@ Règles de rédaction :
 
     try {
       const page = await browser.newPage();
-      const htmlContent = this.getDocumentHtml(data);
+      const htmlContent = this.getDocumentHtml(data, model);
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
       // Auto-size viewport to content
@@ -840,11 +659,53 @@ Règles de rédaction :
     }
   }
 
-  private getDocumentHtml(data: any): string {
+  private getDocumentHtml(data: any, model: string = 'Moderne'): string {
     const title = data.title || 'Document';
     const presentation = data.presentation || '';
     const sections = data.sections || [];
     const conclusion = data.conclusion || '';
+
+    let themeStyles = '';
+
+    // THEMES CSS
+    if (model === 'Minimaliste') {
+      themeStyles = `
+        body { background: #ffffff; color: #000000; font-family: 'Helvetica', sans-serif; }
+        h1 { color: #000; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: 300; text-transform: uppercase; letter-spacing: 2px; }
+        .section-title { color: #333; border-left: 3px solid #000; padding-left: 10px; font-size: 18px; text-transform: uppercase; }
+        th { background: #f0f0f0; color: #000; border-bottom: 2px solid #000; }
+        td { border-bottom: 1px solid #eee; }
+      `;
+    } else if (model === 'Luxe') {
+      themeStyles = `
+        body { background: #0a0a0a; color: #ffffff; font-family: 'Georgia', serif; }
+        h1 { color: #D4AF37; border-bottom: 2px solid #D4AF37; font-style: italic; }
+        .section-title { color: #D4AF37; font-variant: small-caps; border-bottom: 1px solid rgba(212, 175, 55, 0.3); }
+        table { border: 1px solid #D4AF37; }
+        th { background: #D4AF37; color: #000; }
+        td { border-bottom: 1px solid rgba(212, 175, 55, 0.2); }
+        .conclusion { color: #D4AF37; }
+      `;
+    } else if (model === 'Coloré') {
+      themeStyles = `
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: #2d3436; }
+        .container { background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 40px; }
+        h1 { background: linear-gradient(to right, #6c5ce7, #00cec9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: none; }
+        .section-title { color: #6c5ce7; font-weight: 800; }
+        th { background: #6c5ce7; color: white; border-radius: 5px 5px 0 0; }
+        tr:nth-child(even) { background-color: #f1f2f6; }
+      `;
+    } else {
+      // MODERNE (Default Hipster Style)
+      themeStyles = `
+        body { background: #0a0a0a; color: #ffffff; font-family: 'Helvetica', sans-serif; }
+        h1 { color: #00FFAA; text-shadow: 0 0 10px rgba(0,255,170,0.3); border-bottom: 2px solid #00FFAA; }
+        .section-title { color: #00FFAA; text-transform: uppercase; letter-spacing: 1px; }
+        th { background: #00FFAA; color: #000; }
+        td { border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .conclusion { color: #00FFAA; }
+      `;
+    }
 
     return `
       <!DOCTYPE html>
@@ -852,18 +713,18 @@ Règles de rédaction :
       <head>
         <meta charset="UTF-8">
         <style>
-          body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; padding: 40px; background: white; max-width: 800px; }
-          .container { width: 100%; }
-          h1 { color: #00FFAA; text-align: center; border-bottom: 2px solid #00FFAA; padding-bottom: 10px; margin-bottom: 30px; font-size: 28px; }
-          .presentation { font-size: 16px; margin-bottom: 30px; line-height: 1.8; color: #444; }
+          body { line-height: 1.6; padding: 40px; margin: 0; display: flex; justify-content: center; }
+          .container { width: 100%; max-width: 800px; }
+          h1 { text-align: center; padding-bottom: 10px; margin-bottom: 30px; font-size: 32px; }
+          .presentation { font-size: 16px; margin-bottom: 30px; line-height: 1.8; opacity: 0.9; }
           .section { margin-bottom: 30px; }
-          .section-title { font-size: 20px; color: #00FFAA; margin-bottom: 10px; font-weight: bold; }
-          .section-text { font-size: 15px; margin-bottom: 15px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
-          th { background: #00FFAA; color: black; padding: 12px; text-align: left; font-size: 14px; }
-          td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
-          tr:nth-child(even) { background-color: #f9f9f9; }
-          .conclusion { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-style: italic; color: #777; font-size: 15px; }
+          .section-title { font-size: 20px; margin-bottom: 15px; font-weight: bold; }
+          .section-text { font-size: 15px; margin-bottom: 15px; opacity: 0.8; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th { padding: 12px; text-align: left; font-size: 14px; }
+          td { padding: 12px; font-size: 14px; }
+          .conclusion { margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(128,128,128,0.2); font-style: italic; font-size: 15px; }
+          ${themeStyles}
         </style>
       </head>
       <body>
@@ -876,9 +737,9 @@ Règles de rédaction :
               (s: any) => `
             <div class="section">
               ${s.title ? `<div class="section-title">${s.title}</div>` : ''}
-              ${s.text ? `<div class="section-text">${s.text}</div>` : ''}
+              ${s.text || s.content ? `<div class="section-text">${s.text || s.content}</div>` : ''}
               ${
-                s.table
+                s.table && Array.isArray(s.table) && s.table.length > 0
                   ? `
                 <table>
                   <thead>
