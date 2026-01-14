@@ -127,6 +127,10 @@ export class AiService {
       Cible: ${userName}
       Contexte: Génération de contenu ${type}
       ${identityContext ? `\n\n${identityContext}\n\nIMPORTANT: Utilise ces informations de contact (Nom, Email, Adresse, Tél, Site) si cela est pertinent pour le type de contenu généré (exemple: fin de légende, bloc contact, pied de page).` : ''}
+      
+      RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations que le client n'a pas fournies. 
+      Ne crée pas de prix, d'horaires d'ouverture, de services spécifiques ou de détails techniques si ils ne sont pas explicitement mentionnés dans le prompt ou le profil. 
+      Si une information manque, reste général ou n'en parle pas.
     `;
 
     const messages = [
@@ -238,6 +242,7 @@ export class AiService {
       Sujet: ${prompt}
       Inclus des hashtags pertinents. N'inclus pas de suggestions d'images.
       IMPORTANT: Inclus les coordonnées de contact (adresse, téléphone, site) si elles sont fournies dans le contexte.
+      IMPORTANT: N'INVENTE AUCUN PRIX, SERVICE OU HORAIRE NON MENTIONNÉ.
       IMPORTANT: N'UTILISE JAMAIS DE GRAS (**) OU DE MISE EN FORME MARKDOWN. RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE BRUT. PAS DE JSON. PAS DE BLOC DE CODE.`;
 
     const textRes = await this.generateText(textPrompt, 'social', userId);
@@ -322,7 +327,7 @@ export class AiService {
       const senderContext =
         Object.keys(senderInfo).length > 0
           ? `Voici les infos de l'émetteur : ${JSON.stringify(senderInfo)}`
-          : 'Invente des informations réalistes d’entreprise si non fournies.';
+          : 'Infos émetteur non fournies (laisser les champs vides ou mettre "A compléter").';
 
       /* ----------------------------- QUOTE PROMPT ----------------------------- */
       prompt = `
@@ -333,10 +338,10 @@ ${senderContext}
 
 MODE ESTIMATEUR INTELLIGENT :
 1. Numéro du document : "${docNumber}"
-2. Estimation automatique des coûts :
-   - Analyse la demande même si elle est vague.
-   - Estime matériaux, main d'œuvre, temps, quantités.
-   - Utilise des prix réalistes basés sur le marché.
+2. Estimation :
+   - Liste uniquement les services/produits mentionnés par le client.
+   - Si des prix ne sont pas fournis, utilise des valeurs "0" ou des placeholders "[PRIX]" pour ne pas inventer.
+   - N'invente PAS de services additionnels.
 3. Structure : Document professionnel de type DEVIS.
 4. TVA : 20%
 5. Validité : 30 jours
