@@ -180,7 +180,7 @@ export class AiService {
 
     // QUALITY BOOSTER: Positive constraints to simulate negative prompts
     const qualityBooster =
-      ' . High Resolution, 4K, Sharp Focus, Professional Typography, Correct Spelling, Vector Style, No Blurry Text, Clear Text, No Typos, Best Quality.';
+      ' . Create a clean and modern typography poster. Text must be perfectly readable, sharp, not blurry, not distorted and not stylized. Use high contrast, straight lines, and consistent font weight. Do not warp letters. Do not add extra text. Use a centered professional layout. High Resolution, 4K, Vector Style.';
 
     /* -------------------------------------------------------------------------- */
     /*                         SMART PROMPT REFINEMENT (GPT)                      */
