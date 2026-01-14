@@ -380,6 +380,11 @@ Règles de rédaction :
 
     const contentData = this.parseDocumentContent(generation.result);
     const model = modelOverride || generation.attributes?.model || 'Moderne';
+
+    // Fetch user profile for branding
+    const user = await this.getAiUserWithProfile(userId);
+    const branding = user?.aiProfile || {};
+
     console.log('Exporting with model:', model);
 
     const fileName = `document_${id}.${format}`;
@@ -388,7 +393,7 @@ Règles de rédaction :
 
     switch (format.toLowerCase()) {
       case 'pdf':
-        buffer = await this.generatePdfBuffer(contentData, model);
+        buffer = await this.generatePdfBuffer(contentData, model, branding);
         mimeType = 'application/pdf';
         break;
       case 'docx':
@@ -404,7 +409,7 @@ Règles de rédaction :
         break;
       case 'image':
       case 'png':
-        buffer = await this.generateImageBuffer(contentData, model);
+        buffer = await this.generateImageBuffer(contentData, model, branding);
         mimeType = 'image/png';
         break;
       default:
@@ -543,6 +548,7 @@ Règles de rédaction :
   private async generatePdfBuffer(
     data: any,
     model: string = 'Moderne',
+    branding: any = {},
   ): Promise<Buffer> {
     const puppeteer = require('puppeteer');
     const browser = await puppeteer.launch({
@@ -552,7 +558,7 @@ Règles de rédaction :
 
     try {
       const page = await browser.newPage();
-      const htmlContent = this.getDocumentHtml(data, model);
+      const htmlContent = this.getDocumentHtml(data, model, branding);
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
       const pdfBuffer = await page.pdf({
@@ -631,6 +637,7 @@ Règles de rédaction :
   private async generateImageBuffer(
     data: any,
     model: string = 'Moderne',
+    branding: any = {},
   ): Promise<Buffer> {
     const puppeteer = require('puppeteer');
     const browser = await puppeteer.launch({
@@ -640,7 +647,7 @@ Règles de rédaction :
 
     try {
       const page = await browser.newPage();
-      const htmlContent = this.getDocumentHtml(data, model);
+      const htmlContent = this.getDocumentHtml(data, model, branding);
       await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
       // Auto-size viewport to content
@@ -663,11 +670,28 @@ Règles de rédaction :
     }
   }
 
-  private getDocumentHtml(data: any, model: string = 'Moderne'): string {
+  private getDocumentHtml(
+    data: any,
+    model: string = 'Moderne',
+    branding: any = {},
+  ): string {
     const title = data.title || 'Document';
     const presentation = data.presentation || '';
     const sections = data.sections || [];
     const conclusion = data.conclusion || '';
+
+    // Branding info
+    const logoUrl = branding.logoUrl
+      ? branding.logoUrl.startsWith('http')
+        ? branding.logoUrl
+        : `${this.configService.get('API_URL') || 'http://localhost:3000'}${branding.logoUrl}`
+      : null;
+    const companyName = branding.companyName || '';
+    const contactInfo = `
+      ${branding.professionalAddress || ''} ${branding.postalCode || ''} ${branding.city || ''}
+      ${branding.professionalPhone ? ` | Tél: ${branding.professionalPhone}` : ''}
+      ${branding.professionalEmail ? ` | Email: ${branding.professionalEmail}` : ''}
+    `.trim();
 
     let themeStyles = '';
 
@@ -728,11 +752,30 @@ Règles de rédaction :
           th { padding: 12px; text-align: left; font-size: 14px; }
           td { padding: 12px; font-size: 14px; }
           .conclusion { margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(128,128,128,0.2); font-style: italic; font-size: 15px; }
+          
+          /* BRANDING STYLES */
+          .branding-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; border-bottom: 2px solid rgba(128,128,128,0.1); padding-bottom: 20px; }
+          .branding-logo { max-height: 60px; max-width: 150px; }
+          .branding-info { text-align: right; font-size: 12px; opacity: 0.8; }
+          .branding-footer { margin-top: 50px; text-align: center; font-size: 11px; opacity: 0.5; border-top: 1px solid rgba(128,128,128,0.1); padding-top: 10px; }
+          
           ${themeStyles}
         </style>
       </head>
       <body>
         <div class="container">
+          <!-- Header Branding -->
+          <div class="branding-header">
+            <div class="branding-logo-box">
+              ${logoUrl ? `<img src="${logoUrl}" class="branding-logo" />` : `<span style="font-size: 24px; font-weight: bold;">${companyName}</span>`}
+            </div>
+            <div class="branding-info">
+              ${companyName ? `<div style="font-weight: bold; margin-bottom: 5px;">${companyName}</div>` : ''}
+              <div>${contactInfo}</div>
+              ${branding.websiteUrl ? `<div>${branding.websiteUrl}</div>` : ''}
+            </div>
+          </div>
+
           <h1>${title}</h1>
           ${presentation ? `<div class="presentation">${presentation}</div>` : ''}
           
@@ -773,6 +816,12 @@ Règles de rédaction :
             .join('')}
 
           ${conclusion ? `<div class="conclusion">${conclusion}</div>` : ''}
+
+          <!-- Footer Branding -->
+          <div class="branding-footer">
+            Document généré par Hipster•IA pour ${companyName || 'votre entreprise'}.
+            ${branding.siret ? ` | SIRET: ${branding.siret}` : ''}
+          </div>
         </div>
       </body>
       </html>
