@@ -267,9 +267,6 @@ Elle ne doit JAMAIS changer, quel que soit le métier, la demande ou les détail
 ## Détails importants
 (Zone texte libre expliquant conditions, variantes, informations utiles.)
 
-## Style visuel recommandé
-(Brève description pour aider à générer un PDF / image cohérente.)
-
 ## Conclusion
 (Petite phrase courte et professionnelle pour clôturer le document.)
 
