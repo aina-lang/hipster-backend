@@ -358,12 +358,10 @@ Règles de rédaction :
           const savedGen = await this.aiGenRepo.save(latestGen);
           generationId = savedGen.id;
         }
-      } catch (error) {
-        this.logger.error('Error updating generation record:', error);
-      }
+      } catch (error) {}
     }
 
-    return { content: result, generationId };
+    return { content: resultText, generationId: generationId || textGenId };
   }
 
   async exportDocument(
