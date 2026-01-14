@@ -52,7 +52,7 @@ export class AiController {
     return this.aiService.getHistory(req.user.sub);
   }
 
-  @ApiOperation({ summary: 'Chat avec l\'IA (GPT-5)' })
+  @ApiOperation({ summary: "Chat avec l'IA (GPT-5)" })
   @Post('chat')
   @Roles(Role.AI_USER)
   async chat(@Body() body: { messages: any[] }, @Req() req) {
@@ -70,7 +70,11 @@ export class AiController {
     @Req() req,
   ) {
     return {
-      content: await this.aiService.generateText(body.prompt, body.type, req.user.sub),
+      content: await this.aiService.generateText(
+        body.prompt,
+        body.type,
+        req.user.sub,
+      ),
     };
   }
 
@@ -95,7 +99,10 @@ export class AiController {
       aiUser?.aiProfile?.planType === 'pro' ||
       aiUser?.aiProfile?.planType === 'enterprise';
 
-    return { url: await this.aiService.applyWatermark(imageUrl, isPremium), rawUrl: imageUrl };
+    return {
+      url: await this.aiService.applyWatermark(imageUrl, isPremium),
+      rawUrl: imageUrl,
+    };
   }
 
   @ApiOperation({ summary: 'Générer un document via IA' })
@@ -106,7 +113,11 @@ export class AiController {
     @Body() body: { type: 'legal' | 'business'; params: any },
     @Req() req,
   ) {
-    return await this.aiService.generateDocument(body.type, body.params, req.user.sub);
+    return await this.aiService.generateDocument(
+      body.type,
+      body.params,
+      req.user.sub,
+    );
   }
 
   @ApiOperation({ summary: 'Exporter un document (PDF, Word, Excel)' })
@@ -116,14 +127,17 @@ export class AiController {
     @Req() req,
     @Param('id') id: string,
     @Query('format') format: string,
+    @Query('model') model: string,
     @Res() res,
   ) {
     try {
-      const { buffer, fileName, mimeType } = await this.aiService.exportDocument(
-        parseInt(id),
-        format,
-        req.user.sub,
-      );
+      const { buffer, fileName, mimeType } =
+        await this.aiService.exportDocument(
+          parseInt(id),
+          format,
+          req.user.sub,
+          model,
+        );
 
       res.set({
         'Content-Type': mimeType,
@@ -134,7 +148,7 @@ export class AiController {
       res.end(buffer);
     } catch (error) {
       this.logger.error('Export error:', error);
-      res.status(500).json({ message: 'Erreur lors de l\'exportation' });
+      res.status(500).json({ message: "Erreur lors de l'exportation" });
     }
   }
 }

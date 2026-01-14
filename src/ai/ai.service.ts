@@ -365,6 +365,7 @@ Règles de rédaction :
     id: number,
     format: string,
     userId: number,
+    modelOverride?: string,
   ): Promise<{ buffer: Buffer; fileName: string; mimeType: string }> {
     const generation = await this.aiGenRepo.findOne({
       where: { id, user: { id: userId } },
@@ -375,7 +376,7 @@ Règles de rédaction :
     }
 
     const contentData = this.parseDocumentContent(generation.result);
-    const model = generation.attributes?.model || 'Moderne';
+    const model = modelOverride || generation.attributes?.model || 'Moderne';
     console.log('Exporting with model:', model);
 
     const fileName = `document_${id}.${format}`;
