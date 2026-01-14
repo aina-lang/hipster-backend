@@ -195,6 +195,30 @@ export class AiService {
     }
   }
 
+  async generateSocial(
+    prompt: string,
+    userId?: number,
+  ): Promise<{ content: string; url: string; generationId?: number }> {
+    console.log('--- GENERATE SOCIAL (Post + Image) ---');
+
+    // 1. Generate specialized Caption
+    const textPrompt = `Génère une légende percutante pour un post réseaux sociaux (Instagram, Facebook). 
+      Sujet: ${prompt}
+      Inclus des hashtags pertinents. N'inclus pas de suggestions d'images, génère uniquement le texte de la légende.`;
+
+    const textRes = await this.generateText(textPrompt, 'social', userId);
+
+    // 2. Generate specialized Image
+    const imagePrompt = `A high-quality, professional social media post image about: ${prompt}. Photorealistic, aesthetically pleasing, suitable for Instagram.`;
+    const imageRes = await this.generateImage(imagePrompt, 'realistic', userId);
+
+    return {
+      content: textRes.content,
+      url: imageRes.url,
+      generationId: textRes.generationId, // We use the text generation ID as the main reference
+    };
+  }
+
   async generateDocument(
     type: 'legal' | 'business',
     params: any,

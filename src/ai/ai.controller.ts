@@ -123,6 +123,14 @@ export class AiController {
     );
   }
 
+  @ApiOperation({ summary: 'Générer un post réseaux sociaux (Image + Texte)' })
+  @ResponseMessage('Post généré avec succès')
+  @Post('social')
+  @Roles(Role.AI_USER)
+  async generateSocial(@Body() body: { prompt: string }, @Req() req) {
+    return await this.aiService.generateSocial(body.prompt, req.user.sub);
+  }
+
   @ApiOperation({ summary: 'Exporter un document (PDF, Word, Excel)' })
   @Get('export/:id')
   @Roles(Role.AI_USER)
