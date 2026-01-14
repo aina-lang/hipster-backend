@@ -109,7 +109,7 @@ export class AiService {
     const messages = [
       {
         role: 'system',
-        content: `Tu es Hipster IA. Voici ta configuration :\n${systemContext}\n\nRéponds en Markdown standard.`,
+        content: `Tu es Hipster IA. Voici ta configuration :\n${systemContext}\n\nRéponds au format JSON si possible pour une meilleure extraction des données, sinon utilise un format clair et structuré.`,
       },
       { role: 'user', content: prompt },
     ];
@@ -300,31 +300,31 @@ IMPORTANT : Tu dois répondre UNIQUEMENT avec ce JSON valide :
       const docTitle = cleanFunctionName.toUpperCase();
 
       prompt = `
-Tu dois impérativement répondre en suivant EXACTEMENT cette structure Markdown.
-Elle ne doit JAMAIS changer.
-
-# ${docTitle}
-
-## Présentation générale
-(Brève introduction. 3 à 5 phrases maximum.)
-
-## Liste des prestations
-(Tableau en Markdown avec 3 colonnes : Prestation | Description | Prix)
-
-## Détails importants
-(Zone texte libre expliquant conditions, variantes, informations utiles.)
-
-## Conclusion
-(Phrase courte et professionnelle pour clôturer le document.)
-
+Génère un document "${docTitle}" structuré.
 Paramètres de génération :
 ${paramsStr}
 
-IMPORTANT :
-- Le contenu doit être professionnel, complet, et intégralement rédigé.
-- AUCUN code, AUCUNE balise XML/JSON.
-- Respect STRICT des titres et sections.
-- INTERDICTION D'INVENTER : N'ajoute AUCUNE prestation, service ou prix qui n'a pas été explicitement mentionné dans les paramètres ci-dessus. Si une liste est fournie, utilise-la fidèlement sans rien ajouter.
+IMPORTANT : Tu dois impérativement répondre avec un objet JSON valide suivant cette structure :
+{
+  "title": "${docTitle}",
+  "presentation": "Bref texte d'introduction (3-5 phrases)",
+  "sections": [
+    {
+      "title": "Titre de section",
+      "content": "Contenu détaillé de la section",
+      "table": [
+        ["Colonne 1", "Colonne 2", "Colonne 3"],
+        ["Valeur 1", "Valeur 2", "Valeur 3"]
+      ]
+    }
+  ],
+  "conclusion": "Phrase courte et professionnelle"
+}
+
+Règles de rédaction :
+- Le contenu doit être professionnel et complet.
+- INTERDICTION D'INVENTER : N'ajoute AUCUN service ou prix non mentionné.
+- Si des prestations sont listées, utilise le champ "table" pour les structurer.
 `.trim();
     }
 
@@ -424,6 +424,23 @@ IMPORTANT :
         ) {
           console.log('Detected Structured Invoice/Quote JSON');
           return data;
+        }
+
+        // Case C: New Structured Document JSON
+        if (data.presentation || data.sections || data.conclusion) {
+          console.log('Detected Structured Document JSON');
+          return {
+            title: data.title || 'Document',
+            presentation: data.presentation || '',
+            sections: Array.isArray(data.sections)
+              ? data.sections.map((s: any) => ({
+                  title: s.title || '',
+                  text: s.content || '',
+                  table: s.table || null,
+                }))
+              : [],
+            conclusion: data.conclusion || '',
+          };
         }
 
         // Case B: Minified Generic JSON (Legacy/Other)
@@ -643,21 +660,80 @@ IMPORTANT :
         }
       } else {
         // --- GENERIC LAYOUT ---
-        doc.fontSize(20).text(data.title || 'Document', { align: 'center' });
+        doc
+          .fontSize(22)
+          .font('Helvetica-Bold')
+          .text(data.title || 'Document', { align: 'center' });
         doc.moveDown();
+
+        // Presentation
+        if (data.presentation) {
+          doc.fontSize(12).font('Helvetica').text(data.presentation);
+          doc.moveDown(2);
+        }
 
         if (data.sections && Array.isArray(data.sections)) {
           data.sections.forEach((section: any) => {
-            doc
-              .fontSize(14)
-              .font('Helvetica-Bold')
-              .text(section.title || '', { underline: true });
+            if (section.title) {
+              doc
+                .fontSize(16)
+                .font('Helvetica-Bold')
+                .fillColor('#00FFAA')
+                .text(section.title);
+              doc.moveDown(0.5);
+              doc
+                .lineWidth(1)
+                .moveTo(50, doc.y)
+                .lineTo(150, doc.y)
+                .stroke('#ccc');
+              doc.moveDown();
+            }
+
             doc
               .fontSize(12)
               .font('Helvetica')
+              .fillColor('black')
               .text(section.text || '');
-            doc.moveDown();
+
+            // Handle Table in Section
+            if (section.table && Array.isArray(section.table)) {
+              doc.moveDown();
+              const tableX = 60;
+              let tableY = doc.y;
+              const colWidth = 150;
+
+              section.table.forEach((row: any[], rowIndex: number) => {
+                if (rowIndex === 0) doc.font('Helvetica-Bold');
+                else doc.font('Helvetica');
+
+                row.forEach((cell, cellIndex) => {
+                  doc.text(
+                    String(cell),
+                    tableX + cellIndex * colWidth,
+                    tableY,
+                    { width: colWidth - 10 },
+                  );
+                });
+
+                const rowHeight = 20; // Simplified
+                tableY += rowHeight;
+                doc.y = tableY;
+              });
+            }
+
+            doc.moveDown(2);
           });
+        }
+
+        // Conclusion
+        if (data.conclusion) {
+          doc.moveDown();
+          doc
+            .fontSize(12)
+            .font('Helvetica-Bold')
+            .text('Conclusion', { underline: true });
+          doc.moveDown(0.5);
+          doc.fontSize(12).font('Helvetica').text(data.conclusion);
         } else if (typeof data === 'string') {
           doc.fontSize(12).text(data);
         } else {
