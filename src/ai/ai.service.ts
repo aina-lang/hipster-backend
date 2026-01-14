@@ -195,9 +195,12 @@ export class AiService {
     const cleanFunctionName = funcName ? funcName.replace(/\s*\(.*?\)\s*/g, '').trim() : funcName;
     const isQuoteEstimate = /devis|estimation/i.test(cleanFunctionName || params.type);
     
+    const entityName = userProfile?.companyName || (userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : null);
+
     const paramsStr = JSON.stringify({
       ...restParams,
       function: cleanFunctionName,
+      entityName: entityName,
     }, null, 2);
 
     let prompt = '';
