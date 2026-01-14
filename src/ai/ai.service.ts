@@ -91,11 +91,33 @@ export class AiService {
     type: string,
     userId?: number,
   ): Promise<{ content: string; generationId?: number }> {
+    let identityContext = '';
     let userName = "l'utilisateur";
+
     if (userId) {
-      const userObj = await this.aiUserRepo.findOne({ where: { id: userId } });
-      if (userObj?.firstName) {
-        userName = userObj.firstName;
+      const userObj = await this.getAiUserWithProfile(userId);
+      if (userObj) {
+        userName = userObj.firstName || userObj.email;
+        const profile = userObj.aiProfile;
+        if (profile) {
+          const parts = [
+            `Nom: ${profile.companyName || userName}`,
+            profile.professionalEmail
+              ? `Email: ${profile.professionalEmail}`
+              : '',
+            profile.professionalAddress || profile.city || profile.postalCode
+              ? `Adresse: ${profile.professionalAddress || ''} ${profile.city || ''} ${profile.postalCode || ''}`.trim()
+              : '',
+            profile.professionalPhone
+              ? `Tél: ${profile.professionalPhone}`
+              : '',
+            profile.websiteUrl ? `Site: ${profile.websiteUrl}` : '',
+          ].filter(Boolean);
+
+          if (parts.length > 0) {
+            identityContext = `INFOS ENTREPRISE/USER:\n${parts.join('\n')}`;
+          }
+        }
       }
     }
 
@@ -104,6 +126,7 @@ export class AiService {
       Rôle: Expert assistant créatif
       Cible: ${userName}
       Contexte: Génération de contenu ${type}
+      ${identityContext ? `\n\n${identityContext}\n\nIMPORTANT: Utilise ces informations de contact (Nom, Email, Adresse, Tél, Site) si cela est pertinent pour le type de contenu généré (exemple: fin de légende, bloc contact, pied de page).` : ''}
     `;
 
     const messages = [
@@ -142,12 +165,17 @@ export class AiService {
   ): Promise<{ url: string; generationId?: number }> {
     console.log(`--- GENERATE IMAGE (DALL-E 3) ---`);
     console.log(`Prompt: ${prompt}`);
-    console.log(`Style param: ${style}`);
+
+    let brandingInfo = '';
+    if (userId) {
+      const userObj = await this.getAiUserWithProfile(userId);
+      if (userObj?.aiProfile) {
+        brandingInfo = `for ${userObj.aiProfile.companyName || userObj.firstName || 'a professional business'}.`;
+      }
+    }
 
     // Map legacy styles to DALL-E 3 compatible prompt enhancements
-    // DALL-E 3 supports 'style': 'vivid' | 'natural'.
-    // We will use 'vivid' for most marketing content to make it pop.
-    let enhancedPrompt = prompt;
+    let enhancedPrompt = `${prompt} ${brandingInfo}`;
     let dalleStyle: 'vivid' | 'natural' = 'vivid';
 
     if (style === 'cartoon') {
@@ -209,7 +237,8 @@ export class AiService {
     const textPrompt = `Génère une légende percutante pour un post réseaux sociaux (Instagram, Facebook). 
       Sujet: ${prompt}
       Inclus des hashtags pertinents. N'inclus pas de suggestions d'images.
-      IMPORTANT: RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE. PAS DE JSON. PAS DE BLOC DE CODE.`;
+      IMPORTANT: Inclus les coordonnées de contact (adresse, téléphone, site) si elles sont fournies dans le contexte.
+      RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE. PAS DE JSON. PAS DE BLOC DE CODE.`;
 
     const textRes = await this.generateText(textPrompt, 'social', userId);
 
