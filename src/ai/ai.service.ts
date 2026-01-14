@@ -252,7 +252,8 @@ Structure JSON requise :
 }`;
     } else {
       // Generic Document (Keep Markdown as fallback)
-      prompt = `Génère un document ${params.type} avec les paramètres suivants :\n${paramsStr}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.`;
+      const docTypeLabel = cleanFunctionName || params.type || 'Document';
+      prompt = `Génère le contenu de type "${docTypeLabel}" avec les paramètres suivants :\n${paramsStr}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.\n- La structure doit être uniforme et logique.`;
     }
 
     const result = await this.generateText(prompt, 'business', userId);
