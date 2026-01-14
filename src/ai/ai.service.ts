@@ -251,9 +251,32 @@ Structure JSON requise :
   "legal": "Mentions légales..."
 }`;
     } else {
-      // Generic Document (Keep Markdown as fallback)
-      const docTypeLabel = cleanFunctionName || params.type || 'Document';
-      prompt = `Génère le contenu de type "${docTypeLabel}" avec les paramètres suivants :\n${paramsStr}\n\nIMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé.\n- Utilise le format Markdown.\n- Utilise un titre principal (# Titre).\n- Utilise des sous-titres pour les sections (## Titre Section).\n- Le contenu doit être clair, sans code, sans balises XML/JSON.\n- La structure doit être uniforme et logique.`;
+      // Generic Document (Strictly Enforced Markdown Structure)
+      const docTypeLabel = (cleanFunctionName || params.type || 'Document').toUpperCase();
+      prompt = `Tu dois impérativement répondre en suivant EXACTEMENT cette structure Markdown. 
+Elle ne doit JAMAIS changer, quel que soit le métier, la demande ou les détails.
+
+# ${docTypeLabel}
+
+## Présentation générale
+(Brève introduction. 3 à 5 phrases maximum.)
+
+## Liste des prestations
+(Tableau en Markdown avec 3 colonnes : Prestation | Description | Prix)
+
+## Détails importants
+(Zone texte libre expliquant conditions, variantes, informations utiles.)
+
+## Style visuel recommandé
+(Brève description pour aider à générer un PDF / image cohérente.)
+
+## Conclusion
+(Petite phrase courte et professionnelle pour clôturer le document.)
+
+Paramètres de génération :
+${paramsStr}
+
+IMPORTANT: Ta réponse doit être un document professionnel entièrement rédigé. N'inclus PAS de code, ni de balises XML/JSON. Respecte strictement les titres (H1 et H2) fournis.`;
     }
 
     const result = await this.generateText(prompt, 'business', userId);
