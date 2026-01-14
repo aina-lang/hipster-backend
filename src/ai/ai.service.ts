@@ -939,6 +939,150 @@ Règles de rédaction :
         </div>
       </body>
       </html>
+      `;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                         POSTER GENERATION (NATIVE)                         */
+  /* -------------------------------------------------------------------------- */
+  async generatePoster(
+    prompt: string,
+    userId?: number,
+  ): Promise<{ backgroundUrl: string; layout: any; generationId?: number }> {
+    console.log('--- GENERATE POSTER (Native) ---');
+
+    // 1. Generate Layout Data (JSON)
+    const layoutPrompt = `
+      Génère une structure JSON pour une affiche publicitaire professionnelle.
+      Sujet: ${prompt}
+      
+      RÈGLES COMPOSITION :
+      - TITRE : Court, accrocheur (ex: "PROMO RENTRÉE", "NOUVEAU MENU").
+      - SOUS-TITRE : Description en 1 phrase.
+      - LISTE : Liste des produits/services avec prix (SI mentionnés).
+      - CTA : Appel à l'action (ex: "Réservez au 06...").
+      - COULEURS : Palette hexadécimale (text, accent) adaptée au sujet.
+      
+      IMPORTANT :
+      - N'invente AUCUN PRIX non fourni.
+      - FORMAT JSON STRICT :
+      {
+        "title": "Titre",
+        "subtitle": "Sous-titre",
+        "items": [ { "label": "Produit", "price": "10€" } ],
+        "cta": "Contact...",
+        "colors": { "text": "#000000", "accent": "#FF0000" }
+      }
     `;
+
+    let layoutData;
+    try {
+      // Direct prompt without excessive wrapper to save tokens/complexity, since we just need JSON
+      const layoutJson = await this.chat([
+        {
+          role: 'system',
+          content:
+            'Tu es un designer expert. Réponds uniquement en JSON valide.',
+        },
+        { role: 'user', content: layoutPrompt },
+      ]);
+      layoutData = JSON.parse(
+        layoutJson.replace(/```json/g, '').replace(/```/g, ''),
+      );
+    } catch (e) {
+      console.error('Layout generation failed', e);
+      layoutData = {
+        title: 'Affiche',
+        subtitle: prompt,
+        items: [],
+        cta: '',
+        colors: { text: '#000', accent: '#000' },
+      };
+    }
+
+    // 2. Generate Background Image (No Text)
+    const bgPrompt = `
+      Professional advertising background for: ${prompt}. 
+      Style: Minimalist, abstract, high quality 4k texture. 
+      IMPORTANT: NO TEXT, NO LETTERS, NO WORDS on the image. Just background, negative space in center for text overlay.
+      Soft lighting, professional gradient or texture.
+    `;
+
+    // Allow generateImage to handle DALL-E call
+    const { url: bgUrl, generationId } = await this.generateImage(
+      bgPrompt,
+      'realistic',
+      userId,
+    );
+
+    return { backgroundUrl: bgUrl, layout: layoutData, generationId };
+  }
+
+  async exportPoster(data: {
+    backgroundUrl: string;
+    layout: any;
+  }): Promise<Buffer> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ size: [1024, 1024], margin: 0 }); // Square format match DALL-E
+        const buffers: Buffer[] = [];
+        doc.on('data', buffers.push.bind(buffers));
+        doc.on('end', () => resolve(Buffer.concat(buffers)));
+
+        // Draw Background
+        const response = await fetch(data.backgroundUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const bgBuffer = Buffer.from(arrayBuffer);
+
+        doc.image(bgBuffer, 0, 0, { width: 1024, height: 1024 });
+
+        // Draw Text using Layout
+        const { title, subtitle, items, cta, colors } = data.layout;
+        const textColor = colors?.text || '#ffffff';
+        const accentColor = colors?.accent || '#ff0000';
+
+        // Title
+        doc
+          .fillColor(textColor)
+          .fontSize(80)
+          .font('Helvetica-Bold')
+          .text(title || '', 0, 150, { align: 'center', width: 1024 });
+
+        // Subtitle
+        doc
+          .fillColor(textColor)
+          .fontSize(40)
+          .font('Helvetica')
+          .text(subtitle || '', 100, 250, { align: 'center', width: 824 });
+
+        // Items
+        let y = 400;
+        if (items && Array.isArray(items)) {
+          items.forEach((item: any) => {
+            doc
+              .fillColor(textColor)
+              .fontSize(35)
+              .text(item.label || '', 150, y);
+            if (item.price) {
+              doc
+                .fillColor(accentColor)
+                .text(item.price, 800, y, { align: 'right', width: 100 });
+            }
+            y += 60;
+          });
+        }
+
+        // CTA
+        doc
+          .fillColor(accentColor)
+          .fontSize(50)
+          .font('Helvetica-Bold')
+          .text(cta || '', 0, 900, { align: 'center', width: 1024 });
+
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
   }
 }
