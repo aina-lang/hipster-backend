@@ -182,7 +182,54 @@ export class AiService {
     const qualityBooster =
       ' . High Resolution, 4K, Sharp Focus, Professional Typography, Correct Spelling, Vector Style, No Blurry Text, Clear Text, No Typos, Best Quality.';
 
-    let enhancedPrompt = `${prompt} ${brandingInfo} ${qualityBooster}`;
+    /* -------------------------------------------------------------------------- */
+    /*                         SMART PROMPT REFINEMENT (GPT)                      */
+    /* -------------------------------------------------------------------------- */
+    // Use GPT to structure the prompt and define EXACT text to avoid hallucinations/typos
+    let smartPrompt = prompt;
+    try {
+      const gptMessages = [
+        {
+          role: 'system',
+          content: `Tu es un Directeur Artistique expert en marketing. Ta mission est de préparer un prompt PARFAIT pour DALL-E 3.
+          
+          RÈGLES CRITIQUES :
+          1. ANALYSE : Identifie le sujet visuel principal et le style.
+          2. TEXTE : Définis le texte EXACT qui doit apparaître sur l'image. 
+             - Si l'utilisateur fournit un texte, utilise-le tel quel.
+             - Sinon, crée un slogan court et percutant (max 5 mots).
+             - VERROUILLE L'ORTHOGRAPHE.
+             - N'INVENTE PAS de prix ou services non mentionnés.
+          3. BRANDING : Si pertinent (ex: affiche promo), inclus les infos de contact fournies (numéro, site) dans le texte de l'image.
+             Infos client : ${brandingInfo}
+          
+          FORMAT DE RÉPONSE (JSON uniquement) :
+          {
+            "visual_description": "Description détaillée de la scène en anglais pour DALL-E...",
+            "exact_text_to_display": "Le texte exact à écrire sur l'image"
+          }`,
+        },
+        { role: 'user', content: `Sujet : ${prompt}. Style : ${style}` },
+      ];
+
+      const gptResponse = await this.chat(gptMessages);
+      const parsed = JSON.parse(
+        gptResponse.replace(/```json/g, '').replace(/```/g, ''),
+      );
+
+      if (parsed.visual_description && parsed.exact_text_to_display) {
+        smartPrompt = `${parsed.visual_description}. 
+        IMPORTANT - The image MUST display this exact text clearly: "${parsed.exact_text_to_display}". 
+        Typography must be professional, bold, and perfectly spelled.`;
+      }
+    } catch (e) {
+      console.log(
+        'Smart prompt extraction failed, falling back to raw prompt',
+        e,
+      );
+    }
+
+    let enhancedPrompt = `${smartPrompt} ${qualityBooster}`;
     let dalleStyle: 'vivid' | 'natural' = 'vivid';
 
     if (style === 'cartoon') {
