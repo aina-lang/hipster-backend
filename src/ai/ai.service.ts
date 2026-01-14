@@ -390,7 +390,7 @@ IMPORTANT : Tu dois impérativement répondre avec un objet JSON valide suivant 
 
 Règles de rédaction :
 - Le contenu doit être professionnel et complet.
-- INTERDICTION ABSOLUE D'INVENTER : Si l'utilisateur n'a pas fourni de liste de services ou de prix dans les paramètres, NE REMPLIS PAS LE TABLEAU. Laisse le tableau vide `[]` ou mets simplement une phrase type "Liste des services à définir".
+- INTERDICTION ABSOLUE D'INVENTER : Si l'utilisateur n'a pas fourni de liste de services ou de prix dans les paramètres, NE REMPLIS PAS LE TABLEAU. Laisse le tableau vide "[]" ou absente-le. N'écris PAS "Liste à définir".
 - N'invente pas de nom d'entreprise "Hipster Marketing" ou autre. Utilise uniquement le nom "entityName" fourni ou un placeholder "[NOM DE L'ENTREPRISE]".
 - Si des prestations sont listées par le client, utilise le champ "table" pour les structurer. Sinon, pas de tableau inventé.
 `.trim();
