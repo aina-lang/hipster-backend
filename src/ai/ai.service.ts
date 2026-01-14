@@ -109,7 +109,11 @@ export class AiService {
     const messages = [
       {
         role: 'system',
-        content: `Tu es Hipster IA. Voici ta configuration :\n${systemContext}\n\nRéponds au format JSON si possible pour une meilleure extraction des données, sinon utilise un format clair et structuré.`,
+        content: `Tu es Hipster IA. Voici ta configuration :\n${systemContext}\n\n${
+          type === 'social'
+            ? 'Réponds avec un format clair et structuré (pas de JSON).'
+            : 'Réponds au format JSON si possible pour une meilleure extraction des données, sinon utilise un format clair et structuré.'
+        }`,
       },
       { role: 'user', content: prompt },
     ];
@@ -204,7 +208,8 @@ export class AiService {
     // 1. Generate specialized Caption
     const textPrompt = `Génère une légende percutante pour un post réseaux sociaux (Instagram, Facebook). 
       Sujet: ${prompt}
-      Inclus des hashtags pertinents. N'inclus pas de suggestions d'images, génère uniquement le texte de la légende.`;
+      Inclus des hashtags pertinents. N'inclus pas de suggestions d'images.
+      IMPORTANT: RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE. PAS DE JSON. PAS DE BLOC DE CODE.`;
 
     const textRes = await this.generateText(textPrompt, 'social', userId);
 
