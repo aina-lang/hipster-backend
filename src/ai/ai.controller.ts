@@ -174,7 +174,7 @@ export class AiController {
   @Post('poster/export')
   @Roles(Role.AI_USER)
   async exportPoster(
-    @Body() body: { backgroundUrl: string; layout: any },
+    @Body() body: { backgroundUrl: string; layout: any; model?: string },
     @Res() res,
   ) {
     try {

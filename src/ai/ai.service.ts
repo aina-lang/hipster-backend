@@ -1021,10 +1021,11 @@ Règles de rédaction :
   async exportPoster(data: {
     backgroundUrl: string;
     layout: any;
+    model?: string;
   }): Promise<Buffer> {
     return new Promise(async (resolve, reject) => {
       try {
-        const doc = new PDFDocument({ size: [1024, 1024], margin: 0 }); // Square format match DALL-E
+        const doc = new PDFDocument({ size: [1024, 1024], margin: 0 });
         const buffers: Buffer[] = [];
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', () => resolve(Buffer.concat(buffers)));
@@ -1036,48 +1037,166 @@ Règles de rédaction :
 
         doc.image(bgBuffer, 0, 0, { width: 1024, height: 1024 });
 
+        // Add minimal Overlay for readability
+        doc.rect(0, 0, 1024, 1024).fillOpacity(0.3).fill('black');
+        doc.fillOpacity(1); // Reset opcode
+
         // Draw Text using Layout
         const { title, subtitle, items, cta, colors } = data.layout;
         const textColor = colors?.text || '#ffffff';
         const accentColor = colors?.accent || '#ff0000';
+        const model = data.model || 'Moderne';
 
-        // Title
-        doc
-          .fillColor(textColor)
-          .fontSize(80)
-          .font('Helvetica-Bold')
-          .text(title || '', 0, 150, { align: 'center', width: 1024 });
+        if (model === 'Minimaliste') {
+          doc
+            .fillColor(textColor)
+            .fontSize(100)
+            .font('Helvetica-Bold')
+            .text(title || '', 50, 400, { align: 'left', width: 900 });
+          doc
+            .fontSize(30)
+            .font('Helvetica-Oblique')
+            .text(subtitle || '', 50, 520, { align: 'left', width: 900 });
 
-        // Subtitle
-        doc
-          .fillColor(textColor)
-          .fontSize(40)
-          .font('Helvetica')
-          .text(subtitle || '', 100, 250, { align: 'center', width: 824 });
-
-        // Items
-        let y = 400;
-        if (items && Array.isArray(items)) {
-          items.forEach((item: any) => {
+          let y = 600;
+          items?.forEach((item: any) => {
             doc
-              .fillColor(textColor)
-              .fontSize(35)
-              .text(item.label || '', 150, y);
-            if (item.price) {
-              doc
-                .fillColor(accentColor)
-                .text(item.price, 800, y, { align: 'right', width: 100 });
-            }
+              .fontSize(40)
+              .font('Helvetica')
+              .fillColor('#FFFFFF')
+              .text(`${item.label}   `, 50, y, { continued: true });
+            doc.font('Helvetica-Bold').text(item.price);
             y += 60;
           });
-        }
 
-        // CTA
-        doc
-          .fillColor(accentColor)
-          .fontSize(50)
-          .font('Helvetica-Bold')
-          .text(cta || '', 0, 900, { align: 'center', width: 1024 });
+          doc.moveDown();
+          doc
+            .fontSize(35)
+            .font('Helvetica')
+            .fillColor(accentColor)
+            .text(cta || '', 50, y + 50, { underline: true });
+        } else if (model === 'Luxe') {
+          // Border
+          doc
+            .rect(40, 40, 944, 944)
+            .strokeColor('#D4AF37')
+            .lineWidth(5)
+            .stroke();
+
+          doc
+            .fillColor('#D4AF37')
+            .fontSize(24)
+            .font('Times-Roman')
+            .text('PREMIUM COLLECTION', 0, 300, {
+              align: 'center',
+              characterSpacing: 5,
+            });
+          doc
+            .fillColor(textColor)
+            .fontSize(90)
+            .font('Times-Roman')
+            .text(title || '', 0, 350, { align: 'center' });
+
+          // Divider
+          doc
+            .moveTo(462, 480)
+            .lineTo(562, 480)
+            .strokeColor('#D4AF37')
+            .lineWidth(2)
+            .stroke();
+
+          let y = 520;
+          items?.forEach((item: any) => {
+            doc
+              .fillColor(textColor)
+              .fontSize(36)
+              .font('Times-Roman')
+              .text(item.label, 0, y, { align: 'center' });
+            doc
+              .fillColor('#D4AF37')
+              .fontSize(32)
+              .text(item.price, 0, y + 40, { align: 'center' });
+            y += 100;
+          });
+
+          doc
+            .fillColor('#D4AF37')
+            .fontSize(24)
+            .text(cta || '', 0, 900, { align: 'center', characterSpacing: 2 });
+          doc.fontSize(18).text('MERCIA • PARIS', 0, 940, { align: 'center' });
+        } else if (model === 'Flashy') {
+          doc.save();
+          doc.rotate(-5, { origin: [512, 512] });
+          doc
+            .fillColor('#FFFF00')
+            .fontSize(110)
+            .font('Helvetica-Bold')
+            .text((title || '').toUpperCase(), 0, 200, { align: 'center' });
+          doc.restore();
+
+          doc.save();
+          doc.rotate(2, { origin: [512, 600] });
+          // Bg for items
+          doc.rect(200, 500, 624, 300).fillOpacity(0.7).fill('black');
+          doc.fillOpacity(1);
+
+          let y = 550;
+          items?.forEach((item: any) => {
+            doc
+              .fillColor('#FFFF00')
+              .fontSize(50)
+              .font('Helvetica-Bold')
+              .text(`${item.label} : ${item.price}`, 0, y, { align: 'center' });
+            y += 70;
+          });
+          doc.restore();
+
+          // CTA Badge
+          doc.rect(312, 900, 400, 80).fill('#FFFF00');
+          doc
+            .fillColor('#000000')
+            .fontSize(40)
+            .font('Helvetica-Bold')
+            .text(cta || '', 312, 920, { align: 'center', width: 400 });
+        } else {
+          // MODERNE (Default)
+          doc
+            .fillColor(textColor)
+            .fontSize(80)
+            .font('Helvetica-Bold')
+            .text(title || '', 0, 150, { align: 'center', width: 1024 });
+
+          // Subtitle
+          doc
+            .fillColor(textColor)
+            .fontSize(40)
+            .font('Helvetica')
+            .text(subtitle || '', 100, 250, { align: 'center', width: 824 });
+
+          // Items
+          let y = 400;
+          if (items && Array.isArray(items)) {
+            items.forEach((item: any) => {
+              doc
+                .fillColor(textColor)
+                .fontSize(35)
+                .text(item.label || '', 150, y);
+              if (item.price) {
+                doc
+                  .fillColor(accentColor)
+                  .text(item.price, 800, y, { align: 'right', width: 100 });
+              }
+              y += 60;
+            });
+          }
+
+          // CTA
+          doc
+            .fillColor(accentColor)
+            .fontSize(50)
+            .font('Helvetica-Bold')
+            .text(cta || '', 0, 900, { align: 'center', width: 1024 });
+        }
 
         doc.end();
       } catch (error) {
