@@ -178,8 +178,11 @@ export class AiService {
       }
     }
 
-    // Map legacy styles to DALL-E 3 compatible prompt enhancements
-    let enhancedPrompt = `${prompt} ${brandingInfo}`;
+    // QUALITY BOOSTER: Positive constraints to simulate negative prompts
+    const qualityBooster =
+      ' . High Resolution, 4K, Sharp Focus, Professional Typography, Correct Spelling, Vector Style, No Blurry Text, Clear Text, No Typos, Best Quality.';
+
+    let enhancedPrompt = `${prompt} ${brandingInfo} ${qualityBooster}`;
     let dalleStyle: 'vivid' | 'natural' = 'vivid';
 
     if (style === 'cartoon') {
@@ -192,7 +195,7 @@ export class AiService {
       // realistic
       enhancedPrompt +=
         ' . Style: Photorealistic, high quality, 4k, professional photography.';
-      dalleStyle = 'natural'; // Natural often looks more realistic for photos
+      dalleStyle = 'natural';
     }
 
     try {
@@ -201,7 +204,7 @@ export class AiService {
         prompt: enhancedPrompt,
         n: 1,
         size: '1024x1024',
-        quality: 'standard', // or 'hd' ($0.08 vs $0.04)
+        quality: 'hd', // Boost quality to HD
         style: dalleStyle,
         response_format: 'url',
       });
