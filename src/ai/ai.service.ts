@@ -394,6 +394,11 @@ Règles de rédaction :
         mimeType =
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         break;
+      case 'image':
+      case 'png':
+        buffer = await this.generateImageBuffer(contentData);
+        mimeType = 'image/png';
+        break;
       default:
         throw new Error('Format non supporté');
     }
@@ -801,5 +806,111 @@ Règles de rédaction :
     }
     // Mock watermark logic
     return `${imageUrl}&watermark=hipster_studio`;
+  }
+
+  private async generateImageBuffer(data: any): Promise<Buffer> {
+    const puppeteer = require('puppeteer');
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
+    try {
+      const page = await browser.newPage();
+      const htmlContent = this.getDocumentHtml(data);
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+      // Auto-size viewport to content
+      const bodyHandle = await page.$('body');
+      const box = await bodyHandle.boundingBox();
+      if (box) {
+        await page.setViewport({
+          width: Math.ceil(box.width),
+          height: Math.ceil(box.height),
+        });
+      }
+
+      const imageBuffer = await page.screenshot({ fullPage: true });
+      await browser.close();
+      return Buffer.from(imageBuffer);
+    } catch (error) {
+      console.error('Image generation error:', error);
+      await browser.close();
+      throw error;
+    }
+  }
+
+  private getDocumentHtml(data: any): string {
+    const title = data.title || 'Document';
+    const presentation = data.presentation || '';
+    const sections = data.sections || [];
+    const conclusion = data.conclusion || '';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; padding: 40px; background: white; max-width: 800px; }
+          .container { width: 100%; }
+          h1 { color: #00FFAA; text-align: center; border-bottom: 2px solid #00FFAA; padding-bottom: 10px; margin-bottom: 30px; font-size: 28px; }
+          .presentation { font-size: 16px; margin-bottom: 30px; line-height: 1.8; color: #444; }
+          .section { margin-bottom: 30px; }
+          .section-title { font-size: 20px; color: #00FFAA; margin-bottom: 10px; font-weight: bold; }
+          .section-text { font-size: 15px; margin-bottom: 15px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
+          th { background: #00FFAA; color: black; padding: 12px; text-align: left; font-size: 14px; }
+          td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .conclusion { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-style: italic; color: #777; font-size: 15px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>${title}</h1>
+          ${presentation ? `<div class="presentation">${presentation}</div>` : ''}
+          
+          ${sections
+            .map(
+              (s: any) => `
+            <div class="section">
+              ${s.title ? `<div class="section-title">${s.title}</div>` : ''}
+              ${s.text ? `<div class="section-text">${s.text}</div>` : ''}
+              ${
+                s.table
+                  ? `
+                <table>
+                  <thead>
+                    <tr>
+                      ${s.table[0].map((h: string) => `<th>${h}</th>`).join('')}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${s.table
+                      .slice(1)
+                      .map(
+                        (row: any[]) => `
+                      <tr>
+                        ${row.map((cell) => `<td>${cell}</td>`).join('')}
+                      </tr>
+                    `,
+                      )
+                      .join('')}
+                  </tbody>
+                </table>
+              `
+                  : ''
+              }
+            </div>
+          `,
+            )
+            .join('')}
+
+          ${conclusion ? `<div class="conclusion">${conclusion}</div>` : ''}
+        </div>
+      </body>
+      </html>
+    `;
   }
 }
