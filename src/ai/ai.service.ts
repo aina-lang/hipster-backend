@@ -180,14 +180,19 @@ export class AiService {
       'Réponds au format JSON si possible pour une meilleure extraction des données, sinon utilise un format clair et structuré. IMPORTANT: Pas de mise en forme Markdown (**) dans les valeurs textuelles.';
 
     const func = (params.function || '').toLowerCase();
+    const answers = params.workflowAnswers || {};
+    const section = answers.section || '';
+    const tone = answers.tone || '';
+
     if (func.includes('site internet')) {
       jsonInstruction = `
         Réponds OBLIGATOIREMENT au format JSON avec les clés suivantes :
-        - "titre_page": Un titre accrocheur.
+        - "titre_page": Un titre accrocheur${section ? ` pour la section ${section}` : ''}.
         - "accroche": Une phrase de bienvenue percutante.
-        - "sections": Un tableau d'objets avec { "titre_section", "contenu" }.
+        - "sections": Un tableau d'objets avec { "titre_section", "contenu" }. 
+          ${section ? `NOTE: La première section DOIT concerner spécifiquement : ${section}.` : ''}
         - "appel_a_l_action": Le texte pour un bouton.
-        IMPORTANT: Pas de Markdown (**).
+        IMPORTANT: Le ton doit être "${tone || 'professionnel'}". Pas de Markdown (**).
       `;
     } else if (func.includes('seo')) {
       jsonInstruction = `
@@ -195,8 +200,8 @@ export class AiService {
         - "balise_title": Titre SEO optimisé (max 60 caractères).
         - "meta_description": Description SEO percutante (max 160 caractères).
         - "mots_cles": Un tableau de 5 à 10 mots-clés pertinents.
-        - "conseils_optimisation": Liste de 3 conseils pour améliorer le référencement.
-        IMPORTANT: Pas de Markdown (**).
+        - "conseils_optimisation": Liste de 3 conseils pour améliorer le référencement${section ? ` pour la page ${section}` : ''}.
+        IMPORTANT: Le ton doit être "${tone || 'expert'}". Pas de Markdown (**).
       `;
     }
 
