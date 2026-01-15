@@ -132,9 +132,14 @@ export class AiService {
       .replace(/\s*\(.*?\)\s*/g, '')
       .trim();
 
+    const isSocial =
+      params.function?.toLowerCase().includes('réseaux') ||
+      params.category === 'Social';
+
     const workflowDetails = workflowAnswers
       ? Object.entries(workflowAnswers)
-          .map(([k, v]) => `• ${k}: ${v}`)
+          .filter(([k]) => isSocial || k !== 'platform') // Filter out platform for non-social
+          .map(([k, v]) => `• ${k.replace(/_/g, ' ').toUpperCase()}: ${v}`)
           .join('\n')
       : '';
 
@@ -144,6 +149,9 @@ export class AiService {
       workflowDetails ? `Détails de personnalisation:\n${workflowDetails}` : '',
       context ? `Contexte supplémentaire: ${context}` : '',
       userQuery ? `Demande spécifique de l'utilisateur: ${userQuery}` : '',
+      params.instruction_speciale
+        ? `NOTE IMPORTANTE: ${params.instruction_speciale}`
+        : '',
       instructions ? `Instructions de formatage: ${instructions}` : '',
       identityContext ? `\n${identityContext}` : '',
     ].filter(Boolean);
@@ -185,23 +193,44 @@ export class AiService {
     const tone = answers.tone || '';
 
     if (func.includes('site internet')) {
+      const sectionPrompt = section
+        ? `TU NE DOIS GÉNÉRER QUE LE CONTENU DE LA SECTION : "${section}". INTERDICTION de créer d'autres sections ou un titre de page global.`
+        : "Génère le contenu pour la page d'accueil.";
+
       jsonInstruction = `
         Réponds OBLIGATOIREMENT au format JSON avec les clés suivantes :
-        - "titre_page": Un titre accrocheur${section ? ` pour la section ${section}` : ''}.
-        - "accroche": Une phrase de bienvenue percutante.
-        - "sections": Un tableau d'objets avec { "titre_section", "contenu" }. 
-          ${section ? `NOTE: La première section DOIT concerner spécifiquement : ${section}.` : ''}
+        - "titre_section": Le titre de la section (ex: <h1> ou <h2>).
+        - "contenu": Le corps du texte (UTILISE IMPÉRATIVEMENT des balises HTML <p>, <br>, et <strong> pour structurer le texte).
+        - "conseils_balisage": Une courte liste d'instructions pour l'intégration technique.
         - "appel_a_l_action": Le texte pour un bouton.
+
+        RÈGLE ABSOLUE : ${sectionPrompt}
         IMPORTANT: Le ton doit être "${tone || 'professionnel'}". Pas de Markdown (**).
       `;
     } else if (func.includes('seo')) {
+      const pageFocus = section
+        ? `spécifiquement pour la page/section "${section}"`
+        : '';
       jsonInstruction = `
         Réponds OBLIGATOIREMENT au format JSON avec les clés suivantes :
-        - "balise_title": Titre SEO optimisé (max 60 caractères).
-        - "meta_description": Description SEO percutante (max 160 caractères).
-        - "mots_cles": Un tableau de 5 à 10 mots-clés pertinents.
-        - "conseils_optimisation": Liste de 3 conseils pour améliorer le référencement${section ? ` pour la page ${section}` : ''}.
+        - "balise_title": Titre SEO optimisé.
+        - "meta_description": Description SEO.
+        - "mots_cles": Un tableau de mots-clés optimisés ${pageFocus}.
+        - "structure_h_n": Suggestion de structure (H1, H2, H3).
+        - "conseils_optimisation": Conseils techniques.
+
         IMPORTANT: Le ton doit être "${tone || 'expert'}". Pas de Markdown (**).
+      `;
+    } else if (func.includes('flyer') || func.includes('affiche')) {
+      jsonInstruction = `
+        Réponds OBLIGATOIREMENT au format JSON avec les clés suivantes :
+        - "titre_principal": Le titre accrocheur de l'affiche.
+        - "sous_titre": Un sous-titre ou une phrase d'accroche.
+        - "corps_de_texte": Le message principal détaillé.
+        - "offres_speciales": Une ou plusieurs offres si mentionnées, sinon un champ vide.
+        - "informations_pratiques": Coordonnées, horaires, etc.
+        - "appel_a_l_action": Phrase incitant à l'action.
+        IMPORTANT: Le ton doit être "${tone || 'percutant'}". Pas de Markdown (**).
       `;
     }
 
