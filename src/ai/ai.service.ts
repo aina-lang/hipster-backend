@@ -206,128 +206,157 @@ export class AiService {
   }
 
   async generateImage(
-    params: any,
-    style: 'realistic' | 'cartoon' | 'sketch',
-    userId?: number,
-  ): Promise<{ url: string; generationId?: number }> {
-    // Backward compatibility
-    if (typeof params === 'string') {
-      params = { userQuery: params };
-    }
+  params: any,
+  style: 'realistic' | 'cartoon' | 'sketch',
+  userId?: number,
+): Promise<{ url: string; generationId?: number }> {
 
-    const basePrompt = await this.buildPrompt(params, userId);
-    console.log(`--- GENERATE IMAGE (DALL-E 3) ---`);
-    console.log(`Base Prompt: ${basePrompt}`);
+  /* ------------------------------------------ */
+  /*           1. Normalize input               */
+  /* ------------------------------------------ */
+  if (typeof params === 'string') {
+    params = { userQuery: params };
+  }
 
-    let brandingInfo = '';
-    if (userId) {
-      const userObj = await this.getAiUserWithProfile(userId);
-      if (userObj?.aiProfile) {
-        brandingInfo = `for ${userObj.aiProfile.companyName || userObj.firstName || 'a professional business'}.`;
-      }
-    }
+  const basePrompt = await this.buildPrompt(params, userId);
+  const userQuery = params.userQuery || "";
 
-    // QUALITY BOOSTER: Positive constraints to simulate negative prompts
-    const qualityBooster =
-      ' . Create a clean and modern typography poster. Text must be perfectly readable, sharp, not blurry, not distorted and not stylized. Use high contrast, straight lines, and consistent font weight. Do not warp letters. Do not add extra text. Use a centered professional layout. High Resolution, 4K, Vector Style.';
 
-    /* -------------------------------------------------------------------------- */
-    /*                         SMART PROMPT REFINEMENT (GPT)                      */
-    /* -------------------------------------------------------------------------- */
-    // Use GPT to structure the prompt and define EXACT text to avoid hallucinations/typos
-    let smartPrompt = params.userQuery || '';
-    try {
-      const gptMessages = [
-        {
-          role: 'system',
-          content: `Tu es un Directeur Artistique expert en marketing. Ta mission est de préparer un prompt PARFAIT pour DALL-E 3.
-          
-          RÈGLES CRITIQUES :
-          1. ANALYSE : Identifie le sujet visuel principal et le style.
-          2. TEXTE : Définis le texte EXACT qui doit apparaître sur l'image. 
-             - Si l'utilisateur fournit un texte, utilise-le tel quel.
-             - Sinon, crée un slogan court et percutant (max 5 mots).
-             - VERROUILLE L'ORTHOGRAPHE.
-             - N'INVENTE PAS de prix ou services non mentionnés.
-          3. BRANDING : Si pertinent (ex: affiche promo), inclus les infos de contact fournies (numéro, site) dans le texte de l'image.
-             Infos client : ${brandingInfo}
-          
-          FORMAT DE RÉPONSE (JSON uniquement) :
-          {
-            "visual_description": "Description détaillée de la scène en anglais pour DALL-E...",
-            "exact_text_to_display": "Le texte exact à écrire sur l'image"
-          }`,
-        },
-        { role: 'user', content: `Sujet : ${smartPrompt}. Style : ${style}` },
-      ];
+  /* ------------------------------------------ */
+  /*      2. Prepare text detection rules       */
+  /* ------------------------------------------ */
+  const userWantsText =
+    /text|écris|write|affiche|slogan|titre|caption|message|poster/i.test(userQuery);
 
-      const gptResponse = await this.chat(gptMessages);
-      const parsed = JSON.parse(
-        gptResponse.replace(/```json/g, '').replace(/```/g, ''),
-      );
 
-      if (parsed.visual_description && parsed.exact_text_to_display) {
-        smartPrompt = `${parsed.visual_description}. 
-        IMPORTANT - The image MUST display this exact text clearly: "${parsed.exact_text_to_display}". 
-        Typography must be professional, bold, and perfectly spelled.`;
-      }
-    } catch (e) {
-      console.log(
-        'Smart prompt extraction failed, falling back to raw prompt',
-        e,
-      );
-    }
+  /* ------------------------------------------ */
+  /*        3. GPT Prompt Optimization          */
+  /* ------------------------------------------ */
+  const gptMessages = [
+    {
+      role: "system",
+      content: `You are an elite art director preparing a PERFECT prompt for DALL·E 3.
 
-    let enhancedPrompt = `${smartPrompt} ${qualityBooster}`;
-    let dalleStyle: 'vivid' | 'natural' = 'vivid';
+RULES:
+1. Output JSON ONLY.
+2. Rewrite the visual subject clearly in English.
+3. TEXT RULE:
+   - If the user explicitly asks for text, keep it EXACT.
+   - If NOT, "exact_text_to_display" MUST be "".
+4. Never invent text, slogans, numbers, names, or content.
+5. Keep JSON minimal and clean.
 
-    if (style === 'cartoon') {
-      enhancedPrompt += ' . Style: Cartoon, vibrant colors, flat design.';
-      dalleStyle = 'vivid';
-    } else if (style === 'sketch') {
-      enhancedPrompt += ' . Style: Pencil sketch, artistic, black and white.';
-      dalleStyle = 'natural';
-    } else {
-      // realistic
-      enhancedPrompt +=
-        ' . Style: Photorealistic, high quality, 4k, professional photography.';
-      dalleStyle = 'natural';
-    }
+FORMAT:
+{
+  "visual_description": "string",
+  "exact_text_to_display": "string"
+}`
+    },
+    { role: "user", content: userQuery }
+  ];
 
-    try {
-      const response = await this.openai.images.generate({
-        model: 'dall-e-3',
-        prompt: enhancedPrompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'hd', // Boost quality to HD
-        style: dalleStyle,
-        response_format: 'url',
+
+  /* ------------------------------------------ */
+  /*             4. Call GPT (safe)             */
+  /* ------------------------------------------ */
+  let parsed = {
+    visual_description: userQuery,
+    exact_text_to_display: "",
+  };
+
+  try {
+    const gptResponse = await this.chat(gptMessages);
+
+    parsed = JSON.parse(
+      gptResponse.replace(/```json|```/g, "")
+    );
+  } catch (e) {
+    console.warn("GPT parse failed, fallback used.");
+  }
+
+
+  /* ------------------------------------------ */
+  /*       5. Build final DALL·E prompt         */
+  /* ------------------------------------------ */
+
+  const negativeGeneral = `
+Avoid: blurry text, distorted letters, random words, misspellings,
+warped shapes, strange symbols, unwanted text, watermarks, signatures,
+logos, noise, artifacts, chaotic layout, low resolution.
+`.trim();
+
+  let finalPrompt = parsed.visual_description;
+
+
+  /* —————— HANDLE TEXT OR NO TEXT —————— */
+
+  if (parsed.exact_text_to_display.trim() === "") {
+    // NO TEXT
+    finalPrompt += `
+No text, no letters, no numbers, no captions.
+Avoid accidental words or symbols.
+    `;
+  } else {
+    // EXACT TEXT
+    finalPrompt += `
+The image must display this exact text: "${parsed.exact_text_to_display}".
+Avoid extra words, misspellings, or decorative glyphs.
+Typography must be clean, sharp and perfectly readable.
+    `;
+  }
+
+  // Universal quality booster
+  finalPrompt += `
+High quality, sharp details, clean layout, 4K render.
+${negativeGeneral}
+  `;
+
+  // Style mapping
+  if (style === "cartoon") finalPrompt += " Cartoon style, vibrant colors.";
+  if (style === "sketch") finalPrompt += " Pencil sketch, black and white.";
+  if (style === "realistic") finalPrompt += " Photorealistic, ultra-detailed.";
+
+
+  /* ------------------------------------------ */
+  /*            6. Call DALL·E 3               */
+  /* ------------------------------------------ */
+  try {
+    const response = await this.openai.images.generate({
+      model: "dall-e-3",
+      prompt: finalPrompt,
+      n: 1,
+      size: "1024x1024",
+      quality: "hd",
+      style: style === "realistic" ? "natural" : "vivid",
+      response_format: "url",
+    });
+
+    const url = response.data[0].url;
+
+    /* ------------------------------------------ */
+    /*      7. Save image generation history      */
+    /* ------------------------------------------ */
+    let generationId: number | undefined;
+
+    if (userId && url) {
+      const saved = await this.aiGenRepo.save({
+        user: { id: userId } as AiUser,
+        type: AiGenerationType.IMAGE,
+        prompt: basePrompt.substring(0, 1000),
+        result: url,
+        title: (params.userQuery || "Generated Image").substring(0, 40),
       });
 
-      const url = response.data[0].url;
-      console.log('--- IMAGE GENERATED ---');
-      console.log('URL:', url);
-
-      let generationId: number | undefined;
-      if (userId && url) {
-        const saved = await this.aiGenRepo.save({
-          user: { id: userId } as AiUser,
-          type: AiGenerationType.IMAGE,
-          prompt: basePrompt.substring(0, 1000),
-          result: url,
-          title:
-            (params.userQuery || 'Image sans titre').substring(0, 30) + '...',
-        });
-        generationId = saved.id;
-      }
-      return { url, generationId };
-    } catch (error) {
-      console.error('--- OPENAI IMAGE ERROR ---');
-      console.error(error);
-      throw new Error("Erreur lors de la génération d'image");
+      generationId = saved.id;
     }
+
+    return { url, generationId };
+  } catch (error) {
+    console.error("DALL-E IMAGE ERROR:", error);
+    throw new Error("Erreur lors de la génération d'image");
   }
+}
+
 
   async generateSocial(
     params: any,
