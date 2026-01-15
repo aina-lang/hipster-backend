@@ -261,6 +261,7 @@ IMPORTANT :
         prompt: basePrompt.substring(0, 1000), // Save part of the constructed prompt
         result: result,
         title: (params.userQuery || 'Sans titre').substring(0, 30) + '...',
+        attributes: params, // Persist full context attributes
       });
       generationId = saved.id;
     }
@@ -402,6 +403,7 @@ ${negativeGeneral}
           prompt: basePrompt.substring(0, 1000),
           result: url,
           title: (params.userQuery || 'Generated Image').substring(0, 40),
+          attributes: params, // Persist full context attributes
         });
 
         generationId = saved.id;
