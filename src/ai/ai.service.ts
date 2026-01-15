@@ -54,6 +54,7 @@ export class AiService {
   async chat(messages: any[], userId?: number): Promise<string> {
     console.log('--- START AI CHAT REQUEST ---');
     console.log('Messages:', JSON.stringify(messages, null, 2));
+    const start = Date.now();
 
     try {
       const completion = await this.openai.chat.completions.create({
@@ -61,8 +62,9 @@ export class AiService {
         messages: messages,
       });
 
+      const duration = Date.now() - start;
       const content = completion.choices[0].message.content || '';
-      console.log('--- AI RESPONSE RECEIVED ---');
+      console.log(`--- AI RESPONSE RECEIVED (${duration}ms) ---`);
 
       // PERSIST IF USER ID PROVIDED
       if (userId) {
