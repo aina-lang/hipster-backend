@@ -199,13 +199,13 @@ export class AiService {
 
       jsonInstruction = `
         Réponds OBLIGATOIREMENT au format JSON avec les clés suivantes :
-        - "titre_section": Le titre de la section (ex: <h1> ou <h2>).
-        - "contenu": Le corps du texte (UTILISE IMPÉRATIVEMENT des balises HTML <p>, <br>, et <strong> pour structurer le texte).
-        - "conseils_balisage": Une courte liste d'instructions pour l'intégration technique.
+        - "titre_section": Le titre de la section.
+        - "contenu": Le corps du texte (TEXTE BRUT UNIQUEMENT, pas de balises HTML, pas de gras **).
+        - "conseils_balisage": Un tableau de chaînes indiquant la structure conseillée (ex: ["titre -> h2", "contenu -> p", "appel_a_l_action -> button"]).
         - "appel_a_l_action": Le texte pour un bouton.
 
         RÈGLE ABSOLUE : ${sectionPrompt}
-        IMPORTANT: Le ton doit être "${tone || 'professionnel'}". Pas de Markdown (**).
+        IMPORTANT: Le ton doit être "${tone || 'professionnel'}".
       `;
     } else if (func.includes('seo')) {
       const pageFocus = section
@@ -216,10 +216,10 @@ export class AiService {
         - "balise_title": Titre SEO optimisé.
         - "meta_description": Description SEO.
         - "mots_cles": Un tableau de mots-clés optimisés ${pageFocus}.
-        - "structure_h_n": Suggestion de structure (H1, H2, H3).
+        - "structure_h_n": Un tableau de recommandations de balises (ex: ["titre -> h1", "sous-titre -> h2"]).
         - "conseils_optimisation": Conseils techniques.
 
-        IMPORTANT: Le ton doit être "${tone || 'expert'}". Pas de Markdown (**).
+        IMPORTANT: Le ton doit être "${tone || 'expert'}". Pas de balises HTML dans les textes, seulement des conseils de structure.
       `;
     } else if (func.includes('flyer') || func.includes('affiche')) {
       jsonInstruction = `
