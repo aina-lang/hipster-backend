@@ -66,11 +66,11 @@ export class AiController {
   @Post('text')
   @Roles(Role.AI_USER)
   async generateText(
-    @Body() body: { prompt: string; type: 'blog' | 'social' | 'ad' },
+    @Body() body: { params: any; type: 'blog' | 'social' | 'ad' },
     @Req() req,
   ) {
     const result = await this.aiService.generateText(
-      body.prompt,
+      body.params,
       body.type,
       req.user.sub,
     );
@@ -85,7 +85,7 @@ export class AiController {
   @Post('image')
   @Roles(Role.AI_USER)
   async generateImage(
-    @Body() body: { prompt: string; style: 'realistic' | 'cartoon' | 'sketch' },
+    @Body() body: { params: any; style: 'realistic' | 'cartoon' | 'sketch' },
     @Req() req,
   ) {
     // AI isolation: we don't fetch roles from standard user.
@@ -97,7 +97,7 @@ export class AiController {
       aiUser?.aiProfile?.planType === 'enterprise';
 
     const result = await this.aiService.generateImage(
-      body.prompt,
+      body.params,
       body.style,
       req.user.sub,
     );
@@ -127,8 +127,8 @@ export class AiController {
   @ResponseMessage('Post généré avec succès')
   @Post('social')
   @Roles(Role.AI_USER)
-  async generateSocial(@Body() body: { prompt: string }, @Req() req) {
-    return await this.aiService.generateSocial(body.prompt, req.user.sub);
+  async generateSocial(@Body() body: { params: any }, @Req() req) {
+    return await this.aiService.generateSocial(body.params, req.user.sub);
   }
 
   @ApiOperation({ summary: 'Exporter un document (PDF, Word, Excel)' })

@@ -86,11 +86,16 @@ export class AiService {
     }
   }
 
-  async generateText(
-    prompt: string,
-    type: string,
-    userId?: number,
-  ): Promise<{ content: string; generationId?: number }> {
+  private async buildPrompt(params: any, userId?: number): Promise<string> {
+    const {
+      job,
+      function: funcName,
+      context,
+      userQuery,
+      workflowAnswers,
+      instructions = '',
+    } = params;
+
     let identityContext = '';
     let userName = "l'utilisateur";
 
@@ -115,18 +120,51 @@ export class AiService {
           ].filter(Boolean);
 
           if (parts.length > 0) {
-            identityContext = `INFOS ENTREPRISE/USER:\n${parts.join('\n')}`;
+            identityContext = `INFOS CONTACT/BRADING:\n${parts.join('\n')}`;
           }
         }
       }
     }
 
+    const cleanFunction = (funcName || 'Création de contenu')
+      .replace(/\s*\(.*?\)\s*/g, '')
+      .trim();
+
+    const workflowDetails = workflowAnswers
+      ? Object.entries(workflowAnswers)
+          .map(([k, v]) => `• ${k}: ${v}`)
+          .join('\n')
+      : '';
+
+    const parts = [
+      `Métier: ${job || 'Non spécifié'}`,
+      `Type de contenu: ${cleanFunction}`,
+      workflowDetails ? `Détails de personnalisation:\n${workflowDetails}` : '',
+      context ? `Contexte supplémentaire: ${context}` : '',
+      userQuery ? `Demande spécifique de l'utilisateur: ${userQuery}` : '',
+      instructions ? `Instructions de formatage: ${instructions}` : '',
+      identityContext ? `\n${identityContext}` : '',
+    ].filter(Boolean);
+
+    return parts.join('\n\n');
+  }
+
+  async generateText(
+    params: any,
+    type: string,
+    userId?: number,
+  ): Promise<{ content: string; generationId?: number }> {
+    // Backward compatibility or direct prompt
+    if (typeof params === 'string') {
+      params = { userQuery: params };
+    }
+
+    const basePrompt = await this.buildPrompt(params, userId);
+
     const systemContext = `
       Identité: Hipster IA
       Rôle: Expert assistant créatif
-      Cible: ${userName}
       Contexte: Génération de contenu ${type}
-      ${identityContext ? `\n\n${identityContext}\n\nIMPORTANT: Utilise ces informations de contact (Nom, Email, Adresse, Tél, Site) si cela est pertinent pour le type de contenu généré (exemple: fin de légende, bloc contact, pied de page).` : ''}
       
       RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations que le client n'a pas fournies. 
       Ne crée pas de prix, d'horaires d'ouverture, de services spécifiques ou de détails techniques si ils ne sont pas explicitement mentionnés dans le prompt ou le profil. 
@@ -142,7 +180,7 @@ export class AiService {
             : 'Réponds au format JSON si possible pour une meilleure extraction des données, sinon utilise un format clair et structuré. IMPORTANT: Pas de mise en forme Markdown (**) dans les valeurs textuelles.'
         }`,
       },
-      { role: 'user', content: prompt },
+      { role: 'user', content: basePrompt },
     ];
 
     const result = await this.chat(messages);
@@ -152,9 +190,9 @@ export class AiService {
       const saved = await this.aiGenRepo.save({
         user: { id: userId } as AiUser,
         type: AiGenerationType.TEXT,
-        prompt: prompt,
+        prompt: basePrompt.substring(0, 1000), // Save part of the constructed prompt
         result: result,
-        title: prompt.substring(0, 30) + '...',
+        title: (params.userQuery || 'Sans titre').substring(0, 30) + '...',
       });
       generationId = saved.id;
     }
@@ -163,12 +201,18 @@ export class AiService {
   }
 
   async generateImage(
-    prompt: string,
+    params: any,
     style: 'realistic' | 'cartoon' | 'sketch',
     userId?: number,
   ): Promise<{ url: string; generationId?: number }> {
+    // Backward compatibility
+    if (typeof params === 'string') {
+      params = { userQuery: params };
+    }
+
+    const basePrompt = await this.buildPrompt(params, userId);
     console.log(`--- GENERATE IMAGE (DALL-E 3) ---`);
-    console.log(`Prompt: ${prompt}`);
+    console.log(`Base Prompt: ${basePrompt}`);
 
     let brandingInfo = '';
     if (userId) {
@@ -186,7 +230,7 @@ export class AiService {
     /*                         SMART PROMPT REFINEMENT (GPT)                      */
     /* -------------------------------------------------------------------------- */
     // Use GPT to structure the prompt and define EXACT text to avoid hallucinations/typos
-    let smartPrompt = prompt;
+    let smartPrompt = params.userQuery || '';
     try {
       const gptMessages = [
         {
@@ -209,7 +253,7 @@ export class AiService {
             "exact_text_to_display": "Le texte exact à écrire sur l'image"
           }`,
         },
-        { role: 'user', content: `Sujet : ${prompt}. Style : ${style}` },
+        { role: 'user', content: `Sujet : ${smartPrompt}. Style : ${style}` },
       ];
 
       const gptResponse = await this.chat(gptMessages);
@@ -265,15 +309,14 @@ export class AiService {
         const saved = await this.aiGenRepo.save({
           user: { id: userId } as AiUser,
           type: AiGenerationType.IMAGE,
-          prompt: enhancedPrompt,
-          result: 'Image DALL-E 3',
-          imageUrl: url,
-          title: prompt.substring(0, 30) + '...',
+          prompt: basePrompt.substring(0, 1000),
+          result: url,
+          title:
+            (params.userQuery || 'Image sans titre').substring(0, 30) + '...',
         });
         generationId = saved.id;
       }
-
-      return { url: url || '', generationId };
+      return { url, generationId };
     } catch (error) {
       console.error('--- OPENAI IMAGE ERROR ---');
       console.error(error);
@@ -282,24 +325,37 @@ export class AiService {
   }
 
   async generateSocial(
-    prompt: string,
+    params: any,
     userId?: number,
   ): Promise<{ content: string; url: string; generationId?: number }> {
+    // Backward compatibility
+    if (typeof params === 'string') {
+      params = { userQuery: params };
+    }
+
     console.log('--- GENERATE SOCIAL (Post + Image) ---');
 
     // 1. Generate specialized Caption
-    const textPrompt = `Génère une légende percutante pour un post réseaux sociaux (Instagram, Facebook). 
-      Sujet: ${prompt}
-      Inclus des hashtags pertinents. N'inclus pas de suggestions d'images.
-      IMPORTANT: Inclus les coordonnées de contact (adresse, téléphone, site) si elles sont fournies dans le contexte.
-      IMPORTANT: N'INVENTE AUCUN PRIX, SERVICE OU HORAIRE NON MENTIONNÉ.
-      IMPORTANT: N'UTILISE JAMAIS DE GRAS (**) OU DE MISE EN FORME MARKDOWN. RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE BRUT. PAS DE JSON. PAS DE BLOC DE CODE.`;
-
-    const textRes = await this.generateText(textPrompt, 'social', userId);
+    const textRes = await this.generateText(
+      {
+        ...params,
+        instructions:
+          "Génère une légende percutante pour un post réseaux sociaux (Instagram, Facebook). Inclus des hashtags pertinents. N'inclus pas de suggestions d'images. IMPORTANT: Inclus les coordonnées de contact (adresse, téléphone, site) si elles sont fournies dans le contexte. IMPORTANT: N'INVENTE AUCUN PRIX, SERVICE OU HORAIRE NON MENTIONNÉ. IMPORTANT: N'UTILISE JAMAIS DE GRAS (**) OU DE MISE EN FORME MARKDOWN. RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE BRUT. PAS DE JSON. PAS DE BLOC DE CODE.",
+      },
+      'social',
+      userId,
+    );
 
     // 2. Generate specialized Image
-    const imagePrompt = `A high-quality, professional social media post image about: ${prompt}. Photorealistic, aesthetically pleasing, suitable for Instagram.`;
-    const imageRes = await this.generateImage(imagePrompt, 'realistic', userId);
+    const imageRes = await this.generateImage(
+      {
+        ...params,
+        instructions:
+          'A high-quality, professional social media post image. Photorealistic, aesthetically pleasing, suitable for Instagram.',
+      },
+      'realistic',
+      userId,
+    );
 
     return {
       content: textRes.content,
