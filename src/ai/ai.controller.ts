@@ -66,7 +66,8 @@ export class AiController {
   @Post('text')
   @Roles(Role.AI_USER)
   async generateText(
-    @Body() body: { params: any; type: 'blog' | 'social' | 'ad' },
+    @Body()
+    body: { params: any; type: 'blog' | 'social' | 'ad' | 'text' | 'texte' },
     @Req() req,
   ) {
     console.log('--- API POST /ai/text ---', JSON.stringify(body, null, 2));
