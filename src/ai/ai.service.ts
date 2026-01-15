@@ -632,19 +632,31 @@ Règles de rédaction :
   }
 
   async deleteGeneration(id: number, userId: number): Promise<void> {
+    console.log(`[AiService] Deleting generation ${id} for user ${userId}`);
     const gen = await this.aiGenRepo.findOne({
       where: { id, user: { id: userId } },
     });
-    if (!gen) throw new Error('Generation not found');
+    if (!gen) {
+      console.warn(
+        `[AiService] Generation ${id} not found or not owned by user ${userId}`,
+      );
+      throw new Error('Generation not found');
+    }
     await this.aiGenRepo.remove(gen);
+    console.log(`[AiService] Generation ${id} deleted successfully`);
   }
 
   async clearHistory(userId: number): Promise<void> {
+    console.log(`[AiService] Clearing history for user ${userId}`);
     const gens = await this.aiGenRepo.find({
       where: { user: { id: userId } },
     });
     if (gens.length > 0) {
+      console.log(`[AiService] Found ${gens.length} items to delete`);
       await this.aiGenRepo.remove(gens);
+      console.log(`[AiService] History cleared successfully`);
+    } else {
+      console.log(`[AiService] No history found to clear`);
     }
   }
 
