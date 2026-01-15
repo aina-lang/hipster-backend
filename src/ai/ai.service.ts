@@ -146,7 +146,10 @@ export class AiService {
       identityContext ? `\n${identityContext}` : '',
     ].filter(Boolean);
 
-    return parts.join('\n\n');
+    const fullPrompt = parts.join('\n\n');
+    console.log('--- BUILT PROMPT ---');
+    console.log(fullPrompt);
+    return fullPrompt;
   }
 
   async generateText(
@@ -336,26 +339,43 @@ export class AiService {
     console.log('--- GENERATE SOCIAL (Post + Image) ---');
 
     // 1. Generate specialized Caption
-    const textRes = await this.generateText(
-      {
-        ...params,
-        instructions:
-          "Génère une légende percutante pour un post réseaux sociaux (Instagram, Facebook). Inclus des hashtags pertinents. N'inclus pas de suggestions d'images. IMPORTANT: Inclus les coordonnées de contact (adresse, téléphone, site) si elles sont fournies dans le contexte. IMPORTANT: N'INVENTE AUCUN PRIX, SERVICE OU HORAIRE NON MENTIONNÉ. IMPORTANT: N'UTILISE JAMAIS DE GRAS (**) OU DE MISE EN FORME MARKDOWN. RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE BRUT. PAS DE JSON. PAS DE BLOC DE CODE.",
-      },
-      'social',
-      userId,
-    );
+    let textRes: any;
+    try {
+      textRes = await this.generateText(
+        {
+          ...params,
+          instructions:
+            "Génère une légende percutante pour un post réseaux sociaux (Instagram, Facebook). Inclus des hashtags pertinents. N'inclus pas de suggestions d'images. IMPORTANT: Inclus les coordonnées de contact (adresse, téléphone, site) si elles sont fournies dans le contexte. IMPORTANT: N'INVENTE AUCUN PRIX, SERVICE OU HORAIRE NON MENTIONNÉ. IMPORTANT: N'UTILISE JAMAIS DE GRAS (**) OU DE MISE EN FORME MARKDOWN. RÉPONDS UNIQUEMENT AVEC LE TEXTE DE LA LÉGENDE BRUT. PAS DE JSON. PAS DE BLOC DE CODE.",
+        },
+        'social',
+        userId,
+      );
+    } catch (e) {
+      console.error('--- SOCIAL TEXT GEN FAILED ---', e);
+      throw e;
+    }
 
     // 2. Generate specialized Image
-    const imageRes = await this.generateImage(
-      {
-        ...params,
-        instructions:
-          'A high-quality, professional social media post image. Photorealistic, aesthetically pleasing, suitable for Instagram.',
-      },
-      'realistic',
-      userId,
-    );
+    let imageRes: any;
+    try {
+      imageRes = await this.generateImage(
+        {
+          ...params,
+          instructions:
+            'A high-quality, professional social media post image. Photorealistic, aesthetically pleasing, suitable for Instagram.',
+        },
+        'realistic',
+        userId,
+      );
+    } catch (e) {
+      console.error('--- SOCIAL IMAGE GEN FAILED ---', e);
+      // Optional: fallback to no image or throw
+      throw e;
+    }
+
+    console.log('--- SOCIAL GENERATION PREVIEW ---');
+    console.log('Text result length:', textRes?.content?.length);
+    console.log('Image URL:', imageRes?.url);
 
     return {
       content: textRes.content,

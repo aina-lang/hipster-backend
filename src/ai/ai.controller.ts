@@ -69,6 +69,7 @@ export class AiController {
     @Body() body: { params: any; type: 'blog' | 'social' | 'ad' },
     @Req() req,
   ) {
+    console.log('--- API POST /ai/text ---', JSON.stringify(body, null, 2));
     const result = await this.aiService.generateText(
       body.params,
       body.type,
@@ -88,6 +89,7 @@ export class AiController {
     @Body() body: { params: any; style: 'realistic' | 'cartoon' | 'sketch' },
     @Req() req,
   ) {
+    console.log('--- API POST /ai/image ---', JSON.stringify(body, null, 2));
     // AI isolation: we don't fetch roles from standard user.
     // We check the AI subscription profile linked to this AI account.
     // Fetch user with profile to check planType
@@ -128,7 +130,13 @@ export class AiController {
   @Post('social')
   @Roles(Role.AI_USER)
   async generateSocial(@Body() body: { params: any }, @Req() req) {
-    return await this.aiService.generateSocial(body.params, req.user.sub);
+    console.log('--- API POST /ai/social ---', JSON.stringify(body, null, 2));
+    const result = await this.aiService.generateSocial(
+      body.params,
+      req.user.sub,
+    );
+    console.log('--- API SOCIAL RESULT SUCCESS ---');
+    return result;
   }
 
   @ApiOperation({ summary: 'Exporter un document (PDF, Word, Excel)' })
