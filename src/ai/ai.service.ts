@@ -369,6 +369,9 @@ export class AiService {
     params: any,
     userId?: number,
   ): Promise<{ content: string; generationId?: number }> {
+    // 1. Build Base Context via centralized method
+    const baseContext = await this.buildPrompt(params, userId);
+
     const {
       format: requestedFormat,
       function: funcName,
@@ -377,9 +380,9 @@ export class AiService {
     } = params;
 
     // Clean format hints like "(PDF / DOCX)"
-    const cleanFunctionName = funcName
-      ? funcName.replace(/\s*\(.*?\)\s*/g, '').trim()
-      : 'Document';
+    const cleanFunctionName = (funcName || 'Document')
+      .replace(/\s*\(.*?\)\s*/g, '')
+      .trim();
 
     const isQuoteEstimate = /devis|estimation|estimate/i.test(
       cleanFunctionName,
@@ -389,12 +392,6 @@ export class AiService {
     const entityName =
       userProfile?.companyName ||
       (userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : null);
-
-    const paramsStr = JSON.stringify(
-      { ...restParams, function: cleanFunctionName, entityName },
-      null,
-      2,
-    );
 
     let prompt = '';
 
@@ -437,8 +434,8 @@ export class AiService {
 
       /* ----------------------------- QUOTE PROMPT ----------------------------- */
       prompt = `
-Génère un document "${cleanFunctionName}" avec les paramètres suivants :
-${paramsStr}
+Génère un document "${cleanFunctionName}" basé sur ce contexte :
+${baseContext}
 
 ${senderContext}
 
@@ -473,9 +470,8 @@ IMPORTANT : Tu dois répondre UNIQUEMENT avec ce JSON valide :
       const docTitle = cleanFunctionName.toUpperCase();
 
       prompt = `
-Génère un document "${docTitle}" structuré.
-Paramètres de génération :
-${paramsStr}
+Génère un document "${docTitle}" structuré basé sur ce contexte :
+${baseContext}
 
 IMPORTANT : Tu dois impérativement répondre avec un objet JSON valide suivant cette structure :
 {
@@ -1002,15 +998,21 @@ Règles de rédaction :
   /*                         POSTER GENERATION (NATIVE)                         */
   /* -------------------------------------------------------------------------- */
   async generatePoster(
-    prompt: string,
+    params: any,
     userId?: number,
   ): Promise<{ backgroundUrl: string; layout: any; generationId?: number }> {
+    // Backward compatibility
+    if (typeof params === 'string') {
+      params = { userQuery: params };
+    }
+
+    const baseContext = await this.buildPrompt(params, userId);
     console.log('--- GENERATE POSTER (Native) ---');
 
     // 1. Generate Layout Data (JSON)
     const layoutPrompt = `
-      Génère une structure JSON pour une affiche publicitaire professionnelle.
-      Sujet: ${prompt}
+      Génère une structure JSON pour une affiche publicitaire professionnelle basée sur :
+      ${baseContext}
       
       RÈGLES COMPOSITION :
       - TITRE : Court, accrocheur (ex: "PROMO RENTRÉE", "NOUVEAU MENU").
@@ -1049,7 +1051,7 @@ Règles de rédaction :
       console.error('Layout generation failed', e);
       layoutData = {
         title: 'Affiche',
-        subtitle: prompt,
+        subtitle: params.userQuery || 'Affiche',
         items: [],
         cta: '',
         colors: { text: '#000', accent: '#000' },
@@ -1058,7 +1060,7 @@ Règles de rédaction :
 
     // 2. Generate Background Image (No Text)
     const bgPrompt = `
-      Professional advertising background for: ${prompt}. 
+      Professional advertising background for: ${params.userQuery || 'Marketing'}. 
       Style: Minimalist, abstract, high quality 4k texture. 
       IMPORTANT: NO TEXT, NO LETTERS, NO WORDS on the image. Just background, negative space in center for text overlay.
       Soft lighting, professional gradient or texture.
@@ -1066,7 +1068,7 @@ Règles de rédaction :
 
     // Allow generateImage to handle DALL-E call
     const { url: bgUrl, generationId } = await this.generateImage(
-      bgPrompt,
+      { ...params, userQuery: bgPrompt },
       'realistic',
       userId,
     );

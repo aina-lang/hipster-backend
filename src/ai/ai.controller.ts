@@ -163,11 +163,12 @@ export class AiController {
     }
   }
 
-  @ApiOperation({ summary: 'Générer une affiche (Layout + Fond)' })
+  @ApiOperation({ summary: 'Générer une affiche (Layout + Background)' })
+  @ResponseMessage('Affiche générée avec succès')
   @Post('poster')
   @Roles(Role.AI_USER)
-  async generatePoster(@Body() body: { prompt: string }, @Req() req) {
-    return await this.aiService.generatePoster(body.prompt, req.user.sub);
+  async generatePoster(@Body() body: { params: any }, @Req() req) {
+    return await this.aiService.generatePoster(body.params, req.user.sub);
   }
 
   @ApiOperation({ summary: 'Exporter une affiche en PDF' })
