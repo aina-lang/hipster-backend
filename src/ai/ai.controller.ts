@@ -52,6 +52,22 @@ export class AiController {
     return this.aiService.getHistory(req.user.sub);
   }
 
+  @ApiOperation({ summary: "Supprimer un item d'historique" })
+  @Post('history/:id/delete') // Using POST for broader compatibility if needed, but DELETE is better REST
+  @Roles(Role.AI_USER)
+  async deleteHistoryItem(@Param('id') id: string, @Req() req) {
+    await this.aiService.deleteGeneration(parseInt(id), req.user.sub);
+    return { message: 'Item deleted' };
+  }
+
+  @ApiOperation({ summary: "Effacer tout l'historique" })
+  @Post('history/clear')
+  @Roles(Role.AI_USER)
+  async clearHistory(@Req() req) {
+    await this.aiService.clearHistory(req.user.sub);
+    return { message: 'History cleared' };
+  }
+
   @ApiOperation({ summary: "Chat avec l'IA (GPT-5)" })
   @Post('chat')
   @Roles(Role.AI_USER)

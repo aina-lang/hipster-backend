@@ -631,6 +631,23 @@ Règles de rédaction :
     return { content: resultText, generationId: generationId || textGenId };
   }
 
+  async deleteGeneration(id: number, userId: number): Promise<void> {
+    const gen = await this.aiGenRepo.findOne({
+      where: { id, user: { id: userId } },
+    });
+    if (!gen) throw new Error('Generation not found');
+    await this.aiGenRepo.remove(gen);
+  }
+
+  async clearHistory(userId: number): Promise<void> {
+    const gens = await this.aiGenRepo.find({
+      where: { user: { id: userId } },
+    });
+    if (gens.length > 0) {
+      await this.aiGenRepo.remove(gens);
+    }
+  }
+
   async exportDocument(
     id: number,
     format: string,
