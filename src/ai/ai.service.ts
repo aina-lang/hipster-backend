@@ -176,13 +176,37 @@ export class AiService {
       Si une information manque, reste général ou n'en parle pas.
     `;
 
+    let jsonInstruction =
+      'Réponds au format JSON si possible pour une meilleure extraction des données, sinon utilise un format clair et structuré. IMPORTANT: Pas de mise en forme Markdown (**) dans les valeurs textuelles.';
+
+    const func = (params.function || '').toLowerCase();
+    if (func.includes('site internet')) {
+      jsonInstruction = `
+        Réponds OBLIGATOIREMENT au format JSON avec les clés suivantes :
+        - "titre_page": Un titre accrocheur.
+        - "accroche": Une phrase de bienvenue percutante.
+        - "sections": Un tableau d'objets avec { "titre_section", "contenu" }.
+        - "appel_a_l_action": Le texte pour un bouton.
+        IMPORTANT: Pas de Markdown (**).
+      `;
+    } else if (func.includes('seo')) {
+      jsonInstruction = `
+        Réponds OBLIGATOIREMENT au format JSON avec les clés suivantes :
+        - "balise_title": Titre SEO optimisé (max 60 caractères).
+        - "meta_description": Description SEO percutante (max 160 caractères).
+        - "mots_cles": Un tableau de 5 à 10 mots-clés pertinents.
+        - "conseils_optimisation": Liste de 3 conseils pour améliorer le référencement.
+        IMPORTANT: Pas de Markdown (**).
+      `;
+    }
+
     const messages = [
       {
         role: 'system',
         content: `Tu es Hipster IA. Voici ta configuration :\n${systemContext}\n\n${
           type === 'social'
             ? "Réponds avec un format clair et structuré (pas de JSON). IMPORTANT: N'utilise JAMAIS de mise en forme Markdown comme les doubles astérisques (**) pour le gras. Produis du texte brut et propre."
-            : 'Réponds au format JSON si possible pour une meilleure extraction des données, sinon utilise un format clair et structuré. IMPORTANT: Pas de mise en forme Markdown (**) dans les valeurs textuelles.'
+            : jsonInstruction
         }`,
       },
       { role: 'user', content: basePrompt },
@@ -206,36 +230,35 @@ export class AiService {
   }
 
   async generateImage(
-  params: any,
-  style: 'realistic' | 'cartoon' | 'sketch',
-  userId?: number,
-): Promise<{ url: string; generationId?: number }> {
+    params: any,
+    style: 'realistic' | 'cartoon' | 'sketch',
+    userId?: number,
+  ): Promise<{ url: string; generationId?: number }> {
+    /* ------------------------------------------ */
+    /*           1. Normalize input               */
+    /* ------------------------------------------ */
+    if (typeof params === 'string') {
+      params = { userQuery: params };
+    }
 
-  /* ------------------------------------------ */
-  /*           1. Normalize input               */
-  /* ------------------------------------------ */
-  if (typeof params === 'string') {
-    params = { userQuery: params };
-  }
+    const basePrompt = await this.buildPrompt(params, userId);
+    const userQuery = params.userQuery || '';
 
-  const basePrompt = await this.buildPrompt(params, userId);
-  const userQuery = params.userQuery || "";
+    /* ------------------------------------------ */
+    /*      2. Prepare text detection rules       */
+    /* ------------------------------------------ */
+    const userWantsText =
+      /text|écris|write|affiche|slogan|titre|caption|message|poster/i.test(
+        userQuery,
+      );
 
-
-  /* ------------------------------------------ */
-  /*      2. Prepare text detection rules       */
-  /* ------------------------------------------ */
-  const userWantsText =
-    /text|écris|write|affiche|slogan|titre|caption|message|poster/i.test(userQuery);
-
-
-  /* ------------------------------------------ */
-  /*        3. GPT Prompt Optimization          */
-  /* ------------------------------------------ */
-  const gptMessages = [
-    {
-      role: "system",
-      content: `You are an elite art director preparing a PERFECT prompt for DALL·E 3.
+    /* ------------------------------------------ */
+    /*        3. GPT Prompt Optimization          */
+    /* ------------------------------------------ */
+    const gptMessages = [
+      {
+        role: 'system',
+        content: `You are an elite art director preparing a PERFECT prompt for DALL·E 3.
 
 RULES:
 1. Output JSON ONLY.
@@ -250,113 +273,107 @@ FORMAT:
 {
   "visual_description": "string",
   "exact_text_to_display": "string"
-}`
-    },
-    { role: "user", content: userQuery }
-  ];
+}`,
+      },
+      { role: 'user', content: userQuery },
+    ];
 
+    /* ------------------------------------------ */
+    /*             4. Call GPT (safe)             */
+    /* ------------------------------------------ */
+    let parsed = {
+      visual_description: userQuery,
+      exact_text_to_display: '',
+    };
 
-  /* ------------------------------------------ */
-  /*             4. Call GPT (safe)             */
-  /* ------------------------------------------ */
-  let parsed = {
-    visual_description: userQuery,
-    exact_text_to_display: "",
-  };
+    try {
+      const gptResponse = await this.chat(gptMessages);
 
-  try {
-    const gptResponse = await this.chat(gptMessages);
+      parsed = JSON.parse(gptResponse.replace(/```json|```/g, ''));
+    } catch (e) {
+      console.warn('GPT parse failed, fallback used.');
+    }
 
-    parsed = JSON.parse(
-      gptResponse.replace(/```json|```/g, "")
-    );
-  } catch (e) {
-    console.warn("GPT parse failed, fallback used.");
-  }
+    /* ------------------------------------------ */
+    /*       5. Build final DALL·E prompt         */
+    /* ------------------------------------------ */
 
-
-  /* ------------------------------------------ */
-  /*       5. Build final DALL·E prompt         */
-  /* ------------------------------------------ */
-
-  const negativeGeneral = `
+    const negativeGeneral = `
 Avoid: blurry text, distorted letters, random words, misspellings,
 warped shapes, strange symbols, unwanted text, watermarks, signatures,
 logos, noise, artifacts, chaotic layout, low resolution.
 `.trim();
 
-  let finalPrompt = parsed.visual_description;
+    let finalPrompt = parsed.visual_description;
 
+    /* —————— HANDLE TEXT OR NO TEXT —————— */
 
-  /* —————— HANDLE TEXT OR NO TEXT —————— */
-
-  if (parsed.exact_text_to_display.trim() === "") {
-    // NO TEXT
-    finalPrompt += `
+    if (parsed.exact_text_to_display.trim() === '') {
+      // NO TEXT
+      finalPrompt += `
 No text, no letters, no numbers, no captions.
 Avoid accidental words or symbols.
     `;
-  } else {
-    // EXACT TEXT
-    finalPrompt += `
+    } else {
+      // EXACT TEXT
+      finalPrompt += `
 The image must display this exact text: "${parsed.exact_text_to_display}".
 Avoid extra words, misspellings, or decorative glyphs.
 Typography must be clean, sharp and perfectly readable.
     `;
-  }
+    }
 
-  // Universal quality booster
-  finalPrompt += `
+    // Universal quality booster
+    finalPrompt += `
 High quality, sharp details, clean layout, 4K render.
 ${negativeGeneral}
   `;
 
-  // Style mapping
-  if (style === "cartoon") finalPrompt += " Cartoon style, vibrant colors.";
-  if (style === "sketch") finalPrompt += " Pencil sketch, black and white.";
-  if (style === "realistic") finalPrompt += " Photorealistic, ultra-detailed.";
-
-
-  /* ------------------------------------------ */
-  /*            6. Call DALL·E 3               */
-  /* ------------------------------------------ */
-  try {
-    const response = await this.openai.images.generate({
-      model: "dall-e-3",
-      prompt: finalPrompt,
-      n: 1,
-      size: "1024x1024",
-      quality: "hd",
-      style: style === "realistic" ? "natural" : "vivid",
-      response_format: "url",
-    });
-
-    const url = response.data[0].url;
+    // Style mapping
+    if (style === 'cartoon') finalPrompt += ' Cartoon style, vibrant colors.';
+    if (style === 'sketch') finalPrompt += ' Pencil sketch, black and white.';
+    if (style === 'realistic')
+      finalPrompt += ' Photorealistic, ultra-detailed.';
 
     /* ------------------------------------------ */
-    /*      7. Save image generation history      */
+    /*            6. Call DALL·E 3               */
     /* ------------------------------------------ */
-    let generationId: number | undefined;
-
-    if (userId && url) {
-      const saved = await this.aiGenRepo.save({
-        user: { id: userId } as AiUser,
-        type: AiGenerationType.IMAGE,
-        prompt: basePrompt.substring(0, 1000),
-        result: url,
-        title: (params.userQuery || "Generated Image").substring(0, 40),
+    try {
+      const response = await this.openai.images.generate({
+        model: 'dall-e-3',
+        prompt: finalPrompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'hd',
+        style: style === 'realistic' ? 'natural' : 'vivid',
+        response_format: 'url',
       });
 
-      generationId = saved.id;
+      const url = response.data[0].url;
+
+      /* ------------------------------------------ */
+      /*      7. Save image generation history      */
+      /* ------------------------------------------ */
+      let generationId: number | undefined;
+
+      if (userId && url) {
+        const saved = await this.aiGenRepo.save({
+          user: { id: userId } as AiUser,
+          type: AiGenerationType.IMAGE,
+          prompt: basePrompt.substring(0, 1000),
+          result: url,
+          title: (params.userQuery || 'Generated Image').substring(0, 40),
+        });
+
+        generationId = saved.id;
+      }
+
+      return { url, generationId };
+    } catch (error) {
+      console.error('DALL-E IMAGE ERROR:', error);
+      throw new Error("Erreur lors de la génération d'image");
     }
-
-    return { url, generationId };
-  } catch (error) {
-    console.error("DALL-E IMAGE ERROR:", error);
-    throw new Error("Erreur lors de la génération d'image");
   }
-}
-
 
   async generateSocial(
     params: any,
