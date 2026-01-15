@@ -223,15 +223,20 @@ export class AiService {
       `;
     } else if (func.includes('flyer') || func.includes('affiche')) {
       jsonInstruction = `
-        Réponds OBLIGATOIREMENT au format JSON avec les clés suivantes :
-        - "titre_principal": Le titre accrocheur de l'affiche.
-        - "sous_titre": Un sous-titre ou une phrase d'accroche.
-        - "corps_de_texte": Le message principal détaillé.
-        - "offres_speciales": Une ou plusieurs offres si mentionnées, sinon un champ vide.
-        - "informations_pratiques": Coordonnées, horaires, etc.
-        - "appel_a_l_action": Phrase incitant à l'action.
-        IMPORTANT: Le ton doit être "${tone || 'percutant'}". Pas de Markdown (**).
-      `;
+Réponds OBLIGATOIREMENT au format JSON avec les clés suivantes :
+- "titre_principal": Le titre accrocheur de l'affiche.
+- "sous_titre": Un sous-titre ou une phrase d'accroche.
+- "offres_speciales": Une ou plusieurs offres si mentionnées, sinon un champ vide.
+- "informations_pratiques": Coordonnées, horaires, etc. si fournies, sinon vide.
+- "appel_a_l_action": Phrase incitant à l'action si fournie, sinon vide.
+
+IMPORTANT :
+1. Si l'utilisateur n'a pas fourni l'information correspondante, laisse le champ vide.
+2. Ne jamais inventer d'offres, de prix ou de contacts.
+3. Le ton doit être "${tone || 'percutant'}".
+4. Pas de Markdown (**), pas de texte en dehors du JSON.
+5. Répond uniquement avec un JSON valide.
+  `;
     }
 
     const messages = [
