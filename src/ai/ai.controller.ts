@@ -194,42 +194,6 @@ export class AiController {
     }
   }
 
-  @ApiOperation({ summary: 'Générer une affiche (Layout + Background)' })
-  @ResponseMessage('Affiche générée avec succès')
-  @Post('poster')
-  @Roles(Role.AI_USER)
-  async generatePoster(
-    @Body() body: { params: any; negativePrompt?: string },
-    @Req() req,
-  ) {
-    return await this.aiService.generatePoster(
-      body.params,
-      req.user.sub,
-      body.negativePrompt,
-    );
-  }
-
-  @ApiOperation({ summary: 'Exporter une affiche en PDF' })
-  @Post('poster/export')
-  @Roles(Role.AI_USER)
-  async exportPoster(
-    @Body() body: { backgroundUrl: string; layout: any; model?: string },
-    @Res() res,
-  ) {
-    try {
-      const buffer = await this.aiService.exportPoster(body);
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="affiche_hypster.pdf"',
-        'Content-Length': buffer.length,
-      });
-      res.end(buffer);
-    } catch (error) {
-      this.logger.error('Poster export error', error);
-      res.status(500).json({ message: 'Erreur export affiche' });
-    }
-  }
-
   @ApiOperation({ summary: 'Générer un flyer en image (PNG)' })
   @ResponseMessage('Image de flyer générée avec succès')
   @Post('flyer')

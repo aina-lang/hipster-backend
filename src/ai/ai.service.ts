@@ -244,43 +244,25 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const visualDescription = params.userQuery || '';
     const negativePrompt = manualNegativePrompt || '';
 
-    const apiKey =
-      this.configService.get<string>('STABLE_API_KEY') ||
-      this.configService.get<string>('STABILITY_API_KEY');
-    if (!apiKey) throw new Error('Configuration manquante : STABLE_API_KEY');
+    this.logger.log(`Generating image with OpenAI: ${visualDescription}`);
 
-    let stylePreset = 'enhance';
-    if (style === 'realistic') stylePreset = 'photographic';
-    if (style === 'cartoon') stylePreset = 'comic-book';
-    if (style === 'sketch') stylePreset = 'line-art';
+    // Based on user request to use 'gpt-5.2-mini-image'
+    const response = await this.openai.images.generate({
+      model: 'gpt-5.2-mini-image' as any,
+      prompt: `${visualDescription} ${negativePrompt ? `(Avoid: ${negativePrompt})` : ''}`,
+      size: '1024x1024',
+      n: 1,
+    });
 
-    const formData = new FormData();
-    formData.append('prompt', visualDescription);
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    formData.append('style_preset', stylePreset);
-    formData.append('output_format', 'png');
+    const imageUrl = response.data[0].url;
+    if (!imageUrl) throw new Error('Failed to generate image URL from OpenAI');
 
-    const response = await fetch(
-      'https://api.stability.ai/v2beta/stable-image/generate/ultra',
-      {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, Accept: 'image/*' },
-        body: formData,
-      },
-    );
-    if (!response.ok) {
-      if (response.status === 402) {
-        throw new Error(
-          'Crédits insuffisants sur Stability AI (402). Veuillez recharger votre compte.',
-        );
-      }
-      const errText = await response.text();
-      throw new Error(
-        `Stability Error: ${response.status} ${response.statusText} - ${errText}`,
-      );
-    }
+    // Download the image to save it locally as per project structure
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok)
+      throw new Error('Failed to download generated image');
+    const buffer = Buffer.from(await imageResponse.arrayBuffer());
 
-    const buffer = Buffer.from(await response.arrayBuffer());
     const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     const fileName = `gen_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.png`;
@@ -295,8 +277,8 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
         type: AiGenerationType.IMAGE,
         prompt: basePrompt.substring(0, 1000),
         result: publicUrl,
-        title: (params.userQuery || 'Stable Image').substring(0, 40),
-        attributes: { ...params, engine: 'stable-diffusion' },
+        title: (params.userQuery || 'AI Image').substring(0, 40),
+        attributes: { ...params, engine: 'openai-gpt-5-mini' },
       });
       generationId = saved.id;
     }
@@ -479,32 +461,6 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     };
   }
 
-  async generatePoster(
-    params: any,
-    userId?: number,
-    manualNegativePrompt?: string,
-  ) {
-    const posterPrompt = this.constructPosterPrompt(params);
-    const systemNegative = this.constructNegativeFlyerPrompt();
-    const negativePrompt = manualNegativePrompt
-      ? `${systemNegative}, ${manualNegativePrompt}`
-      : systemNegative;
-
-    console.log('[generatePoster] Using Stable Diffusion for poster');
-
-    const imageResult = await this.generateImage(
-      { ...params, userQuery: posterPrompt },
-      'realistic',
-      userId,
-      negativePrompt,
-    );
-
-    return {
-      url: imageResult.url,
-      generationId: imageResult.generationId,
-    };
-  }
-
   private constructFlyerPrompt(params: any): string {
     const { userQuery, title, businessName, workflowAnswers } = params;
     const userText = this.cleanUserPrompt(
@@ -526,24 +482,6 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
      Use a real ${type} design aesthetic, not a mockup. Use clean shapes, balanced layout,
      proper margins, and high-quality print-ready design. Vibrant but controlled colors.
      High resolution, sharp details.`.replace(/\s+/g, ' ');
-  }
-
-  private constructPosterPrompt(params: any): string {
-    const { userQuery, title, businessName, workflowAnswers } = params;
-    const userText = this.cleanUserPrompt(
-      userQuery || title || businessName || 'Affiche Hipster',
-    );
-
-    const style = workflowAnswers?.style || 'Cinematic';
-    const tone = workflowAnswers?.tone || 'Professional';
-
-    return `Professional ${style} advertising poster. High-end photography, ${style} lighting, 
-    grand composition, epic proportions. Bold, stylish typography integrated into the scene. 
-    Main focus: ${userText}. ${tone} atmosphere, hyper-realistic, 8k resolution, 
-    masterpiece quality. No clutter, focused on the main subject.`.replace(
-      /\s+/g,
-      ' ',
-    );
   }
 
   private cleanUserPrompt(query: string): string {
@@ -590,24 +528,5 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
   async applyWatermark(url: string, isPremium: boolean): Promise<string> {
     // Simply returning the URL for now as requested or to simplify
     return url;
-  }
-
-  async exportPoster(body: {
-    backgroundUrl: string;
-    layout: any;
-    model?: string;
-  }) {
-    // Simplified PDF export for poster
-    const puppeteer = require('puppeteer');
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox'],
-    });
-    const page = await browser.newPage();
-    const html = `<html><body style="margin:0;padding:0;"><img src="${body.backgroundUrl}" style="width:100%"/></body></html>`;
-    await page.setContent(html);
-    const pdfBuffer = await page.pdf({ format: 'A4' });
-    await browser.close();
-    return Buffer.from(pdfBuffer);
   }
 }
