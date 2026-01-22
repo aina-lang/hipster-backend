@@ -506,28 +506,40 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
   }
 
   private constructFlyerPrompt(params: any): string {
-    const { userQuery, title, businessName } = params;
+    const { userQuery, title, businessName, workflowAnswers } = params;
     const userText = this.cleanUserPrompt(
       userQuery || title || businessName || 'Promotion',
     );
 
-    return `A clean, professional commercial flyer layout. Modern graphic design, high-quality composition,
-     perfect alignment, bold readable typography, centered title, clear promotional message.
+    const type = workflowAnswers?.type || 'Flyer';
+    const style = workflowAnswers?.style || 'Modern';
+    const promotion =
+      workflowAnswers?.promotion && workflowAnswers.promotion !== 'Aucune'
+        ? workflowAnswers.promotion
+        : '';
+    const tone = workflowAnswers?.tone || 'Professional';
+
+    return `A clean, professional commercial ${type} layout. ${style} graphic design, high-quality composition,
+     perfect alignment, bold readable typography, centered title, ${tone} message.
+     ${promotion ? `Promotional focus: ${promotion}.` : ''}
      Include the following text exactly and fully visible, with correct spelling and spacing: "${userText}".
-     Use a real flyer design aesthetic, not a poster mockup. Use clean shapes, balanced layout,
+     Use a real ${type} design aesthetic, not a mockup. Use clean shapes, balanced layout,
      proper margins, and high-quality print-ready design. Vibrant but controlled colors.
      High resolution, sharp details.`.replace(/\s+/g, ' ');
   }
 
   private constructPosterPrompt(params: any): string {
-    const { userQuery, title, businessName } = params;
+    const { userQuery, title, businessName, workflowAnswers } = params;
     const userText = this.cleanUserPrompt(
       userQuery || title || businessName || 'Affiche Hipster',
     );
 
-    return `Professional cinematic advertising poster. High-end photography, cinematic lighting, 
+    const style = workflowAnswers?.style || 'Cinematic';
+    const tone = workflowAnswers?.tone || 'Professional';
+
+    return `Professional ${style} advertising poster. High-end photography, ${style} lighting, 
     grand composition, epic proportions. Bold, stylish typography integrated into the scene. 
-    Main text: "${userText}". Surreal and premium atmosphere, hyper-realistic, 8k resolution, 
+    Main focus: ${userText}. ${tone} atmosphere, hyper-realistic, 8k resolution, 
     masterpiece quality. No clutter, focused on the main subject.`.replace(
       /\s+/g,
       ' ',
