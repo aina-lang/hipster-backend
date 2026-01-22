@@ -422,7 +422,7 @@ FORMAT:
     /* ------------------------------------------ */
     try {
       const response = await fetch(
-        'https://api.stability.ai/v2beta/stable-image/generate/core',
+        'https://api.stability.ai/v2beta/stable-image/generate/sd3',
         {
           method: 'POST',
           headers: {
