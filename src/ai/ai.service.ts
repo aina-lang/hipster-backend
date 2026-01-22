@@ -9,7 +9,7 @@ import * as PDFDocument from 'pdfkit';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import * as ExcelJS from 'exceljs';
 import OpenAI from 'openai';
-import fetch from 'node-fetch';
+// Native fetch used
 
 import { AiUser } from './entities/ai-user.entity';
 import {
