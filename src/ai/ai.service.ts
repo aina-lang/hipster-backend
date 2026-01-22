@@ -1206,95 +1206,117 @@ Règles de rédaction :
       `;
   }
 
+  /**
+   * Helper method to build optimized Stable Diffusion prompt for flyer generation
+   */
+  private async buildFlyerPrompt(
+    params: any,
+    userId?: number,
+  ): Promise<string> {
+    const baseContext = await this.buildPrompt(params, userId);
+
+    const gptMessages = [
+      {
+        role: 'system',
+        content: `Tu es un expert en design de flyers marketing et en prompts Stable Diffusion.
+
+Crée un prompt Stable Diffusion pour générer un FLYER VISUEL professionnel et attractif.
+
+RÈGLES IMPORTANTES:
+1. Stable Diffusion Core ne gère PAS BIEN le texte dans les images
+2. Focus sur l'AMBIANCE VISUELLE, les COULEURS, le STYLE, la COMPOSITION
+3. Décris les ÉLÉMENTS VISUELS, l'ÉCLAIRAGE, la MISE EN PAGE
+4. NE PAS inclure de texte spécifique (pas de "text:", "words:", etc.)
+5. Pense "affiche publicitaire moderne, professionnelle et attractive"
+6. Utilise des termes visuels précis: "gradient", "minimalist", "bold colors", "dynamic composition"
+
+STYLE VISUEL À PRIVILÉGIER:
+- Modern commercial photography
+- Professional marketing material
+- Clean and premium aesthetic
+- High-end advertising design
+- Vibrant but professional colors
+
+FORMAT DE SORTIE (JSON uniquement):
+{
+  "visual_description": "Description visuelle détaillée et optimisée pour Stable Diffusion",
+  "negative_prompt": "Éléments à éviter (blurry, low quality, text, watermark, etc.)"
+}
+
+EXEMPLES DE BONS PROMPTS:
+- "Modern minimalist product advertisement, vibrant gradient background from coral to purple, professional studio lighting, clean composition, premium aesthetic, commercial photography style, 4k quality, sharp focus"
+- "Dynamic promotional poster design, bold complementary colors, geometric shapes, professional marketing material, high-end commercial aesthetic, studio lighting, ultra detailed"
+- "Sleek business flyer design, elegant color palette, modern typography layout suggestion through visual elements, professional photography, luxury brand aesthetic, pristine quality"
+`,
+      },
+      {
+        role: 'user',
+        content: `Contexte: ${baseContext}\n\nCrée un prompt visuel pour un flyer marketing basé sur ce contexte.`,
+      },
+    ];
+
+    try {
+      const response = await this.chat(gptMessages);
+      const parsed = JSON.parse(response.replace(/```json|```/g, '').trim());
+
+      console.log(
+        '[buildFlyerPrompt] Generated prompt:',
+        parsed.visual_description,
+      );
+      return parsed.visual_description;
+    } catch (e) {
+      console.warn('[buildFlyerPrompt] GPT parse failed, using fallback');
+      // Fallback: create a generic professional flyer prompt
+      return `Professional marketing flyer design, modern minimalist aesthetic, vibrant gradient background, clean composition, commercial photography style, premium quality, studio lighting, 4k, ultra detailed, sharp focus`;
+    }
+  }
+
   /* -------------------------------------------------------------------------- */
-  /*                         FLYER IMAGE GENERATION (USING PUPPETEER)         */
+  /*                    FLYER IMAGE GENERATION (STABLE DIFFUSION)              */
   /* -------------------------------------------------------------------------- */
   async generateFlyer(
     params: any,
     userId?: number,
   ): Promise<{ url: string; imageData?: string; generationId?: number }> {
-    console.log('--- START FLYER GENERATION ---');
+    console.log('--- START FLYER GENERATION (Stable Diffusion) ---');
+
     try {
-      // First, generate the flyer text content via IA
-      const textContent = await this.generateText(
-        params,
-        'texte',
+      // 1. Build optimized prompt for flyer via GPT
+      const flyerPrompt = await this.buildFlyerPrompt(params, userId);
+
+      console.log(
+        '[generateFlyer] Using Stable Diffusion with prompt:',
+        flyerPrompt,
+      );
+
+      // 2. Generate image using Stable Diffusion (same as generateImage)
+      // Using 'realistic' style for professional marketing look
+      const imageResult = await this.generateImage(
+        { ...params, userQuery: flyerPrompt },
+        'realistic',
         userId,
       );
 
-      // Parse the AI response to extract structured data
-      let flyerData: any = {
-        title: '🎉 Offre Spéciale',
-        subtitle: 'Découvrez nos produits',
-        mainPoints: [],
-        cta: 'Découvrir',
-        colors: { bg: '#1a1a2e', primary: '#ff6b6b', accent: '#ffd93d', text: '#ffffff' },
-      };
+      console.log(
+        '[generateFlyer] Image generated successfully:',
+        imageResult.url,
+      );
 
-      try {
-        const parsed = JSON.parse(textContent.content);
-        flyerData = {
-          title: parsed.titre_affiche || parsed.title || flyerData.title,
-          subtitle: parsed.contenu_texte || parsed.subtitle || flyerData.subtitle,
-          mainPoints: parsed.liste_points_forts || parsed.mainPoints || [],
-          cta: parsed.appel_a_l_action || parsed.cta || flyerData.cta,
-          colors: parsed.colors || flyerData.colors,
-        };
-      } catch (e) {
-        // If parsing fails, use the raw content
-        const lines = textContent.content.split('\n').filter(l => l.trim());
-        if (lines.length > 0) flyerData.title = lines[0];
-        if (lines.length > 1) flyerData.subtitle = lines[1];
-      }
-
-      // Generate HTML/CSS for the flyer
-      const html = this.generateFlyerHTML(flyerData);
-
-      // Try to use Puppeteer to render HTML to image, with fallback
-      let imageBuffer: Buffer;
-      try {
-        imageBuffer = await this.renderHTMLToImage(html);
-      } catch (puppeteerError) {
-        this.logger.warn('Puppeteer rendering failed, using fallback SVG to PNG conversion', puppeteerError);
-        // Fallback: use a basic SVG rendering or placeholder
-        imageBuffer = await this.generateFlyerFallback(flyerData);
-      }
-
-      // Save image to file system
-      const fileName = `flyer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.png`;
-      const uploadDir = './uploads';
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      
-      const filePath = path.join(uploadDir, fileName);
-      fs.writeFileSync(filePath, imageBuffer);
-
-      // Generate URL
-      const baseUrl = this.configService.get('APP_URL') || 'https://hipster-api.fr';
-      const imageUrl = `${baseUrl}/uploads/${fileName}`;
-
-      // Save to database
-      const generation = await this.aiGenRepo.save({
-        user: { id: userId } as AiUser,
-        type: AiGenerationType.IMAGE,
-        prompt: params.userQuery || 'Flyer Generation',
-        result: imageUrl,
-        title: (flyerData.title || '').substring(0, 50),
-        metadata: { type: 'flyer', ...flyerData },
-      });
-
-      console.log('--- FLYER GENERATION SUCCESS ---');
+      // 3. Return result (already saved by generateImage)
       return {
-        url: imageUrl,
-        imageData: `data:image/png;base64,${imageBuffer.toString('base64')}`,
-        generationId: generation.id,
+        url: imageResult.url,
+        generationId: imageResult.generationId,
       };
     } catch (error) {
       console.error('--- FLYER GENERATION ERROR ---', error);
       throw error;
     }
   }
+
+  /* -------------------------------------------------------------------------- */
+  /*     OBSOLETE METHODS (Kept for reference - No longer used)                */
+  /*     Flyer generation now uses Stable Diffusion instead of Puppeteer       */
+  /* -------------------------------------------------------------------------- */
 
   private generateFlyerHTML(data: any): string {
     const { title, subtitle, mainPoints, cta, colors } = data;
@@ -1304,7 +1326,7 @@ Règles de rédaction :
     const textColor = colors?.text || '#ffffff';
 
     const pointsHTML = Array.isArray(mainPoints)
-      ? mainPoints.map(point => `<li>${point}</li>`).join('')
+      ? mainPoints.map((point) => `<li>${point}</li>`).join('')
       : '';
 
     return `
@@ -1421,12 +1443,12 @@ Règles de rédaction :
     const bgColor = colors?.bg || '#1a1a2e';
     const primaryColor = colors?.primary || '#ff6b6b';
     const accentColor = colors?.accent || '#ffd93d';
-    
+
     return new Promise((resolve, reject) => {
       try {
         const doc = new PDFDocument({ size: [800, 1000], margin: 0 });
         const chunks: Buffer[] = [];
-        
+
         doc.on('data', chunks.push.bind(chunks));
         doc.on('end', async () => {
           const pdfBuffer = Buffer.concat(chunks);
@@ -1438,15 +1460,21 @@ Règles de rédaction :
 
         // Simple PDF layout
         doc.rect(0, 0, 800, 1000).fill(bgColor);
-        
+
         // Title
         doc.fillColor(primaryColor).fontSize(48).font('Helvetica-Bold');
-        doc.text(title.substring(0, 50), 40, 100, { width: 720, align: 'center' });
-        
+        doc.text(title.substring(0, 50), 40, 100, {
+          width: 720,
+          align: 'center',
+        });
+
         // Subtitle
         doc.fillColor(accentColor).fontSize(24).font('Helvetica');
-        doc.text(subtitle.substring(0, 100), 40, 200, { width: 720, align: 'center' });
-        
+        doc.text(subtitle.substring(0, 100), 40, 200, {
+          width: 720,
+          align: 'center',
+        });
+
         // Points
         let y = 350;
         if (Array.isArray(mainPoints)) {
@@ -1456,11 +1484,14 @@ Règles de rédaction :
             y += 80;
           }
         }
-        
+
         // CTA
         doc.fillColor(primaryColor).fontSize(32).font('Helvetica-Bold');
-        doc.text(cta.substring(0, 30).toUpperCase(), 40, 850, { width: 720, align: 'center' });
-        
+        doc.text(cta.substring(0, 30).toUpperCase(), 40, 850, {
+          width: 720,
+          align: 'center',
+        });
+
         doc.end();
       } catch (error) {
         reject(error);
@@ -1472,7 +1503,7 @@ Règles de rédaction :
     let browser;
     try {
       const puppeteer = require('puppeteer');
-      
+
       // Launch browser with error handling
       try {
         browser = await puppeteer.launch({
@@ -1480,29 +1511,41 @@ Règles de rédaction :
           args: ['--no-sandbox', '--disable-setuid-sandbox'],
         });
       } catch (launchError) {
-        console.error('Failed to launch Puppeteer, trying with different args:', launchError);
+        console.error(
+          'Failed to launch Puppeteer, trying with different args:',
+          launchError,
+        );
         // Try alternative launch options
         browser = await puppeteer.launch({
           headless: true,
-          args: ['--disable-gpu', '--no-first-run', '--no-default-browser-check'],
+          args: [
+            '--disable-gpu',
+            '--no-first-run',
+            '--no-default-browser-check',
+          ],
         });
       }
 
       const page = await browser.newPage();
       await page.setViewport({ width: 800, height: 1000 });
-      
+
       // Set content with timeout
-      await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 30000 });
+      await page.setContent(html, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
 
       // Take screenshot
       const screenshot = await page.screenshot({ type: 'png', fullPage: true });
       await page.close();
-      
+
       return screenshot;
     } catch (error) {
       console.error('Puppeteer rendering error:', error);
       // Don't throw - let the caller handle fallback
-      throw new Error(`Puppeteer rendering failed: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Puppeteer rendering failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     } finally {
       if (browser) {
         await browser.close();
@@ -1514,9 +1557,11 @@ Règles de rédaction :
     const num = parseInt(color.replace('#', ''), 16);
     const amt = Math.round(2.55 * percent);
     const R = Math.max(0, Math.min(255, (num >> 16) + amt));
-    const G = Math.max(0, Math.min(255, (num >> 8 & 0x00FF) + amt));
-    const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
-    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+    const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00ff) + amt));
+    const B = Math.max(0, Math.min(255, (num & 0x0000ff) + amt));
+    return (
+      '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)
+    );
   }
 
   private escapeHTML(text: string): string {
