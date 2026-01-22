@@ -1062,7 +1062,7 @@ Règles de rédaction :
     const logoUrl = branding.logoUrl
       ? branding.logoUrl.startsWith('http')
         ? branding.logoUrl
-        : `${this.configService.get('API_URL') || 'http://localhost:3000'}${branding.logoUrl}`
+        : `${this.configService.get('API_URL') || 'https://hipster-api.fr'}${branding.logoUrl}`
       : null;
     const companyName = branding.companyName || '';
     const contactInfo = `
@@ -1271,7 +1271,7 @@ Règles de rédaction :
       fs.writeFileSync(filePath, imageBuffer);
 
       // Generate URL
-      const baseUrl = this.configService.get('APP_URL') || 'http://localhost:3000';
+      const baseUrl = this.configService.get('APP_URL') || 'https://hipster-api.fr';
       const imageUrl = `${baseUrl}/uploads/${fileName}`;
 
       // Save to database
