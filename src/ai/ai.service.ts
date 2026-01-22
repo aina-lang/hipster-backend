@@ -349,43 +349,9 @@ export class AiService {
     const basePrompt = await this.buildPrompt(params, userId);
     const userQuery = params.userQuery || '';
 
-    /* ------------------------------------------ */
-    /*        2. GPT Prompt Optimization          */
-    /* ------------------------------------------ */
-    const gptMessages = [
-      {
-        role: 'system',
-        content: `You are an elite art director preparing a PERFECT PROMPT for Stable Diffusion Core.
-
-RULES:
-1. Output JSON ONLY.
-2. Structure the prompt with "Subject, details, style, lighting, camera".
-3. TEXT HANDLING:
-   - Stable Diffusion Core handles text poorly inside images. 
-   - DO NOT include "text: ..." instructions unless CRITICAL.
-   - Focus on visual description.
-4. Keep JSON minimal.
-
-FORMAT:
-{
-  "visual_description": "string",
-  "negative_prompt": "string"
-}`,
-      },
-      { role: 'user', content: userQuery },
-    ];
-
-    let parsed = {
-      visual_description: userQuery,
-      negative_prompt: '',
-    };
-
-    try {
-      const gptResponse = await this.chat(gptMessages);
-      parsed = JSON.parse(gptResponse.replace(/```json|```/g, ''));
-    } catch (e) {
-      console.warn('GPT parse failed, fallback used.');
-    }
+    // GPT optimization removed to save credits and latency
+    const visualDescription = userQuery;
+    const negativePrompt = '';
 
     /* ------------------------------------------ */
     /*           3. Configure Stability           */
@@ -405,16 +371,16 @@ FORMAT:
     if (style === 'sketch') stylePreset = 'line-art';
 
     const formData = new FormData();
-    formData.append('prompt', parsed.visual_description);
-    if (parsed.negative_prompt) {
-      formData.append('negative_prompt', parsed.negative_prompt);
+    formData.append('prompt', visualDescription);
+    if (negativePrompt) {
+      formData.append('negative_prompt', negativePrompt);
     }
     formData.append('style_preset', stylePreset);
     formData.append('output_format', 'png');
     // formData.append('aspect_ratio', '1:1'); // Default is 1:1
 
     console.log('--- CALLING STABILITY AI ---');
-    console.log('Prompt:', parsed.visual_description);
+    console.log('Prompt:', visualDescription);
     console.log('Style:', stylePreset);
 
     /* ------------------------------------------ */
@@ -1212,68 +1178,36 @@ Règles de rédaction :
   }
 
   /**
-   * Helper method to build optimized Stable Diffusion prompt for flyer generation
+   * Constructs a descriptive prompt for Stable Diffusion 3 without using GPT.
+   * Focuses on text rendering and professional layout.
    */
-  private async buildFlyerPrompt(
-    params: any,
-    userId?: number,
-  ): Promise<string> {
-    const baseContext = await this.buildPrompt(params, userId);
+  private constructFlyerPrompt(params: any): string {
+    const { title, subtitle, businessName, prompt, targetAudience, type } =
+      params;
 
-    const gptMessages = [
-      {
-        role: 'system',
-        content: `Tu es un expert en design de flyers marketing et en prompts Stable Diffusion.
+    const mainText = title || prompt || 'Promotion';
+    const subText = subtitle || businessName || '';
+    const category = type || 'marketing';
 
-Crée un prompt Stable Diffusion pour générer un FLYER VISUEL professionnel et attractif.
+    // SD3-optimized prompt structure for text rendering
+    let sdPrompt = `A professional ${category} flyer, premium design, modern aesthetic. `;
 
-RÈGLES IMPORTANTES:
-1. Stable Diffusion Core ne gère PAS BIEN le texte dans les images
-2. Focus sur l'AMBIANCE VISUELLE, les COULEURS, le STYLE, la COMPOSITION
-3. Décris les ÉLÉMENTS VISUELS, l'ÉCLAIRAGE, la MISE EN PAGE
-4. NE PAS inclure de texte spécifique (pas de "text:", "words:", etc.)
-5. Pense "affiche publicitaire moderne, professionnelle et attractive"
-6. Utilise des termes visuels précis: "gradient", "minimalist", "bold colors", "dynamic composition"
+    // Explicit text instructions for SD3
+    sdPrompt += `The image prominently features the large, clear text "${mainText.toUpperCase()}". `;
 
-STYLE VISUEL À PRIVILÉGIER:
-- Modern commercial photography
-- Professional marketing material
-- Clean and premium aesthetic
-- High-end advertising design
-- Vibrant but professional colors
-
-FORMAT DE SORTIE (JSON uniquement):
-{
-  "visual_description": "Description visuelle détaillée et optimisée pour Stable Diffusion",
-  "negative_prompt": "Éléments à éviter (blurry, low quality, text, watermark, etc.)"
-}
-
-EXEMPLES DE BONS PROMPTS:
-- "Modern minimalist product advertisement, vibrant gradient background from coral to purple, professional studio lighting, clean composition, premium aesthetic, commercial photography style, 4k quality, sharp focus"
-- "Dynamic promotional poster design, bold complementary colors, geometric shapes, professional marketing material, high-end commercial aesthetic, studio lighting, ultra detailed"
-- "Sleek business flyer design, elegant color palette, modern typography layout suggestion through visual elements, professional photography, luxury brand aesthetic, pristine quality"
-`,
-      },
-      {
-        role: 'user',
-        content: `Contexte: ${baseContext}\n\nCrée un prompt visuel pour un flyer marketing basé sur ce contexte.`,
-      },
-    ];
-
-    try {
-      const response = await this.chat(gptMessages);
-      const parsed = JSON.parse(response.replace(/```json|```/g, '').trim());
-
-      console.log(
-        '[buildFlyerPrompt] Generated prompt:',
-        parsed.visual_description,
-      );
-      return parsed.visual_description;
-    } catch (e) {
-      console.warn('[buildFlyerPrompt] GPT parse failed, using fallback');
-      // Fallback: create a generic professional flyer prompt
-      return `Professional marketing flyer design, modern minimalist aesthetic, vibrant gradient background, clean composition, commercial photography style, premium quality, studio lighting, 4k, ultra detailed, sharp focus`;
+    if (subText) {
+      sdPrompt += `Below it, there is smaller text that says "${subText}". `;
     }
+
+    // Add context and style
+    sdPrompt += `High-quality commercial photography style, vibrant colors, clean composition, perfect alignment, studio lighting, 8k resolution, highly detailed. `;
+
+    // Audience-specific context
+    if (targetAudience) {
+      sdPrompt += `The visual style is tailored for ${targetAudience}. `;
+    }
+
+    return sdPrompt.trim();
   }
 
   /* -------------------------------------------------------------------------- */
@@ -1286,32 +1220,11 @@ EXEMPLES DE BONS PROMPTS:
     console.log('--- START FLYER GENERATION (Stable Diffusion) ---');
 
     try {
-      // 1. Build optimized prompt for flyer via GPT
-      let flyerPrompt: string;
-
-      try {
-        flyerPrompt = await this.buildFlyerPrompt(params, userId);
-
-        // Validate prompt is not empty
-        if (!flyerPrompt || flyerPrompt.trim().length === 0) {
-          console.warn(
-            '[generateFlyer] Empty prompt from buildFlyerPrompt, using fallback',
-          );
-          flyerPrompt =
-            'Professional marketing flyer design, modern aesthetic, vibrant colors, clean composition, commercial photography, 4k quality';
-        }
-
-        // Sanitize prompt (remove potential problematic characters)
-        flyerPrompt = flyerPrompt.trim().substring(0, 1000); // Limit length
-      } catch (promptError) {
-        console.error('[generateFlyer] buildFlyerPrompt failed:', promptError);
-        // Fallback to a safe default prompt
-        flyerPrompt =
-          'Professional marketing flyer design, modern minimalist aesthetic, vibrant gradient background, clean composition, commercial photography style, premium quality, studio lighting, 4k, ultra detailed, sharp focus';
-      }
+      // 1. Build optimized prompt for flyer LOCALLY (Direct SD3 handling)
+      const flyerPrompt = this.constructFlyerPrompt(params);
 
       console.log(
-        '[generateFlyer] Using Stable Diffusion with prompt:',
+        '[generateFlyer] Using Stable Diffusion with local prompt:',
         flyerPrompt,
       );
 
@@ -1339,245 +1252,6 @@ EXEMPLES DE BONS PROMPTS:
     }
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*     OBSOLETE METHODS (Kept for reference - No longer used)                */
-  /*     Flyer generation now uses Stable Diffusion instead of Puppeteer       */
-  /* -------------------------------------------------------------------------- */
-
-  private generateFlyerHTML(data: any): string {
-    const { title, subtitle, mainPoints, cta, colors } = data;
-    const bgColor = colors?.bg || '#1a1a2e';
-    const primaryColor = colors?.primary || '#ff6b6b';
-    const accentColor = colors?.accent || '#ffd93d';
-    const textColor = colors?.text || '#ffffff';
-
-    const pointsHTML = Array.isArray(mainPoints)
-      ? mainPoints.map((point) => `<li>${point}</li>`).join('')
-      : '';
-
-    return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-          }
-          body {
-            width: 800px;
-            height: 1000px;
-            background: linear-gradient(135deg, ${bgColor} 0%, ${this.adjustColor(bgColor, -20)} 100%);
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 40px;
-            color: ${textColor};
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 30px;
-          }
-          .title {
-            font-size: 56px;
-            font-weight: bold;
-            color: ${primaryColor};
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            margin-bottom: 10px;
-            line-height: 1.2;
-          }
-          .subtitle {
-            font-size: 28px;
-            color: ${accentColor};
-            font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            line-height: 1.3;
-          }
-          .divider {
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, ${primaryColor}, transparent);
-            margin: 30px 0;
-          }
-          .content {
-            flex-grow: 1;
-            text-align: center;
-          }
-          .points {
-            list-style: none;
-            font-size: 20px;
-            line-height: 2;
-            margin: 20px 0;
-            color: ${textColor};
-          }
-          .points li {
-            background: rgba(255,255,255,0.05);
-            padding: 12px 20px;
-            margin: 10px 0;
-            border-left: 4px solid ${accentColor};
-            border-radius: 4px;
-            text-align: left;
-          }
-          .cta-button {
-            background: linear-gradient(135deg, ${primaryColor}, ${this.adjustColor(primaryColor, -20)});
-            color: ${textColor};
-            padding: 20px 50px;
-            font-size: 24px;
-            font-weight: bold;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            margin-top: auto;
-            text-transform: uppercase;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-            letter-spacing: 1px;
-          }
-          .footer {
-            margin-top: 30px;
-            font-size: 12px;
-            opacity: 0.7;
-            text-align: center;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="title">${this.escapeHTML(title)}</div>
-          <div class="subtitle">${this.escapeHTML(subtitle)}</div>
-        </div>
-        <div class="divider"></div>
-        <div class="content">
-          ${pointsHTML ? `<ul class="points">${pointsHTML}</ul>` : ''}
-        </div>
-        <button class="cta-button">${this.escapeHTML(cta)}</button>
-        <div class="footer">
-          © Généré par Hipster IA
-        </div>
-      </body>
-      </html>
-    `;
-  }
-
-  private async generateFlyerFallback(data: any): Promise<Buffer> {
-    // Fallback: Generate using PDFKit and convert to PNG (works without Puppeteer)
-    const { title, subtitle, mainPoints, cta, colors } = data;
-    const bgColor = colors?.bg || '#1a1a2e';
-    const primaryColor = colors?.primary || '#ff6b6b';
-    const accentColor = colors?.accent || '#ffd93d';
-
-    return new Promise((resolve, reject) => {
-      try {
-        const doc = new PDFDocument({ size: [800, 1000], margin: 0 });
-        const chunks: Buffer[] = [];
-
-        doc.on('data', chunks.push.bind(chunks));
-        doc.on('end', async () => {
-          const pdfBuffer = Buffer.concat(chunks);
-          // For fallback, return a simple PNG-like placeholder
-          // In production, you'd use pdf2image library here
-          resolve(pdfBuffer);
-        });
-        doc.on('error', reject);
-
-        // Simple PDF layout
-        doc.rect(0, 0, 800, 1000).fill(bgColor);
-
-        // Title
-        doc.fillColor(primaryColor).fontSize(48).font('Helvetica-Bold');
-        doc.text(title.substring(0, 50), 40, 100, {
-          width: 720,
-          align: 'center',
-        });
-
-        // Subtitle
-        doc.fillColor(accentColor).fontSize(24).font('Helvetica');
-        doc.text(subtitle.substring(0, 100), 40, 200, {
-          width: 720,
-          align: 'center',
-        });
-
-        // Points
-        let y = 350;
-        if (Array.isArray(mainPoints)) {
-          for (const point of mainPoints.slice(0, 3)) {
-            doc.fillColor('#ffffff').fontSize(16);
-            doc.text(`• ${point.substring(0, 60)}`, 80, y, { width: 640 });
-            y += 80;
-          }
-        }
-
-        // CTA
-        doc.fillColor(primaryColor).fontSize(32).font('Helvetica-Bold');
-        doc.text(cta.substring(0, 30).toUpperCase(), 40, 850, {
-          width: 720,
-          align: 'center',
-        });
-
-        doc.end();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  private async renderHTMLToImage(html: string): Promise<Buffer> {
-    let browser;
-    try {
-      const puppeteer = require('puppeteer');
-
-      // Launch browser with error handling
-      try {
-        browser = await puppeteer.launch({
-          headless: 'new',
-          args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        });
-      } catch (launchError) {
-        console.error(
-          'Failed to launch Puppeteer, trying with different args:',
-          launchError,
-        );
-        // Try alternative launch options
-        browser = await puppeteer.launch({
-          headless: true,
-          args: [
-            '--disable-gpu',
-            '--no-first-run',
-            '--no-default-browser-check',
-          ],
-        });
-      }
-
-      const page = await browser.newPage();
-      await page.setViewport({ width: 800, height: 1000 });
-
-      // Set content with timeout
-      await page.setContent(html, {
-        waitUntil: 'domcontentloaded',
-        timeout: 30000,
-      });
-
-      // Take screenshot
-      const screenshot = await page.screenshot({ type: 'png', fullPage: true });
-      await page.close();
-
-      return screenshot;
-    } catch (error) {
-      console.error('Puppeteer rendering error:', error);
-      // Don't throw - let the caller handle fallback
-      throw new Error(
-        `Puppeteer rendering failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    } finally {
-      if (browser) {
-        await browser.close();
-      }
-    }
-  }
 
   private adjustColor(color: string, percent: number): string {
     const num = parseInt(color.replace('#', ''), 16);
