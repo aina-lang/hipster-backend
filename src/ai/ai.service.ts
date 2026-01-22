@@ -246,9 +246,9 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     this.logger.log(`Generating image with OpenAI: ${visualDescription}`);
 
-    // Based on user request to use 'gpt-5.2-mini-image'
+    // Switching to a supported model as gpt-5.2-mini-image is invalid
     const response = await this.openai.images.generate({
-      model: 'gpt-5.2-mini-image' as any,
+      model: 'dall-e-3',
       prompt: `${visualDescription} ${negativePrompt ? `(Avoid: ${negativePrompt})` : ''}`,
       size: '1024x1024',
       n: 1,
@@ -278,7 +278,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
         prompt: basePrompt.substring(0, 1000),
         result: publicUrl,
         title: (params.userQuery || 'AI Image').substring(0, 40),
-        attributes: { ...params, engine: 'openai-gpt-5-mini' },
+        attributes: { ...params, engine: 'openai-dall-e-3' },
       });
       generationId = saved.id;
     }
@@ -445,7 +445,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       ? `${systemNegative}, ${manualNegativePrompt}`
       : systemNegative;
 
-    console.log('[generateFlyer] Using Stable Diffusion with refined prompts');
+    console.log('[generateFlyer] Using OpenAI with refined prompts');
 
     const imageResult = await this.generateImage(
       { ...params, userQuery: flyerPrompt },
