@@ -103,7 +103,12 @@ export class AiController {
   @Post('image')
   @Roles(Role.AI_USER)
   async generateImage(
-    @Body() body: { params: any; style: 'realistic' | 'cartoon' | 'sketch' },
+    @Body()
+    body: {
+      params: any;
+      style: 'realistic' | 'cartoon' | 'sketch';
+      negativePrompt?: string;
+    },
     @Req() req,
   ) {
     console.log('--- API POST /ai/image ---', JSON.stringify(body, null, 2));
@@ -119,6 +124,7 @@ export class AiController {
       body.params,
       body.style,
       req.user.sub,
+      body.negativePrompt,
     );
     return {
       url: await this.aiService.applyWatermark(result.url, isPremium),
@@ -192,8 +198,15 @@ export class AiController {
   @ResponseMessage('Affiche générée avec succès')
   @Post('poster')
   @Roles(Role.AI_USER)
-  async generatePoster(@Body() body: { params: any }, @Req() req) {
-    return await this.aiService.generatePoster(body.params, req.user.sub);
+  async generatePoster(
+    @Body() body: { params: any; negativePrompt?: string },
+    @Req() req,
+  ) {
+    return await this.aiService.generatePoster(
+      body.params,
+      req.user.sub,
+      body.negativePrompt,
+    );
   }
 
   @ApiOperation({ summary: 'Exporter une affiche en PDF' })
@@ -221,12 +234,16 @@ export class AiController {
   @ResponseMessage('Image de flyer générée avec succès')
   @Post('flyer')
   @Roles(Role.AI_USER)
-  async generateFlyer(@Body() body: { params: any }, @Req() req) {
+  async generateFlyer(
+    @Body() body: { params: any; negativePrompt?: string },
+    @Req() req,
+  ) {
     console.log('--- API POST /ai/flyer ---', JSON.stringify(body, null, 2));
     try {
       const result = await this.aiService.generateFlyer(
         body.params,
         req.user.sub,
+        body.negativePrompt,
       );
       console.log('--- FLYER GENERATION SUCCESS ---');
       return {
