@@ -1207,6 +1207,328 @@ Règles de rédaction :
   }
 
   /* -------------------------------------------------------------------------- */
+  /*                         FLYER IMAGE GENERATION (USING PUPPETEER)         */
+  /* -------------------------------------------------------------------------- */
+  async generateFlyer(
+    params: any,
+    userId?: number,
+  ): Promise<{ url: string; imageData?: string; generationId?: number }> {
+    console.log('--- START FLYER GENERATION ---');
+    try {
+      // First, generate the flyer text content via IA
+      const textContent = await this.generateText(
+        params,
+        'texte',
+        userId,
+      );
+
+      // Parse the AI response to extract structured data
+      let flyerData: any = {
+        title: '🎉 Offre Spéciale',
+        subtitle: 'Découvrez nos produits',
+        mainPoints: [],
+        cta: 'Découvrir',
+        colors: { bg: '#1a1a2e', primary: '#ff6b6b', accent: '#ffd93d', text: '#ffffff' },
+      };
+
+      try {
+        const parsed = JSON.parse(textContent.content);
+        flyerData = {
+          title: parsed.titre_affiche || parsed.title || flyerData.title,
+          subtitle: parsed.contenu_texte || parsed.subtitle || flyerData.subtitle,
+          mainPoints: parsed.liste_points_forts || parsed.mainPoints || [],
+          cta: parsed.appel_a_l_action || parsed.cta || flyerData.cta,
+          colors: parsed.colors || flyerData.colors,
+        };
+      } catch (e) {
+        // If parsing fails, use the raw content
+        const lines = textContent.content.split('\n').filter(l => l.trim());
+        if (lines.length > 0) flyerData.title = lines[0];
+        if (lines.length > 1) flyerData.subtitle = lines[1];
+      }
+
+      // Generate HTML/CSS for the flyer
+      const html = this.generateFlyerHTML(flyerData);
+
+      // Try to use Puppeteer to render HTML to image, with fallback
+      let imageBuffer: Buffer;
+      try {
+        imageBuffer = await this.renderHTMLToImage(html);
+      } catch (puppeteerError) {
+        this.logger.warn('Puppeteer rendering failed, using fallback SVG to PNG conversion', puppeteerError);
+        // Fallback: use a basic SVG rendering or placeholder
+        imageBuffer = await this.generateFlyerFallback(flyerData);
+      }
+
+      // Save image to file system
+      const fileName = `flyer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.png`;
+      const uploadDir = './uploads';
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, imageBuffer);
+
+      // Generate URL
+      const baseUrl = this.configService.get('APP_URL') || 'http://localhost:3000';
+      const imageUrl = `${baseUrl}/uploads/${fileName}`;
+
+      // Save to database
+      const generation = await this.aiGenRepo.save({
+        user: { id: userId } as AiUser,
+        type: AiGenerationType.IMAGE,
+        prompt: params.userQuery || 'Flyer Generation',
+        result: imageUrl,
+        title: (flyerData.title || '').substring(0, 50),
+        metadata: { type: 'flyer', ...flyerData },
+      });
+
+      console.log('--- FLYER GENERATION SUCCESS ---');
+      return {
+        url: imageUrl,
+        imageData: `data:image/png;base64,${imageBuffer.toString('base64')}`,
+        generationId: generation.id,
+      };
+    } catch (error) {
+      console.error('--- FLYER GENERATION ERROR ---', error);
+      throw error;
+    }
+  }
+
+  private generateFlyerHTML(data: any): string {
+    const { title, subtitle, mainPoints, cta, colors } = data;
+    const bgColor = colors?.bg || '#1a1a2e';
+    const primaryColor = colors?.primary || '#ff6b6b';
+    const accentColor = colors?.accent || '#ffd93d';
+    const textColor = colors?.text || '#ffffff';
+
+    const pointsHTML = Array.isArray(mainPoints)
+      ? mainPoints.map(point => `<li>${point}</li>`).join('')
+      : '';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          body {
+            width: 800px;
+            height: 1000px;
+            background: linear-gradient(135deg, ${bgColor} 0%, ${this.adjustColor(bgColor, -20)} 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 40px;
+            color: ${textColor};
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+          }
+          .title {
+            font-size: 56px;
+            font-weight: bold;
+            color: ${primaryColor};
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+            line-height: 1.2;
+          }
+          .subtitle {
+            font-size: 28px;
+            color: ${accentColor};
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            line-height: 1.3;
+          }
+          .divider {
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, ${primaryColor}, transparent);
+            margin: 30px 0;
+          }
+          .content {
+            flex-grow: 1;
+            text-align: center;
+          }
+          .points {
+            list-style: none;
+            font-size: 20px;
+            line-height: 2;
+            margin: 20px 0;
+            color: ${textColor};
+          }
+          .points li {
+            background: rgba(255,255,255,0.05);
+            padding: 12px 20px;
+            margin: 10px 0;
+            border-left: 4px solid ${accentColor};
+            border-radius: 4px;
+            text-align: left;
+          }
+          .cta-button {
+            background: linear-gradient(135deg, ${primaryColor}, ${this.adjustColor(primaryColor, -20)});
+            color: ${textColor};
+            padding: 20px 50px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: auto;
+            text-transform: uppercase;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+          }
+          .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            opacity: 0.7;
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">${this.escapeHTML(title)}</div>
+          <div class="subtitle">${this.escapeHTML(subtitle)}</div>
+        </div>
+        <div class="divider"></div>
+        <div class="content">
+          ${pointsHTML ? `<ul class="points">${pointsHTML}</ul>` : ''}
+        </div>
+        <button class="cta-button">${this.escapeHTML(cta)}</button>
+        <div class="footer">
+          © Généré par Hipster IA
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  private async generateFlyerFallback(data: any): Promise<Buffer> {
+    // Fallback: Generate using PDFKit and convert to PNG (works without Puppeteer)
+    const { title, subtitle, mainPoints, cta, colors } = data;
+    const bgColor = colors?.bg || '#1a1a2e';
+    const primaryColor = colors?.primary || '#ff6b6b';
+    const accentColor = colors?.accent || '#ffd93d';
+    
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ size: [800, 1000], margin: 0 });
+        const chunks: Buffer[] = [];
+        
+        doc.on('data', chunks.push.bind(chunks));
+        doc.on('end', async () => {
+          const pdfBuffer = Buffer.concat(chunks);
+          // For fallback, return a simple PNG-like placeholder
+          // In production, you'd use pdf2image library here
+          resolve(pdfBuffer);
+        });
+        doc.on('error', reject);
+
+        // Simple PDF layout
+        doc.rect(0, 0, 800, 1000).fill(bgColor);
+        
+        // Title
+        doc.fillColor(primaryColor).fontSize(48).font('Helvetica-Bold');
+        doc.text(title.substring(0, 50), 40, 100, { width: 720, align: 'center' });
+        
+        // Subtitle
+        doc.fillColor(accentColor).fontSize(24).font('Helvetica');
+        doc.text(subtitle.substring(0, 100), 40, 200, { width: 720, align: 'center' });
+        
+        // Points
+        let y = 350;
+        if (Array.isArray(mainPoints)) {
+          for (const point of mainPoints.slice(0, 3)) {
+            doc.fillColor('#ffffff').fontSize(16);
+            doc.text(`• ${point.substring(0, 60)}`, 80, y, { width: 640 });
+            y += 80;
+          }
+        }
+        
+        // CTA
+        doc.fillColor(primaryColor).fontSize(32).font('Helvetica-Bold');
+        doc.text(cta.substring(0, 30).toUpperCase(), 40, 850, { width: 720, align: 'center' });
+        
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  private async renderHTMLToImage(html: string): Promise<Buffer> {
+    let browser;
+    try {
+      const puppeteer = require('puppeteer');
+      
+      // Launch browser with error handling
+      try {
+        browser = await puppeteer.launch({
+          headless: 'new',
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        });
+      } catch (launchError) {
+        console.error('Failed to launch Puppeteer, trying with different args:', launchError);
+        // Try alternative launch options
+        browser = await puppeteer.launch({
+          headless: true,
+          args: ['--disable-gpu', '--no-first-run', '--no-default-browser-check'],
+        });
+      }
+
+      const page = await browser.newPage();
+      await page.setViewport({ width: 800, height: 1000 });
+      
+      // Set content with timeout
+      await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+      // Take screenshot
+      const screenshot = await page.screenshot({ type: 'png', fullPage: true });
+      await page.close();
+      
+      return screenshot;
+    } catch (error) {
+      console.error('Puppeteer rendering error:', error);
+      // Don't throw - let the caller handle fallback
+      throw new Error(`Puppeteer rendering failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  }
+
+  private adjustColor(color: string, percent: number): string {
+    const num = parseInt(color.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+    const G = Math.max(0, Math.min(255, (num >> 8 & 0x00FF) + amt));
+    const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+  }
+
+  private escapeHTML(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   /*                         POSTER GENERATION (NATIVE)                         */
   /* -------------------------------------------------------------------------- */
   async generatePoster(

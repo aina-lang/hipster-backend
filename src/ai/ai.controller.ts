@@ -216,4 +216,27 @@ export class AiController {
       res.status(500).json({ message: 'Erreur export affiche' });
     }
   }
+
+  @ApiOperation({ summary: 'Générer un flyer en image (PNG)' })
+  @ResponseMessage('Image de flyer générée avec succès')
+  @Post('flyer')
+  @Roles(Role.AI_USER)
+  async generateFlyer(@Body() body: { params: any }, @Req() req) {
+    console.log('--- API POST /ai/flyer ---', JSON.stringify(body, null, 2));
+    try {
+      const result = await this.aiService.generateFlyer(
+        body.params,
+        req.user.sub,
+      );
+      console.log('--- FLYER GENERATION SUCCESS ---');
+      return {
+        url: result.url,
+        imageData: result.imageData,
+        generationId: result.generationId,
+      };
+    } catch (error: any) {
+      this.logger.error('Flyer generation error:', error);
+      throw error;
+    }
+  }
 }
