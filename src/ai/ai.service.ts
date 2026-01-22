@@ -484,7 +484,12 @@ FORMAT:
       return { url: publicUrl, generationId };
     } catch (error) {
       console.error('STABILITY GENERATION ERROR:', error);
-      throw new Error("Erreur lors de la génération d'image (Stability)");
+      // Preserve the original error message for better debugging
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `Erreur lors de la génération d'image (Stability): ${errorMessage}`,
+      );
     }
   }
 
@@ -1282,7 +1287,28 @@ EXEMPLES DE BONS PROMPTS:
 
     try {
       // 1. Build optimized prompt for flyer via GPT
-      const flyerPrompt = await this.buildFlyerPrompt(params, userId);
+      let flyerPrompt: string;
+
+      try {
+        flyerPrompt = await this.buildFlyerPrompt(params, userId);
+
+        // Validate prompt is not empty
+        if (!flyerPrompt || flyerPrompt.trim().length === 0) {
+          console.warn(
+            '[generateFlyer] Empty prompt from buildFlyerPrompt, using fallback',
+          );
+          flyerPrompt =
+            'Professional marketing flyer design, modern aesthetic, vibrant colors, clean composition, commercial photography, 4k quality';
+        }
+
+        // Sanitize prompt (remove potential problematic characters)
+        flyerPrompt = flyerPrompt.trim().substring(0, 1000); // Limit length
+      } catch (promptError) {
+        console.error('[generateFlyer] buildFlyerPrompt failed:', promptError);
+        // Fallback to a safe default prompt
+        flyerPrompt =
+          'Professional marketing flyer design, modern minimalist aesthetic, vibrant gradient background, clean composition, commercial photography style, premium quality, studio lighting, 4k, ultra detailed, sharp focus';
+      }
 
       console.log(
         '[generateFlyer] Using Stable Diffusion with prompt:',
