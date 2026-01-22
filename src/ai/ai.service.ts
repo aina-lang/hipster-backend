@@ -261,7 +261,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     formData.append('output_format', 'png');
 
     const response = await fetch(
-      'https://api.stability.ai/v2beta/stable-image/generate/core',
+      'https://api.stability.ai/v2beta/stable-image/generate/ultra',
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${apiKey}`, Accept: 'image/*' },
@@ -507,7 +507,9 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
   private constructFlyerPrompt(params: any): string {
     const { userQuery, title, businessName } = params;
-    const userText = userQuery || title || businessName || 'Promotion';
+    const userText = this.cleanUserPrompt(
+      userQuery || title || businessName || 'Promotion',
+    );
 
     return `A clean, professional commercial flyer layout. Modern graphic design, high-quality composition,
      perfect alignment, bold readable typography, centered title, clear promotional message.
@@ -519,7 +521,9 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
   private constructPosterPrompt(params: any): string {
     const { userQuery, title, businessName } = params;
-    const userText = userQuery || title || businessName || 'Affiche Hipster';
+    const userText = this.cleanUserPrompt(
+      userQuery || title || businessName || 'Affiche Hipster',
+    );
 
     return `Professional cinematic advertising poster. High-end photography, cinematic lighting, 
     grand composition, epic proportions. Bold, stylish typography integrated into the scene. 
@@ -528,6 +532,41 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       /\s+/g,
       ' ',
     );
+  }
+
+  private cleanUserPrompt(query: string): string {
+    if (!query) return '';
+    let cleaned = query.trim();
+
+    // Common prefixes to remove (French/English)
+    const prefixes = [
+      /^cr[éeè]e[ -]moi (une|un) affiche/i,
+      /^cr[éeè]e[ -]moi (une|un) flyer/i,
+      /^cr[éeè]e[ -]moi (un|une) visuel/i,
+      /^fais[ -]moi (une|un) affiche/i,
+      /^fais[ -]moi (une|un) flyer/i,
+      /^g[éeè]n[éeè]re (une|un) affiche/i,
+      /^g[éeè]n[éeè]re (une|un) flyer/i,
+      /^affiche pour /i,
+      /^flyer pour /i,
+      /^le[ -]texte[ -]est /i,
+      /^make a flyer for/i,
+      /^create a poster for/i,
+      /^le sujet est/i,
+    ];
+
+    for (const regex of prefixes) {
+      if (regex.test(cleaned)) {
+        cleaned = cleaned.replace(regex, '').trim();
+      }
+    }
+
+    // Capitalize first letter
+    if (cleaned.length > 0) {
+      cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    }
+
+    return cleaned;
   }
 
   private constructNegativeFlyerPrompt(): string {
