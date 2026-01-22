@@ -12,6 +12,8 @@ export enum AiGenerationType {
   IMAGE = 'image',
   DOCUMENT = 'document',
   CHAT = 'chat',
+  VIDEO = 'video',
+  AUDIO = 'audio',
 }
 
 @Entity('ai_generations')

@@ -1,12 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
+
 import { AiUser } from './entities/ai-user.entity';
 import {
   AiGeneration,
   AiGenerationType,
 } from './entities/ai-generation.entity';
+
+import {
+  AiSubscriptionProfile,
+  PlanType,
+} from '../profiles/entities/ai-subscription-profile.entity';
 
 import OpenAI from 'openai';
 
@@ -265,11 +271,74 @@ export class AiService {
     return { content: result, generationId };
   }
 
+  /* -------------------------------------------------------- */
+  /*                   LIMIT ENFORCEMENT                      */
+  /* -------------------------------------------------------- */
+  private async checkLimits(
+    userId: number,
+    type: AiGenerationType,
+  ): Promise<void> {
+    const userProfile = await this.getAiUserWithProfile(userId);
+    const plan = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
+
+    // 1. Check if Pack Curieux
+    if (plan === PlanType.CURIEUX) {
+      // A. Check Trial Duration (7 days)
+      const createdAt = userProfile.createdAt; // Assuming user creation is start of trial
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - createdAt.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 7) {
+        throw new Error(
+          "Votre période d'essai de 7 jours est terminée. Veuillez choisir un plan.",
+        );
+      }
+
+      // B. Check Daily Limits
+      // Limits: 2 images/day, 3 texts/day
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const count = await this.aiGenRepo.count({
+        where: {
+          user: { id: userId },
+          type: type,
+          createdAt: MoreThan(today),
+        },
+      });
+
+      if (type === AiGenerationType.IMAGE && count >= 2) {
+        throw new Error(
+          'Limite atteinte : 2 images par jour avec le Pack Curieux.',
+        );
+      }
+      if (type === AiGenerationType.TEXT && count >= 3) {
+        throw new Error(
+          'Limite atteinte : 3 textes par jour avec le Pack Curieux.',
+        );
+      }
+    }
+
+    // 2. Check Atelier Limits
+    if (plan === PlanType.ATELIER) {
+      if (type === AiGenerationType.VIDEO || type === AiGenerationType.AUDIO) {
+        throw new Error(
+          'Le plan Atelier ne permet pas la génération Audio/Vidéo.',
+        );
+      }
+    }
+  }
+
   async generateImage(
     params: any,
     style: 'realistic' | 'cartoon' | 'sketch',
     userId?: number,
   ): Promise<{ url: string; generationId?: number }> {
+    if (userId) {
+      await this.checkLimits(userId, AiGenerationType.IMAGE);
+    }
+
     /* ------------------------------------------ */
     /*           1. Normalize input               */
     /* ------------------------------------------ */
@@ -281,134 +350,141 @@ export class AiService {
     const userQuery = params.userQuery || '';
 
     /* ------------------------------------------ */
-    /*      2. Prepare text detection rules       */
-    /* ------------------------------------------ */
-    const userWantsText =
-      /text|écris|write|affiche|slogan|titre|caption|message|poster/i.test(
-        userQuery,
-      );
-
-    /* ------------------------------------------ */
-    /*        3. GPT Prompt Optimization          */
+    /*        2. GPT Prompt Optimization          */
     /* ------------------------------------------ */
     const gptMessages = [
       {
         role: 'system',
-        content: `You are an elite art director preparing a PERFECT prompt for DALL·E 3.
+        content: `You are an elite art director preparing a PERFECT PROMPT for Stable Diffusion Core.
 
 RULES:
 1. Output JSON ONLY.
-2. Rewrite the visual subject clearly in English.
-3. TEXT RULE:
-   - If the user explicitly asks for text, keep it EXACT.
-   - If NOT, "exact_text_to_display" MUST be "".
-4. Never invent text, slogans, numbers, names, or content.
-5. Keep JSON minimal and clean.
+2. Structure the prompt with "Subject, details, style, lighting, camera".
+3. TEXT HANDLING:
+   - Stable Diffusion Core handles text poorly inside images. 
+   - DO NOT include "text: ..." instructions unless CRITICAL.
+   - Focus on visual description.
+4. Keep JSON minimal.
 
 FORMAT:
 {
   "visual_description": "string",
-  "exact_text_to_display": "string"
+  "negative_prompt": "string"
 }`,
       },
       { role: 'user', content: userQuery },
     ];
 
-    /* ------------------------------------------ */
-    /*             4. Call GPT (safe)             */
-    /* ------------------------------------------ */
     let parsed = {
       visual_description: userQuery,
-      exact_text_to_display: '',
+      negative_prompt: '',
     };
 
     try {
       const gptResponse = await this.chat(gptMessages);
-
       parsed = JSON.parse(gptResponse.replace(/```json|```/g, ''));
     } catch (e) {
       console.warn('GPT parse failed, fallback used.');
     }
 
     /* ------------------------------------------ */
-    /*       5. Build final DALL·E prompt         */
+    /*           3. Configure Stability           */
     /* ------------------------------------------ */
-
-    const negativeGeneral = `
-Avoid: blurry text, distorted letters, random words, misspellings,
-warped shapes, strange symbols, unwanted text, watermarks, signatures,
-logos, noise, artifacts, chaotic layout, low resolution.
-`.trim();
-
-    let finalPrompt = parsed.visual_description;
-
-    /* —————— HANDLE TEXT OR NO TEXT —————— */
-
-    if (parsed.exact_text_to_display.trim() === '') {
-      // NO TEXT
-      finalPrompt += `
-No text, no letters, no numbers, no captions.
-Avoid accidental words or symbols.
-    `;
-    } else {
-      // EXACT TEXT
-      finalPrompt += `
-The image must display this exact text: "${parsed.exact_text_to_display}".
-Avoid extra words, misspellings, or decorative glyphs.
-Typography must be clean, sharp and perfectly readable.
-    `;
+    // User key priority
+    const apiKey =
+      this.configService.get<string>('STABLE_API_KEY') ||
+      this.configService.get<string>('STABILITY_API_KEY');
+    if (!apiKey) {
+      throw new Error('Configuration manquante : STABLE_API_KEY');
     }
 
-    // Universal quality booster
-    finalPrompt += `
-High quality, sharp details, clean layout, 4K render.
-${negativeGeneral}
-  `;
+    /* Style Mapping */
+    let stylePreset = 'enhance'; // default
+    if (style === 'realistic') stylePreset = 'photographic';
+    if (style === 'cartoon') stylePreset = 'comic-book';
+    if (style === 'sketch') stylePreset = 'line-art';
 
-    // Style mapping
-    if (style === 'cartoon') finalPrompt += ' Cartoon style, vibrant colors.';
-    if (style === 'sketch') finalPrompt += ' Pencil sketch, black and white.';
-    if (style === 'realistic')
-      finalPrompt += ' Photorealistic, ultra-detailed.';
+    const formData = new FormData();
+    formData.append('prompt', parsed.visual_description);
+    if (parsed.negative_prompt) {
+      formData.append('negative_prompt', parsed.negative_prompt);
+    }
+    formData.append('style_preset', stylePreset);
+    formData.append('output_format', 'png');
+    // formData.append('aspect_ratio', '1:1'); // Default is 1:1
+
+    console.log('--- CALLING STABILITY AI ---');
+    console.log('Prompt:', parsed.visual_description);
+    console.log('Style:', stylePreset);
 
     /* ------------------------------------------ */
-    /*            6. Call DALL·E 3               */
+    /*           4. Call API & Save File          */
     /* ------------------------------------------ */
     try {
-      const response = await this.openai.images.generate({
-        model: 'dall-e-3',
-        prompt: finalPrompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'hd',
-        style: style === 'realistic' ? 'natural' : 'vivid',
-        response_format: 'url',
-      });
+      const response = await fetch(
+        'https://api.stability.ai/v2beta/stable-image/generate/core',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            Accept: 'image/*',
+          },
+          body: formData,
+        },
+      );
 
-      const url = response.data[0].url;
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('Stability API Error:', errText);
+        throw new Error(
+          `Stability Error: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const buffer = await response.arrayBuffer();
+
+      // Ensure directory exists
+      const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      // Save file
+      const fileName = `gen_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.png`;
+      const filePath = path.join(uploadDir, fileName);
+
+      fs.writeFileSync(filePath, Buffer.from(buffer));
+
+      // Construct Public URL
+      // NOTE: Verify your server's domain/IP config.
+      // Using hardcoded base for now based on client.ts info, or relative if served from same origin.
+      // Ideally use ConfigService for BASE_URL.
+      const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+      console.log('Image saved to:', filePath);
+      console.log('Public URL:', publicUrl);
 
       /* ------------------------------------------ */
-      /*      7. Save image generation history      */
+      /*      5. Save History & Return            */
       /* ------------------------------------------ */
       let generationId: number | undefined;
 
-      if (userId && url) {
+      if (userId) {
         const saved = await this.aiGenRepo.save({
           user: { id: userId } as AiUser,
           type: AiGenerationType.IMAGE,
           prompt: basePrompt.substring(0, 1000),
-          result: url,
-          title: (params.userQuery || 'Generated Image').substring(0, 40),
-          attributes: params, // Persist full context attributes
+          result: publicUrl,
+          title: (params.userQuery || 'Stable Image').substring(0, 40),
+          attributes: { ...params, engine: 'stable-diffusion' },
         });
-
         generationId = saved.id;
       }
 
-      return { url, generationId };
+      return { url: publicUrl, generationId };
     } catch (error) {
-      console.error('DALL-E IMAGE ERROR:', error);
-      throw new Error("Erreur lors de la génération d'image");
+      console.error('STABILITY GENERATION ERROR:', error);
+      throw new Error("Erreur lors de la génération d'image (Stability)");
     }
   }
 
@@ -668,6 +744,16 @@ Règles de rédaction :
 
     if (!generation) {
       throw new Error('Document non trouvé');
+    }
+
+    // Check for 'Pack Curieux' restriction
+    const userProfile = await this.getAiUserWithProfile(userId);
+    const planType = userProfile?.aiProfile?.planType || 'curieux';
+
+    if (planType === 'curieux') {
+      throw new Error(
+        "L'export et le téléchargement ne sont pas disponibles avec le Pack Curieux.",
+      );
     }
 
     const contentData = this.parseDocumentContent(generation.result);

@@ -4,7 +4,11 @@ import Stripe from 'stripe';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AiUser } from '../ai/entities/ai-user.entity';
 import { Repository } from 'typeorm';
-import { AiSubscriptionProfile, PlanType, SubscriptionStatus } from '../profiles/entities/ai-subscription-profile.entity';
+import {
+  AiSubscriptionProfile,
+  PlanType,
+  SubscriptionStatus,
+} from '../profiles/entities/ai-subscription-profile.entity';
 
 @Injectable()
 export class SubscriptionsService {
@@ -49,25 +53,52 @@ export class SubscriptionsService {
   async getPlans() {
     return [
       {
-        id: 'basic',
-        name: 'Basic',
+        id: 'curieux',
+        name: 'Pack Curieux',
         price: 0,
-        features: ['10 crédits/mois', 'Support standard', 'Qualité standard'],
+        features: [
+          "7 jours d'essai",
+          '2 images / jour',
+          '3 textes / jour',
+          "Pas d'export / téléchargement",
+        ],
         stripePriceId: null,
       },
       {
-        id: 'pro',
-        name: 'Pro',
-        price: 19.99,
-        features: ['500 crédits/mois', 'Support prioritaire', 'Qualité HD', 'Pas de filigrane'],
-        stripePriceId: 'price_HpsPro123', // Placeholder until configured
+        id: 'atelier',
+        name: 'Atelier',
+        price: 17.9,
+        features: [
+          '100 images / mois',
+          'Texte illimité',
+          'Pas de vidéo / audio',
+          'Choix du canal',
+        ],
+        stripePriceId: 'price_Atelier1790',
       },
       {
-        id: 'enterprise',
-        name: 'Enterprise',
-        price: 49.99,
-        features: ['Illimité', 'Support 24/7', 'Qualité 4K', 'API Access'],
-        stripePriceId: 'price_HpsEnt456', // Placeholder until configured
+        id: 'studio',
+        name: 'Studio',
+        price: 29.9,
+        features: [
+          '100 images / mois',
+          'Texte illimité',
+          '3 vidéos / mois',
+          'Support prioritaire',
+        ],
+        stripePriceId: 'price_Studio2990',
+      },
+      {
+        id: 'agence',
+        name: 'Agence',
+        price: 69.9,
+        features: [
+          '300 images / mois',
+          'Texte illimité',
+          '60 sons / mois',
+          '10 vidéos / mois',
+        ],
+        stripePriceId: 'price_Agence6990',
       },
     ];
   }
@@ -105,7 +136,7 @@ export class SubscriptionsService {
 
     // Check referrals for discount
     const referralCount = await this.aiUserRepo.count({
-      where: { id: userId }, 
+      where: { id: userId },
     });
 
     let coupon: string | undefined = undefined;

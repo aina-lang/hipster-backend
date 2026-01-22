@@ -22,6 +22,10 @@ export enum PlanType {
   BASIC = 'basic',
   PRO = 'pro',
   ENTERPRISE = 'enterprise',
+  CURIEUX = 'curieux',
+  ATELIER = 'atelier',
+  STUDIO = 'studio',
+  AGENCE = 'agence',
 }
 
 export enum AiAccessLevel {
