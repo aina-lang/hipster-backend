@@ -23,9 +23,10 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd ~/hipster-backend
             
-            echo "--- Nettoyage Git ---"
-            git checkout package-lock.json
-            git pull origin main
+            echo "--- Git sync ---"
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
          
             echo "--- Installation des dépendances ---"
             npm install --legacy-peer-deps
