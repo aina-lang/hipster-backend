@@ -62,9 +62,6 @@ export class AiSubscriptionProfile {
   @Column({ default: 1000 })
   credits: number;
 
-  @Column({ default: 'particulier' })
-  profileType: 'particulier' | 'entreprise';
-
   @Column({ default: false })
   isSetupComplete: boolean;
 

@@ -13,6 +13,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
 
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { HipsteriaSubscriptionsModule } from './hipsteria/subscriptions/hipsteria-subscriptions.module';
+import { HipsterMarketingSubscriptionsModule } from './hipster-marketing/subscriptions/hipster-marketing-subscriptions.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ProjectsModule } from './projects/projects.module';
 import { InvoicesModule } from './invoices/invoices.module';
@@ -72,6 +74,11 @@ import { AiModule } from './ai/ai.module';
     OtpModule,
     TasksModule,
 
+    // Hipsteria-IA (uses ai-auth and ai modules)
+    HipsteriaSubscriptionsModule,
+    // Hipster-Marketing (separate payment module)
+    HipsterMarketingSubscriptionsModule,
+    // Legacy subscriptions (keep for backwards compatibility)
     SubscriptionsModule,
     PaymentsModule,
     ProjectsModule,
