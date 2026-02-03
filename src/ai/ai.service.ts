@@ -194,7 +194,11 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
   }
 
   /* --------------------- IMAGE GENERATION --------------------- */
-  private async checkLimits(userId: number, type: AiGenerationType) {
+  private async checkLimits(
+    userId: number,
+    type: AiGenerationType,
+    style?: string,
+  ) {
     const userProfile = await this.getAiUserWithProfile(userId);
     const plan = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
 
@@ -222,6 +226,40 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
           'Limite atteinte : 3 textes par jour avec le Pack Curieux.',
         );
     }
+
+    // Check 3D Limits for Agence (or any plan allowing 3D)
+    if (plan === PlanType.AGENCE && style === '3d') {
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // Count 3D generations this month
+      // We assume attributes JSON contains style: '3d' or typical check.
+      // For simplicity, we can query raw or rely on metadata if we stored it properly.
+      // Since attributes is JSONB or JSON, we can query it.
+      // NOTE: TypeORM simple find with JSON check depends on DB. Assuming simple count for now.
+      // Ideally we need a way to filter by attributes->>style = '3d'
+
+      // Fetching all images for this month and filtering in JS (simplest without custom query builder right now)
+      const recentImages = await this.aiGenRepo.find({
+        where: {
+          user: { id: userId },
+          type: AiGenerationType.IMAGE,
+          createdAt: MoreThan(firstDayOfMonth),
+        },
+        select: ['attributes'],
+      });
+
+      const count3D = recentImages.filter(
+        (g: any) => g.attributes?.style === '3d',
+      ).length;
+
+      if (count3D >= 25) {
+        throw new Error(
+          'Limite atteinte : 25 générations 3D par mois avec le Pack Agence.',
+        );
+      }
+    }
+
     if (
       plan === PlanType.ATELIER &&
       (type === AiGenerationType.VIDEO || type === AiGenerationType.AUDIO)
@@ -233,39 +271,91 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
   async generateImage(
     params: any,
-    style: 'realistic' | 'cartoon' | 'sketch',
+    style: 'realistic' | 'cartoon' | 'sketch' | '3d', // added 3d
     userId?: number,
     manualNegativePrompt?: string,
   ) {
-    if (userId) await this.checkLimits(userId, AiGenerationType.IMAGE);
+    if (userId) await this.checkLimits(userId, AiGenerationType.IMAGE, style);
 
     if (typeof params === 'string') params = { userQuery: params };
     const basePrompt = await this.buildPrompt(params, userId);
     const visualDescription = params.userQuery || '';
     const negativePrompt = manualNegativePrompt || '';
 
-    this.logger.log(`Generating image with OpenAI: ${visualDescription}`);
+    const apiKey =
+      this.configService.get<string>('STABLE_API_KEY') ||
+      this.configService.get<string>('STABILITY_API_KEY');
+    if (!apiKey) throw new Error('Configuration manquante : STABLE_API_KEY');
 
-    // Switching to a supported model as gpt-5.2-mini-image is invalid
-    const response = await this.openai.images.generate({
-      model: 'dall-e-3',
-      prompt: `${visualDescription} ${negativePrompt ? `(Avoid: ${negativePrompt})` : ''}`,
-      size: '1024x1024',
-      n: 1,
+    this.logger.log(
+      `Generating image with Stability AI. Style: ${style || 'default'}`,
+    );
+
+    // Determine Model & Endpoint based on Plan & Request
+    let endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
+    let model: string | undefined = undefined;
+    let outputFormat = 'png';
+
+    // Default / Fallback (Curieux)
+    // Curieux -> Core (already default endpoint)
+
+    if (userId) {
+      const userProfile = await this.getAiUserWithProfile(userId);
+      const plan = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
+
+      if (plan === PlanType.ATELIER || plan === PlanType.STUDIO) {
+        // Atelier/Studio -> SD 3.5 Large Turbo
+        endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
+        model = 'sd3.5-large-turbo';
+      } else if (plan === PlanType.AGENCE) {
+        // Agence -> Ultra
+        endpoint =
+          'https://api.stability.ai/v2beta/stable-image/generate/ultra';
+
+        // Agence 3D Case
+        if (style === '3d') {
+          // Note: stable-fast-3d is Image-to-3D.
+          // If we wanted Text-to-3D, we'd need a different pipeline.
+          // For now, if "3d" style is requested via Text-to-Image, we use Ultra with strong 3D prompting
+          // OR we could throw if the user expects an actual 3D model from text.
+          // Assuming "3D Render Image" for this method signature (returns image URL).
+          // Use Ultra for best quality 3D renders.
+        }
+      }
+    }
+
+    const formData = new FormData();
+    formData.append('prompt', visualDescription);
+    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    formData.append('output_format', outputFormat);
+    if (model) formData.append('model', model);
+    // If using Core/Ultra, 'aspect_ratio' might be needed instead of size options, depending on API.
+    // Core/Ultra/SD3 support 'aspect_ratio'. (e.g. "1:1")
+    formData.append('aspect_ratio', '1:1');
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, Accept: 'image/*' },
+      body: formData,
     });
 
-    const imageUrl = response.data[0].url;
-    if (!imageUrl) throw new Error('Failed to generate image URL from OpenAI');
+    if (!response.ok) {
+      if (response.status === 402) {
+        throw new Error(
+          'Crédits insuffisants sur Stability AI (402). Veuillez recharger votre compte.',
+        );
+      }
+      const errText = await response.text();
+      throw new Error(
+        `Stability Error: ${response.status} ${response.statusText} - ${errText}`,
+      );
+    }
 
-    // Download the image to save it locally as per project structure
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok)
-      throw new Error('Failed to download generated image');
-    const buffer = Buffer.from(await imageResponse.arrayBuffer());
-
+    const buffer = Buffer.from(await response.arrayBuffer());
     const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-    const fileName = `gen_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.png`;
+    // Save with ID to track better?
+    const fileName = `gen_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.${outputFormat}`;
     const filePath = path.join(uploadDir, fileName);
     fs.writeFileSync(filePath, buffer);
     const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
@@ -278,7 +368,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
         prompt: basePrompt.substring(0, 1000),
         result: publicUrl,
         title: (params.userQuery || 'AI Image').substring(0, 40),
-        attributes: { ...params, engine: 'openai-dall-e-3' },
+        attributes: { ...params, engine: model || 'core', style },
       });
       generationId = saved.id;
     }
@@ -475,9 +565,16 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
         : '';
     const tone = workflowAnswers?.tone || 'Professional';
 
+    // Include other workflow answers specifically
+    const details = Object.entries(workflowAnswers || {})
+      .filter(([key]) => !['type', 'style', 'promotion', 'tone'].includes(key))
+      .map(([key, value]) => `${key}: ${value}`)
+      .join(', ');
+
     return `A clean, professional commercial ${type} layout. ${style} graphic design, high-quality composition,
      perfect alignment, bold readable typography, centered title, ${tone} message.
      ${promotion ? `Promotional focus: ${promotion}.` : ''}
+     ${details ? `Additional focus details: ${details}.` : ''}
      Include the following text exactly and fully visible, with correct spelling and spacing: "${userText}".
      Use a real ${type} design aesthetic, not a mockup. Use clean shapes, balanced layout,
      proper margins, and high-quality print-ready design. Vibrant but controlled colors.

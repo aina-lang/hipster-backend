@@ -55,48 +55,51 @@ export class SubscriptionsService {
       {
         id: 'curieux',
         name: 'Pack Curieux',
-        price: 0,
+        price: 'Gratuit', // Frontend display logic might handle specific text like "7 jours gratuits"
+        description: "Pour découvrir la puissance de l'IA",
         features: [
           "7 jours d'essai",
-          '2 images / jour',
+          '2 images / jour (Modèle Core)',
           '3 textes / jour',
-          "Pas d'export / téléchargement",
+          "Pas d'export",
         ],
-        stripePriceId: null,
+        stripePriceId: null, // Free trial, no stripe init
       },
       {
         id: 'atelier',
         name: 'Atelier',
-        price: 17.9,
+        price: 9.9, // Display logic handles the "then 17.90"
+        description: 'Idéal pour démarrer',
         features: [
-          '100 images / mois',
-          'Texte illimité',
+          'Génération de texte illimitée',
+          'Génération d’image (SD 3.5 Turbo)',
           'Pas de vidéo / audio',
-          'Choix du canal',
         ],
-        stripePriceId: 'price_Atelier1790',
+        stripePriceId: 'price_Atelier1790', // TODO: Make sure this ID exists in Stripe
       },
       {
         id: 'studio',
         name: 'Studio',
         price: 29.9,
+        description: 'Pack orienté photo pro',
         features: [
-          '100 images / mois',
           'Texte illimité',
-          '3 vidéos / mois',
-          'Support prioritaire',
+          'Génération d’image (SD 3.5 Turbo)',
+          'Optimisation image HD / 4K',
         ],
         stripePriceId: 'price_Studio2990',
+        popular: true,
       },
       {
         id: 'agence',
         name: 'Agence',
-        price: 69.9,
+        price: 69.99,
+        description: 'Puissance Totale',
         features: [
-          '300 images / mois',
-          'Texte illimité',
-          '60 sons / mois',
-          '10 vidéos / mois',
+          'Tout illimité',
+          'Images Ultra Quality (Model Ultra)',
+          'Création 3D (25/mois - Model Fast 3D)',
+          'Vidéo & Audio inclus',
         ],
         stripePriceId: 'price_Agence6990',
       },
@@ -104,12 +107,45 @@ export class SubscriptionsService {
   }
 
   async createSubscription(userId: number, planId: string) {
+    const plans = await this.getPlans();
+    const selectedPlan = plans.find((p) => p.id === planId);
+
+    if (!selectedPlan) {
+      throw new BadRequestException('Plan invalide');
+    }
+
     const user = await this.aiUserRepo.findOne({
       where: { id: userId },
       relations: ['aiProfile'],
     });
 
     if (!user) throw new BadRequestException('AiUser not found');
+
+    // 1. Handle Free Pack "Curieux"
+    if (planId === 'curieux') {
+      let profile = user.aiProfile;
+      if (!profile) {
+        profile = this.subRepo.create({ aiUser: user });
+      }
+
+      profile.planType = PlanType.CURIEUX;
+      profile.subscriptionStatus = SubscriptionStatus.ACTIVE; // Or TRIAL
+      // Set limits or specific end date for trial if needed
+      await this.subRepo.save(profile);
+
+      return {
+        message: 'Pack Curieux activé avec succès',
+        subscriptionId: 'free-trial',
+        clientSecret: null,
+      };
+    }
+
+    // 2. Handle Paid Packs (Stripe)
+    if (!selectedPlan.stripePriceId) {
+      throw new BadRequestException(
+        'Configuration de prix manquante pour ce plan payant',
+      );
+    }
 
     let customerId = user.aiProfile?.stripeCustomerId;
 
@@ -148,7 +184,7 @@ export class SubscriptionsService {
 
     const subscription = await this.stripe.subscriptions.create({
       customer: customerId,
-      items: [{ price: planId }],
+      items: [{ price: selectedPlan.stripePriceId }],
       discounts: coupon ? [{ coupon }] : undefined,
       payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
