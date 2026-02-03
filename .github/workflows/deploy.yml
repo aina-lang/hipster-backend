@@ -37,6 +37,6 @@ jobs:
             cp -r dist/templates/* dist/src/templates/ || true
            
             echo "--- Redémarrage PM2 ---"
-            pm2 restart hipster-api --update-env || pm2 start dist/main.js --name hipster-api
+            pm2 restart hipster-api  || pm2 start dist/main.js --name hipster-api
             pm2 save
           EOF
