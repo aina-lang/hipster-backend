@@ -5,6 +5,7 @@ import { AiAuthService } from './ai-auth.service';
 import { AiAuthController } from './ai-auth.controller';
 import { AiUser } from 'src/ai/entities/ai-user.entity';
 import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
+import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
 import { OtpModule } from 'src/otp/otp.module';
 import { MailModule } from 'src/mail/mail.module';
 
@@ -14,7 +15,7 @@ import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AiUser, AiSubscriptionProfile]),
+    TypeOrmModule.forFeature([AiUser, AiSubscriptionProfile, AiCredit]),
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secretKey',

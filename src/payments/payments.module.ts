@@ -11,6 +11,7 @@ import { ConfigModule } from '@nestjs/config';
 import { StripeService } from './stripe.service';
 import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
 import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
+import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entit
       Invoice,
       AiSubscriptionProfile,
       AiSubscription,
+      AiCredit,
     ]),
   ],
   controllers: [PaymentsController],

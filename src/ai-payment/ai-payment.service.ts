@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AiUser } from '../ai/entities/ai-user.entity';
-import { AiSubscriptionProfile } from '../profiles/entities/ai-subscription-profile.entity';
+import { AiSubscriptionProfile, PlanType, SubscriptionStatus } from '../profiles/entities/ai-subscription-profile.entity';
 import { AiCredit } from '../profiles/entities/ai-credit.entity';
 
 @Injectable()
@@ -184,8 +184,8 @@ export class AiPaymentService {
     await this.aiCreditRepo.save(credit);
 
     // Update profile with plan type and subscription status
-    user.aiProfile.planType = planId;
-    user.aiProfile.subscriptionStatus = 'active';
+    user.aiProfile.planType = PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] || PlanType.BASIC;
+    user.aiProfile.subscriptionStatus = SubscriptionStatus.ACTIVE;
     await this.aiProfileRepo.save(user.aiProfile);
 
     this.logger.log(`Plan confirmed for user ${userId}: ${planId} with limits ${JSON.stringify(selectedPlan)}`);

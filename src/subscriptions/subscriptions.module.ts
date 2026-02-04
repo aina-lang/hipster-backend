@@ -6,11 +6,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AiUser } from '../ai/entities/ai-user.entity';
 import { AiSubscriptionProfile } from '../profiles/entities/ai-subscription-profile.entity';
 import { AiSubscription } from './entities/ai-subscription.entity';
+import { AiCredit } from '../profiles/entities/ai-credit.entity';
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([AiUser, AiSubscriptionProfile, AiSubscription]),
+    TypeOrmModule.forFeature([AiUser, AiSubscriptionProfile, AiSubscription, AiCredit]),
   ],
   controllers: [SubscriptionsController],
   providers: [SubscriptionsService],
