@@ -19,4 +19,14 @@ export class AiPaymentController {
     const userId = body.userId || req.user.sub;
     return this.aiPaymentService.createPaymentSheet(userId, body.priceId);
   }
+
+  @ApiOperation({ summary: 'Confirmer un plan et appliquer les limites d\'utilisation' })
+  @Post('confirm-plan')
+  async confirmPlan(
+    @Req() req,
+    @Body() body: { planId: string },
+  ) {
+    const userId = req.user.sub;
+    return this.aiPaymentService.confirmPlan(userId, body.planId);
+  }
 }
