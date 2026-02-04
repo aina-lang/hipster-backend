@@ -22,6 +22,7 @@ import {
 } from './entities/payment.entity';
 import { ConfigService } from '@nestjs/config';
 import { AiSubscriptionProfile, PlanType, SubscriptionStatus } from 'src/profiles/entities/ai-subscription-profile.entity';
+import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
 import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
 
 @Injectable()
@@ -41,6 +42,8 @@ export class PaymentsService {
     private readonly aiProfileRepo: Repository<AiSubscriptionProfile>,
     @InjectRepository(AiSubscription)
     private readonly aiSubscriptionRepo: Repository<AiSubscription>,
+    @InjectRepository(AiCredit)
+    private readonly aiCreditRepo: Repository<AiCredit>,
     private readonly stripeService: StripeService,
     private readonly configService: ConfigService,
   ) {}
@@ -201,10 +204,21 @@ export class PaymentsService {
     profile.lastRenewalDate = new Date((subscription as any).current_period_start * 1000);
     profile.nextRenewalDate = new Date((subscription as any).current_period_end * 1000);
 
-    // Update credits based on plan upgrade
+    // Update AiCredit based on plan upgrade
     if (status === SubscriptionStatus.ACTIVE) {
-      if (planType === PlanType.PRO) profile.credits = 500;
-      if (planType === PlanType.ENTERPRISE) profile.credits = 9999;
+      let credit = await this.aiCreditRepo.findOne({ where: { aiProfile: { id: profile.id } } });
+      if (!credit) {
+        credit = this.aiCreditRepo.create({
+          promptsLimit: 0,
+          imagesLimit: 0,
+          videosLimit: 0,
+          audioLimit: 0,
+          aiProfile: profile,
+        });
+      }
+      if (planType === PlanType.PRO) credit.promptsLimit = 500;
+      if (planType === PlanType.ENTERPRISE) credit.promptsLimit = 9999;
+      await this.aiCreditRepo.save(credit);
     }
 
     await this.aiProfileRepo.save(profile);

@@ -19,6 +19,7 @@ import { OtpService } from 'src/otp/otp.service';
 import { OtpType } from 'src/common/enums/otp.enum';
 import { MailService } from 'src/mail/mail.service';
 import { Public } from 'src/common/decorators/public.decorator';
+import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
 import { deleteFile } from 'src/common/utils/file.utils';
 
 @Injectable()
@@ -28,6 +29,8 @@ export class AiAuthService {
     private readonly aiUserRepo: Repository<AiUser>,
     @InjectRepository(AiSubscriptionProfile)
     private readonly aiProfileRepo: Repository<AiSubscriptionProfile>,
+    @InjectRepository(AiCredit)
+    private readonly aiCreditRepo: Repository<AiCredit>,
     private readonly jwtService: JwtService,
     private readonly otpService: OtpService,
     private readonly mailService: MailService,
@@ -58,9 +61,18 @@ export class AiAuthService {
     const profile = this.aiProfileRepo.create({
       aiUser: user,
       accessLevel: AiAccessLevel.GUEST,
-      credits: 5,
     });
     await this.aiProfileRepo.save(profile);
+
+    // Create default AiCredit for the profile
+    const credit = this.aiCreditRepo.create({
+      promptsLimit: 100,
+      imagesLimit: 50,
+      videosLimit: 10,
+      audioLimit: 20,
+      aiProfile: profile,
+    });
+    await this.aiCreditRepo.save(credit);
 
     const otp = await this.otpService.generateOtp(user, OtpType.OTP);
     await this.mailService.sendEmail({

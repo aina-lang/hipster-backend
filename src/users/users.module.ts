@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
+import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
 import { Permission } from 'src/permissions/entities/permission.entity';
 
@@ -18,6 +19,7 @@ import { AiAuthModule } from 'src/ai-auth/ai-auth.module';
       User,
       ClientProfile,
       AiSubscriptionProfile,
+      AiCredit,
       EmployeeProfile,
       Permission,
     ]),

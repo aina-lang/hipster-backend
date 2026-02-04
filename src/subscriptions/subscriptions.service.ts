@@ -9,6 +9,7 @@ import {
   PlanType,
   SubscriptionStatus,
 } from '../profiles/entities/ai-subscription-profile.entity';
+import { AiCredit } from '../profiles/entities/ai-credit.entity';
 
 @Injectable()
 export class SubscriptionsService {
@@ -20,6 +21,8 @@ export class SubscriptionsService {
     private readonly aiUserRepo: Repository<AiUser>,
     @InjectRepository(AiSubscriptionProfile)
     private readonly subRepo: Repository<AiSubscriptionProfile>,
+    @InjectRepository(AiCredit)
+    private readonly aiCreditRepo: Repository<AiCredit>,
   ) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (apiKey) {
@@ -40,11 +43,21 @@ export class SubscriptionsService {
 
       const newProfile = this.subRepo.create({
         aiUser: user,
-        credits: 10,
         planType: PlanType.BASIC,
         subscriptionStatus: SubscriptionStatus.ACTIVE,
       });
-      return this.subRepo.save(newProfile);
+      const savedProfile = await this.subRepo.save(newProfile);
+
+      const credit = this.aiCreditRepo.create({
+        promptsLimit: 100,
+        imagesLimit: 50,
+        videosLimit: 10,
+        audioLimit: 20,
+        aiProfile: savedProfile,
+      });
+      await this.aiCreditRepo.save(credit);
+
+      return savedProfile;
     }
 
     return profile;
@@ -164,9 +177,16 @@ export class SubscriptionsService {
         const newProfile = this.subRepo.create({
           aiUser: user,
           stripeCustomerId: customerId,
-          credits: 10, // Free credits
         });
-        await this.subRepo.save(newProfile);
+        const savedProfile = await this.subRepo.save(newProfile);
+        const credit = this.aiCreditRepo.create({
+          promptsLimit: 100,
+          imagesLimit: 50,
+          videosLimit: 10,
+          audioLimit: 20,
+          aiProfile: savedProfile,
+        });
+        await this.aiCreditRepo.save(credit);
       }
     }
 
@@ -231,9 +251,16 @@ export class SubscriptionsService {
         const newProfile = this.subRepo.create({
           aiUser: user,
           stripeCustomerId: customerId,
-          credits: 10,
         });
-        await this.subRepo.save(newProfile);
+        const savedProfile = await this.subRepo.save(newProfile);
+        const credit = this.aiCreditRepo.create({
+          promptsLimit: 100,
+          imagesLimit: 50,
+          videosLimit: 10,
+          audioLimit: 20,
+          aiProfile: savedProfile,
+        });
+        await this.aiCreditRepo.save(credit);
       }
     }
 

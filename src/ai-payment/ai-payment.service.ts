@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AiUser } from '../ai/entities/ai-user.entity';
 import { AiSubscriptionProfile } from '../profiles/entities/ai-subscription-profile.entity';
+import { AiCredit } from '../profiles/entities/ai-credit.entity';
 
 @Injectable()
 export class AiPaymentService {
@@ -21,6 +22,8 @@ export class AiPaymentService {
     private readonly aiUserRepo: Repository<AiUser>,
     @InjectRepository(AiSubscriptionProfile)
     private readonly aiProfileRepo: Repository<AiSubscriptionProfile>,
+    @InjectRepository(AiCredit)
+    private readonly aiCreditRepo: Repository<AiCredit>,
   ) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (apiKey) {
@@ -74,7 +77,6 @@ export class AiPaymentService {
       where: { id: userId },
       relations: ['aiProfile'],
     });
-
     if (!user) throw new BadRequestException('AiUser not found');
 
     let customerId = user.aiProfile?.stripeCustomerId;
@@ -95,9 +97,16 @@ export class AiPaymentService {
         const newProfile = this.aiProfileRepo.create({
           aiUser: user,
           stripeCustomerId: customerId,
-          credits: 10,
         });
-        await this.aiProfileRepo.save(newProfile);
+        const saved = await this.aiProfileRepo.save(newProfile);
+        const credit = this.aiCreditRepo.create({
+          promptsLimit: 100,
+          imagesLimit: 50,
+          videosLimit: 10,
+          audioLimit: 20,
+          aiProfile: saved,
+        });
+        await this.aiCreditRepo.save(credit);
       }
     }
 

@@ -2,6 +2,7 @@ import { AiUsageLog } from 'src/ai/entities/ai-usage-log.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
 import { AiUser } from 'src/ai/entities/ai-user.entity';
+import { AiCredit } from './ai-credit.entity';
 import {
   Column,
   Entity,
@@ -59,10 +60,7 @@ export class AiSubscriptionProfile {
   })
   accessLevel: AiAccessLevel;
 
-  @Column({ default: 1000 })
-  credits: number;
-
-  @Column({ default: false })
+  @Column({ nullable: true })
   isSetupComplete: boolean;
 
   @Column({ nullable: true })
@@ -117,6 +115,9 @@ export class AiSubscriptionProfile {
   @OneToOne(() => AiUser, (u) => u.aiProfile, { onDelete: 'CASCADE' })
   @JoinColumn()
   aiUser: AiUser;
+
+  @OneToOne(() => AiCredit, (c) => c.aiProfile, { cascade: true })
+  aiCredit: AiCredit;
 
   @OneToMany(() => AiSubscription, (s) => s.aiProfile)
   subscriptions: AiSubscription[];

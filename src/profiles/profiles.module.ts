@@ -5,6 +5,7 @@ import { ProfilesController } from './profiles.controller';
 import { ClientProfile } from './entities/client-profile.entity';
 import { EmployeeProfile } from './entities/employee-profile.entity';
 import { AiSubscriptionProfile } from './entities/ai-subscription-profile.entity';
+import { AiCredit } from './entities/ai-credit.entity';
 import { ClientWebsite } from './entities/client-website.entity';
 import { User } from 'src/users/entities/user.entity';
 import { AiUser } from 'src/ai/entities/ai-user.entity';
@@ -19,6 +20,7 @@ import { ClientWebsitesController } from './client-websites.controller';
       ClientProfile,
       EmployeeProfile,
       AiSubscriptionProfile,
+      AiCredit,
       ClientWebsite,
       User,
       AiUser,
