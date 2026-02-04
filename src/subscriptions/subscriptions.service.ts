@@ -197,4 +197,71 @@ export class SubscriptionsService {
         .client_secret,
     };
   }
+
+  async createPaymentSheet(userId: number, priceId: string) {
+    const plans = await this.getPlans();
+    const selectedPlan = plans.find((p) => p.stripePriceId === priceId);
+
+    if (!selectedPlan || !selectedPlan.stripePriceId) {
+      throw new BadRequestException('Prix invalide');
+    }
+
+    const user = await this.aiUserRepo.findOne({
+      where: { id: userId },
+      relations: ['aiProfile'],
+    });
+
+    if (!user) throw new BadRequestException('AiUser not found');
+
+    let customerId = user.aiProfile?.stripeCustomerId;
+
+    // Create customer if not exists
+    if (!customerId) {
+      const customer = await this.stripe.customers.create({
+        email: user.email,
+        metadata: { userId: user.id.toString() },
+      });
+      customerId = customer.id;
+
+      // Update or create profile
+      if (user.aiProfile) {
+        user.aiProfile.stripeCustomerId = customerId;
+        await this.subRepo.save(user.aiProfile);
+      } else {
+        const newProfile = this.subRepo.create({
+          aiUser: user,
+          stripeCustomerId: customerId,
+          credits: 10,
+        });
+        await this.subRepo.save(newProfile);
+      }
+    }
+
+    // Create ephemeral key for client
+    const ephemeralKey = await this.stripe.ephemeralKeys.create(
+      { customer: customerId },
+      { apiVersion: '2025-11-17.clover' },
+    );
+
+    // Create payment intent
+    const paymentIntent = await this.stripe.paymentIntents.create({
+      amount: this.getPriceInCents(selectedPlan.price),
+      currency: 'eur',
+      customer: customerId,
+      automatic_payment_methods: {
+        enabled: true,
+      },
+    });
+
+    return {
+      paymentIntentClientSecret: paymentIntent.client_secret,
+      ephemeralKey: ephemeralKey.secret,
+      customerId: customerId,
+    };
+  }
+
+  private getPriceInCents(price: number | string): number {
+    const priceNum = typeof price === 'string' ? parseFloat(price) : price;
+    return Math.round(priceNum * 100);
+  }
 }

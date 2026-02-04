@@ -5,7 +5,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 
 @ApiTags('Subscriptions')
-@Controller('subscriptions')
+@Controller('ai/subscriptions')
 @UseGuards(AuthGuard('jwt'))
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
@@ -30,5 +30,15 @@ export class SubscriptionsController {
       req.user.sub,
       body.planId,
     );
+  }
+
+  @ApiOperation({ summary: 'Créer une feuille de paiement Stripe' })
+  @Post('create-payment-sheet')
+  async createPaymentSheet(
+    @Req() req,
+    @Body() body: { priceId: string; userId?: number },
+  ) {
+    const userId = body.userId || req.user.sub;
+    return this.subscriptionsService.createPaymentSheet(userId, body.priceId);
   }
 }
