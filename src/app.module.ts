@@ -34,6 +34,7 @@ import { ReferralModule } from './referral/referral.module';
 import { CompanyModule } from './company/company.module';
 import { AiAuthModule } from './ai-auth/ai-auth.module';
 import { AiModule } from './ai/ai.module';
+import { AiPaymentModule } from './ai-payment/ai-payment.module';
 
 @Module({
   imports: [
@@ -92,6 +93,7 @@ import { AiModule } from './ai/ai.module';
     MaintenanceModule,
     AiAuthModule,
     AiModule,
+    AiPaymentModule,
   ],
 
   controllers: [],
