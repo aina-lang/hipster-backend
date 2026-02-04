@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Put, Req, Get } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Put, Req } from '@nestjs/common';
 import { AiAuthService } from './ai-auth.service';
 import { Public } from '../common/decorators/public.decorator';
 import { AuthGuard } from '@nestjs/passport';
@@ -74,12 +74,5 @@ export class AiAuthController {
   @Post('logout')
   async logout(@Req() req) {
     return this.aiAuthService.logout(req.user.sub);
-  }
-
-  @Public()
-  @ApiOperation({ summary: 'Récupérer la configuration client IA' })
-  @Get('config')
-  async getConfig() {
-    return this.aiAuthService.getConfig();
   }
 }
