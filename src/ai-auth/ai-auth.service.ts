@@ -6,6 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -31,6 +32,7 @@ export class AiAuthService {
     private readonly jwtService: JwtService,
     private readonly otpService: OtpService,
     private readonly mailService: MailService,
+    private readonly configService: ConfigService,
   ) {}
 
   private readonly logger = new Logger(AiAuthService.name);
@@ -270,5 +272,13 @@ export class AiAuthService {
     await this.aiUserRepo.save(user);
 
     return { message: 'Mot de passe modifié avec succès.' };
+  }
+
+  async getConfig() {
+    return {
+      stripe: {
+        publishableKey: this.configService.get<string>('STRIPE_PUBLISHABLE_KEY'),
+      },
+    };
   }
 }
