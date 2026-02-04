@@ -84,7 +84,7 @@ export class Payment {
   @JoinColumn()
   project?: Project;
 
-  @OneToOne(() => Invoice, (i) => i.payment)
+  @OneToOne(() => Invoice, (i) => i.payment, { onDelete: 'CASCADE' })
   @JoinColumn()
   invoice?: Invoice;
 
