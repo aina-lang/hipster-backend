@@ -44,22 +44,34 @@ export class AiAuthService {
 
   @Public()
   async register(dto: any) {
-    const email = dto.email?.trim().toLowerCase();
-    const existing = await this.aiUserRepo.findOne({
-      where: { email },
+    const normalizedEmail = dto.email?.trim().toLowerCase();
+    let user = await this.aiUserRepo.findOne({
+      where: { email: normalizedEmail },
     });
-    if (existing) throw new ConflictException('Email déjà utilisé.');
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    const user = this.aiUserRepo.create({
-      email,
-      password: hashedPassword,
-      firstName: '', // No longer used in setup
-      lastName: dto.lastName || '', // Stores the "Full Name / Company Name"
-      isActive: true,
-      isEmailVerified: false,
-    });
+    if (user) {
+      if (user.isActive && user.isEmailVerified) {
+        throw new ConflictException('Email déjà utilisé.');
+      }
+      // Retry flow for inactive/unverified users
+      this.logger.log(
+        `Registration retry for inactive user: ${normalizedEmail}`,
+      );
+      user.password = await bcrypt.hash(dto.password, 10);
+      user.lastName = dto.lastName || user.lastName || '';
+      user.isEmailVerified = false;
+      user.isActive = false;
+    } else {
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+      user = this.aiUserRepo.create({
+        email: normalizedEmail,
+        password: hashedPassword,
+        firstName: '',
+        lastName: dto.lastName || '',
+        isActive: false, // Inactive until OTP verified
+        isEmailVerified: false,
+      });
+    }
     await this.aiUserRepo.save(user);
 
     const planTypeInput = dto.planId ? dto.planId.toLowerCase() : 'curieux';
@@ -224,6 +236,7 @@ export class AiAuthService {
     if (!isValid) throw new BadRequestException('Code invalide ou expiré.');
 
     user.isEmailVerified = true;
+    user.isActive = true; // Activate account now
 
     // Generate tokens for auto-login
     const payload = {
