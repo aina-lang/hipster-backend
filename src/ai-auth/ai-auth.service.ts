@@ -14,6 +14,8 @@ import { AiUser } from 'src/ai/entities/ai-user.entity';
 import {
   AiSubscriptionProfile,
   AiAccessLevel,
+  PlanType,
+  SubscriptionStatus,
 } from 'src/profiles/entities/ai-subscription-profile.entity';
 import { OtpService } from 'src/otp/otp.service';
 import { OtpType } from 'src/common/enums/otp.enum';
@@ -21,6 +23,7 @@ import { MailService } from 'src/mail/mail.service';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
 import { deleteFile } from 'src/common/utils/file.utils';
+import { AiPaymentService } from 'src/ai-payment/ai-payment.service';
 
 @Injectable()
 export class AiAuthService {
@@ -34,6 +37,7 @@ export class AiAuthService {
     private readonly jwtService: JwtService,
     private readonly otpService: OtpService,
     private readonly mailService: MailService,
+    private readonly aiPaymentService: AiPaymentService,
   ) {}
 
   private readonly logger = new Logger(AiAuthService.name);
@@ -51,16 +55,23 @@ export class AiAuthService {
     const user = this.aiUserRepo.create({
       email,
       password: hashedPassword,
-      firstName: dto.firstName || '',
-      lastName: dto.lastName || '',
+      firstName: '', // No longer used in setup
+      lastName: dto.lastName || '', // Stores the "Full Name / Company Name"
       isActive: true,
       isEmailVerified: false,
     });
     await this.aiUserRepo.save(user);
 
+    const planTypeInput = dto.planId ? dto.planId.toLowerCase() : 'curieux';
     const profile = this.aiProfileRepo.create({
       aiUser: user,
       accessLevel: AiAccessLevel.GUEST,
+      planType:
+        (PlanType as any)[planTypeInput.toUpperCase()] || PlanType.CURIEUX,
+      subscriptionStatus:
+        planTypeInput === 'curieux'
+          ? SubscriptionStatus.ACTIVE
+          : SubscriptionStatus.TRIAL,
     });
     await this.aiProfileRepo.save(profile);
 
@@ -79,13 +90,34 @@ export class AiAuthService {
       to: user.email,
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
-      context: { name: user.lastName || user.firstName || user.email, code: otp },
+      context: {
+        name: user.lastName || user.firstName || user.email,
+        code: otp,
+      },
       userRoles: ['ai_user'], // Standardized AI role
     });
+
+    let stripeData = null;
+    if (dto.planId && dto.planId !== 'curieux') {
+      const plan = this.aiPaymentService
+        .getPlans()
+        .find((p) => p.id === dto.planId);
+      if (plan && plan.stripePriceId) {
+        stripeData = await this.aiPaymentService.createPaymentSheet(
+          user.id,
+          plan.stripePriceId,
+        );
+
+        // Mark user as potentially requiring verification but also payment
+        // For now just returning data so the app can show the payment sheet
+      }
+    }
 
     return {
       message: 'Inscription AI réussie. Un code OTP a été envoyé.',
       email: user.email,
+      userId: user.id,
+      stripe: stripeData,
     };
   }
 
@@ -229,7 +261,9 @@ export class AiAuthService {
 
   async resendOtp(email: string) {
     const normalizedEmail = email.trim().toLowerCase();
-    const user = await this.aiUserRepo.findOne({ where: { email: normalizedEmail } });
+    const user = await this.aiUserRepo.findOne({
+      where: { email: normalizedEmail },
+    });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     const otp = await this.otpService.generateOtp(user, OtpType.OTP);
@@ -237,7 +271,10 @@ export class AiAuthService {
       to: user.email,
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
-      context: { name: user.lastName || user.firstName || user.email, code: otp },
+      context: {
+        name: user.lastName || user.firstName || user.email,
+        code: otp,
+      },
       userRoles: ['ai_user'],
     });
 
@@ -248,8 +285,8 @@ export class AiAuthService {
     const user = await this.aiUserRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
-    if (dto.firstName) user.firstName = dto.firstName;
     if (dto.lastName) user.lastName = dto.lastName;
+    // firstName is ignored in simplified flow
 
     if (dto.avatarUrl && user.avatarUrl && dto.avatarUrl !== user.avatarUrl) {
       deleteFile(user.avatarUrl);
@@ -275,7 +312,8 @@ export class AiAuthService {
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     const isMatch = await bcrypt.compare(dto.oldPassword, user.password);
-    if (!isMatch) throw new UnauthorizedException('Mot de passe actuel incorrect.');
+    if (!isMatch)
+      throw new UnauthorizedException('Mot de passe actuel incorrect.');
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
     user.password = hashedPassword;

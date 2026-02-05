@@ -44,10 +44,6 @@ export class CreateIaClientProfileDto {
   isSetupComplete?: boolean;
 
   @IsOptional()
-  @IsString()
-  companyName?: string;
-
-  @IsOptional()
   @IsEmail()
   professionalEmail?: string;
 

@@ -22,6 +22,7 @@ import { MailService } from 'src/mail/mail.service';
 import { LoyaltyService } from 'src/loyalty/loyalty.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { LOYALTY_RULES } from 'src/loyalty/loyalty.types';
+import { Role } from 'src/common/enums/role.enum';
 
 import { Invoice } from 'src/invoices/entities/invoice.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
@@ -131,11 +132,15 @@ export class ProjectsService {
       );
     }
 
-    // Determine default status: If client exists -> PENDING, otherwise -> PLANNED
+    // Determine default status: If admin/employee -> PLANNED, otherwise (client) -> PENDING
     // This ensures client-submitted projects require validation
-    const initialStatus = client
-      ? ProjectStatus.PENDING
-      : ProjectStatus.PLANNED;
+    const isAdminOrEmployee =
+      currentUser.roles.includes(Role.ADMIN) ||
+      currentUser.roles.includes(Role.EMPLOYEE);
+
+    const initialStatus = isAdminOrEmployee
+      ? ProjectStatus.PLANNED
+      : ProjectStatus.PENDING;
 
     // Créer le projet
     const project = this.projectRepo.create({
@@ -291,7 +296,7 @@ export class ProjectsService {
           await this.notificationsService.createProjectSubmissionNotification(
             project.id,
             project.name,
-            clientId,
+            client.id,
             adminIds,
           );
 

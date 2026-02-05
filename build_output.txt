@@ -2,7 +2,10 @@
 > nestjsapi@0.0.1 build
 > nest build
 
-[91merror[0m[90m TS5098: [0mOption 'resolvePackageJsonExports' can only be used when 'moduleResolution' is set to 'node16', 'nodenext', or 'bundler'.
+[96msrc/ai/ai.service.ts[0m:[93m115[0m:[93m29[0m - [91merror[0m[90m TS2339: [0mProperty 'companyName' does not exist on type 'AiSubscriptionProfile'.
+
+[7m115[0m             `Nom: ${profile.companyName || userName}`,
+[7m   [0m [91m                            ~~~~~~~~~~~[0m
 
 Found 1 error(s).
 

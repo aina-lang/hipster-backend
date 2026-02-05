@@ -112,7 +112,7 @@ export class AiService {
         const profile = userObj.aiProfile;
         if (profile) {
           const parts = [
-            `Nom: ${profile.companyName || userName}`,
+            `Nom: ${userName}`,
             profile.professionalEmail
               ? `Email: ${profile.professionalEmail}`
               : '',
@@ -215,7 +215,9 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
         (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
       );
       if (diffDays > 7)
-        throw new BadRequestException("Votre période d'essai de 7 jours est terminée.");
+        throw new BadRequestException(
+          "Votre période d'essai de 7 jours est terminée.",
+        );
 
       // Check daily limits
       sinceDate = new Date();
@@ -234,37 +236,63 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     if (plan === PlanType.CURIEUX) {
       // Curieux: 2 images/day, 3 texts/day, no video, no audio
       if (type === AiGenerationType.IMAGE && count >= 2)
-        throw new BadRequestException('Limite atteinte : 2 images par jour avec le Pack Curieux.');
+        throw new BadRequestException(
+          'Limite atteinte : 2 images par jour avec le Pack Curieux.',
+        );
       if (type === AiGenerationType.TEXT && count >= 3)
-        throw new BadRequestException('Limite atteinte : 3 textes par jour avec le Pack Curieux.');
+        throw new BadRequestException(
+          'Limite atteinte : 3 textes par jour avec le Pack Curieux.',
+        );
       if (type === AiGenerationType.VIDEO)
-        throw new BadRequestException('Le Pack Curieux ne permet pas la génération de vidéos.');
+        throw new BadRequestException(
+          'Le Pack Curieux ne permet pas la génération de vidéos.',
+        );
       if (type === AiGenerationType.AUDIO)
-        throw new BadRequestException('Le Pack Curieux ne permet pas la génération d\'audios.');
+        throw new BadRequestException(
+          "Le Pack Curieux ne permet pas la génération d'audios.",
+        );
     } else if (plan === PlanType.ATELIER) {
       // Atelier: 100 images/month, unlimited texts, no video, no audio
       if (type === AiGenerationType.IMAGE && count >= 100)
-        throw new BadRequestException('Limite atteinte : 100 images par mois avec le plan Atelier.');
+        throw new BadRequestException(
+          'Limite atteinte : 100 images par mois avec le plan Atelier.',
+        );
       if (type === AiGenerationType.VIDEO)
-        throw new BadRequestException('Le plan Atelier ne permet pas la génération de vidéos.');
+        throw new BadRequestException(
+          'Le plan Atelier ne permet pas la génération de vidéos.',
+        );
       if (type === AiGenerationType.AUDIO)
-        throw new BadRequestException('Le plan Atelier ne permet pas la génération d\'audios.');
+        throw new BadRequestException(
+          "Le plan Atelier ne permet pas la génération d'audios.",
+        );
     } else if (plan === PlanType.STUDIO) {
       // Studio: 100 images/month, unlimited texts, 3 videos/month, no audio
       if (type === AiGenerationType.IMAGE && count >= 100)
-        throw new BadRequestException('Limite atteinte : 100 images par mois avec le plan Studio.');
+        throw new BadRequestException(
+          'Limite atteinte : 100 images par mois avec le plan Studio.',
+        );
       if (type === AiGenerationType.VIDEO && count >= 3)
-        throw new BadRequestException('Limite atteinte : 3 vidéos par mois avec le plan Studio.');
+        throw new BadRequestException(
+          'Limite atteinte : 3 vidéos par mois avec le plan Studio.',
+        );
       if (type === AiGenerationType.AUDIO)
-        throw new BadRequestException('Le plan Studio ne permet pas la génération d\'audios.');
+        throw new BadRequestException(
+          "Le plan Studio ne permet pas la génération d'audios.",
+        );
     } else if (plan === PlanType.AGENCE) {
       // Agence: 300 images/month, unlimited texts, 10 videos/month, 60 audios/month
       if (type === AiGenerationType.IMAGE && count >= 300)
-        throw new BadRequestException('Limite atteinte : 300 images par mois avec le plan Agence.');
+        throw new BadRequestException(
+          'Limite atteinte : 300 images par mois avec le plan Agence.',
+        );
       if (type === AiGenerationType.VIDEO && count >= 10)
-        throw new BadRequestException('Limite atteinte : 10 vidéos par mois avec le plan Agence.');
+        throw new BadRequestException(
+          'Limite atteinte : 10 vidéos par mois avec le plan Agence.',
+        );
       if (type === AiGenerationType.AUDIO && count >= 60)
-        throw new BadRequestException('Limite atteinte : 60 audios par mois avec le plan Agence.');
+        throw new BadRequestException(
+          'Limite atteinte : 60 audios par mois avec le plan Agence.',
+        );
     }
   }
 

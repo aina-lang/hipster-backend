@@ -12,6 +12,7 @@ import { MailModule } from 'src/mail/mail.module';
 import { AiJwtStrategy } from './strategies/ai-jwt.strategy';
 import { AiRefreshStrategy } from './strategies/ai-refresh.strategy';
 import { PassportModule } from '@nestjs/passport';
+import { AiPaymentModule } from '../ai-payment/ai-payment.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PassportModule } from '@nestjs/passport';
     }),
     OtpModule,
     MailModule,
+    AiPaymentModule,
   ],
   controllers: [AiAuthController],
   providers: [AiAuthService, AiJwtStrategy, AiRefreshStrategy],
