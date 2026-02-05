@@ -64,17 +64,14 @@ export class AiAuthService {
     await this.aiUserRepo.save(user);
 
     const planTypeInput = dto.planId ? dto.planId.toLowerCase() : 'curieux';
+    const plans = this.aiPaymentService.getPlans();
+    const selectedPlanConfig =
+      plans.find((p) => p.id === planTypeInput) || plans[0];
+
     const profile = this.aiProfileRepo.create({
       aiUser: user,
       accessLevel: AiAccessLevel.GUEST,
-      planType: (function () {
-        const p = (planTypeInput || 'curieux').toUpperCase();
-        if (p === 'CURIEUX') return PlanType.CURIEUX;
-        if (p === 'ATELIER') return PlanType.ATELIER;
-        if (p === 'STUDIO') return PlanType.STUDIO;
-        if (p === 'AGENCE') return PlanType.AGENCE;
-        return PlanType.CURIEUX;
-      })(),
+      planType: selectedPlanConfig.id as PlanType,
       subscriptionStatus:
         planTypeInput === 'curieux'
           ? SubscriptionStatus.ACTIVE
@@ -82,12 +79,12 @@ export class AiAuthService {
     });
     await this.aiProfileRepo.save(profile);
 
-    // Create default AiCredit for the profile
+    // Create default AiCredit for the profile using plan limits
     const credit = this.aiCreditRepo.create({
-      promptsLimit: 100,
-      imagesLimit: 50,
-      videosLimit: 10,
-      audioLimit: 20,
+      promptsLimit: selectedPlanConfig.promptsLimit,
+      imagesLimit: selectedPlanConfig.imagesLimit,
+      videosLimit: selectedPlanConfig.videosLimit,
+      audioLimit: selectedPlanConfig.audioLimit,
       aiProfile: profile,
     });
     await this.aiCreditRepo.save(credit);

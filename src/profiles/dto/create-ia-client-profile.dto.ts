@@ -17,15 +17,15 @@ import {
 export class CreateIaClientProfileDto {
   @IsOptional()
   @IsEnum(SubscriptionStatus)
-  subscriptionStatus?: SubscriptionStatus = SubscriptionStatus.TRIAL;
+  subscriptionStatus?: SubscriptionStatus;
 
   @IsOptional()
   @IsEnum(PlanType)
-  planType?: PlanType = PlanType.CURIEUX;
+  planType?: PlanType;
 
   @IsOptional()
   @IsNumber()
-  credits?: number = 1000;
+  credits?: number;
 
   @IsOptional()
   @IsDateString()
