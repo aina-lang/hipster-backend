@@ -296,7 +296,7 @@ export class ProjectsService {
           await this.notificationsService.createProjectSubmissionNotification(
             project.id,
             project.name,
-            clientId,
+            client.id,
             adminIds,
           );
 
