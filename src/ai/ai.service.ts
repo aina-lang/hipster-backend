@@ -49,10 +49,14 @@ export class AiService {
   }
 
   async getHistory(userId: number) {
-    return this.aiGenRepo.find({
+    const history = await this.aiGenRepo.find({
       where: { user: { id: userId } },
       order: { createdAt: 'DESC' },
     });
+
+    // Filter out usage logs that were created just for credit decrementing
+    // We only want to show the main conversations (type: CHAT) and other generations
+    return history.filter((item) => !(item.attributes as any)?.isUsageLog);
   }
 
   async getConversation(conversationId: number, userId: number) {
@@ -181,6 +185,23 @@ export class AiService {
         }
 
         generationId = generation.id.toString();
+
+        // Save a separate usage record of type TEXT for EACH turn in the conversation.
+        // This ensures the credit system (which counts TEXT entries) decrements
+        // a credit for every message in the conversation.
+        const lastUserMsg = [...messages]
+          .reverse()
+          .find((m) => m.role === 'user');
+        await this.aiGenRepo.save({
+          user: { id: userId } as AiUser,
+          type: AiGenerationType.TEXT,
+          prompt: lastUserMsg?.content || 'Chat message',
+          result: content,
+          attributes: {
+            isUsageLog: true,
+            conversationId: generation.id,
+          },
+        });
       }
 
       return { content, conversationId: generationId };
