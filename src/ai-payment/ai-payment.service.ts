@@ -41,40 +41,40 @@ export class AiPaymentService {
         name: 'Pack Curieux',
         price: 0,
         stripePriceId: null,
-        promptsLimit: 100,
-        imagesLimit: 50,
-        videosLimit: 10,
-        audioLimit: 20,
+        promptsLimit: 3, // 3 texts/day (daily limit)
+        imagesLimit: 2, // 2 images/day (daily limit)
+        videosLimit: 0, // No video
+        audioLimit: 0, // No audio
       },
       {
         id: 'atelier',
         name: 'Atelier',
         price: 9.9,
         stripePriceId: 'price_Atelier1790',
-        promptsLimit: 500,
-        imagesLimit: 100,
-        videosLimit: 0,
-        audioLimit: 0,
+        promptsLimit: 999999, // Unlimited texts
+        imagesLimit: 100, // 100 images/month
+        videosLimit: 0, // No video
+        audioLimit: 0, // No audio
       },
       {
         id: 'studio',
         name: 'Studio',
         price: 29.9,
         stripePriceId: 'price_Studio2990',
-        promptsLimit: 1000,
-        imagesLimit: 100,
-        videosLimit: 3,
-        audioLimit: 0,
+        promptsLimit: 999999, // Unlimited texts
+        imagesLimit: 100, // 100 images/month
+        videosLimit: 3, // 3 videos/month
+        audioLimit: 0, // No audio
       },
       {
         id: 'agence',
         name: 'Agence',
         price: 69.99,
         stripePriceId: 'price_Agence6990',
-        promptsLimit: 9999,
-        imagesLimit: 300,
-        videosLimit: 10,
-        audioLimit: 60,
+        promptsLimit: 999999, // Unlimited texts
+        imagesLimit: 300, // 300 images/month
+        videosLimit: 10, // 10 videos/month
+        audioLimit: 60, // 60 audios/month
       },
     ];
   }
@@ -118,11 +118,12 @@ export class AiPaymentService {
           stripeCustomerId: customerId,
         });
         const saved = await this.aiProfileRepo.save(newProfile);
+        const curieuxPlan = this.getPlans().find((p) => p.id === 'curieux');
         const credit = this.aiCreditRepo.create({
-          promptsLimit: 100,
-          imagesLimit: 50,
-          videosLimit: 10,
-          audioLimit: 20,
+          promptsLimit: curieuxPlan?.promptsLimit ?? 3,
+          imagesLimit: curieuxPlan?.imagesLimit ?? 2,
+          videosLimit: curieuxPlan?.videosLimit ?? 0,
+          audioLimit: curieuxPlan?.audioLimit ?? 0,
           aiProfile: saved,
         });
         await this.aiCreditRepo.save(credit);

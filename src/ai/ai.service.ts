@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
@@ -67,6 +67,7 @@ export class AiService {
   async chat(messages: any[], userId?: number): Promise<string> {
     const start = Date.now();
     try {
+      if (userId) await this.checkLimits(userId, AiGenerationType.TEXT);
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
@@ -175,7 +176,8 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       { role: 'user', content: basePrompt },
     ];
 
-    const result = await this.chat(messages);
+    if (userId) await this.checkLimits(userId, AiGenerationType.TEXT);
+    const result = await this.chat(messages, userId);
 
     let generationId: number | undefined;
     if (userId) {
@@ -202,71 +204,68 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const userProfile = await this.getAiUserWithProfile(userId);
     const plan = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
 
+    // Get date range for limit checking
+    const now = new Date();
+    let sinceDate: Date;
+
     if (plan === PlanType.CURIEUX) {
+      // Daily limits for Curieux
       const createdAt = userProfile.createdAt;
-      const now = new Date();
       const diffDays = Math.ceil(
         (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
       );
       if (diffDays > 7)
-        throw new Error("Votre période d'essai de 7 jours est terminée.");
+        throw new BadRequestException("Votre période d'essai de 7 jours est terminée.");
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const count = await this.aiGenRepo.count({
-        where: { user: { id: userId }, type, createdAt: MoreThan(today) },
-      });
+      // Check daily limits
+      sinceDate = new Date();
+      sinceDate.setHours(0, 0, 0, 0);
+    } else {
+      // Monthly limits for Atelier, Studio, Agence
+      sinceDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
 
+    // Count usage since the date range started
+    const count = await this.aiGenRepo.count({
+      where: { user: { id: userId }, type, createdAt: MoreThan(sinceDate) },
+    });
+
+    // Check limits based on plan and type
+    if (plan === PlanType.CURIEUX) {
+      // Curieux: 2 images/day, 3 texts/day, no video, no audio
       if (type === AiGenerationType.IMAGE && count >= 2)
-        throw new Error(
-          'Limite atteinte : 2 images par jour avec le Pack Curieux.',
-        );
+        throw new BadRequestException('Limite atteinte : 2 images par jour avec le Pack Curieux.');
       if (type === AiGenerationType.TEXT && count >= 3)
-        throw new Error(
-          'Limite atteinte : 3 textes par jour avec le Pack Curieux.',
-        );
+        throw new BadRequestException('Limite atteinte : 3 textes par jour avec le Pack Curieux.');
+      if (type === AiGenerationType.VIDEO)
+        throw new BadRequestException('Le Pack Curieux ne permet pas la génération de vidéos.');
+      if (type === AiGenerationType.AUDIO)
+        throw new BadRequestException('Le Pack Curieux ne permet pas la génération d\'audios.');
+    } else if (plan === PlanType.ATELIER) {
+      // Atelier: 100 images/month, unlimited texts, no video, no audio
+      if (type === AiGenerationType.IMAGE && count >= 100)
+        throw new BadRequestException('Limite atteinte : 100 images par mois avec le plan Atelier.');
+      if (type === AiGenerationType.VIDEO)
+        throw new BadRequestException('Le plan Atelier ne permet pas la génération de vidéos.');
+      if (type === AiGenerationType.AUDIO)
+        throw new BadRequestException('Le plan Atelier ne permet pas la génération d\'audios.');
+    } else if (plan === PlanType.STUDIO) {
+      // Studio: 100 images/month, unlimited texts, 3 videos/month, no audio
+      if (type === AiGenerationType.IMAGE && count >= 100)
+        throw new BadRequestException('Limite atteinte : 100 images par mois avec le plan Studio.');
+      if (type === AiGenerationType.VIDEO && count >= 3)
+        throw new BadRequestException('Limite atteinte : 3 vidéos par mois avec le plan Studio.');
+      if (type === AiGenerationType.AUDIO)
+        throw new BadRequestException('Le plan Studio ne permet pas la génération d\'audios.');
+    } else if (plan === PlanType.AGENCE) {
+      // Agence: 300 images/month, unlimited texts, 10 videos/month, 60 audios/month
+      if (type === AiGenerationType.IMAGE && count >= 300)
+        throw new BadRequestException('Limite atteinte : 300 images par mois avec le plan Agence.');
+      if (type === AiGenerationType.VIDEO && count >= 10)
+        throw new BadRequestException('Limite atteinte : 10 vidéos par mois avec le plan Agence.');
+      if (type === AiGenerationType.AUDIO && count >= 60)
+        throw new BadRequestException('Limite atteinte : 60 audios par mois avec le plan Agence.');
     }
-
-    // Check 3D Limits for Agence (or any plan allowing 3D)
-    if (plan === PlanType.AGENCE && style === '3d') {
-      const now = new Date();
-      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-      // Count 3D generations this month
-      // We assume attributes JSON contains style: '3d' or typical check.
-      // For simplicity, we can query raw or rely on metadata if we stored it properly.
-      // Since attributes is JSONB or JSON, we can query it.
-      // NOTE: TypeORM simple find with JSON check depends on DB. Assuming simple count for now.
-      // Ideally we need a way to filter by attributes->>style = '3d'
-
-      // Fetching all images for this month and filtering in JS (simplest without custom query builder right now)
-      const recentImages = await this.aiGenRepo.find({
-        where: {
-          user: { id: userId },
-          type: AiGenerationType.IMAGE,
-          createdAt: MoreThan(firstDayOfMonth),
-        },
-        select: ['attributes'],
-      });
-
-      const count3D = recentImages.filter(
-        (g: any) => g.attributes?.style === '3d',
-      ).length;
-
-      if (count3D >= 25) {
-        throw new Error(
-          'Limite atteinte : 25 générations 3D par mois avec le Pack Agence.',
-        );
-      }
-    }
-
-    if (
-      plan === PlanType.ATELIER &&
-      (type === AiGenerationType.VIDEO || type === AiGenerationType.AUDIO)
-    )
-      throw new Error(
-        'Le plan Atelier ne permet pas la génération Audio/Vidéo.',
-      );
   }
 
   async generateImage(

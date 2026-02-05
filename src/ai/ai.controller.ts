@@ -10,6 +10,7 @@ import {
   Param,
   Query,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { HttpException, HttpStatus } from '@nestjs/common';
@@ -100,6 +101,7 @@ export class AiController {
       };
     } catch (error: any) {
       this.logger.error('Text generation error:', error);
+      if (error instanceof BadRequestException) throw error;
       throw new HttpException(
         { message: error?.message || 'Erreur interne lors de la génération de texte' },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -143,6 +145,7 @@ export class AiController {
       };
     } catch (error: any) {
       this.logger.error('Image generation error:', error);
+      if (error instanceof BadRequestException) throw error;
       throw new HttpException(
         { message: error?.message || 'Erreur interne lors de la génération d\'image' },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -180,6 +183,7 @@ export class AiController {
       return result;
     } catch (error: any) {
       this.logger.error('Social generation error:', error);
+      if (error instanceof BadRequestException) throw error;
       throw new HttpException(
         { message: error?.message || 'Erreur interne lors de la génération social' },
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -242,6 +246,7 @@ export class AiController {
       };
     } catch (error: any) {
       this.logger.error('Flyer generation error:', error);
+      if (error instanceof BadRequestException) throw error;
       throw new HttpException(
         { message: error?.message || 'Erreur interne lors de la génération de flyer' },
         HttpStatus.INTERNAL_SERVER_ERROR,
