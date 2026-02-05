@@ -162,13 +162,23 @@ export class AiPaymentService {
     }
 
     // Get user and profile
-    const user = await this.aiUserRepo.findOne({
+    let user = await this.aiUserRepo.findOne({
       where: { id: userId },
       relations: ['aiProfile', 'aiProfile.aiCredit'],
     });
 
-    if (!user?.aiProfile) {
-      throw new BadRequestException('Profil utilisateur non trouvé');
+    if (!user) {
+      throw new BadRequestException('Utilisateur non trouvé');
+    }
+
+    // Create AI Profile if it doesn't exist
+    if (!user.aiProfile) {
+      const profile = this.aiProfileRepo.create({
+        aiUser: user,
+        planType: PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] || PlanType.BASIC,
+        subscriptionStatus: SubscriptionStatus.ACTIVE,
+      });
+      user.aiProfile = await this.aiProfileRepo.save(profile);
     }
 
     // Update or create AiCredit with plan limits
