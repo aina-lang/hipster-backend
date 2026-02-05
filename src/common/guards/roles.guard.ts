@@ -51,7 +51,18 @@ export class RolesGuard implements CanActivate {
       r.toLowerCase().trim(),
     );
 
+    console.log(
+      `[RolesGuard] Checking access for User ID: ${request.user?.['userId'] || request.user?.['sub']}`,
+    );
+    console.log(`[RolesGuard] User Roles:`, userRoles);
+    console.log(`[RolesGuard] Required Roles:`, requiredRolesNormalized);
+
     // Vérification
-    return requiredRolesNormalized.some((role) => userRoles.includes(role));
+    const hasRole = requiredRolesNormalized.some((role) =>
+      userRoles.includes(role),
+    );
+    if (!hasRole)
+      console.warn('[RolesGuard] Access Denied. Missing required roles.');
+    return hasRole;
   }
 }
