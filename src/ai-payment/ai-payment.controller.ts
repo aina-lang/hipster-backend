@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { AiPaymentService } from './ai-payment.service';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -28,5 +28,12 @@ export class AiPaymentController {
   ) {
     const userId = req.user.sub;
     return this.aiPaymentService.confirmPlan(userId, body.planId);
+  }
+
+  @ApiOperation({ summary: 'Récupérer les limites d\'utilisation actuelles' })
+  @Get('credits')
+  async getCredits(@Req() req) {
+    const userId = req.user.sub;
+    return this.aiPaymentService.getCredits(userId);
   }
 }

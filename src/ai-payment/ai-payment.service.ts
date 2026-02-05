@@ -201,4 +201,25 @@ export class AiPaymentService {
       },
     };
   }
+
+  async getCredits(userId: number) {
+    const user = await this.aiUserRepo.findOne({
+      where: { id: userId },
+      relations: ['aiProfile', 'aiProfile.aiCredit'],
+    });
+
+    if (!user?.aiProfile?.aiCredit) {
+      throw new BadRequestException('Crédits utilisateur non trouvés');
+    }
+
+    const credit = user.aiProfile.aiCredit;
+    return {
+      promptsLimit: credit.promptsLimit,
+      imagesLimit: credit.imagesLimit,
+      videosLimit: credit.videosLimit,
+      audioLimit: credit.audioLimit,
+      createdAt: credit.createdAt,
+      updatedAt: credit.updatedAt,
+    };
+  }
 }
