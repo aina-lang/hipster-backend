@@ -14,6 +14,8 @@ import { AiUser } from 'src/ai/entities/ai-user.entity';
 import {
   AiSubscriptionProfile,
   AiAccessLevel,
+  PlanType,
+  SubscriptionStatus,
 } from 'src/profiles/entities/ai-subscription-profile.entity';
 import { OtpService } from 'src/otp/otp.service';
 import { OtpType } from 'src/common/enums/otp.enum';
@@ -21,6 +23,7 @@ import { MailService } from 'src/mail/mail.service';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
 import { deleteFile } from 'src/common/utils/file.utils';
+import { AiPaymentService } from 'src/ai-payment/ai-payment.service';
 
 @Injectable()
 export class AiAuthService {
@@ -34,6 +37,7 @@ export class AiAuthService {
     private readonly jwtService: JwtService,
     private readonly otpService: OtpService,
     private readonly mailService: MailService,
+    private readonly aiPaymentService: AiPaymentService,
   ) {}
 
   private readonly logger = new Logger(AiAuthService.name);
@@ -58,9 +62,16 @@ export class AiAuthService {
     });
     await this.aiUserRepo.save(user);
 
+    const planTypeInput = dto.planId ? dto.planId.toLowerCase() : 'curieux';
     const profile = this.aiProfileRepo.create({
       aiUser: user,
       accessLevel: AiAccessLevel.GUEST,
+      planType:
+        (PlanType as any)[planTypeInput.toUpperCase()] || PlanType.CURIEUX,
+      subscriptionStatus:
+        planTypeInput === 'curieux'
+          ? SubscriptionStatus.ACTIVE
+          : SubscriptionStatus.TRIAL,
     });
     await this.aiProfileRepo.save(profile);
 
@@ -86,9 +97,27 @@ export class AiAuthService {
       userRoles: ['ai_user'], // Standardized AI role
     });
 
+    let stripeData = null;
+    if (dto.planId && dto.planId !== 'curieux') {
+      const plan = this.aiPaymentService
+        .getPlans()
+        .find((p) => p.id === dto.planId);
+      if (plan && plan.stripePriceId) {
+        stripeData = await this.aiPaymentService.createPaymentSheet(
+          user.id,
+          plan.stripePriceId,
+        );
+
+        // Mark user as potentially requiring verification but also payment
+        // For now just returning data so the app can show the payment sheet
+      }
+    }
+
     return {
       message: 'Inscription AI réussie. Un code OTP a été envoyé.',
       email: user.email,
+      userId: user.id,
+      stripe: stripeData,
     };
   }
 

@@ -8,8 +8,16 @@ import { AiCredit } from '../profiles/entities/ai-credit.entity';
 import { AiGeneration } from '../ai/entities/ai-generation.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AiUser, AiSubscriptionProfile, AiCredit, AiGeneration])],
+  imports: [
+    TypeOrmModule.forFeature([
+      AiUser,
+      AiSubscriptionProfile,
+      AiCredit,
+      AiGeneration,
+    ]),
+  ],
   controllers: [AiPaymentController],
   providers: [AiPaymentService],
+  exports: [AiPaymentService],
 })
 export class AiPaymentModule {}

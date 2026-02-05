@@ -1,16 +1,19 @@
-import {
-  Injectable,
-  BadRequestException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
 import { AiUser } from '../ai/entities/ai-user.entity';
-import { AiSubscriptionProfile, PlanType, SubscriptionStatus } from '../profiles/entities/ai-subscription-profile.entity';
+import {
+  AiSubscriptionProfile,
+  PlanType,
+  SubscriptionStatus,
+} from '../profiles/entities/ai-subscription-profile.entity';
 import { AiCredit } from '../profiles/entities/ai-credit.entity';
-import { AiGeneration, AiGenerationType } from '../ai/entities/ai-generation.entity';
+import {
+  AiGeneration,
+  AiGenerationType,
+} from '../ai/entities/ai-generation.entity';
 
 @Injectable()
 export class AiPaymentService {
@@ -34,7 +37,7 @@ export class AiPaymentService {
     }
   }
 
-  private getPlans() {
+  public getPlans() {
     return [
       {
         id: 'curieux',
@@ -188,11 +191,15 @@ export class AiPaymentService {
     await this.aiCreditRepo.save(credit);
 
     // Update profile with plan type and subscription status
-    user.aiProfile.planType = PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] || PlanType.BASIC;
+    user.aiProfile.planType =
+      PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] ||
+      PlanType.BASIC;
     user.aiProfile.subscriptionStatus = SubscriptionStatus.ACTIVE;
     await this.aiProfileRepo.save(user.aiProfile);
 
-    this.logger.log(`Plan confirmed for user ${userId}: ${planId} with limits ${JSON.stringify(selectedPlan)}`);
+    this.logger.log(
+      `Plan confirmed for user ${userId}: ${planId} with limits ${JSON.stringify(selectedPlan)}`,
+    );
 
     return {
       message: 'Plan confirmé avec succès',
@@ -217,7 +224,9 @@ export class AiPaymentService {
     }
 
     const plan = user.aiProfile.planType || PlanType.CURIEUX;
-    const planConfig = this.getPlans().find((p) => p.id === plan.toLowerCase()) || this.getPlans()[0];
+    const planConfig =
+      this.getPlans().find((p) => p.id === plan.toLowerCase()) ||
+      this.getPlans()[0];
 
     // Determine the date range for counting usage
     let sinceDate: Date;
@@ -231,21 +240,45 @@ export class AiPaymentService {
       sinceDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
-    const promptsUsed = await this.aiGenRepo.count({
-      where: { user: { id: userId }, type: AiGenerationType.TEXT, createdAt: MoreThan(sinceDate) as any },
-    }).catch(() => 0);
+    const promptsUsed = await this.aiGenRepo
+      .count({
+        where: {
+          user: { id: userId },
+          type: AiGenerationType.TEXT,
+          createdAt: MoreThan(sinceDate) as any,
+        },
+      })
+      .catch(() => 0);
 
-    const imagesUsed = await this.aiGenRepo.count({
-      where: { user: { id: userId }, type: AiGenerationType.IMAGE, createdAt: MoreThan(sinceDate) as any },
-    }).catch(() => 0);
+    const imagesUsed = await this.aiGenRepo
+      .count({
+        where: {
+          user: { id: userId },
+          type: AiGenerationType.IMAGE,
+          createdAt: MoreThan(sinceDate) as any,
+        },
+      })
+      .catch(() => 0);
 
-    const videosUsed = await this.aiGenRepo.count({
-      where: { user: { id: userId }, type: AiGenerationType.VIDEO, createdAt: MoreThan(sinceDate) as any },
-    }).catch(() => 0);
+    const videosUsed = await this.aiGenRepo
+      .count({
+        where: {
+          user: { id: userId },
+          type: AiGenerationType.VIDEO,
+          createdAt: MoreThan(sinceDate) as any,
+        },
+      })
+      .catch(() => 0);
 
-    const audioUsed = await this.aiGenRepo.count({
-      where: { user: { id: userId }, type: AiGenerationType.AUDIO, createdAt: MoreThan(sinceDate) as any },
-    }).catch(() => 0);
+    const audioUsed = await this.aiGenRepo
+      .count({
+        where: {
+          user: { id: userId },
+          type: AiGenerationType.AUDIO,
+          createdAt: MoreThan(sinceDate) as any,
+        },
+      })
+      .catch(() => 0);
 
     // Always return limits from current plan config, not from stored credit
     return {
@@ -300,7 +333,7 @@ export class AiPaymentService {
     }
 
     const credit = user.aiProfile.aiCredit;
-    
+
     // Map generation type to credit field
     let fieldName: keyof typeof credit;
     let limitFieldName: keyof typeof credit;
@@ -323,7 +356,9 @@ export class AiPaymentService {
         limitFieldName = 'audioLimit';
         break;
       default:
-        throw new BadRequestException(`Type de génération non supporté: ${generationType}`);
+        throw new BadRequestException(
+          `Type de génération non supporté: ${generationType}`,
+        );
     }
 
     // Get current usage
@@ -332,24 +367,48 @@ export class AiPaymentService {
 
     switch (generationType) {
       case AiGenerationType.TEXT:
-        currentUsage = await this.aiGenRepo.count({
-          where: { user: { id: userId }, type: AiGenerationType.TEXT, createdAt: MoreThan(sinceDate) as any },
-        }).catch(() => 0);
+        currentUsage = await this.aiGenRepo
+          .count({
+            where: {
+              user: { id: userId },
+              type: AiGenerationType.TEXT,
+              createdAt: MoreThan(sinceDate) as any,
+            },
+          })
+          .catch(() => 0);
         break;
       case AiGenerationType.IMAGE:
-        currentUsage = await this.aiGenRepo.count({
-          where: { user: { id: userId }, type: AiGenerationType.IMAGE, createdAt: MoreThan(sinceDate) as any },
-        }).catch(() => 0);
+        currentUsage = await this.aiGenRepo
+          .count({
+            where: {
+              user: { id: userId },
+              type: AiGenerationType.IMAGE,
+              createdAt: MoreThan(sinceDate) as any,
+            },
+          })
+          .catch(() => 0);
         break;
       case AiGenerationType.VIDEO:
-        currentUsage = await this.aiGenRepo.count({
-          where: { user: { id: userId }, type: AiGenerationType.VIDEO, createdAt: MoreThan(sinceDate) as any },
-        }).catch(() => 0);
+        currentUsage = await this.aiGenRepo
+          .count({
+            where: {
+              user: { id: userId },
+              type: AiGenerationType.VIDEO,
+              createdAt: MoreThan(sinceDate) as any,
+            },
+          })
+          .catch(() => 0);
         break;
       case AiGenerationType.AUDIO:
-        currentUsage = await this.aiGenRepo.count({
-          where: { user: { id: userId }, type: AiGenerationType.AUDIO, createdAt: MoreThan(sinceDate) as any },
-        }).catch(() => 0);
+        currentUsage = await this.aiGenRepo
+          .count({
+            where: {
+              user: { id: userId },
+              type: AiGenerationType.AUDIO,
+              createdAt: MoreThan(sinceDate) as any,
+            },
+          })
+          .catch(() => 0);
         break;
     }
 
@@ -358,7 +417,9 @@ export class AiPaymentService {
 
     // If limit is 0, the plan doesn't allow this generation type
     if (typeof limit === 'number' && limit === 0) {
-      throw new BadRequestException(`Le plan actuel n'autorise pas la génération de ${this.getTypeLabel(generationType)}.`);
+      throw new BadRequestException(
+        `Le plan actuel n'autorise pas la génération de ${this.getTypeLabel(generationType)}.`,
+      );
     }
 
     // Check if limit reached (usage count is already incremented by ai.service.ts when saved)
