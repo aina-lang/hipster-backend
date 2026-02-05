@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { AiPaymentService } from './ai-payment.service';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { AiGenerationType } from '../ai/entities/ai-generation.entity';
 
 @ApiTags('AI-Payment')
 @Controller('ai/payment')
@@ -35,5 +36,15 @@ export class AiPaymentController {
   async getCredits(@Req() req) {
     const userId = req.user.sub;
     return this.aiPaymentService.getCredits(userId);
+  }
+
+  @ApiOperation({ summary: 'Décrémenter les crédits d\'un type de génération et vérifier les limites' })
+  @Post('decrement')
+  async decrementCredits(
+    @Req() req,
+    @Body() body: { type: AiGenerationType },
+  ) {
+    const userId = req.user.sub;
+    return this.aiPaymentService.decrementCredits(userId, body.type);
   }
 }

@@ -12,6 +12,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { AiService } from './ai.service';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -86,16 +87,24 @@ export class AiController {
     body: { params: any; type: 'blog' | 'social' | 'ad' | 'text' | 'texte' },
     @Req() req,
   ) {
-    console.log('--- API POST /ai/text ---', JSON.stringify(body, null, 2));
-    const result = await this.aiService.generateText(
-      body.params,
-      body.type,
-      req.user.sub,
-    );
-    return {
-      content: result.content,
-      generationId: result.generationId,
-    };
+    try {
+      console.log('--- API POST /ai/text ---', JSON.stringify(body, null, 2));
+      const result = await this.aiService.generateText(
+        body.params,
+        body.type,
+        req.user.sub,
+      );
+      return {
+        content: result.content,
+        generationId: result.generationId,
+      };
+    } catch (error: any) {
+      this.logger.error('Text generation error:', error);
+      throw new HttpException(
+        { message: error?.message || 'Erreur interne lors de la génération de texte' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @ApiOperation({ summary: 'Générer une image via IA' })
@@ -111,8 +120,9 @@ export class AiController {
     },
     @Req() req,
   ) {
-    console.log('--- API POST /ai/image ---', JSON.stringify(body, null, 2));
-    // AI isolation: we don't fetch roles from standard user.
+    try {
+      console.log('--- API POST /ai/image ---', JSON.stringify(body, null, 2));
+      // AI isolation: we don't fetch roles from standard user.
     // We check the AI subscription profile linked to this AI account.
     // Fetch user with profile to check planType
     const aiUser = await this.aiService.getAiUserWithProfile(req.user.sub);
@@ -120,17 +130,24 @@ export class AiController {
       aiUser?.aiProfile?.planType === 'pro' ||
       aiUser?.aiProfile?.planType === 'enterprise';
 
-    const result = await this.aiService.generateImage(
-      body.params,
-      body.style,
-      req.user.sub,
-      body.negativePrompt,
-    );
-    return {
-      url: await this.aiService.applyWatermark(result.url, isPremium),
-      rawUrl: result.url,
-      generationId: result.generationId,
-    };
+      const result = await this.aiService.generateImage(
+        body.params,
+        body.style,
+        req.user.sub,
+        body.negativePrompt,
+      );
+      return {
+        url: await this.aiService.applyWatermark(result.url, isPremium),
+        rawUrl: result.url,
+        generationId: result.generationId,
+      };
+    } catch (error: any) {
+      this.logger.error('Image generation error:', error);
+      throw new HttpException(
+        { message: error?.message || 'Erreur interne lors de la génération d\'image' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @ApiOperation({ summary: 'Générer un document via IA' })
@@ -153,13 +170,21 @@ export class AiController {
   @Post('social')
   @Roles(Role.AI_USER)
   async generateSocial(@Body() body: { params: any }, @Req() req) {
-    console.log('--- API POST /ai/social ---', JSON.stringify(body, null, 2));
-    const result = await this.aiService.generateSocial(
-      body.params,
-      req.user.sub,
-    );
-    console.log('--- API SOCIAL RESULT SUCCESS ---');
-    return result;
+    try {
+      console.log('--- API POST /ai/social ---', JSON.stringify(body, null, 2));
+      const result = await this.aiService.generateSocial(
+        body.params,
+        req.user.sub,
+      );
+      console.log('--- API SOCIAL RESULT SUCCESS ---');
+      return result;
+    } catch (error: any) {
+      this.logger.error('Social generation error:', error);
+      throw new HttpException(
+        { message: error?.message || 'Erreur interne lors de la génération social' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @ApiOperation({ summary: 'Exporter un document (PDF, Word, Excel)' })
@@ -202,8 +227,8 @@ export class AiController {
     @Body() body: { params: any; negativePrompt?: string },
     @Req() req,
   ) {
-    console.log('--- API POST /ai/flyer ---', JSON.stringify(body, null, 2));
     try {
+      console.log('--- API POST /ai/flyer ---', JSON.stringify(body, null, 2));
       const result = await this.aiService.generateFlyer(
         body.params,
         req.user.sub,
@@ -217,7 +242,10 @@ export class AiController {
       };
     } catch (error: any) {
       this.logger.error('Flyer generation error:', error);
-      throw error;
+      throw new HttpException(
+        { message: error?.message || 'Erreur interne lors de la génération de flyer' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }
