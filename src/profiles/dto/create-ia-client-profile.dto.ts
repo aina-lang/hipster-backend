@@ -21,7 +21,7 @@ export class CreateIaClientProfileDto {
 
   @IsOptional()
   @IsEnum(PlanType)
-  planType?: PlanType = PlanType.BASIC;
+  planType?: PlanType = PlanType.CURIEUX;
 
   @IsOptional()
   @IsNumber()

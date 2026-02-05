@@ -178,7 +178,9 @@ export class AiPaymentService {
     if (!user.aiProfile) {
       const profile = this.aiProfileRepo.create({
         aiUser: user,
-        planType: PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] || PlanType.BASIC,
+        planType:
+          PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] ||
+          PlanType.CURIEUX,
         subscriptionStatus: SubscriptionStatus.ACTIVE,
       });
       user.aiProfile = await this.aiProfileRepo.save(profile);
@@ -203,7 +205,7 @@ export class AiPaymentService {
     // Update profile with plan type and subscription status
     user.aiProfile.planType =
       PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] ||
-      PlanType.BASIC;
+      PlanType.CURIEUX;
     user.aiProfile.subscriptionStatus = SubscriptionStatus.ACTIVE;
     await this.aiProfileRepo.save(user.aiProfile);
 

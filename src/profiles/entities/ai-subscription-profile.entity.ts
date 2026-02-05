@@ -20,9 +20,6 @@ export enum SubscriptionStatus {
 }
 
 export enum PlanType {
-  BASIC = 'basic',
-  PRO = 'pro',
-  ENTERPRISE = 'enterprise',
   CURIEUX = 'curieux',
   ATELIER = 'atelier',
   STUDIO = 'studio',
@@ -49,7 +46,7 @@ export class AiSubscriptionProfile {
   @Column({
     type: 'enum',
     enum: PlanType,
-    default: PlanType.BASIC,
+    default: PlanType.CURIEUX,
   })
   planType: PlanType;
 

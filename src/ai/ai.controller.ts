@@ -21,6 +21,7 @@ import { Role } from '../common/enums/role.enum';
 import { ResponseMessage } from '../common/decorators/response-message.decorator';
 import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
+import { PlanType } from '../profiles/entities/ai-subscription-profile.entity';
 
 @ApiTags('AI')
 @Controller('ai')
@@ -103,7 +104,10 @@ export class AiController {
       this.logger.error('Text generation error:', error);
       if (error instanceof BadRequestException) throw error;
       throw new HttpException(
-        { message: error?.message || 'Erreur interne lors de la génération de texte' },
+        {
+          message:
+            error?.message || 'Erreur interne lors de la génération de texte',
+        },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -125,12 +129,10 @@ export class AiController {
     try {
       console.log('--- API POST /ai/image ---', JSON.stringify(body, null, 2));
       // AI isolation: we don't fetch roles from standard user.
-    // We check the AI subscription profile linked to this AI account.
-    // Fetch user with profile to check planType
-    const aiUser = await this.aiService.getAiUserWithProfile(req.user.sub);
-    const isPremium =
-      aiUser?.aiProfile?.planType === 'pro' ||
-      aiUser?.aiProfile?.planType === 'enterprise';
+      // We check the AI subscription profile linked to this AI account.
+      // Fetch user with profile to check planType
+      const aiUser = await this.aiService.getAiUserWithProfile(req.user.sub);
+      const isPremium = aiUser?.aiProfile?.planType !== PlanType.CURIEUX;
 
       const result = await this.aiService.generateImage(
         body.params,
@@ -147,7 +149,10 @@ export class AiController {
       this.logger.error('Image generation error:', error);
       if (error instanceof BadRequestException) throw error;
       throw new HttpException(
-        { message: error?.message || 'Erreur interne lors de la génération d\'image' },
+        {
+          message:
+            error?.message || "Erreur interne lors de la génération d'image",
+        },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -185,7 +190,10 @@ export class AiController {
       this.logger.error('Social generation error:', error);
       if (error instanceof BadRequestException) throw error;
       throw new HttpException(
-        { message: error?.message || 'Erreur interne lors de la génération social' },
+        {
+          message:
+            error?.message || 'Erreur interne lors de la génération social',
+        },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -248,7 +256,10 @@ export class AiController {
       this.logger.error('Flyer generation error:', error);
       if (error instanceof BadRequestException) throw error;
       throw new HttpException(
-        { message: error?.message || 'Erreur interne lors de la génération de flyer' },
+        {
+          message:
+            error?.message || 'Erreur interne lors de la génération de flyer',
+        },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

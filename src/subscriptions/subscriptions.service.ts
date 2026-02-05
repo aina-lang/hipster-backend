@@ -43,7 +43,7 @@ export class SubscriptionsService {
 
       const newProfile = this.subRepo.create({
         aiUser: user,
-        planType: PlanType.BASIC,
+        planType: PlanType.CURIEUX,
         subscriptionStatus: SubscriptionStatus.ACTIVE,
       });
       const savedProfile = await this.subRepo.save(newProfile);

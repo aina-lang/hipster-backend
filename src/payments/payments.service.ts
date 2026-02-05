@@ -21,7 +21,11 @@ import {
   PaymentType,
 } from './entities/payment.entity';
 import { ConfigService } from '@nestjs/config';
-import { AiSubscriptionProfile, PlanType, SubscriptionStatus } from 'src/profiles/entities/ai-subscription-profile.entity';
+import {
+  AiSubscriptionProfile,
+  PlanType,
+  SubscriptionStatus,
+} from 'src/profiles/entities/ai-subscription-profile.entity';
 import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
 import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
 
@@ -154,7 +158,10 @@ export class PaymentsService {
   }
 
   private async syncAiSubscription(stripeSubscriptionId: string) {
-    const subscription = await this.stripeService.instance.subscriptions.retrieve(stripeSubscriptionId);
+    const subscription =
+      await this.stripeService.instance.subscriptions.retrieve(
+        stripeSubscriptionId,
+      );
     const customerId = subscription.customer as string;
 
     const profile = await this.aiProfileRepo.findOne({
@@ -189,24 +196,31 @@ export class PaymentsService {
     }
 
     // Determine Plan Type from Stripe Price ID
-    // Note: In real app, you'd map price IDs to plans
-    let planType = PlanType.BASIC;
+    let planType = PlanType.CURIEUX;
     const priceId = subscription.items.data[0].price.id;
 
-    if (priceId === 'price_HpsPro123') {
-      planType = PlanType.PRO;
-    } else if (priceId === 'price_HpsEnt456') {
-      planType = PlanType.ENTERPRISE;
+    if (priceId === 'price_Atelier1790') {
+      planType = PlanType.ATELIER;
+    } else if (priceId === 'price_Studio2990') {
+      planType = PlanType.STUDIO;
+    } else if (priceId === 'price_Agence6990') {
+      planType = PlanType.AGENCE;
     }
 
     profile.subscriptionStatus = status;
     profile.planType = planType;
-    profile.lastRenewalDate = new Date((subscription as any).current_period_start * 1000);
-    profile.nextRenewalDate = new Date((subscription as any).current_period_end * 1000);
+    profile.lastRenewalDate = new Date(
+      (subscription as any).current_period_start * 1000,
+    );
+    profile.nextRenewalDate = new Date(
+      (subscription as any).current_period_end * 1000,
+    );
 
     // Update AiCredit based on plan upgrade
     if (status === SubscriptionStatus.ACTIVE) {
-      let credit = await this.aiCreditRepo.findOne({ where: { aiProfile: { id: profile.id } } });
+      let credit = await this.aiCreditRepo.findOne({
+        where: { aiProfile: { id: profile.id } },
+      });
       if (!credit) {
         credit = this.aiCreditRepo.create({
           promptsLimit: 0,
@@ -216,8 +230,9 @@ export class PaymentsService {
           aiProfile: profile,
         });
       }
-      if (planType === PlanType.PRO) credit.promptsLimit = 500;
-      if (planType === PlanType.ENTERPRISE) credit.promptsLimit = 9999;
+      if (planType === PlanType.ATELIER) credit.promptsLimit = 999999;
+      if (planType === PlanType.STUDIO) credit.promptsLimit = 999999;
+      if (planType === PlanType.AGENCE) credit.promptsLimit = 999999;
       await this.aiCreditRepo.save(credit);
     }
 
