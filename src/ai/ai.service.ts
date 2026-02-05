@@ -1,4 +1,9 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
@@ -77,7 +82,53 @@ export class AiService {
   ): Promise<{ content: string; conversationId?: string }> {
     const start = Date.now();
     try {
-      if (userId) await this.checkLimits(userId, AiGenerationType.TEXT);
+      if (userId) {
+        // Fetch user with profile
+        const user = await this.aiUserRepo.findOne({
+          where: { id: userId },
+          relations: ['aiProfile'],
+        });
+
+        if (!user || !user.aiProfile) {
+          throw new ForbiddenException('Utilisateur ou profil non trouvé');
+        }
+
+        // Check Pack Curieux message limit (10 messages per conversation)
+        // We only check if it's an existing conversation
+        if (user.aiProfile.planType === PlanType.CURIEUX && conversationId) {
+          const conversation = await this.aiGenRepo.findOne({
+            where: { id: parseInt(conversationId), user: { id: userId } },
+          });
+
+          if (conversation) {
+            try {
+              // Parse the prompt which contains the message array
+              const storedMessages = JSON.parse(conversation.prompt);
+              if (Array.isArray(storedMessages)) {
+                // Count user messages in the conversation
+                const userMessageCount = storedMessages.filter(
+                  (m) => m.role === 'user',
+                ).length;
+
+                if (userMessageCount >= 10) {
+                  throw new ForbiddenException(
+                    'Limite de 10 messages atteinte pour cette conversation. Démarrez une nouvelle conversation pour continuer.',
+                  );
+                }
+              }
+            } catch (e) {
+              this.logger.warn(
+                `Failed to check message limit for conversation ${conversationId}: ${e.message}`,
+              );
+            }
+          }
+        }
+
+        // Use existing checkLimits for daily/monthly budget
+        await this.checkLimits(userId, AiGenerationType.TEXT);
+      }
+
+      // Call OpenAI API
       const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o',
         messages,
