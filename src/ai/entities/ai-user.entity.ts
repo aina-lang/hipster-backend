@@ -15,8 +15,8 @@ export class AiUser {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  firstName: string;
+  @Column({ nullable: true })
+  firstName?: string;
 
   @Column({ nullable: true })
   lastName: string;

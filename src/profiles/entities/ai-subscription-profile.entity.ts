@@ -64,9 +64,6 @@ export class AiSubscriptionProfile {
   isSetupComplete: boolean;
 
   @Column({ nullable: true })
-  companyName?: string;
-
-  @Column({ nullable: true })
   professionalEmail?: string;
 
   @Column({ nullable: true })

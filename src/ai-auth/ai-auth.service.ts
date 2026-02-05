@@ -51,8 +51,8 @@ export class AiAuthService {
     const user = this.aiUserRepo.create({
       email,
       password: hashedPassword,
-      firstName: dto.firstName || '',
-      lastName: dto.lastName || '',
+      firstName: '', // No longer used in setup
+      lastName: dto.lastName || '', // Stores the "Full Name / Company Name"
       isActive: true,
       isEmailVerified: false,
     });
@@ -79,7 +79,10 @@ export class AiAuthService {
       to: user.email,
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
-      context: { name: user.lastName || user.firstName || user.email, code: otp },
+      context: {
+        name: user.lastName || user.firstName || user.email,
+        code: otp,
+      },
       userRoles: ['ai_user'], // Standardized AI role
     });
 
@@ -229,7 +232,9 @@ export class AiAuthService {
 
   async resendOtp(email: string) {
     const normalizedEmail = email.trim().toLowerCase();
-    const user = await this.aiUserRepo.findOne({ where: { email: normalizedEmail } });
+    const user = await this.aiUserRepo.findOne({
+      where: { email: normalizedEmail },
+    });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     const otp = await this.otpService.generateOtp(user, OtpType.OTP);
@@ -237,7 +242,10 @@ export class AiAuthService {
       to: user.email,
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
-      context: { name: user.lastName || user.firstName || user.email, code: otp },
+      context: {
+        name: user.lastName || user.firstName || user.email,
+        code: otp,
+      },
       userRoles: ['ai_user'],
     });
 
@@ -248,8 +256,8 @@ export class AiAuthService {
     const user = await this.aiUserRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
-    if (dto.firstName) user.firstName = dto.firstName;
     if (dto.lastName) user.lastName = dto.lastName;
+    // firstName is ignored in simplified flow
 
     if (dto.avatarUrl && user.avatarUrl && dto.avatarUrl !== user.avatarUrl) {
       deleteFile(user.avatarUrl);
@@ -275,7 +283,8 @@ export class AiAuthService {
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     const isMatch = await bcrypt.compare(dto.oldPassword, user.password);
-    if (!isMatch) throw new UnauthorizedException('Mot de passe actuel incorrect.');
+    if (!isMatch)
+      throw new UnauthorizedException('Mot de passe actuel incorrect.');
 
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
     user.password = hashedPassword;
