@@ -50,6 +50,12 @@ export class AiService {
     });
   }
 
+  async getConversation(conversationId: number, userId: number) {
+    return this.aiGenRepo.findOne({
+      where: { id: conversationId, user: { id: userId } },
+    });
+  }
+
   async deleteGeneration(id: number, userId: number): Promise<void> {
     const gen = await this.aiGenRepo.findOne({
       where: { id, user: { id: userId } },
@@ -64,7 +70,11 @@ export class AiService {
   }
 
   /* --------------------- CHAT / TEXT --------------------- */
-  async chat(messages: any[], userId?: number): Promise<string> {
+  async chat(
+    messages: any[],
+    userId?: number,
+    conversationId?: string,
+  ): Promise<{ content: string; conversationId?: string }> {
     const start = Date.now();
     try {
       if (userId) await this.checkLimits(userId, AiGenerationType.TEXT);
@@ -74,18 +84,55 @@ export class AiService {
       });
       const content = completion.choices[0].message.content || '';
 
+      let generationId: string | undefined;
+
       if (userId) {
-        const lastUserMsg = messages.filter((m) => m.role === 'user').pop();
-        await this.aiGenRepo.save({
-          user: { id: userId } as AiUser,
-          type: AiGenerationType.CHAT,
-          prompt: lastUserMsg?.content || 'Chat session',
-          result: content,
-          title: lastUserMsg?.content?.substring(0, 30) + '...',
-        });
+        let generation: AiGeneration;
+
+        if (conversationId) {
+          // Update existing conversation
+          generation = await this.aiGenRepo.findOne({
+            where: { id: parseInt(conversationId), user: { id: userId } },
+          });
+
+          if (generation) {
+            // Update the existing conversation
+            generation.result = content;
+            generation.prompt = JSON.stringify(messages); // Store full conversation history
+            await this.aiGenRepo.save(generation);
+            this.logger.log(
+              `Updated conversation ${conversationId} for user ${userId}`,
+            );
+          } else {
+            this.logger.warn(
+              `Conversation ${conversationId} not found, creating new one`,
+            );
+            // If conversation not found, create a new one
+            conversationId = null;
+          }
+        }
+
+        if (!conversationId) {
+          // Create new conversation
+          const firstUserMsg = messages.find((m) => m.role === 'user');
+          generation = await this.aiGenRepo.save({
+            user: { id: userId } as AiUser,
+            type: AiGenerationType.CHAT,
+            prompt: JSON.stringify(messages),
+            result: content,
+            title:
+              (firstUserMsg?.content?.substring(0, 50) || 'Conversation') +
+              '...',
+          });
+          this.logger.log(
+            `Created new conversation ${generation.id} for user ${userId}`,
+          );
+        }
+
+        generationId = generation.id.toString();
       }
 
-      return content;
+      return { content, conversationId: generationId };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       throw new Error(`Erreur AI: ${msg}`);
@@ -177,7 +224,8 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     ];
 
     if (userId) await this.checkLimits(userId, AiGenerationType.TEXT);
-    const result = await this.chat(messages, userId);
+    const chatResult = await this.chat(messages, userId);
+    const result = chatResult.content;
 
     let generationId: number | undefined;
     if (userId) {

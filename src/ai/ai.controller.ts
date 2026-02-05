@@ -56,6 +56,13 @@ export class AiController {
     return this.aiService.getHistory(req.user.sub);
   }
 
+  @ApiOperation({ summary: 'Récupérer une conversation spécifique' })
+  @Get('history/:id')
+  @Roles(Role.AI_USER)
+  async getConversation(@Param('id') id: string, @Req() req) {
+    return this.aiService.getConversation(parseInt(id), req.user.sub);
+  }
+
   @ApiOperation({ summary: "Supprimer un item d'historique" })
   @Post('history/:id/delete') // Using POST for broader compatibility if needed, but DELETE is better REST
   @Roles(Role.AI_USER)
@@ -75,10 +82,16 @@ export class AiController {
   @ApiOperation({ summary: "Chat avec l'IA (GPT-5)" })
   @Post('chat')
   @Roles(Role.AI_USER)
-  async chat(@Body() body: { messages: any[] }, @Req() req) {
-    return {
-      message: await this.aiService.chat(body.messages, req.user.sub),
-    };
+  async chat(
+    @Body() body: { messages: any[]; conversationId?: string },
+    @Req() req,
+  ) {
+    const result = await this.aiService.chat(
+      body.messages,
+      req.user.sub,
+      body.conversationId,
+    );
+    return { data: result };
   }
 
   @ApiOperation({ summary: 'Générer du texte via IA' })
