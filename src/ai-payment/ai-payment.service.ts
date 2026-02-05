@@ -216,9 +216,20 @@ export class AiPaymentService {
       throw new BadRequestException('Crédits utilisateur non trouvés');
     }
 
-    const credit = user.aiProfile.aiCredit;
-    // Compute usage counts since the credit was created (or since epoch as fallback)
-    const sinceDate = credit.createdAt || new Date(0);
+    const plan = user.aiProfile.planType || PlanType.CURIEUX;
+    const planConfig = this.getPlans().find((p) => p.id === plan.toLowerCase()) || this.getPlans()[0];
+
+    // Determine the date range for counting usage
+    let sinceDate: Date;
+    if (plan === PlanType.CURIEUX) {
+      // Daily count for Curieux
+      sinceDate = new Date();
+      sinceDate.setHours(0, 0, 0, 0);
+    } else {
+      // Monthly count for Atelier, Studio, Agence
+      const now = new Date();
+      sinceDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
 
     const promptsUsed = await this.aiGenRepo.count({
       where: { user: { id: userId }, type: AiGenerationType.TEXT, createdAt: MoreThan(sinceDate) as any },
@@ -236,17 +247,19 @@ export class AiPaymentService {
       where: { user: { id: userId }, type: AiGenerationType.AUDIO, createdAt: MoreThan(sinceDate) as any },
     }).catch(() => 0);
 
+    // Always return limits from current plan config, not from stored credit
     return {
-      promptsLimit: credit.promptsLimit,
-      imagesLimit: credit.imagesLimit,
-      videosLimit: credit.videosLimit,
-      audioLimit: credit.audioLimit,
+      promptsLimit: planConfig.promptsLimit,
+      imagesLimit: planConfig.imagesLimit,
+      videosLimit: planConfig.videosLimit,
+      audioLimit: planConfig.audioLimit,
       promptsUsed,
       imagesUsed,
       videosUsed,
       audioUsed,
-      createdAt: credit.createdAt,
-      updatedAt: credit.updatedAt,
+      planType: plan.toLowerCase(),
+      createdAt: user.aiProfile.aiCredit.createdAt,
+      updatedAt: user.aiProfile.aiCredit.updatedAt,
     };
   }
 
