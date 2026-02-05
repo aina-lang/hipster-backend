@@ -131,7 +131,7 @@ export class AiAuthService {
 
     const user = await this.aiUserRepo.findOne({
       where: { email },
-      relations: ['aiProfile'],
+      relations: ['aiProfile', 'aiProfile.aiCredit'],
     });
 
     if (!user) {
@@ -216,7 +216,7 @@ export class AiAuthService {
     const normalizedEmail = email.trim().toLowerCase();
     const user = await this.aiUserRepo.findOne({
       where: { email: normalizedEmail },
-      relations: ['aiProfile'],
+      relations: ['aiProfile', 'aiProfile.aiCredit'],
     });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
