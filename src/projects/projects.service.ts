@@ -1547,13 +1547,13 @@ export class ProjectsService {
       return Buffer.from(pdfBuffer);
     } catch (error) {
       console.error('Project PDF generation error:', error);
-      await browser.close();
+      if (browser) await browser.close();
       throw error;
     }
   }
 
   private getProjectHtml(project: Project): string {
-    const progress = this.calculateProgress(project.tasks);
+    const progress = this.calculateProgress(project.tasks || []);
     const formatDate = (date: Date | string | undefined) => {
       if (!date) return 'N/A';
       return new Date(date).toLocaleDateString('fr-FR');
@@ -1603,7 +1603,7 @@ export class ProjectsService {
         <div class="info-grid">
           <div class="info-box">
             <div class="info-label">Client</div>
-            <strong>${project.client?.companyName || project.client?.user?.firstName + ' ' + project.client?.user?.lastName}</strong><br>
+            <strong>${project.client?.companyName || (project.client?.user ? project.client.user.firstName + ' ' + project.client.user.lastName : 'N/A')}</strong><br>
             ${project.client?.user?.email || ''}
           </div>
           <div class="info-box">
@@ -1633,7 +1633,7 @@ export class ProjectsService {
             </tr>
           </thead>
           <tbody>
-            ${project.tasks
+            ${(project.tasks || [])
               .map(
                 (task) => `
               <tr>

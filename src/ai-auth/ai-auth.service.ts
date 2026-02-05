@@ -56,7 +56,7 @@ export class AiAuthService {
       user = this.aiUserRepo.create({
         email: normalizedEmail,
         password: hashedPassword,
-        name: dto.name || dto.lastName || '',
+        name: dto.name || '',
         isActive: false, // Inactive until OTP verified
         isEmailVerified: false,
       });
@@ -285,7 +285,6 @@ export class AiAuthService {
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     if (dto.name) user.name = dto.name;
-    if (dto.lastName) user.name = dto.lastName; // Backward compatibility for a bit if needed
 
     if (dto.avatarUrl && user.avatarUrl && dto.avatarUrl !== user.avatarUrl) {
       deleteFile(user.avatarUrl);

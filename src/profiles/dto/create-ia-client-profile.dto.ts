@@ -36,20 +36,12 @@ export class CreateIaClientProfileDto {
   nextRenewalDate?: string;
 
   @IsOptional()
-  @IsIn(['particulier', 'entreprise'])
-  profileType?: 'particulier' | 'entreprise';
+  @IsString()
+  job?: string;
 
   @IsOptional()
   @IsBoolean()
   isSetupComplete?: boolean;
-
-  @IsOptional()
-  @IsString()
-  companyName?: string;
-
-  @IsOptional()
-  @IsString()
-  job?: string;
 
   @IsOptional()
   @IsString()
