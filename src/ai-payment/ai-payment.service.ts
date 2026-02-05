@@ -258,8 +258,31 @@ export class AiPaymentService {
       relations: ['aiProfile', 'aiProfile.aiCredit'],
     });
 
-    if (!user?.aiProfile?.aiCredit) {
-      throw new BadRequestException('Profil utilisateur ou crédits non trouvés');
+    // Ensure profile and credit exist. If missing, create defaults for 'curieux'
+    const curieuxPlan = this.getPlans().find((p) => p.id === 'curieux');
+
+    if (!user) {
+      throw new BadRequestException('Utilisateur introuvable');
+    }
+
+    if (!user.aiProfile) {
+      const newProfile = this.aiProfileRepo.create({
+        aiUser: { id: userId } as AiUser,
+        planType: PlanType.CURIEUX,
+        subscriptionStatus: SubscriptionStatus.ACTIVE,
+      });
+      user.aiProfile = await this.aiProfileRepo.save(newProfile);
+    }
+
+    if (!user.aiProfile.aiCredit) {
+      const creditToCreate = this.aiCreditRepo.create({
+        promptsLimit: curieuxPlan?.promptsLimit ?? 100,
+        imagesLimit: curieuxPlan?.imagesLimit ?? 50,
+        videosLimit: curieuxPlan?.videosLimit ?? 10,
+        audioLimit: curieuxPlan?.audioLimit ?? 20,
+        aiProfile: user.aiProfile,
+      });
+      user.aiProfile.aiCredit = await this.aiCreditRepo.save(creditToCreate);
     }
 
     const credit = user.aiProfile.aiCredit;
@@ -318,6 +341,11 @@ export class AiPaymentService {
 
     // Get the limit
     const limit = credit[limitFieldName] as number;
+
+    // If limit is 0, the plan doesn't allow this generation type
+    if (typeof limit === 'number' && limit === 0) {
+      throw new BadRequestException(`Le plan actuel n'autorise pas la génération de ${this.getTypeLabel(generationType)}.`);
+    }
 
     // Check if limit reached (usage count is already incremented by ai.service.ts when saved)
     if (currentUsage >= limit) {
