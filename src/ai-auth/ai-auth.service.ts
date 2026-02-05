@@ -50,17 +50,7 @@ export class AiAuthService {
     });
 
     if (user) {
-      if (user.isActive && user.isEmailVerified) {
-        throw new ConflictException('Email déjà utilisé.');
-      }
-      // Retry flow for inactive/unverified users
-      this.logger.log(
-        `Registration retry for inactive user: ${normalizedEmail}`,
-      );
-      user.password = await bcrypt.hash(dto.password, 10);
-      user.lastName = dto.lastName || user.lastName || '';
-      user.isEmailVerified = false;
-      user.isActive = false;
+      throw new ConflictException('Email déjà utilisé.');
     } else {
       const hashedPassword = await bcrypt.hash(dto.password, 10);
       user = this.aiUserRepo.create({
