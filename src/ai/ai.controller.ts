@@ -52,6 +52,7 @@ export class AiController {
   @Get('history')
   @Roles(Role.AI_USER)
   async getHistory(@Req() req) {
+    console.log('[AiController] GET /history called by user:', req.user.sub);
     return this.aiService.getHistory(req.user.sub);
   }
 
