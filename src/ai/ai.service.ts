@@ -3,6 +3,7 @@ import {
   Logger,
   BadRequestException,
   ForbiddenException,
+  HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -47,7 +48,10 @@ export class AiService {
 
   /* --------------------- USER & HISTORY --------------------- */
   async getAiUserWithProfile(id: number) {
-    return this.aiUserRepo.findOne({ where: { id }, relations: ['aiProfile'] });
+    return this.aiUserRepo.findOne({
+      where: { id },
+      relations: ['aiProfile', 'aiProfile.aiCredit'],
+    });
   }
 
   async getHistory(userId: number) {
@@ -131,7 +135,12 @@ export class AiService {
         }
 
         // Use existing checkLimits for daily/monthly budget
-        await this.checkLimits(userId, AiGenerationType.TEXT);
+        await this.checkLimits(
+          userId,
+          AiGenerationType.TEXT,
+          null,
+          !conversationId,
+        );
       }
 
       // Call OpenAI API
@@ -208,6 +217,9 @@ export class AiService {
 
       return { content, conversationId: generationId };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const msg = error instanceof Error ? error.message : String(error);
       throw new Error(`Erreur AI: ${msg}`);
     }
@@ -297,7 +309,8 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       { role: 'user', content: basePrompt },
     ];
 
-    if (userId) await this.checkLimits(userId, AiGenerationType.TEXT);
+    if (userId)
+      await this.checkLimits(userId, AiGenerationType.TEXT, null, true);
     const chatResult = await this.chat(messages, userId);
     const result = chatResult.content;
 
@@ -322,6 +335,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     userId: number,
     type: AiGenerationType,
     style?: string,
+    isNewRequest?: boolean,
   ) {
     const userProfile = await this.getAiUserWithProfile(userId);
     const planId = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
@@ -338,13 +352,14 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     if (planId === PlanType.CURIEUX) {
       // Daily limits for Curieux
       const createdAt = userProfile.createdAt;
-      const diffDays = Math.ceil(
-        (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24),
-      );
-      if (diffDays > 7)
+      const diffMs = now.getTime() - createdAt.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 7) {
         throw new BadRequestException(
-          "Votre période d'essai de 7 jours est terminée.",
+          "Votre période d'essai de 7 jours est terminée. Veuillez passer à un pack premium pour continuer.",
         );
+      }
 
       // Check daily limits
       sinceDate = new Date();
@@ -354,15 +369,32 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       sinceDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
+    // Special logic for Curieux: limit 2 CONVERSATIONS per day, not 2 messages.
+    // If it's an existing conversation, we don't check the daily TEXT limit here
+    // (it's checked via the 10-message rule in the chat method).
+    if (
+      planId === PlanType.CURIEUX &&
+      type === AiGenerationType.TEXT &&
+      !isNewRequest
+    ) {
+      return;
+    }
+
     // Count usage since the date range started
     // For 3D/Sketch, we filter by attributes.style if type is IMAGE
     const isThreeDRequest =
       type === AiGenerationType.IMAGE && (style === '3d' || style === 'sketch');
 
+    // For Curieux TEXT, we count only CHAT entries (unique conversation starts)
+    const countType =
+      planId === PlanType.CURIEUX && type === AiGenerationType.TEXT
+        ? AiGenerationType.CHAT
+        : type;
+
     const count = await this.aiGenRepo.count({
       where: {
         user: { id: userId },
-        type,
+        type: countType,
         createdAt: MoreThan(sinceDate),
         ...(isThreeDRequest
           ? {
@@ -396,13 +428,15 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
           `Limite atteinte : ${currentPlanConfig.threeDLimit} générations 3D / Sketch ${periodStr} avec le plan ${currentPlanConfig.name}.`,
         );
       }
-      return; // 3D check done, don't fall through to regular IMAGE check
+      return;
     }
 
     if (type === AiGenerationType.TEXT) {
       if (count >= currentPlanConfig.promptsLimit) {
+        const itemStr =
+          planId === PlanType.CURIEUX ? 'conversations' : 'textes';
         throw new BadRequestException(
-          `Limite atteinte : ${currentPlanConfig.promptsLimit} textes ${periodStr} avec le plan ${currentPlanConfig.name}.`,
+          `Limite atteinte : ${currentPlanConfig.promptsLimit} ${itemStr} ${periodStr} avec le plan ${currentPlanConfig.name}.`,
         );
       }
     } else if (type === AiGenerationType.IMAGE) {
