@@ -56,8 +56,7 @@ export class AiAuthService {
       user = this.aiUserRepo.create({
         email: normalizedEmail,
         password: hashedPassword,
-        firstName: '',
-        lastName: dto.lastName || '',
+        name: dto.name || dto.lastName || '',
         isActive: false, // Inactive until OTP verified
         isEmailVerified: false,
       });
@@ -68,8 +67,14 @@ export class AiAuthService {
     const profile = this.aiProfileRepo.create({
       aiUser: user,
       accessLevel: AiAccessLevel.GUEST,
-      planType:
-        (PlanType as any)[planTypeInput.toUpperCase()] || PlanType.CURIEUX,
+      planType: (function () {
+        const p = (planTypeInput || 'curieux').toUpperCase();
+        if (p === 'CURIEUX') return PlanType.CURIEUX;
+        if (p === 'ATELIER') return PlanType.ATELIER;
+        if (p === 'STUDIO') return PlanType.STUDIO;
+        if (p === 'AGENCE') return PlanType.AGENCE;
+        return PlanType.CURIEUX;
+      })(),
       subscriptionStatus:
         planTypeInput === 'curieux'
           ? SubscriptionStatus.ACTIVE
@@ -93,10 +98,9 @@ export class AiAuthService {
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
       context: {
-        name: user.lastName || user.firstName || user.email,
+        name: user.name || user.email,
         code: otp,
       },
-      userRoles: ['ai_user'], // Standardized AI role
     });
 
     let stripeData = null;
@@ -158,7 +162,6 @@ export class AiAuthService {
       sub: user.id,
       email: user.email,
       type: 'ai',
-      roles: ['ai_user'],
     };
     const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '4h',
@@ -176,11 +179,9 @@ export class AiAuthService {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
         aiProfile: user.aiProfile,
         isEmailVerified: user.isEmailVerified,
-        roles: ['ai_user'],
         type: 'ai',
       },
     };
@@ -196,7 +197,6 @@ export class AiAuthService {
       sub: user.id,
       email: user.email,
       type: 'ai',
-      roles: ['ai_user'],
     };
     const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '4h',
@@ -233,7 +233,6 @@ export class AiAuthService {
       sub: user.id,
       email: user.email,
       type: 'ai',
-      roles: ['ai_user'],
     };
     const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '4h',
@@ -252,11 +251,9 @@ export class AiAuthService {
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        name: user.name,
         aiProfile: user.aiProfile,
         isEmailVerified: user.isEmailVerified,
-        roles: ['ai_user'],
         type: 'ai',
       },
     };
@@ -275,10 +272,9 @@ export class AiAuthService {
       subject: 'Vérification de votre compte AI Hipster',
       template: 'otp-email',
       context: {
-        name: user.lastName || user.firstName || user.email,
+        name: user.name || user.email,
         code: otp,
       },
-      userRoles: ['ai_user'],
     });
 
     return { message: 'Nouveau code OTP envoyé.' };
@@ -288,8 +284,8 @@ export class AiAuthService {
     const user = await this.aiUserRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
-    if (dto.lastName) user.lastName = dto.lastName;
-    // firstName is ignored in simplified flow
+    if (dto.name) user.name = dto.name;
+    if (dto.lastName) user.name = dto.lastName; // Backward compatibility for a bit if needed
 
     if (dto.avatarUrl && user.avatarUrl && dto.avatarUrl !== user.avatarUrl) {
       deleteFile(user.avatarUrl);

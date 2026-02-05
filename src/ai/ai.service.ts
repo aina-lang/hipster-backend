@@ -108,7 +108,7 @@ export class AiService {
     if (userId) {
       const userObj = await this.getAiUserWithProfile(userId);
       if (userObj) {
-        userName = userObj.firstName || userObj.email;
+        userName = userObj.name || userObj.email;
         const profile = userObj.aiProfile;
         if (profile) {
           const parts = [

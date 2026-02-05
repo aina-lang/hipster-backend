@@ -22,7 +22,6 @@ export class AiJwtStrategy extends PassportStrategy(Strategy, 'jwt-ai') {
       userId: payload.sub,
       sub: payload.sub,
       email: payload.email,
-      roles: payload.roles,
       type: payload.type,
     };
   }

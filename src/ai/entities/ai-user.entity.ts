@@ -16,10 +16,7 @@ export class AiUser {
   id: number;
 
   @Column({ nullable: true })
-  firstName?: string;
-
-  @Column({ nullable: true })
-  lastName: string;
+  name: string;
 
   @Column({ nullable: true })
   avatarUrl?: string;

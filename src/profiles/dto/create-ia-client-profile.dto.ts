@@ -44,6 +44,18 @@ export class CreateIaClientProfileDto {
   isSetupComplete?: boolean;
 
   @IsOptional()
+  @IsString()
+  companyName?: string;
+
+  @IsOptional()
+  @IsString()
+  job?: string;
+
+  @IsOptional()
+  @IsString()
+  brandingColor?: string;
+
+  @IsOptional()
   @IsEmail()
   professionalEmail?: string;
 

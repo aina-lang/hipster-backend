@@ -28,7 +28,11 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
-import { UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import {
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
 
 @ApiTags('Profiles')
 @ApiBearerAuth()
@@ -186,6 +190,7 @@ export class ProfilesController {
     return this.profilesService.findAiProfileById(+id);
   }
 
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Mettre à jour un profil IA' })
   @ResponseMessage('Profil IA mis à jour avec succès')
   @Patch('ai/:id')
@@ -200,6 +205,7 @@ export class ProfilesController {
     return this.profilesService.removeAiProfile(+id);
   }
 
+  @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Uploader un logo pour le profil IA' })
   @ResponseMessage('Logo mis à jour avec succès')
   @Post('ai/:id/logo')
