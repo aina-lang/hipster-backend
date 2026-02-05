@@ -6,9 +6,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AiUsageLog } from './entities/ai-usage-log.entity';
 import { AiUser } from './entities/ai-user.entity';
 import { AiGeneration } from './entities/ai-generation.entity';
+import { AiPaymentModule } from '../ai-payment/ai-payment.module';
 
 @Module({
-  imports: [ConfigModule, TypeOrmModule.forFeature([AiUsageLog, AiUser, AiGeneration])],
+  imports: [
+    ConfigModule,
+    TypeOrmModule.forFeature([AiUsageLog, AiUser, AiGeneration]),
+    AiPaymentModule,
+  ],
   controllers: [AiController],
   providers: [AiService],
   exports: [AiService],

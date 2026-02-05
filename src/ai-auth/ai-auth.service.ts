@@ -85,6 +85,7 @@ export class AiAuthService {
       imagesLimit: selectedPlanConfig.imagesLimit,
       videosLimit: selectedPlanConfig.videosLimit,
       audioLimit: selectedPlanConfig.audioLimit,
+      threeDLimit: selectedPlanConfig.threeDLimit || 0,
       aiProfile: profile,
     });
     await this.aiCreditRepo.save(credit);

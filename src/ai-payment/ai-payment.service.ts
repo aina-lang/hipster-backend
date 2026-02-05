@@ -41,43 +41,47 @@ export class AiPaymentService {
     return [
       {
         id: 'curieux',
-        name: 'Pack Curieux',
+        name: 'Curieux',
         price: 0,
         stripePriceId: null,
-        promptsLimit: 3, // 3 texts/day (daily limit)
-        imagesLimit: 2, // 2 images/day (daily limit)
-        videosLimit: 0, // No video
-        audioLimit: 0, // No audio
+        promptsLimit: 2,
+        imagesLimit: 2,
+        videosLimit: 0,
+        audioLimit: 0,
+        threeDLimit: 0,
       },
       {
         id: 'atelier',
         name: 'Atelier',
         price: 9.9,
         stripePriceId: 'price_Atelier1790',
-        promptsLimit: 999999, // Unlimited texts
-        imagesLimit: 100, // 100 images/month
-        videosLimit: 0, // No video
-        audioLimit: 0, // No audio
+        promptsLimit: 999999,
+        imagesLimit: 100,
+        videosLimit: 0,
+        audioLimit: 0,
+        threeDLimit: 0,
       },
       {
         id: 'studio',
         name: 'Studio',
         price: 29.9,
         stripePriceId: 'price_Studio2990',
-        promptsLimit: 999999, // Unlimited texts
-        imagesLimit: 100, // 100 images/month
-        videosLimit: 3, // 3 videos/month
-        audioLimit: 0, // No audio
+        promptsLimit: 999999,
+        imagesLimit: 100,
+        videosLimit: 0,
+        audioLimit: 0,
+        threeDLimit: 0,
       },
       {
         id: 'agence',
         name: 'Agence',
         price: 69.99,
         stripePriceId: 'price_Agence6990',
-        promptsLimit: 999999, // Unlimited texts
-        imagesLimit: 300, // 300 images/month
-        videosLimit: 10, // 10 videos/month
-        audioLimit: 60, // 60 audios/month
+        promptsLimit: 999999,
+        imagesLimit: 300,
+        videosLimit: 10,
+        audioLimit: 60,
+        threeDLimit: 25,
       },
     ];
   }

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { Repository, MoreThan, Raw } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -25,6 +25,7 @@ import {
   AiSubscriptionProfile,
   PlanType,
 } from '../profiles/entities/ai-subscription-profile.entity';
+import { AiPaymentService } from '../ai-payment/ai-payment.service';
 
 @Injectable()
 export class AiService {
@@ -37,6 +38,7 @@ export class AiService {
     private readonly aiUserRepo: Repository<AiUser>,
     @InjectRepository(AiGeneration)
     private readonly aiGenRepo: Repository<AiGeneration>,
+    private readonly aiPaymentService: AiPaymentService,
   ) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     this.openai = new OpenAI({ apiKey });
@@ -322,13 +324,18 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     style?: string,
   ) {
     const userProfile = await this.getAiUserWithProfile(userId);
-    const plan = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
+    const planId = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
+
+    // Get plan configuration from PaymentService
+    const plans = this.aiPaymentService.getPlans();
+    const currentPlanConfig =
+      plans.find((p) => p.id === planId.toLowerCase()) || plans[0];
 
     // Get date range for limit checking
     const now = new Date();
     let sinceDate: Date;
 
-    if (plan === PlanType.CURIEUX) {
+    if (planId === PlanType.CURIEUX) {
       // Daily limits for Curieux
       const createdAt = userProfile.createdAt;
       const diffDays = Math.ceil(
@@ -343,76 +350,89 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       sinceDate = new Date();
       sinceDate.setHours(0, 0, 0, 0);
     } else {
-      // Monthly limits for Atelier, Studio, Agence
+      // Monthly limits for others
       sinceDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
     // Count usage since the date range started
+    // For 3D/Sketch, we filter by attributes.style if type is IMAGE
+    const isThreeDRequest =
+      type === AiGenerationType.IMAGE && (style === '3d' || style === 'sketch');
+
     const count = await this.aiGenRepo.count({
-      where: { user: { id: userId }, type, createdAt: MoreThan(sinceDate) },
+      where: {
+        user: { id: userId },
+        type,
+        createdAt: MoreThan(sinceDate),
+        ...(isThreeDRequest
+          ? {
+              attributes: Raw(
+                (alias) => `${alias} ->> 'style' IN ('3d', 'sketch')`,
+              ),
+            }
+          : {}),
+        ...(!isThreeDRequest && type === AiGenerationType.IMAGE
+          ? {
+              attributes: Raw(
+                (alias) =>
+                  `(${alias} ->> 'style' NOT IN ('3d', 'sketch') OR ${alias} ->> 'style' IS NULL)`,
+              ),
+            }
+          : {}),
+      },
     });
 
-    // Check limits based on plan and type
-    if (plan === PlanType.CURIEUX) {
-      // Curieux: 2 images/day, 3 texts/day, no video, no audio
-      if (type === AiGenerationType.IMAGE && count >= 2)
+    const periodStr = planId === PlanType.CURIEUX ? 'par jour' : 'par mois';
+
+    // Check limits based on type
+    if (isThreeDRequest) {
+      if (currentPlanConfig.threeDLimit === 0) {
         throw new BadRequestException(
-          'Limite atteinte : 2 images par jour avec le Pack Curieux.',
+          `Le plan ${currentPlanConfig.name} ne permet pas la génération 3D / Sketch.`,
         );
-      if (type === AiGenerationType.TEXT && count >= 3)
+      }
+      if (count >= currentPlanConfig.threeDLimit) {
         throw new BadRequestException(
-          'Limite atteinte : 3 textes par jour avec le Pack Curieux.',
+          `Limite atteinte : ${currentPlanConfig.threeDLimit} générations 3D / Sketch ${periodStr} avec le plan ${currentPlanConfig.name}.`,
         );
-      if (type === AiGenerationType.VIDEO)
+      }
+      return; // 3D check done, don't fall through to regular IMAGE check
+    }
+
+    if (type === AiGenerationType.TEXT) {
+      if (count >= currentPlanConfig.promptsLimit) {
         throw new BadRequestException(
-          'Le Pack Curieux ne permet pas la génération de vidéos.',
+          `Limite atteinte : ${currentPlanConfig.promptsLimit} textes ${periodStr} avec le plan ${currentPlanConfig.name}.`,
         );
-      if (type === AiGenerationType.AUDIO)
+      }
+    } else if (type === AiGenerationType.IMAGE) {
+      if (count >= currentPlanConfig.imagesLimit) {
         throw new BadRequestException(
-          "Le Pack Curieux ne permet pas la génération d'audios.",
+          `Limite atteinte : ${currentPlanConfig.imagesLimit} images ${periodStr} avec le plan ${currentPlanConfig.name}.`,
         );
-    } else if (plan === PlanType.ATELIER) {
-      // Atelier: 100 images/month, unlimited texts, no video, no audio
-      if (type === AiGenerationType.IMAGE && count >= 100)
+      }
+    } else if (type === AiGenerationType.VIDEO) {
+      if (currentPlanConfig.videosLimit === 0) {
         throw new BadRequestException(
-          'Limite atteinte : 100 images par mois avec le plan Atelier.',
+          `Le plan ${currentPlanConfig.name} ne permet pas la génération de vidéos.`,
         );
-      if (type === AiGenerationType.VIDEO)
+      }
+      if (count >= currentPlanConfig.videosLimit) {
         throw new BadRequestException(
-          'Le plan Atelier ne permet pas la génération de vidéos.',
+          `Limite atteinte : ${currentPlanConfig.videosLimit} vidéos ${periodStr} avec le plan ${currentPlanConfig.name}.`,
         );
-      if (type === AiGenerationType.AUDIO)
+      }
+    } else if (type === AiGenerationType.AUDIO) {
+      if (currentPlanConfig.audioLimit === 0) {
         throw new BadRequestException(
-          "Le plan Atelier ne permet pas la génération d'audios.",
+          `Le plan ${currentPlanConfig.name} ne permet pas la génération d'audios.`,
         );
-    } else if (plan === PlanType.STUDIO) {
-      // Studio: 100 images/month, unlimited texts, 3 videos/month, no audio
-      if (type === AiGenerationType.IMAGE && count >= 100)
+      }
+      if (count >= currentPlanConfig.audioLimit) {
         throw new BadRequestException(
-          'Limite atteinte : 100 images par mois avec le plan Studio.',
+          `Limite atteinte : ${currentPlanConfig.audioLimit} audios ${periodStr} avec le plan ${currentPlanConfig.name}.`,
         );
-      if (type === AiGenerationType.VIDEO && count >= 3)
-        throw new BadRequestException(
-          'Limite atteinte : 3 vidéos par mois avec le plan Studio.',
-        );
-      if (type === AiGenerationType.AUDIO)
-        throw new BadRequestException(
-          "Le plan Studio ne permet pas la génération d'audios.",
-        );
-    } else if (plan === PlanType.AGENCE) {
-      // Agence: 300 images/month, unlimited texts, 10 videos/month, 60 audios/month
-      if (type === AiGenerationType.IMAGE && count >= 300)
-        throw new BadRequestException(
-          'Limite atteinte : 300 images par mois avec le plan Agence.',
-        );
-      if (type === AiGenerationType.VIDEO && count >= 10)
-        throw new BadRequestException(
-          'Limite atteinte : 10 vidéos par mois avec le plan Agence.',
-        );
-      if (type === AiGenerationType.AUDIO && count >= 60)
-        throw new BadRequestException(
-          'Limite atteinte : 60 audios par mois avec le plan Agence.',
-        );
+      }
     }
   }
 

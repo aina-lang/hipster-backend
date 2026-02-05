@@ -24,6 +24,9 @@ export class AiCredit {
   @Column({ default: 20 })
   audioLimit: number;
 
+  @Column({ default: 0 })
+  threeDLimit: number;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
