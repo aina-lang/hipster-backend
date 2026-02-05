@@ -41,11 +41,11 @@ export class ProfilesService {
 
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
- 
+
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
   ) {}
- 
+
   private readonly logger = new Logger(ProfilesService.name);
 
   // ----------------------------
@@ -387,7 +387,7 @@ export class ProfilesService {
 
   async findAllAiProfiles(): Promise<AiSubscriptionProfile[]> {
     return this.aiProfileRepo.find({
-      relations: ['aiUser', 'subscriptions', 'usageLogs', 'payments'],
+      relations: ['aiUser', 'subscriptions'],
     });
   }
 
@@ -405,7 +405,9 @@ export class ProfilesService {
     id: number,
     dto: UpdateAiProfileDto,
   ): Promise<AiSubscriptionProfile> {
-    this.logger.log(`Updating AI Profile #${id} with data: ${JSON.stringify(dto)}`);
+    this.logger.log(
+      `Updating AI Profile #${id} with data: ${JSON.stringify(dto)}`,
+    );
     const profile = await this.findAiProfileById(id);
 
     // ✅ Delete old logo if a new one is being uploaded

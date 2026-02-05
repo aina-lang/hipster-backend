@@ -272,8 +272,12 @@ export class ProjectsService {
       }
     }
 
-    // ✅ If created by a client, notify all admins
-    if (clientUser && clientUser.roles?.includes('client_marketing' as any)) {
+    // ✅ If created by a client (and not by an admin for a client), notify all admins
+    if (
+      clientUser &&
+      clientUser.id === currentUser.id &&
+      clientUser.roles?.includes('client_marketing' as any)
+    ) {
       try {
         // Get all admin users
         const admins = await this.userRepo.find({
