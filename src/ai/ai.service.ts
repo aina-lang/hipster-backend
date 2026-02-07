@@ -62,7 +62,17 @@ export class AiService {
 
     // Filter out usage logs that were created just for credit decrementing
     // We only want to show the main conversations (type: CHAT) and other generations
-    return history.filter((item) => !(item.attributes as any)?.isUsageLog);
+    return history.filter((item) => {
+      let attrs = item.attributes;
+      if (typeof attrs === 'string') {
+        try {
+          attrs = JSON.parse(attrs);
+        } catch (e) {
+          // ignore error
+        }
+      }
+      return !(attrs as any)?.isUsageLog;
+    });
   }
 
   async getConversation(conversationId: number, userId: number) {
