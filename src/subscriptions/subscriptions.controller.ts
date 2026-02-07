@@ -1,22 +1,24 @@
 import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard } from '../common/guards/auth.guard';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Subscriptions')
 @Controller('ai/subscriptions')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard)
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
-  @ApiOperation({ summary: 'Récupérer mon profil d\'abonnement' })
+  @ApiOperation({ summary: "Récupérer mon profil d'abonnement" })
   @Get('me')
   async getMySubscription(@Req() req) {
     return this.subscriptionsService.getSubscriptionProfile(req.user.sub);
   }
 
-  @ApiOperation({ summary: 'Lister les plans d\'abonnement' })
+  @Public()
+  @ApiOperation({ summary: "Lister les plans d'abonnement" })
   @Get('plans')
   async getPlans() {
     return this.subscriptionsService.getPlans();

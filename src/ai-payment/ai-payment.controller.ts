@@ -1,13 +1,13 @@
 import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { AiPaymentService } from './ai-payment.service';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard } from '../common/guards/auth.guard';
 import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AiGenerationType } from '../ai/entities/ai-generation.entity';
 import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('AI-Payment')
 @Controller('ai/payment')
-@UseGuards(AuthGuard('jwt-ai'))
+@UseGuards(AuthGuard)
 @ApiBearerAuth()
 export class AiPaymentController {
   constructor(private readonly aiPaymentService: AiPaymentService) {}
