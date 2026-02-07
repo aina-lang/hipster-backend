@@ -56,7 +56,7 @@ export class AiPaymentService {
   {
     id: 'curieux',
     name: 'Curieux',
-    price: 0,
+    price: "Gratuit",
     stripePriceId: null,
     promptsLimit: 2,
     imagesLimit: 2,
@@ -67,7 +67,6 @@ export class AiPaymentService {
     features: [
       '2 textes / jour',
       '2 images / jour',
-      '7 jours d’essai gratuit',
       'Pas d’export',
     ],
   },
@@ -85,10 +84,8 @@ export class AiPaymentService {
       ? 'Offre de lancement : 9,90€ (30 premiers)'
       : "L’essentiel pour créer",
     features: [
-      'Génération de texte illimitée',
-      '100 images / mois',
-      'Modèle Image SD 3.5 Turbo',
-      'Support par email',
+      'Génération de texte',
+      'Génération d\'image',
     ],
   },
   {
@@ -101,12 +98,11 @@ export class AiPaymentService {
     videosLimit: 0,
     audioLimit: 0,
     threeDLimit: 0,
-    description: 'Pour les créateurs réguliers',
+    description: 'Orienté photo',
     features: [
-      'Génération de texte illimitée',
-      '100 images / mois',
-      'Optimisation HD / 4K',
-      'Support prioritaire',
+      'Génération de texte',
+      'Génération d\'image',
+      'Optimisation image HD / 4K',
     ],
     popular: true,
   },
@@ -120,13 +116,14 @@ export class AiPaymentService {
     videosLimit: 10,
     audioLimit: 60,
     threeDLimit: 25,
-    description: 'Puissance maximale pour les pros',
+    description: 'Puissance maximale',
     features: [
-      'Texte illimité',
-      '300 images / mois',
-      '10 vidéos / mois',
-      '60 audios / mois',
-      '25 générations 3D',
+      'Génération de texte',
+      'Génération d\'image',
+      'Optimisation image HD / 4K',
+      'Création vidéo',
+      'Création sonore',
+      '25 générations 3D/Sketch',
     ],
   },
 ];
