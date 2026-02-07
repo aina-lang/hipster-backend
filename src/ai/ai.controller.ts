@@ -11,7 +11,10 @@ import {
   Query,
   Res,
   BadRequestException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AiService } from './ai.service';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -92,6 +95,16 @@ export class AiController {
       body.conversationId,
     );
     return { data: result };
+  }
+
+  @ApiOperation({ summary: 'Transcrire un fichier audio (Whisper)' })
+  @Post('transcribe')
+  @Roles(Role.AI_USER)
+  @UseInterceptors(FileInterceptor('file'))
+  async transcribeAudio(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Aucun fichier audio fourni');
+    const text = await this.aiService.transcribeAudio(file);
+    return { text };
   }
 
   @ApiOperation({ summary: 'Générer du texte via IA' })

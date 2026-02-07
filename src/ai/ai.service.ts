@@ -92,13 +92,22 @@ export class AiService {
   }
 
   async deleteGeneration(id: number, userId: number): Promise<void> {
+    this.logger.log(
+      `[deleteGeneration] Request to delete ${id} for user ${userId}`,
+    );
     const gen = await this.aiGenRepo.findOne({
       where: { id, user: { id: userId } },
     });
-    if (!gen) throw new Error('Generation not found');
+    if (!gen) {
+      this.logger.warn(`[deleteGeneration] Generation ${id} not found`);
+      throw new Error('Generation not found');
+    }
 
     // If it's a CHAT, also delete related TEXT logs (usage tracking)
     if (gen.type === AiGenerationType.CHAT) {
+      this.logger.log(
+        `[deleteGeneration] Deleting related usage logs for chat ${id}`,
+      );
       await this.aiGenRepo.delete({
         user: { id: userId },
         type: AiGenerationType.TEXT,
@@ -107,6 +116,7 @@ export class AiService {
     }
 
     await this.aiGenRepo.remove(gen);
+    this.logger.log(`[deleteGeneration] Successfully deleted ${id}`);
   }
 
   async clearHistory(userId: number): Promise<void> {
@@ -857,5 +867,31 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
   async applyWatermark(url: string, isPremium: boolean): Promise<string> {
     // Simply returning the URL for now as requested or to simplify
     return url;
+  }
+
+  /* --------------------- AUDIO TRANSCRIPTION --------------------- */
+  async transcribeAudio(file: Express.Multer.File): Promise<string> {
+    const tempFilePath = path.join('/tmp', `audio_${Date.now()}.m4a`);
+    try {
+      fs.writeFileSync(tempFilePath, file.buffer);
+      this.logger.log(
+        `[transcribeAudio] File written to ${tempFilePath}, size: ${file.size}`,
+      );
+
+      const transcription = await this.openai.audio.transcriptions.create({
+        file: fs.createReadStream(tempFilePath),
+        model: 'whisper-1',
+      });
+
+      this.logger.log('[transcribeAudio] Transcription success');
+      return transcription.text;
+    } catch (e) {
+      this.logger.error('Transcription failed', e);
+      throw new BadRequestException('Failed to transcribe audio: ' + e.message);
+    } finally {
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+    }
   }
 }
