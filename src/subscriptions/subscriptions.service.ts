@@ -10,6 +10,7 @@ import {
   SubscriptionStatus,
 } from '../profiles/entities/ai-subscription-profile.entity';
 import { AiCredit } from '../profiles/entities/ai-credit.entity';
+import { AiPaymentService } from '../ai-payment/ai-payment.service';
 
 @Injectable()
 export class SubscriptionsService {
@@ -17,6 +18,7 @@ export class SubscriptionsService {
 
   constructor(
     private readonly configService: ConfigService,
+    private readonly aiPaymentService: AiPaymentService,
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
     @InjectRepository(AiSubscriptionProfile)
@@ -64,59 +66,7 @@ export class SubscriptionsService {
   }
 
   async getPlans() {
-    return [
-      {
-        id: 'curieux',
-        name: 'Pack Curieux',
-        price: 'Gratuit', // Frontend display logic might handle specific text like "7 jours gratuits"
-        description: "Pour découvrir la puissance de l'IA",
-        features: [
-          "7 jours d'essai",
-          '2 images / jour (Modèle Core)',
-          '3 textes / jour',
-          "Pas d'export",
-        ],
-        stripePriceId: null, // Free trial, no stripe init
-      },
-      {
-        id: 'atelier',
-        name: 'Atelier',
-        price: 9.9, // Display logic handles the "then 17.90"
-        description: 'Idéal pour démarrer',
-        features: [
-          'Génération de texte illimitée',
-          'Génération d’image (SD 3.5 Turbo)',
-          'Pas de vidéo / audio',
-        ],
-        stripePriceId: 'price_Atelier1790', // TODO: Make sure this ID exists in Stripe
-      },
-      {
-        id: 'studio',
-        name: 'Studio',
-        price: 29.9,
-        description: 'Pack orienté photo pro',
-        features: [
-          'Texte illimité',
-          'Génération d’image (SD 3.5 Turbo)',
-          'Optimisation image HD / 4K',
-        ],
-        stripePriceId: 'price_Studio2990',
-        popular: true,
-      },
-      {
-        id: 'agence',
-        name: 'Agence',
-        price: 69.99,
-        description: 'Puissance Totale',
-        features: [
-          'Tout illimité',
-          'Images Ultra Quality (Model Ultra)',
-          'Création 3D (25/mois - Model Fast 3D)',
-          'Vidéo & Audio inclus',
-        ],
-        stripePriceId: 'price_Agence6990',
-      },
-    ];
+    return this.aiPaymentService.getPlans();
   }
 
   async createSubscription(userId: number, planId: string) {

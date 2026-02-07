@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, MoreThan } from 'typeorm';
+import { Repository, MoreThan, Raw } from 'typeorm';
 import { AiUser } from '../ai/entities/ai-user.entity';
 import {
   AiSubscriptionProfile,
@@ -37,7 +37,21 @@ export class AiPaymentService {
     }
   }
 
-  public getPlans() {
+  public async getPlans() {
+    // Count active subscribers (excluding Curieux)
+    const activeSubscribersCount = await this.aiProfileRepo.count({
+      where: {
+        planType: Raw((alias) => `${alias} != 'curieux'`),
+        subscriptionStatus: SubscriptionStatus.ACTIVE,
+      },
+    });
+
+    const isEarlyBird = activeSubscribersCount < 30;
+    const atelierPrice = isEarlyBird ? 9.9 : 17.9;
+    const atelierPriceId = isEarlyBird
+      ? 'price_Atelier990'
+      : 'price_Atelier1790';
+
     return [
       {
         id: 'curieux',
@@ -49,17 +63,33 @@ export class AiPaymentService {
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
+        description: '7 jours gratuits pour essayer',
+        features: [
+          '2 textes (conversations) / jour',
+          '2 images / jour',
+          "7 jours d'essai gratuit",
+          "Pas d'export",
+        ],
       },
       {
         id: 'atelier',
         name: 'Atelier',
-        price: 9.9,
-        stripePriceId: 'price_Atelier1790',
+        price: atelierPrice,
+        stripePriceId: atelierPriceId,
         promptsLimit: 999999,
         imagesLimit: 100,
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
+        description: isEarlyBird
+          ? 'Offre de lancement : 9,90€ (pour les 30 premiers)'
+          : "L'essentiel pour créer",
+        features: [
+          'Génération de texte illimitée',
+          '100 images / mois',
+          'Modèle Image SD 3.5 Turbo',
+          'Support par email',
+        ],
       },
       {
         id: 'studio',
@@ -71,6 +101,14 @@ export class AiPaymentService {
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
+        description: 'Pour les créateurs réguliers',
+        features: [
+          'Génération de texte illimitée',
+          '100 images / mois',
+          'Optimisation HD / 4K',
+          'Support prioritaire',
+        ],
+        popular: true,
       },
       {
         id: 'agence',
@@ -82,6 +120,14 @@ export class AiPaymentService {
         videosLimit: 10,
         audioLimit: 60,
         threeDLimit: 25,
+        description: 'Puissance maximale pour les pros',
+        features: [
+          'Tout illimité (Texte)',
+          '300 images / mois',
+          'Génération Vidéo (10/mois)',
+          'Génération Audio (60/mois)',
+          '25 générations 3D / Sketch',
+        ],
       },
     ];
   }
@@ -92,7 +138,7 @@ export class AiPaymentService {
   }
 
   async createPaymentSheet(userId: number, priceId: string) {
-    const plans = this.getPlans();
+    const plans = await this.getPlans();
     const selectedPlan = plans.find((p) => p.stripePriceId === priceId);
 
     if (!selectedPlan || !selectedPlan.stripePriceId) {
@@ -125,7 +171,8 @@ export class AiPaymentService {
           stripeCustomerId: customerId,
         });
         const saved = await this.aiProfileRepo.save(newProfile);
-        const curieuxPlan = this.getPlans().find((p) => p.id === 'curieux');
+        const plans = await this.getPlans();
+        const curieuxPlan = plans.find((p) => p.id === 'curieux');
         const credit = this.aiCreditRepo.create({
           promptsLimit: curieuxPlan?.promptsLimit ?? 3,
           imagesLimit: curieuxPlan?.imagesLimit ?? 2,
@@ -161,7 +208,7 @@ export class AiPaymentService {
   }
 
   async confirmPlan(userId: number, planId: string) {
-    const plans = this.getPlans();
+    const plans = await this.getPlans();
     const selectedPlan = plans.find((p) => p.id === planId);
 
     if (!selectedPlan) {
@@ -241,8 +288,8 @@ export class AiPaymentService {
 
     const plan = user.aiProfile.planType || PlanType.CURIEUX;
     const planConfig =
-      this.getPlans().find((p) => p.id === plan.toLowerCase()) ||
-      this.getPlans()[0];
+      (await this.getPlans()).find((p) => p.id === plan.toLowerCase()) ||
+      (await this.getPlans())[0];
 
     // Determine the date range for counting usage
     let sinceDate: Date;
@@ -322,7 +369,7 @@ export class AiPaymentService {
     });
 
     // Ensure profile and credit exist. If missing, create defaults for 'curieux'
-    const curieuxPlan = this.getPlans().find((p) => p.id === 'curieux');
+    const curieuxPlan = (await this.getPlans()).find((p) => p.id === 'curieux');
 
     if (!user) {
       throw new BadRequestException('Utilisateur introuvable');

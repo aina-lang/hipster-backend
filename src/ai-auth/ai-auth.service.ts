@@ -64,9 +64,10 @@ export class AiAuthService {
     await this.aiUserRepo.save(user);
 
     const planTypeInput = dto.planId ? dto.planId.toLowerCase() : 'curieux';
-    const plans = this.aiPaymentService.getPlans();
+    const plans = await this.aiPaymentService.getPlans();
+    const curieuxPlan = plans.find((p) => p.id === 'curieux') || plans[0];
     const selectedPlanConfig =
-      plans.find((p) => p.id === planTypeInput) || plans[0];
+      plans.find((p) => p.id === planTypeInput) || curieuxPlan;
 
     const profile = this.aiProfileRepo.create({
       aiUser: user,
@@ -103,9 +104,8 @@ export class AiAuthService {
 
     let stripeData = null;
     if (dto.planId && dto.planId !== 'curieux') {
-      const plan = this.aiPaymentService
-        .getPlans()
-        .find((p) => p.id === dto.planId);
+      const plans = await this.aiPaymentService.getPlans();
+      const plan = plans.find((p) => p.id === dto.planId);
       if (plan && plan.stripePriceId) {
         stripeData = await this.aiPaymentService.createPaymentSheet(
           user.id,

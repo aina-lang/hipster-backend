@@ -341,9 +341,10 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const planId = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
 
     // Get plan configuration from PaymentService
-    const plans = this.aiPaymentService.getPlans();
+    const plans = await this.aiPaymentService.getPlans();
+    const curieuxPlan = plans.find((p) => p.id === 'curieux');
     const currentPlanConfig =
-      plans.find((p) => p.id === planId.toLowerCase()) || plans[0];
+      plans.find((p) => p.id === planId.toLowerCase()) || curieuxPlan;
 
     // Get date range for limit checking
     const now = new Date();
