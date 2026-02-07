@@ -96,6 +96,16 @@ export class AiService {
       where: { id, user: { id: userId } },
     });
     if (!gen) throw new Error('Generation not found');
+
+    // If it's a CHAT, also delete related TEXT logs (usage tracking)
+    if (gen.type === AiGenerationType.CHAT) {
+      await this.aiGenRepo.delete({
+        user: { id: userId },
+        type: AiGenerationType.TEXT,
+        attributes: Raw((alias) => `${alias} ->> 'conversationId' = '${id}'`),
+      });
+    }
+
     await this.aiGenRepo.remove(gen);
   }
 
