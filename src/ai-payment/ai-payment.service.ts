@@ -68,7 +68,7 @@ export class AiPaymentService {
           '2 textes / jour',
           '2 images / jour',
           'Pas d’export',
-          'Accompagnement Hipster',
+          "Accompagnement de l'agence",
         ],
       },
       {
@@ -82,12 +82,12 @@ export class AiPaymentService {
         audioLimit: 0,
         threeDLimit: 0,
         description: isEarlyBird
-          ? 'Offre de lancement : 9,90€ (30 premiers)'
+          ? '9,90€ 30 premiers - ensuite 17,90€ / mois'
           : 'L’essentiel pour créer',
         features: [
           'Génération de texte',
           "Génération d'image",
-          'Accompagnement Hipster',
+          "Accompagnement de l'agence",
         ],
       },
       {
@@ -105,7 +105,7 @@ export class AiPaymentService {
           'Génération de texte',
           "Génération d'image",
           'Optimisation image HD / 4K',
-          'Accompagnement Hipster',
+          "Accompagnement de l'agence",
         ],
         popular: true,
       },
@@ -127,7 +127,7 @@ export class AiPaymentService {
           'Création vidéo',
           'Création sonore',
           '25 générations 3D/Sketch',
-          'Accompagnement Hipster Premium',
+          "Accompagnement de l'agence",
         ],
       },
     ];
