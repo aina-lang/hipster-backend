@@ -111,6 +111,12 @@ export class AiSubscriptionProfile {
   @Column({ type: 'timestamp', nullable: true })
   nextRenewalDate?: Date;
 
+  @Column({ type: 'timestamp', nullable: true })
+  subscriptionStartDate?: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  subscriptionEndDate?: Date;
+
   // Relations
   @OneToOne(() => AiUser, (u) => u.aiProfile, { onDelete: 'CASCADE' })
   @JoinColumn()

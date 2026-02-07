@@ -69,6 +69,14 @@ export class AiAuthService {
     const selectedPlanConfig =
       plans.find((p) => p.id === planTypeInput) || curieuxPlan;
 
+    const startDate = new Date();
+    const endDate = new Date();
+    if (planTypeInput === 'curieux') {
+      endDate.setDate(endDate.getDate() + 7); // 7 days trial for Curieux
+    } else {
+      endDate.setDate(endDate.getDate() + 30); // 30 days period for others
+    }
+
     const profile = this.aiProfileRepo.create({
       aiUser: user,
       accessLevel: AiAccessLevel.GUEST,
@@ -77,6 +85,10 @@ export class AiAuthService {
         planTypeInput === 'curieux'
           ? SubscriptionStatus.ACTIVE
           : SubscriptionStatus.TRIAL,
+      subscriptionStartDate: startDate,
+      subscriptionEndDate: endDate,
+      lastRenewalDate: startDate,
+      nextRenewalDate: endDate,
     });
     await this.aiProfileRepo.save(profile);
 

@@ -259,6 +259,17 @@ export class AiPaymentService {
       PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] ||
       PlanType.CURIEUX;
     user.aiProfile.subscriptionStatus = SubscriptionStatus.ACTIVE;
+
+    // Set subscription dates
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 1);
+
+    user.aiProfile.subscriptionStartDate = startDate;
+    user.aiProfile.subscriptionEndDate = endDate;
+    user.aiProfile.lastRenewalDate = startDate;
+    user.aiProfile.nextRenewalDate = endDate;
+
     await this.aiProfileRepo.save(user.aiProfile);
 
     this.logger.log(
@@ -299,9 +310,10 @@ export class AiPaymentService {
       sinceDate = new Date();
       sinceDate.setHours(0, 0, 0, 0);
     } else {
-      // Monthly count for Atelier, Studio, Agence
-      const now = new Date();
-      sinceDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      // Use stored subscription start date for paid plans, fallback to start of month if missing
+      sinceDate =
+        user.aiProfile.subscriptionStartDate ||
+        new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     }
 
     const promptsUsed = await this.aiGenRepo
@@ -357,6 +369,8 @@ export class AiPaymentService {
       planType: plan.toLowerCase(),
       createdAt: user.aiProfile.aiCredit.createdAt,
       updatedAt: user.aiProfile.aiCredit.updatedAt,
+      subscriptionStartDate: user.aiProfile.subscriptionStartDate,
+      subscriptionEndDate: user.aiProfile.subscriptionEndDate,
     };
   }
 
@@ -397,6 +411,18 @@ export class AiPaymentService {
     }
 
     const credit = user.aiProfile.aiCredit;
+
+    // Check for subscription expiration
+    if (
+      user.aiProfile.subscriptionEndDate &&
+      new Date() > user.aiProfile.subscriptionEndDate
+    ) {
+      throw new BadRequestException(
+        user.aiProfile.planType === PlanType.CURIEUX
+          ? "Votre période d'essai de 7 jours est terminée. Veuillez souscrire à un pack pour continuer."
+          : 'Votre abonnement a expiré. Veuillez le renouveler pour continuer à utiliser ces fonctionnalités.',
+      );
+    }
 
     // Map generation type to credit field
     let fieldName: keyof typeof credit;
