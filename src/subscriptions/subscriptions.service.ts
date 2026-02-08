@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AiUser } from '../ai/entities/ai-user.entity';
 import { Repository } from 'typeorm';
+import { AiSubscription } from './entities/ai-subscription.entity';
 import {
   AiSubscriptionProfile,
   PlanType,
@@ -23,6 +24,8 @@ export class SubscriptionsService {
     private readonly aiUserRepo: Repository<AiUser>,
     @InjectRepository(AiSubscriptionProfile)
     private readonly subRepo: Repository<AiSubscriptionProfile>,
+    @InjectRepository(AiSubscription)
+    private readonly aiSubscriptionRepo: Repository<AiSubscription>,
     @InjectRepository(AiCredit)
     private readonly aiCreditRepo: Repository<AiCredit>,
   ) {
@@ -30,6 +33,56 @@ export class SubscriptionsService {
     if (apiKey) {
       this.stripe = new Stripe(apiKey, { apiVersion: '2025-11-17.clover' });
     }
+  }
+
+  async getPlansForUser(userId: number) {
+    const plans = await this.getPlans();
+
+    // Load profile and subscriptions
+    const profile = await this.subRepo.findOne({
+      where: { aiUser: { id: userId } },
+      relations: ['subscriptions'],
+    });
+
+    // If no profile, user is new -> return full plans
+    if (!profile) return plans;
+
+    const subscriptions = await this.aiSubscriptionRepo.find({
+      where: { aiProfile: { id: profile.id } },
+    });
+
+    const curieuxUsed = subscriptions.some(
+      (s) => s.planName && s.planName.toLowerCase() === 'curieux',
+    );
+
+    // If user currently has an active paid plan (not curieux), hide curieux
+    const hasActivePaid =
+      profile.planType !== PlanType.CURIEUX &&
+      profile.subscriptionStatus === SubscriptionStatus.ACTIVE;
+
+    // Check paid subscriptions that lasted >= 30 days and are finished
+    const paidLongEnoughExpired = subscriptions.some((s) => {
+      if (!s.startDate || !s.endDate) return false;
+      const name = (s.planName || '').toLowerCase();
+      if (name === 'curieux') return false;
+      const durationDays =
+        (new Date(s.endDate).getTime() - new Date(s.startDate).getTime()) /
+        (1000 * 60 * 60 * 24);
+      return durationDays >= 30 && s.status !== 'active';
+    });
+
+    // Apply rules
+    const filtered = plans.filter((p) => {
+      if (p.id === 'curieux') {
+        if (curieuxUsed) return false;
+        if (hasActivePaid) return false;
+        // If paidLongEnoughExpired and user never used curieux -> allow
+        return true;
+      }
+      return true;
+    });
+
+    return filtered;
   }
 
   async getSubscriptionProfile(userId: number): Promise<AiSubscriptionProfile> {
@@ -91,10 +144,30 @@ export class SubscriptionsService {
         profile = this.subRepo.create({ aiUser: user });
       }
 
+      const startDate = new Date();
+      const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
       profile.planType = PlanType.CURIEUX;
-      profile.subscriptionStatus = SubscriptionStatus.ACTIVE; // Or TRIAL
-      // Set limits or specific end date for trial if needed
-      await this.subRepo.save(profile);
+      profile.subscriptionStatus = SubscriptionStatus.ACTIVE; // Trial
+      profile.subscriptionStartDate = startDate;
+      profile.subscriptionEndDate = endDate;
+
+      const savedProfile = await this.subRepo.save(profile);
+
+      // Persist a subscription history entry for audit (free trial)
+      try {
+        const sub = this.aiSubscriptionRepo.create({
+          planName: 'curieux',
+          startDate,
+          endDate,
+          amount: 0,
+          status: 'active',
+          aiProfile: savedProfile,
+        });
+        await this.aiSubscriptionRepo.save(sub);
+      } catch (err) {
+        // Non-blocking: subscription history is best-effort, but log if needed
+      }
 
       return {
         message: 'Pack Curieux activé avec succès',
