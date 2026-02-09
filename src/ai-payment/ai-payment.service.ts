@@ -27,7 +27,7 @@ export class AiPaymentService {
   ) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (apiKey) {
-      this.stripe = new Stripe(apiKey, { apiVersion: '2025-11-17.clover' });
+      this.stripe = new Stripe(apiKey, { apiVersion: '2024-06-20' as any });
     }
   }
 
@@ -153,6 +153,9 @@ export class AiPaymentService {
   }
 
   async createPaymentSheet(userId: number, priceId?: string, planId?: string) {
+    this.logger.log(
+      `Creating payment sheet for user ${userId}, price ${priceId}, plan ${planId}`,
+    );
     const plans = await this.getPlans();
     let selectedPlan;
 
@@ -164,7 +167,12 @@ export class AiPaymentService {
         : plans.find((p) => p.stripePriceId === priceId);
     }
 
-    if (!selectedPlan) throw new BadRequestException('Prix invalide');
+    if (!selectedPlan) {
+      this.logger.warn(
+        `Invalid price or plan: priceId=${priceId}, planId=${planId}`,
+      );
+      throw new BadRequestException('Prix invalide');
+    }
 
     const user = await this.aiUserRepo.findOneBy({ id: userId });
     if (!user) throw new BadRequestException('AiUser not found');
@@ -182,11 +190,12 @@ export class AiPaymentService {
 
     const ephemeralKey = await this.stripe.ephemeralKeys.create(
       { customer: customerId },
-      { apiVersion: '2025-11-17.clover' },
+      { apiVersion: '2024-06-20' as any },
     );
 
     if (selectedPlan.id === 'curieux') {
       if (user.hasUsedTrial) {
+        this.logger.warn(`User ${userId} already used trial`);
         throw new BadRequestException('Essai gratuit déjà utilisé');
       }
 

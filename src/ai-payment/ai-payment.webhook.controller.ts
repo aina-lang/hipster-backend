@@ -29,7 +29,7 @@ export class AiPaymentWebhookController {
   ) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (apiKey) {
-      this.stripe = new Stripe(apiKey, { apiVersion: '2025-11-17.clover' });
+      this.stripe = new Stripe(apiKey, { apiVersion: '2024-06-20' as any });
     }
   }
 
