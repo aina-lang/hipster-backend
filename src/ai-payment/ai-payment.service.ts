@@ -63,7 +63,7 @@ export class AiPaymentService {
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
-        description: '7 jours gratuits, puis Pack Studio (29.90€/mois)',
+        description: '7 jours gratuits',
         features: [
           '2 textes / jour',
           '2 images / jour',
