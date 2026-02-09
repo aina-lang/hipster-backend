@@ -194,8 +194,11 @@ export class AiPaymentService {
     );
 
     if (selectedPlan.id === 'curieux') {
-      if (user.hasUsedTrial) {
-        this.logger.warn(`User ${userId} already used trial`);
+      // Allow if they are currently on curieux plan but haven't added a card yet
+      if (user.hasUsedTrial && user.planType !== PlanType.CURIEUX) {
+        this.logger.warn(
+          `User ${userId} already used trial and is not on curieux plan`,
+        );
         throw new BadRequestException('Essai gratuit déjà utilisé');
       }
 

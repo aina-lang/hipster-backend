@@ -78,7 +78,7 @@ export class AiAuthService {
     if (planTypeInput === 'curieux') {
       endDate.setDate(endDate.getDate() + 7);
       user.subscriptionStatus = SubscriptionStatus.TRIAL;
-      user.hasUsedTrial = true;
+      user.hasUsedTrial = false;
     } else {
       endDate.setDate(endDate.getDate() + 30);
       user.subscriptionStatus = SubscriptionStatus.ACTIVE;
