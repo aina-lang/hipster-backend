@@ -24,6 +24,13 @@ export class SubscriptionsController {
     return this.subscriptionsService.getPlans();
   }
 
+  @ApiOperation({ summary: "Lister les plans d'abonnement (utilisateur connecté)" })
+  @Get('plans/me')
+  async getPlansForUser(@Req() req) {
+    const userId = req.user.sub;
+    return this.subscriptionsService.getPlansForUser(userId);
+  }
+
   @ApiOperation({ summary: 'Souscrire à un abonnement' })
   @ResponseMessage('Souscription effectuée avec succès')
   @Post('subscribe')

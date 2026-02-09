@@ -9,6 +9,7 @@ import {
   JoinColumn,
   OneToMany,
   OneToOne,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -19,12 +20,15 @@ export enum SubscriptionStatus {
   TRIAL = 'trial',
 }
 
+// Deprecated enum kept for compatibility with existing imports.
 export enum PlanType {
   CURIEUX = 'curieux',
   ATELIER = 'atelier',
   STUDIO = 'studio',
   AGENCE = 'agence',
 }
+
+
 
 export enum AiAccessLevel {
   GUEST = 'GUEST',
@@ -124,6 +128,8 @@ export class AiSubscriptionProfile {
 
   @OneToOne(() => AiCredit, (c) => c.aiProfile, { cascade: true })
   aiCredit: AiCredit;
+
+  
 
   @OneToMany(() => AiSubscription, (s) => s.aiProfile)
   subscriptions: AiSubscription[];
