@@ -95,6 +95,10 @@ export class CreateIaClientProfileDto {
   @IsString()
   logoUrl?: string;
 
+  @IsOptional()
+  @IsString()
+  stripeCustomerId?: string;
+
   @IsNotEmpty()
   userId: number; // Relation OneToOne avec User
 }
