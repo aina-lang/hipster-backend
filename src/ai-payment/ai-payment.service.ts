@@ -227,7 +227,7 @@ export class AiPaymentService {
         subscription.latest_invoice &&
         typeof subscription.latest_invoice !== 'string'
       ) {
-        const invoice = subscription.latest_invoice as Stripe.Invoice;
+        const invoice = subscription.latest_invoice as any;
         if (
           invoice.payment_intent &&
           typeof invoice.payment_intent !== 'string'
