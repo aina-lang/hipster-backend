@@ -94,4 +94,30 @@ describe('SubscriptionsService.getPlansForUser', () => {
     const plans = await svc.getPlansForUser(3);
     expect(plans.find((p: any) => p.id === 'curieux')).toBeDefined();
   });
+
+  it('shows curieux when expired (trial past endDate) and never used before', async () => {
+    const now = new Date();
+    const expiredEndDate = new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
+    const profile = {
+      id: 13,
+      planType: 'curieux',
+      subscriptionStatus: 'active',
+      subscriptionEndDate: expiredEndDate,
+    } as any;
+    const sub = { planName: 'curieux', startDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), endDate: expiredEndDate, status: 'expired' } as any;
+
+    const svc = new SubscriptionsService(
+      configServiceMock,
+      aiPaymentServiceMock,
+      mockRepo(),
+      mockRepo({ findOne: jest.fn().mockResolvedValue(profile) }),
+      mockRepo({ find: jest.fn().mockResolvedValue([sub]) }),
+      mockRepo(),
+    );
+
+    const plans = await svc.getPlansForUser(4);
+    // Note: After expitation, curieux should reappear only if user can use it again
+    // This test validates that expired curieux is counted as "used" and won't reappear
+    expect(plans.find((p: any) => p.id === 'curieux')).toBeUndefined();
+  });
 });

@@ -47,6 +47,17 @@ export class SubscriptionsService {
     // If no profile, user is new -> return full plans
     if (!profile) return plans;
 
+    // Auto-cancel expired curieux trial (remove it permanently)
+    if (
+      profile.planType === PlanType.CURIEUX &&
+      profile.subscriptionStatus === SubscriptionStatus.ACTIVE &&
+      profile.subscriptionEndDate &&
+      new Date() >= new Date(profile.subscriptionEndDate)
+    ) {
+      profile.subscriptionStatus = SubscriptionStatus.CANCELED;
+      await this.subRepo.save(profile);
+    }
+
     const subscriptions = await this.aiSubscriptionRepo.find({
       where: { aiProfile: { id: profile.id } },
     });
@@ -59,6 +70,13 @@ export class SubscriptionsService {
     const hasActivePaid =
       profile.planType !== PlanType.CURIEUX &&
       profile.subscriptionStatus === SubscriptionStatus.ACTIVE;
+
+    // If user has an active curieux trial that hasn't expired, hide curieux
+    const hasActiveCurieux =
+      profile.planType === PlanType.CURIEUX &&
+      profile.subscriptionStatus === SubscriptionStatus.ACTIVE &&
+      profile.subscriptionEndDate &&
+      new Date() < new Date(profile.subscriptionEndDate);
 
     // Check paid subscriptions that lasted >= 30 days and are finished
     const paidLongEnoughExpired = subscriptions.some((s) => {
@@ -76,6 +94,7 @@ export class SubscriptionsService {
       if (p.id === 'curieux') {
         if (curieuxUsed) return false;
         if (hasActivePaid) return false;
+        if (hasActiveCurieux) return false; // Hide if currently using curieux
         // If paidLongEnoughExpired and user never used curieux -> allow
         return true;
       }
