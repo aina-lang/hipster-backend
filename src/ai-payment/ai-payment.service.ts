@@ -57,13 +57,13 @@ export class AiPaymentService {
         id: 'curieux',
         name: 'Curieux',
         price: 'Gratuit',
-        stripePriceId: null,
+        stripePriceId: 'price_Studio2990', // Uses Studio price for the trial
         promptsLimit: 2,
         imagesLimit: 2,
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
-        description: '7 jours gratuits pour essayer',
+        description: '7 jours gratuits, puis Pack Studio (29.90€/mois)',
         features: [
           '2 textes / jour',
           '2 images / jour',
@@ -138,9 +138,16 @@ export class AiPaymentService {
     return Math.round(priceNum * 100);
   }
 
-  async createPaymentSheet(userId: number, priceId: string) {
+  async createPaymentSheet(userId: number, priceId: string, planId?: string) {
     const plans = await this.getPlans();
-    const selectedPlan = plans.find((p) => p.stripePriceId === priceId);
+
+    // Prefer planId if available, otherwise find by priceId
+    let selectedPlan;
+    if (planId) {
+      selectedPlan = plans.find((p) => p.id === planId);
+    } else {
+      selectedPlan = plans.find((p) => p.stripePriceId === priceId);
+    }
 
     if (!selectedPlan || !selectedPlan.stripePriceId) {
       throw new BadRequestException('Prix invalide');
@@ -188,10 +195,58 @@ export class AiPaymentService {
     // Create ephemeral key for client
     const ephemeralKey = await this.stripe.ephemeralKeys.create(
       { customer: customerId },
-      { apiVersion: '2025-11-17.clover' },
+      { apiVersion: '2025-11-17.clover' }, // Kept original version
     );
 
-    // Create payment intent
+    // LOGIC for Curieux (Subscription with Trial)
+    if (selectedPlan.id === 'curieux') {
+      // Create Subscription with 7-day trial
+      const subscription = await this.stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: selectedPlan.stripePriceId }],
+        trial_period_days: 7,
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['pending_setup_intent', 'latest_invoice.payment_intent'],
+        metadata: {
+          userId: userId.toString(),
+          planId: 'curieux',
+        },
+      });
+
+      // For a trial with no immediate payment, we usually get a pending_setup_intent
+      let clientSecret = '';
+      let isSetupIntent = false;
+
+      if (subscription.pending_setup_intent) {
+        const setupIntent =
+          subscription.pending_setup_intent as Stripe.SetupIntent;
+        clientSecret = setupIntent.client_secret;
+        isSetupIntent = true;
+      } else if (
+        subscription.latest_invoice &&
+        typeof subscription.latest_invoice !== 'string'
+      ) {
+        const invoice = subscription.latest_invoice as Stripe.Invoice;
+        if (
+          invoice.payment_intent &&
+          typeof invoice.payment_intent !== 'string'
+        ) {
+          clientSecret = (invoice.payment_intent as Stripe.PaymentIntent)
+            .client_secret;
+        }
+      }
+
+      return {
+        setupIntentClientSecret: isSetupIntent ? clientSecret : undefined,
+        paymentIntentClientSecret: !isSetupIntent ? clientSecret : undefined,
+        ephemeralKey: ephemeralKey.secret,
+        customerId: customerId,
+        subscriptionId: subscription.id,
+      };
+    }
+
+    // DEFAULT LOGIC (One-off PaymentIntent for others - preserving existing behavior for now)
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount: this.getPriceInCents(selectedPlan.price),
       currency: 'eur',

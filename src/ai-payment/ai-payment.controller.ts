@@ -16,10 +16,14 @@ export class AiPaymentController {
   @Post('create-payment-sheet')
   async createPaymentSheet(
     @Req() req,
-    @Body() body: { priceId: string; userId?: number },
+    @Body() body: { priceId: string; userId?: number; planId?: string },
   ) {
     const userId = body.userId || req.user.sub;
-    return this.aiPaymentService.createPaymentSheet(userId, body.priceId);
+    return this.aiPaymentService.createPaymentSheet(
+      userId,
+      body.priceId,
+      body.planId,
+    );
   }
 
   @ApiOperation({
