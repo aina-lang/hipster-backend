@@ -113,9 +113,8 @@ export class SubscriptionsService {
 
       const newProfile = this.subRepo.create({
         aiUser: user,
-        // Set default plan to curieux via relation (legacy planType kept for compatibility)
-        aiPlan: { id: 'curieux' } as any,
-        planType: 'curieux',
+        // default to Curieux
+        planType: PlanType.CURIEUX,
         subscriptionStatus: SubscriptionStatus.ACTIVE,
       });
       const savedProfile = await this.subRepo.save(newProfile);
@@ -164,8 +163,7 @@ export class SubscriptionsService {
       const startDate = new Date();
       const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-      profile.aiPlan = { id: 'curieux' } as any;
-      profile.planType = 'curieux';
+      profile.planType = PlanType.CURIEUX;
       profile.subscriptionStatus = SubscriptionStatus.ACTIVE; // Trial
       profile.subscriptionStartDate = startDate;
       profile.subscriptionEndDate = endDate;
