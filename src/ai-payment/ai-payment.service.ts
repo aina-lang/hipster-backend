@@ -156,14 +156,23 @@ export class AiPaymentService {
 
     // Prefer planId if available, otherwise find by priceId
     let selectedPlan;
-    if (planId) {
-      selectedPlan = plans.find((p) => p.id === planId);
+    if (planId === 'curieux') {
+      selectedPlan = plans.find((p) => p.id === 'curieux');
     } else {
-      selectedPlan = plans.find((p) => p.stripePriceId === priceId);
+      if (planId) {
+        selectedPlan = plans.find((p) => p.id === planId);
+      } else {
+        selectedPlan = plans.find((p) => p.stripePriceId === priceId);
+      }
     }
 
-    if (!selectedPlan || !selectedPlan.stripePriceId) {
+    if (!selectedPlan) {
       throw new BadRequestException('Prix invalide');
+    }
+
+    // Allow curieux to skip stripePriceId check for SetupIntent
+    if (selectedPlan.id !== 'curieux' && !selectedPlan.stripePriceId) {
+      throw new BadRequestException('Prix Stripe manquant');
     }
 
     const user = await this.aiUserRepo.findOne({
@@ -211,51 +220,22 @@ export class AiPaymentService {
       { apiVersion: '2025-11-17.clover' }, // Kept original version
     );
 
-    // LOGIC for Curieux (Subscription with Trial)
+    // LOGIC for Curieux (Save card only via SetupIntent)
     if (selectedPlan.id === 'curieux') {
-      // Create Subscription with 7-day trial
-      const subscription = await this.stripe.subscriptions.create({
+      const setupIntent = await this.stripe.setupIntents.create({
         customer: customerId,
-        items: [{ price: selectedPlan.stripePriceId }],
-        trial_period_days: 7,
-        payment_behavior: 'default_incomplete',
-        payment_settings: { save_default_payment_method: 'on_subscription' },
-        expand: ['pending_setup_intent', 'latest_invoice.payment_intent'],
+        payment_method_types: ['card'],
+        usage: 'off_session',
         metadata: {
           userId: userId.toString(),
           planId: 'curieux',
         },
       });
 
-      // For a trial with no immediate payment, we usually get a pending_setup_intent
-      let clientSecret = '';
-      let isSetupIntent = false;
-
-      if (subscription.pending_setup_intent) {
-        const setupIntent =
-          subscription.pending_setup_intent as Stripe.SetupIntent;
-        clientSecret = setupIntent.client_secret;
-        isSetupIntent = true;
-      } else if (
-        subscription.latest_invoice &&
-        typeof subscription.latest_invoice !== 'string'
-      ) {
-        const invoice = subscription.latest_invoice as any;
-        if (
-          invoice.payment_intent &&
-          typeof invoice.payment_intent !== 'string'
-        ) {
-          clientSecret = (invoice.payment_intent as Stripe.PaymentIntent)
-            .client_secret;
-        }
-      }
-
       return {
-        setupIntentClientSecret: isSetupIntent ? clientSecret : undefined,
-        paymentIntentClientSecret: !isSetupIntent ? clientSecret : undefined,
+        setupIntentClientSecret: setupIntent.client_secret,
         ephemeralKey: ephemeralKey.secret,
         customerId: customerId,
-        subscriptionId: subscription.id,
       };
     }
 
