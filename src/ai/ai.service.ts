@@ -123,7 +123,8 @@ export class AiService {
   async chat(
     messages: any[],
     userId?: number,
-    conversationId?: string,
+    conversationId?: string | number,
+    isUsageLog: boolean = false,
   ): Promise<{ content: string; conversationId?: string }> {
     const start = Date.now();
     try {
@@ -156,30 +157,33 @@ export class AiService {
       if (userId) {
         let generation: AiGeneration;
 
-        if (conversationId) {
+        // Normalize conversationId to handle null/undefined/empty string
+        const cid =
+          conversationId &&
+          conversationId !== 'null' &&
+          conversationId !== 'undefined'
+            ? parseInt(conversationId.toString())
+            : null;
+
+        if (cid) {
           // Update existing conversation
           generation = await this.aiGenRepo.findOne({
-            where: { id: parseInt(conversationId), user: { id: userId } },
+            where: { id: cid, user: { id: userId } },
           });
 
           if (generation) {
             // Update the existing conversation
             generation.result = content;
             generation.prompt = JSON.stringify(messages); // Store full conversation history
+            generation.createdAt = new Date(); // Update timestamp to bring to top of history
             await this.aiGenRepo.save(generation);
-            this.logger.log(
-              `Updated conversation ${conversationId} for user ${userId}`,
-            );
+            this.logger.log(`Updated conversation ${cid} for user ${userId}`);
           } else {
-            this.logger.warn(
-              `Conversation ${conversationId} not found, creating new one`,
-            );
-            // If conversation not found, create a new one
-            conversationId = null;
+            this.logger.warn(`Conversation ${cid} not found, creating new one`);
           }
         }
 
-        if (!conversationId) {
+        if (!generation) {
           // Create new conversation
           const firstUserMsg = messages.find((m) => m.role === 'user');
           generation = await this.aiGenRepo.save({
@@ -187,12 +191,13 @@ export class AiService {
             type: AiGenerationType.CHAT,
             prompt: JSON.stringify(messages),
             result: content,
+            attributes: isUsageLog ? { isUsageLog: true } : {},
             title:
               (firstUserMsg?.content?.substring(0, 50) || 'Conversation') +
               '...',
           });
           this.logger.log(
-            `Created new conversation ${generation.id} for user ${userId}`,
+            `Created new conversation ${generation.id} for user ${userId} (UsageLog: ${isUsageLog})`,
           );
         }
 
@@ -311,7 +316,8 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
         userId,
         AiGenerationType.TEXT,
       );
-    const chatResult = await this.chat(messages, userId);
+    // Use isUsageLog = true to avoid Guided Mode background chat from appearing in history
+    const chatResult = await this.chat(messages, userId, null, true);
     const result = chatResult.content;
 
     let generationId: number | undefined;
