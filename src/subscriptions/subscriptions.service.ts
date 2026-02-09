@@ -89,8 +89,14 @@ export class SubscriptionsService {
       return durationDays >= 30 && s.status !== 'active';
     });
 
+    // If the user's profile is canceled, hide their current plan permanently
+    const profileCanceled = profile.subscriptionStatus === SubscriptionStatus.CANCELED;
+
     // Apply rules
     const filtered = plans.filter((p) => {
+      // Hide the user's own plan when their profile is canceled
+      if (profileCanceled && p.id === profile.planType) return false;
+
       if (p.id === 'curieux') {
         if (curieuxUsed) return false;
         if (hasActivePaid) return false;
