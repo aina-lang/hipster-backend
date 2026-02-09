@@ -3,7 +3,6 @@ import { Payment } from 'src/payments/entities/payment.entity';
 import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
 import { AiUser } from 'src/ai/entities/ai-user.entity';
 import { AiCredit } from './ai-credit.entity';
-import { AiPlan } from 'src/plans/entities/ai-plan.entity';
 import {
   Column,
   Entity,
@@ -49,10 +48,11 @@ export class AiSubscriptionProfile {
   subscriptionStatus: SubscriptionStatus;
 
   @Column({
-    nullable: true,
+    type: 'enum',
+    enum: PlanType,
+    default: PlanType.CURIEUX,
   })
-  // Deprecated: replaced by relation to `AiPlan`
-  planType?: string;
+  planType: PlanType;
 
   @Column({
     type: 'enum',
@@ -129,9 +129,7 @@ export class AiSubscriptionProfile {
   @OneToOne(() => AiCredit, (c) => c.aiProfile, { cascade: true })
   aiCredit: AiCredit;
 
-  @ManyToOne(() => AiPlan, { nullable: true })
-  @JoinColumn({ name: 'aiPlanId' })
-  aiPlan?: AiPlan;
+  
 
   @OneToMany(() => AiSubscription, (s) => s.aiProfile)
   subscriptions: AiSubscription[];
