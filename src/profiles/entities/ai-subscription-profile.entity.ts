@@ -3,12 +3,14 @@ import { Payment } from 'src/payments/entities/payment.entity';
 import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
 import { AiUser } from 'src/ai/entities/ai-user.entity';
 import { AiCredit } from './ai-credit.entity';
+import { AiPlan } from 'src/plans/entities/ai-plan.entity';
 import {
   Column,
   Entity,
   JoinColumn,
   OneToMany,
   OneToOne,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -19,12 +21,15 @@ export enum SubscriptionStatus {
   TRIAL = 'trial',
 }
 
+// Deprecated enum kept for compatibility with existing imports.
 export enum PlanType {
   CURIEUX = 'curieux',
   ATELIER = 'atelier',
   STUDIO = 'studio',
   AGENCE = 'agence',
 }
+
+
 
 export enum AiAccessLevel {
   GUEST = 'GUEST',
@@ -44,11 +49,10 @@ export class AiSubscriptionProfile {
   subscriptionStatus: SubscriptionStatus;
 
   @Column({
-    type: 'enum',
-    enum: PlanType,
-    default: PlanType.CURIEUX,
+    nullable: true,
   })
-  planType: PlanType;
+  // Deprecated: replaced by relation to `AiPlan`
+  planType?: string;
 
   @Column({
     type: 'enum',
@@ -124,6 +128,10 @@ export class AiSubscriptionProfile {
 
   @OneToOne(() => AiCredit, (c) => c.aiProfile, { cascade: true })
   aiCredit: AiCredit;
+
+  @ManyToOne(() => AiPlan, { nullable: true })
+  @JoinColumn({ name: 'aiPlanId' })
+  aiPlan?: AiPlan;
 
   @OneToMany(() => AiSubscription, (s) => s.aiProfile)
   subscriptions: AiSubscription[];

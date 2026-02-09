@@ -5,11 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AiUser } from '../ai/entities/ai-user.entity';
 import { Repository } from 'typeorm';
 import { AiSubscription } from './entities/ai-subscription.entity';
-import {
-  AiSubscriptionProfile,
-  PlanType,
-  SubscriptionStatus,
-} from '../profiles/entities/ai-subscription-profile.entity';
+import { AiSubscriptionProfile, SubscriptionStatus } from '../profiles/entities/ai-subscription-profile.entity';
 import { AiCredit } from '../profiles/entities/ai-credit.entity';
 import { AiPaymentService } from '../ai-payment/ai-payment.service';
 
@@ -48,8 +44,10 @@ export class SubscriptionsService {
     if (!profile) return plans;
 
     // Auto-cancel expired curieux trial (remove it permanently)
+    // Use aiPlan relation if available, fallback to legacy planType
+    const profilePlanId = (profile as any).aiPlan?.id || (profile as any).planType || null;
     if (
-      profile.planType === PlanType.CURIEUX &&
+      profilePlanId === 'curieux' &&
       profile.subscriptionStatus === SubscriptionStatus.ACTIVE &&
       profile.subscriptionEndDate &&
       new Date() >= new Date(profile.subscriptionEndDate)
@@ -67,16 +65,10 @@ export class SubscriptionsService {
     );
 
     // If user currently has an active paid plan (not curieux), hide curieux
-    const hasActivePaid =
-      profile.planType !== PlanType.CURIEUX &&
-      profile.subscriptionStatus === SubscriptionStatus.ACTIVE;
+    const hasActivePaid = profilePlanId && profilePlanId !== 'curieux' && profile.subscriptionStatus === SubscriptionStatus.ACTIVE;
 
     // If user has an active curieux trial that hasn't expired, hide curieux
-    const hasActiveCurieux =
-      profile.planType === PlanType.CURIEUX &&
-      profile.subscriptionStatus === SubscriptionStatus.ACTIVE &&
-      profile.subscriptionEndDate &&
-      new Date() < new Date(profile.subscriptionEndDate);
+    const hasActiveCurieux = profilePlanId === 'curieux' && profile.subscriptionStatus === SubscriptionStatus.ACTIVE && profile.subscriptionEndDate && new Date() < new Date(profile.subscriptionEndDate);
 
     // Check paid subscriptions that lasted >= 30 days and are finished
     const paidLongEnoughExpired = subscriptions.some((s) => {
@@ -94,8 +86,8 @@ export class SubscriptionsService {
 
     // Apply rules
     const filtered = plans.filter((p) => {
-      // Hide the user's own plan when their profile is canceled
-      if (profileCanceled && p.id === profile.planType) return false;
+      // Hide the user's own plan when their profile is canceled (use aiPlan id if present)
+      if (profileCanceled && p.id === profilePlanId) return false;
 
       if (p.id === 'curieux') {
         if (curieuxUsed) return false;
@@ -123,7 +115,9 @@ export class SubscriptionsService {
 
       const newProfile = this.subRepo.create({
         aiUser: user,
-        planType: PlanType.CURIEUX,
+        // Set default plan to curieux via relation (legacy planType kept for compatibility)
+        aiPlan: { id: 'curieux' } as any,
+        planType: 'curieux',
         subscriptionStatus: SubscriptionStatus.ACTIVE,
       });
       const savedProfile = await this.subRepo.save(newProfile);
@@ -172,7 +166,8 @@ export class SubscriptionsService {
       const startDate = new Date();
       const endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-      profile.planType = PlanType.CURIEUX;
+      profile.aiPlan = { id: 'curieux' } as any;
+      profile.planType = 'curieux';
       profile.subscriptionStatus = SubscriptionStatus.ACTIVE; // Trial
       profile.subscriptionStartDate = startDate;
       profile.subscriptionEndDate = endDate;
