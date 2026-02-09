@@ -9,10 +9,7 @@ import {
   IsEmail,
   IsBoolean,
 } from 'class-validator';
-import {
-  SubscriptionStatus,
-  PlanType,
-} from '../entities/ai-subscription-profile.entity';
+import { SubscriptionStatus, PlanType } from 'src/ai/entities/ai-user.entity';
 
 export class CreateIaClientProfileDto {
   @IsOptional()

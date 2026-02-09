@@ -9,9 +9,7 @@ import { Project } from 'src/projects/entities/project.entity';
 import { Invoice } from 'src/invoices/entities/invoice.entity';
 import { ConfigModule } from '@nestjs/config';
 import { StripeService } from './stripe.service';
-import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
-import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
-import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
+import { AiUser } from 'src/ai/entities/ai-user.entity';
 
 @Module({
   imports: [
@@ -22,9 +20,7 @@ import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
       ClientProfile,
       Project,
       Invoice,
-      AiSubscriptionProfile,
-      AiSubscription,
-      AiCredit,
+      AiUser,
     ]),
   ],
   controllers: [PaymentsController],

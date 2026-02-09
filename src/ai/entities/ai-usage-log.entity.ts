@@ -1,4 +1,4 @@
-import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
+import { AiUser } from './ai-user.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('ai_usage_logs')
@@ -19,6 +19,6 @@ export class AiUsageLog {
   dateUsed: Date;
 
   // Relation
-  @ManyToOne(() => AiSubscriptionProfile, (p) => p.usageLogs)
-  aiProfile: AiSubscriptionProfile;
+  @ManyToOne(() => AiUser, (u) => u.usageLogs)
+  user: AiUser;
 }

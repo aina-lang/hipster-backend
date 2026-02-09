@@ -11,10 +11,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import Stripe from 'stripe';
 import {
-  AiSubscriptionProfile,
+  AiUser,
   PlanType,
   SubscriptionStatus,
-} from '../profiles/entities/ai-subscription-profile.entity';
+} from '../ai/entities/ai-user.entity';
 import { Public } from '../common/decorators/public.decorator';
 
 @Controller('ai/payment/webhook')
@@ -24,8 +24,8 @@ export class AiPaymentWebhookController {
 
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(AiSubscriptionProfile)
-    private readonly aiProfileRepo: Repository<AiSubscriptionProfile>,
+    @InjectRepository(AiUser)
+    private readonly aiUserRepo: Repository<AiUser>,
   ) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (apiKey) {
@@ -83,13 +83,12 @@ export class AiPaymentWebhookController {
         ? subscription.customer
         : subscription.customer.id;
 
-    const profile = await this.aiProfileRepo.findOne({
+    const user = await this.aiUserRepo.findOne({
       where: { stripeCustomerId: customerId },
-      relations: ['aiUser'],
     });
 
-    if (!profile) {
-      this.logger.warn(`No profile found for customer ${customerId}`);
+    if (!user) {
+      this.logger.warn(`No user found for customer ${customerId}`);
       return;
     }
 
@@ -97,27 +96,27 @@ export class AiPaymentWebhookController {
     // If it was trialing and now active, it means the user upgraded (or trial ended successfully)
     if (subscription.status === 'active') {
       // Check if we should upgrade the plan to STUDIO (if it was Curieux)
-      if (profile.planType === PlanType.CURIEUX) {
-        profile.planType = PlanType.STUDIO;
+      if (user.planType === PlanType.CURIEUX) {
+        user.planType = PlanType.STUDIO;
         this.logger.log(
-          `Upgrading user ${profile.aiUser.id} to STUDIO after trial ended/activation.`,
+          `Upgrading user ${user.id} to STUDIO after trial ended/activation.`,
         );
       }
-      profile.subscriptionStatus = SubscriptionStatus.ACTIVE;
+      user.subscriptionStatus = SubscriptionStatus.ACTIVE;
     } else if (subscription.status === 'trialing') {
-      profile.subscriptionStatus = SubscriptionStatus.TRIAL;
+      user.subscriptionStatus = SubscriptionStatus.TRIAL;
     } else if (
       subscription.status === 'canceled' ||
       subscription.status === 'unpaid'
     ) {
-      profile.subscriptionStatus = SubscriptionStatus.CANCELED;
+      user.subscriptionStatus = SubscriptionStatus.CANCELED;
     }
 
     // Update dates
     const sub = subscription as any;
-    profile.subscriptionStartDate = new Date(sub.current_period_start * 1000);
-    profile.subscriptionEndDate = new Date(sub.current_period_end * 1000);
+    user.subscriptionStartDate = new Date(sub.current_period_start * 1000);
+    user.subscriptionEndDate = new Date(sub.current_period_end * 1000);
 
-    await this.aiProfileRepo.save(profile);
+    await this.aiUserRepo.save(user);
   }
 }

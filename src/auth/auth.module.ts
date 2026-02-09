@@ -7,14 +7,13 @@ import { User } from 'src/users/entities/user.entity';
 import { OtpModule } from 'src/otp/otp.module';
 import { MailModule } from 'src/mail/mail.module';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
-import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, ClientProfile, AiSubscriptionProfile]),
+    TypeOrmModule.forFeature([User, ClientProfile]),
     PassportModule,
     JwtModule.register({
       global: true,

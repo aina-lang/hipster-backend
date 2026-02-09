@@ -22,12 +22,10 @@ import {
 } from './entities/payment.entity';
 import { ConfigService } from '@nestjs/config';
 import {
-  AiSubscriptionProfile,
+  AiUser,
   PlanType,
   SubscriptionStatus,
-} from 'src/profiles/entities/ai-subscription-profile.entity';
-import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
-import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
+} from 'src/ai/entities/ai-user.entity';
 
 @Injectable()
 export class PaymentsService {
@@ -42,12 +40,8 @@ export class PaymentsService {
     private readonly projectRepo: Repository<Project>,
     @InjectRepository(Invoice)
     private readonly invoiceRepo: Repository<Invoice>,
-    @InjectRepository(AiSubscriptionProfile)
-    private readonly aiProfileRepo: Repository<AiSubscriptionProfile>,
-    @InjectRepository(AiSubscription)
-    private readonly aiSubscriptionRepo: Repository<AiSubscription>,
-    @InjectRepository(AiCredit)
-    private readonly aiCreditRepo: Repository<AiCredit>,
+    @InjectRepository(AiUser)
+    private readonly aiUserRepo: Repository<AiUser>,
     private readonly stripeService: StripeService,
     private readonly configService: ConfigService,
   ) {}
@@ -164,13 +158,12 @@ export class PaymentsService {
       );
     const customerId = subscription.customer as string;
 
-    const profile = await this.aiProfileRepo.findOne({
+    const user = await this.aiUserRepo.findOne({
       where: { stripeCustomerId: customerId },
-      relations: ['aiUser'],
     });
 
-    if (!profile) {
-      console.warn(`No AI profile found for Stripe customer ${customerId}`);
+    if (!user) {
+      console.warn(`No AI user found for Stripe customer ${customerId}`);
       return;
     }
 
@@ -207,48 +200,23 @@ export class PaymentsService {
       planType = PlanType.AGENCE;
     }
 
-    profile.subscriptionStatus = status;
-    profile.planType = planType;
-    profile.lastRenewalDate = new Date(
+    user.subscriptionStatus = status;
+    user.planType = planType;
+    user.subscriptionStartDate = new Date(
       (subscription as any).current_period_start * 1000,
     );
-    profile.nextRenewalDate = new Date(
+    user.subscriptionEndDate = new Date(
       (subscription as any).current_period_end * 1000,
     );
 
-    // Update AiCredit based on plan upgrade
+    // Update Limits based on plan upgrade
     if (status === SubscriptionStatus.ACTIVE) {
-      let credit = await this.aiCreditRepo.findOne({
-        where: { aiProfile: { id: profile.id } },
-      });
-      if (!credit) {
-        credit = this.aiCreditRepo.create({
-          promptsLimit: 0,
-          imagesLimit: 0,
-          videosLimit: 0,
-          audioLimit: 0,
-          aiProfile: profile,
-        });
-      }
-      if (planType === PlanType.ATELIER) credit.promptsLimit = 999999;
-      if (planType === PlanType.STUDIO) credit.promptsLimit = 999999;
-      if (planType === PlanType.AGENCE) credit.promptsLimit = 999999;
-      await this.aiCreditRepo.save(credit);
+      if (planType === PlanType.ATELIER) user.promptsLimit = 999999;
+      if (planType === PlanType.STUDIO) user.promptsLimit = 999999;
+      if (planType === PlanType.AGENCE) user.promptsLimit = 999999;
     }
 
-    await this.aiProfileRepo.save(profile);
-
-    // Also record the subscription period in AiSubscription entity
-    const aiSub = this.aiSubscriptionRepo.create({
-      aiProfile: profile,
-      planName: planType.toUpperCase(),
-      startDate: profile.lastRenewalDate,
-      endDate: profile.nextRenewalDate,
-      amount: subscription.items.data[0].plan.amount! / 100,
-      status: status === SubscriptionStatus.ACTIVE ? 'active' : 'canceled',
-    });
-
-    await this.aiSubscriptionRepo.save(aiSub);
+    await this.aiUserRepo.save(user);
   }
 
   private async updatePaymentStatus(

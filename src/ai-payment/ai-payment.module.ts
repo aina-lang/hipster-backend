@@ -4,19 +4,10 @@ import { AiPaymentService } from './ai-payment.service';
 import { AiPaymentController } from './ai-payment.controller';
 import { AiPaymentWebhookController } from './ai-payment.webhook.controller';
 import { AiUser } from '../ai/entities/ai-user.entity';
-import { AiSubscriptionProfile } from '../profiles/entities/ai-subscription-profile.entity';
-import { AiCredit } from '../profiles/entities/ai-credit.entity';
 import { AiGeneration } from '../ai/entities/ai-generation.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      AiUser,
-      AiSubscriptionProfile,
-      AiCredit,
-      AiGeneration,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([AiUser, AiGeneration])],
   controllers: [AiPaymentController, AiPaymentWebhookController],
   providers: [AiPaymentService],
   exports: [AiPaymentService],

@@ -3,13 +3,11 @@ import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan, Raw } from 'typeorm';
-import { AiUser } from '../ai/entities/ai-user.entity';
 import {
-  AiSubscriptionProfile,
+  AiUser,
   PlanType,
   SubscriptionStatus,
-} from '../profiles/entities/ai-subscription-profile.entity';
-import { AiCredit } from '../profiles/entities/ai-credit.entity';
+} from '../ai/entities/ai-user.entity';
 import {
   AiGeneration,
   AiGenerationType,
@@ -24,10 +22,6 @@ export class AiPaymentService {
     private readonly configService: ConfigService,
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
-    @InjectRepository(AiSubscriptionProfile)
-    private readonly aiProfileRepo: Repository<AiSubscriptionProfile>,
-    @InjectRepository(AiCredit)
-    private readonly aiCreditRepo: Repository<AiCredit>,
     @InjectRepository(AiGeneration)
     private readonly aiGenRepo: Repository<AiGeneration>,
   ) {
@@ -39,7 +33,7 @@ export class AiPaymentService {
 
   public async getPlans() {
     // Count active subscribers (excluding Curieux)
-    const activeSubscribersCount = await this.aiProfileRepo.count({
+    const activeSubscribersCount = await this.aiUserRepo.count({
       where: {
         planType: Raw((alias) => `${alias} != 'curieux'`),
         subscriptionStatus: SubscriptionStatus.ACTIVE,
@@ -57,7 +51,7 @@ export class AiPaymentService {
         id: 'curieux',
         name: 'Curieux',
         price: 'Gratuit',
-        stripePriceId: 'price_Studio2990', // Uses Studio price for the trial
+        stripePriceId: 'price_Studio2990',
         promptsLimit: 2,
         imagesLimit: 2,
         videosLimit: 0,
@@ -133,6 +127,26 @@ export class AiPaymentService {
     ];
   }
 
+  async getPlansForUser(userId: number) {
+    const plans = await this.getPlans();
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
+
+    if (!user) return plans;
+
+    return plans.filter((p) => {
+      if (p.id === 'curieux') {
+        return !user.hasUsedTrial;
+      }
+      return true;
+    });
+  }
+
+  async getSubscriptionProfile(userId: number): Promise<AiUser> {
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
+    if (!user) throw new BadRequestException('AiUser not found');
+    return user;
+  }
+
   private getPriceInCents(price: number | string): number {
     const priceNum = typeof price === 'string' ? parseFloat(price) : price;
     return Math.round(priceNum * 100);
@@ -140,96 +154,47 @@ export class AiPaymentService {
 
   async createPaymentSheet(userId: number, priceId?: string, planId?: string) {
     const plans = await this.getPlans();
-
-    // DEBUG: List all prices
-    try {
-      const prices = await this.stripe.prices.list({ limit: 20 });
-      this.logger.warn('DEBUG: AVAILABLE STRIPE PRICES:');
-      prices.data.forEach((p) => {
-        this.logger.warn(
-          `- ID: ${p.id} | Amount: ${p.unit_amount} | Currency: ${p.currency} | Product: ${p.product}`,
-        );
-      });
-    } catch (e) {
-      this.logger.error('Failed to list prices', e);
-    }
-
-    // Prefer planId if available, otherwise find by priceId
     let selectedPlan;
+
     if (planId === 'curieux') {
       selectedPlan = plans.find((p) => p.id === 'curieux');
     } else {
-      if (planId) {
-        selectedPlan = plans.find((p) => p.id === planId);
-      } else {
-        selectedPlan = plans.find((p) => p.stripePriceId === priceId);
-      }
+      selectedPlan = planId
+        ? plans.find((p) => p.id === planId)
+        : plans.find((p) => p.stripePriceId === priceId);
     }
 
-    if (!selectedPlan) {
-      throw new BadRequestException('Prix invalide');
-    }
+    if (!selectedPlan) throw new BadRequestException('Prix invalide');
 
-    // Allow curieux to skip stripePriceId check for SetupIntent
-    if (selectedPlan.id !== 'curieux' && !selectedPlan.stripePriceId) {
-      throw new BadRequestException('Prix Stripe manquant');
-    }
-
-    const user = await this.aiUserRepo.findOne({
-      where: { id: userId },
-      relations: ['aiProfile'],
-    });
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
     if (!user) throw new BadRequestException('AiUser not found');
 
-    let customerId = user.aiProfile?.stripeCustomerId;
-
-    // Create customer if not exists
+    let customerId = user.stripeCustomerId;
     if (!customerId) {
       const customer = await this.stripe.customers.create({
         email: user.email,
         metadata: { userId: user.id.toString() },
       });
       customerId = customer.id;
-
-      // Update or create profile
-      if (user.aiProfile) {
-        user.aiProfile.stripeCustomerId = customerId;
-        await this.aiProfileRepo.save(user.aiProfile);
-      } else {
-        const newProfile = this.aiProfileRepo.create({
-          aiUser: user,
-          stripeCustomerId: customerId,
-        });
-        const saved = await this.aiProfileRepo.save(newProfile);
-        const plans = await this.getPlans();
-        const curieuxPlan = plans.find((p) => p.id === 'curieux');
-        const credit = this.aiCreditRepo.create({
-          promptsLimit: curieuxPlan?.promptsLimit ?? 3,
-          imagesLimit: curieuxPlan?.imagesLimit ?? 2,
-          videosLimit: curieuxPlan?.videosLimit ?? 0,
-          audioLimit: curieuxPlan?.audioLimit ?? 0,
-          aiProfile: saved,
-        });
-        await this.aiCreditRepo.save(credit);
-      }
+      user.stripeCustomerId = customerId;
+      await this.aiUserRepo.save(user);
     }
 
-    // Create ephemeral key for client
     const ephemeralKey = await this.stripe.ephemeralKeys.create(
       { customer: customerId },
-      { apiVersion: '2025-11-17.clover' }, // Kept original version
+      { apiVersion: '2025-11-17.clover' },
     );
 
-    // LOGIC for Curieux (Save card only via SetupIntent)
     if (selectedPlan.id === 'curieux') {
+      if (user.hasUsedTrial) {
+        throw new BadRequestException('Essai gratuit déjà utilisé');
+      }
+
       const setupIntent = await this.stripe.setupIntents.create({
         customer: customerId,
         payment_method_types: ['card'],
         usage: 'off_session',
-        metadata: {
-          userId: userId.toString(),
-          planId: 'curieux',
-        },
+        metadata: { userId: userId.toString(), planId: 'curieux' },
       });
 
       return {
@@ -239,14 +204,11 @@ export class AiPaymentService {
       };
     }
 
-    // DEFAULT LOGIC (One-off PaymentIntent for others - preserving existing behavior for now)
     const paymentIntent = await this.stripe.paymentIntents.create({
       amount: this.getPriceInCents(selectedPlan.price),
       currency: 'eur',
       customer: customerId,
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      automatic_payment_methods: { enabled: true },
     });
 
     return {
@@ -259,172 +221,114 @@ export class AiPaymentService {
   async confirmPlan(userId: number, planId: string) {
     const plans = await this.getPlans();
     const selectedPlan = plans.find((p) => p.id === planId);
+    if (!selectedPlan) throw new BadRequestException('Plan invalide');
 
-    if (!selectedPlan) {
-      throw new BadRequestException('Plan invalide');
-    }
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
+    if (!user) throw new BadRequestException('Utilisateur non trouvé');
 
-    // Get user and profile
-    let user = await this.aiUserRepo.findOne({
-      where: { id: userId },
-      relations: ['aiProfile', 'aiProfile.aiCredit'],
-    });
+    // Apply plan limits and data directly to user
+    user.promptsLimit = selectedPlan.promptsLimit;
+    user.imagesLimit = selectedPlan.imagesLimit;
+    user.videosLimit = selectedPlan.videosLimit;
+    user.audioLimit = selectedPlan.audioLimit;
+    user.threeDLimit = selectedPlan.threeDLimit;
 
-    if (!user) {
-      throw new BadRequestException('Utilisateur non trouvé');
-    }
-
-    // Create AI Profile if it doesn't exist
-    if (!user.aiProfile) {
-      const profile = this.aiProfileRepo.create({
-        aiUser: user,
-        planType:
-          PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] ||
-          PlanType.CURIEUX,
-        subscriptionStatus: SubscriptionStatus.ACTIVE,
-      });
-      user.aiProfile = await this.aiProfileRepo.save(profile);
-    }
-
-    // Update or create AiCredit with plan limits
-    let credit = user.aiProfile.aiCredit;
-    if (!credit) {
-      credit = this.aiCreditRepo.create({
-        aiProfile: user.aiProfile,
-      });
-    }
-
-    // Apply plan limits
-    credit.promptsLimit = selectedPlan.promptsLimit;
-    credit.imagesLimit = selectedPlan.imagesLimit;
-    credit.videosLimit = selectedPlan.videosLimit;
-    credit.audioLimit = selectedPlan.audioLimit;
-
-    await this.aiCreditRepo.save(credit);
-
-    // Update profile with plan type and subscription status
-    user.aiProfile.planType =
+    user.planType =
       PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] ||
       PlanType.CURIEUX;
-    // Set subscription dates
-    const isTrial = selectedPlan.id === 'curieux';
+
     const startDate = new Date();
     const endDate = new Date();
 
-    if (isTrial) {
+    if (selectedPlan.id === 'curieux') {
       endDate.setDate(endDate.getDate() + 7);
-      user.aiProfile.subscriptionStatus = SubscriptionStatus.TRIAL;
+      user.subscriptionStatus = SubscriptionStatus.TRIAL;
+      user.hasUsedTrial = true;
     } else {
       endDate.setMonth(endDate.getMonth() + 1);
-      user.aiProfile.subscriptionStatus = SubscriptionStatus.ACTIVE;
+      user.subscriptionStatus = SubscriptionStatus.ACTIVE;
     }
 
-    user.aiProfile.subscriptionStartDate = startDate;
-    user.aiProfile.subscriptionEndDate = endDate;
-    user.aiProfile.lastRenewalDate = startDate;
-    user.aiProfile.nextRenewalDate = endDate;
+    user.subscriptionStartDate = startDate;
+    user.subscriptionEndDate = endDate;
 
-    await this.aiProfileRepo.save(user.aiProfile);
+    await this.aiUserRepo.save(user);
 
-    this.logger.log(
-      `Plan confirmed for user ${userId}: ${planId} with limits ${JSON.stringify(selectedPlan)}`,
-    );
+    this.logger.log(`Plan confirmed for user ${userId}: ${planId}`);
 
     return {
       message: 'Plan confirmé avec succès',
       planId: selectedPlan.id,
       limits: {
-        promptsLimit: credit.promptsLimit,
-        imagesLimit: credit.imagesLimit,
-        videosLimit: credit.videosLimit,
-        audioLimit: credit.audioLimit,
+        promptsLimit: user.promptsLimit,
+        imagesLimit: user.imagesLimit,
+        videosLimit: user.videosLimit,
+        audioLimit: user.audioLimit,
+        threeDLimit: user.threeDLimit,
       },
     };
   }
 
   async getCredits(userId: number) {
-    const user = await this.aiUserRepo.findOne({
-      where: { id: userId },
-      relations: ['aiProfile', 'aiProfile.aiCredit'],
-    });
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
+    if (!user) throw new BadRequestException('Utilisateur non trouvé');
 
-    if (!user?.aiProfile?.aiCredit) {
-      throw new BadRequestException('Crédits utilisateur non trouvés');
-    }
+    const plan = user.planType || PlanType.CURIEUX;
 
-    const plan = user.aiProfile.planType || PlanType.CURIEUX;
-    const planConfig =
-      (await this.getPlans()).find((p) => p.id === plan.toLowerCase()) ||
-      (await this.getPlans())[0];
-
-    // Determine the date range for counting usage
     let sinceDate: Date;
     if (plan === PlanType.CURIEUX) {
-      // Daily count for Curieux
       sinceDate = new Date();
       sinceDate.setHours(0, 0, 0, 0);
     } else {
-      // Use stored subscription start date for paid plans, fallback to start of month if missing
       sinceDate =
-        user.aiProfile.subscriptionStartDate ||
+        user.subscriptionStartDate ||
         new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     }
 
-    const promptsUsed = await this.aiGenRepo
-      .count({
+    const usage = await Promise.all([
+      this.aiGenRepo.count({
         where: {
           user: { id: userId },
           type: AiGenerationType.TEXT,
           createdAt: MoreThan(sinceDate) as any,
         },
-      })
-      .catch(() => 0);
-
-    const imagesUsed = await this.aiGenRepo
-      .count({
+      }),
+      this.aiGenRepo.count({
         where: {
           user: { id: userId },
           type: AiGenerationType.IMAGE,
           createdAt: MoreThan(sinceDate) as any,
         },
-      })
-      .catch(() => 0);
-
-    const videosUsed = await this.aiGenRepo
-      .count({
+      }),
+      this.aiGenRepo.count({
         where: {
           user: { id: userId },
           type: AiGenerationType.VIDEO,
           createdAt: MoreThan(sinceDate) as any,
         },
-      })
-      .catch(() => 0);
-
-    const audioUsed = await this.aiGenRepo
-      .count({
+      }),
+      this.aiGenRepo.count({
         where: {
           user: { id: userId },
           type: AiGenerationType.AUDIO,
           createdAt: MoreThan(sinceDate) as any,
         },
-      })
-      .catch(() => 0);
+      }),
+    ]);
 
-    // Always return limits from current plan config, not from stored credit
     return {
-      promptsLimit: planConfig.promptsLimit,
-      imagesLimit: planConfig.imagesLimit,
-      videosLimit: planConfig.videosLimit,
-      audioLimit: planConfig.audioLimit,
-      promptsUsed,
-      imagesUsed,
-      videosUsed,
-      audioUsed,
+      promptsLimit: user.promptsLimit,
+      imagesLimit: user.imagesLimit,
+      videosLimit: user.videosLimit,
+      audioLimit: user.audioLimit,
+      threeDLimit: user.threeDLimit,
+      promptsUsed: usage[0] || 0,
+      imagesUsed: usage[1] || 0,
+      videosUsed: usage[2] || 0,
+      audioUsed: usage[3] || 0,
       planType: plan.toLowerCase(),
-      createdAt: user.aiProfile.aiCredit.createdAt,
-      updatedAt: user.aiProfile.aiCredit.updatedAt,
-      subscriptionStartDate: user.aiProfile.subscriptionStartDate,
-      subscriptionEndDate: user.aiProfile.subscriptionEndDate,
+      subscriptionStartDate: user.subscriptionStartDate,
+      subscriptionEndDate: user.subscriptionEndDate,
     };
   }
 
@@ -432,148 +336,61 @@ export class AiPaymentService {
     userId: number,
     generationType: AiGenerationType,
   ): Promise<any> {
-    const user = await this.aiUserRepo.findOne({
-      where: { id: userId },
-      relations: ['aiProfile', 'aiProfile.aiCredit'],
-    });
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
+    if (!user) throw new BadRequestException('Utilisateur non trouvé');
 
-    // Ensure profile and credit exist. If missing, create defaults for 'curieux'
-    const curieuxPlan = (await this.getPlans()).find((p) => p.id === 'curieux');
-
-    if (!user) {
-      throw new BadRequestException('Utilisateur introuvable');
-    }
-
-    if (!user.aiProfile) {
-      const newProfile = this.aiProfileRepo.create({
-        aiUser: { id: userId } as AiUser,
-        planType: PlanType.CURIEUX,
-        subscriptionStatus: SubscriptionStatus.ACTIVE,
-      });
-      user.aiProfile = await this.aiProfileRepo.save(newProfile);
-    }
-
-    if (!user.aiProfile.aiCredit) {
-      const creditToCreate = this.aiCreditRepo.create({
-        promptsLimit: curieuxPlan?.promptsLimit ?? 100,
-        imagesLimit: curieuxPlan?.imagesLimit ?? 50,
-        videosLimit: curieuxPlan?.videosLimit ?? 10,
-        audioLimit: curieuxPlan?.audioLimit ?? 20,
-        aiProfile: user.aiProfile,
-      });
-      user.aiProfile.aiCredit = await this.aiCreditRepo.save(creditToCreate);
-    }
-
-    const credit = user.aiProfile.aiCredit;
-
-    // Check for subscription expiration
-    if (
-      user.aiProfile.subscriptionEndDate &&
-      new Date() > user.aiProfile.subscriptionEndDate
-    ) {
+    if (user.subscriptionEndDate && new Date() > user.subscriptionEndDate) {
       throw new BadRequestException(
-        user.aiProfile.planType === PlanType.CURIEUX
+        user.planType === PlanType.CURIEUX
           ? "Votre période d'essai de 7 jours est terminée. Veuillez souscrire à un pack pour continuer."
           : 'Votre abonnement a expiré. Veuillez le renouveler pour continuer à utiliser ces fonctionnalités.',
       );
     }
 
-    // Map generation type to credit field
-    let fieldName: keyof typeof credit;
-    let limitFieldName: keyof typeof credit;
-
+    let limit = 0;
     switch (generationType) {
       case AiGenerationType.TEXT:
-        fieldName = 'promptsLimit';
-        limitFieldName = 'promptsLimit';
+        limit = user.promptsLimit;
         break;
       case AiGenerationType.IMAGE:
-        fieldName = 'imagesLimit';
-        limitFieldName = 'imagesLimit';
+        limit = user.imagesLimit;
         break;
       case AiGenerationType.VIDEO:
-        fieldName = 'videosLimit';
-        limitFieldName = 'videosLimit';
+        limit = user.videosLimit;
         break;
       case AiGenerationType.AUDIO:
-        fieldName = 'audioLimit';
-        limitFieldName = 'audioLimit';
-        break;
-      default:
-        throw new BadRequestException(
-          `Type de génération non supporté: ${generationType}`,
-        );
-    }
-
-    // Get current usage
-    const sinceDate = credit.createdAt || new Date(0);
-    let currentUsage = 0;
-
-    switch (generationType) {
-      case AiGenerationType.TEXT:
-        currentUsage = await this.aiGenRepo
-          .count({
-            where: {
-              user: { id: userId },
-              type: AiGenerationType.TEXT,
-              createdAt: MoreThan(sinceDate) as any,
-            },
-          })
-          .catch(() => 0);
-        break;
-      case AiGenerationType.IMAGE:
-        currentUsage = await this.aiGenRepo
-          .count({
-            where: {
-              user: { id: userId },
-              type: AiGenerationType.IMAGE,
-              createdAt: MoreThan(sinceDate) as any,
-            },
-          })
-          .catch(() => 0);
-        break;
-      case AiGenerationType.VIDEO:
-        currentUsage = await this.aiGenRepo
-          .count({
-            where: {
-              user: { id: userId },
-              type: AiGenerationType.VIDEO,
-              createdAt: MoreThan(sinceDate) as any,
-            },
-          })
-          .catch(() => 0);
-        break;
-      case AiGenerationType.AUDIO:
-        currentUsage = await this.aiGenRepo
-          .count({
-            where: {
-              user: { id: userId },
-              type: AiGenerationType.AUDIO,
-              createdAt: MoreThan(sinceDate) as any,
-            },
-          })
-          .catch(() => 0);
+        limit = user.audioLimit;
         break;
     }
 
-    // Get the limit
-    const limit = credit[limitFieldName] as number;
-
-    // If limit is 0, the plan doesn't allow this generation type
-    if (typeof limit === 'number' && limit === 0) {
+    if (limit === 0) {
       throw new BadRequestException(
         `Le plan actuel n'autorise pas la génération de ${this.getTypeLabel(generationType)}.`,
       );
     }
 
-    // Check if limit reached (usage count is already incremented by ai.service.ts when saved)
+    let sinceDate: Date;
+    if (user.planType === PlanType.CURIEUX) {
+      sinceDate = new Date();
+      sinceDate.setHours(0, 0, 0, 0);
+    } else {
+      sinceDate = user.subscriptionStartDate || new Date(0);
+    }
+
+    const currentUsage = await this.aiGenRepo.count({
+      where: {
+        user: { id: userId },
+        type: generationType,
+        createdAt: MoreThan(sinceDate) as any,
+      },
+    });
+
     if (currentUsage >= limit) {
       throw new BadRequestException(
         `Limite atteinte pour les ${this.getTypeLabel(generationType)}. Vous avez utilisé ${limit}/${limit}.`,
       );
     }
 
-    // Return remaining credits
     return {
       remaining: limit - currentUsage,
       used: currentUsage,

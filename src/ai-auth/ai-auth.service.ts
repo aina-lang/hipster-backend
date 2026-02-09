@@ -10,18 +10,15 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { AiUser } from 'src/ai/entities/ai-user.entity';
 import {
-  AiSubscriptionProfile,
-  AiAccessLevel,
+  AiUser,
   PlanType,
   SubscriptionStatus,
-} from 'src/profiles/entities/ai-subscription-profile.entity';
+} from 'src/ai/entities/ai-user.entity';
 import { OtpService } from 'src/otp/otp.service';
 import { OtpType } from 'src/common/enums/otp.enum';
 import { MailService } from 'src/mail/mail.service';
 import { Public } from 'src/common/decorators/public.decorator';
-import { AiCredit } from 'src/profiles/entities/ai-credit.entity';
 import { deleteFile } from 'src/common/utils/file.utils';
 import { AiPaymentService } from 'src/ai-payment/ai-payment.service';
 
@@ -30,10 +27,6 @@ export class AiAuthService {
   constructor(
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
-    @InjectRepository(AiSubscriptionProfile)
-    private readonly aiProfileRepo: Repository<AiSubscriptionProfile>,
-    @InjectRepository(AiCredit)
-    private readonly aiCreditRepo: Repository<AiCredit>,
     private readonly jwtService: JwtService,
     private readonly otpService: OtpService,
     private readonly mailService: MailService,
@@ -61,7 +54,6 @@ export class AiAuthService {
         isEmailVerified: false,
       });
     }
-    await this.aiUserRepo.save(user);
 
     const planTypeInput = dto.planId ? dto.planId.toLowerCase() : 'curieux';
     const plans = await this.aiPaymentService.getPlans();
@@ -69,39 +61,33 @@ export class AiAuthService {
     const selectedPlanConfig =
       plans.find((p) => p.id === planTypeInput) || curieuxPlan;
 
+    // Apply plan limits and status directly to user
+    user.promptsLimit = selectedPlanConfig.promptsLimit;
+    user.imagesLimit = selectedPlanConfig.imagesLimit;
+    user.videosLimit = selectedPlanConfig.videosLimit;
+    user.audioLimit = selectedPlanConfig.audioLimit;
+    user.threeDLimit = selectedPlanConfig.threeDLimit || 0;
+
+    user.planType =
+      PlanType[selectedPlanConfig.id.toUpperCase() as keyof typeof PlanType] ||
+      PlanType.CURIEUX;
+
     const startDate = new Date();
     const endDate = new Date();
+
     if (planTypeInput === 'curieux') {
-      endDate.setDate(endDate.getDate() + 7); // 7 days trial for Curieux
+      endDate.setDate(endDate.getDate() + 7);
+      user.subscriptionStatus = SubscriptionStatus.TRIAL;
+      user.hasUsedTrial = true;
     } else {
-      endDate.setDate(endDate.getDate() + 30); // 30 days period for others
+      endDate.setDate(endDate.getDate() + 30);
+      user.subscriptionStatus = SubscriptionStatus.ACTIVE;
     }
 
-    const profile = this.aiProfileRepo.create({
-      aiUser: user,
-      accessLevel: AiAccessLevel.GUEST,
-      planType: selectedPlanConfig.id as PlanType,
-      subscriptionStatus:
-        planTypeInput === 'curieux'
-          ? SubscriptionStatus.ACTIVE
-          : SubscriptionStatus.TRIAL,
-      subscriptionStartDate: startDate,
-      subscriptionEndDate: endDate,
-      lastRenewalDate: startDate,
-      nextRenewalDate: endDate,
-    });
-    await this.aiProfileRepo.save(profile);
+    user.subscriptionStartDate = startDate;
+    user.subscriptionEndDate = endDate;
 
-    // Create default AiCredit for the profile using plan limits
-    const credit = this.aiCreditRepo.create({
-      promptsLimit: selectedPlanConfig.promptsLimit,
-      imagesLimit: selectedPlanConfig.imagesLimit,
-      videosLimit: selectedPlanConfig.videosLimit,
-      audioLimit: selectedPlanConfig.audioLimit,
-      threeDLimit: selectedPlanConfig.threeDLimit || 0,
-      aiProfile: profile,
-    });
-    await this.aiCreditRepo.save(credit);
+    await this.aiUserRepo.save(user);
 
     const otp = await this.otpService.generateOtp(user, OtpType.OTP);
     await this.mailService.sendEmail({
@@ -116,16 +102,12 @@ export class AiAuthService {
 
     let stripeData = null;
     if (dto.planId && dto.planId !== 'curieux') {
-      const plans = await this.aiPaymentService.getPlans();
       const plan = plans.find((p) => p.id === dto.planId);
       if (plan && plan.stripePriceId) {
         stripeData = await this.aiPaymentService.createPaymentSheet(
           user.id,
           plan.stripePriceId,
         );
-
-        // Mark user as potentially requiring verification but also payment
-        // For now just returning data so the app can show the payment sheet
       }
     }
 
@@ -143,7 +125,6 @@ export class AiAuthService {
 
     const user = await this.aiUserRepo.findOne({
       where: { email },
-      relations: ['aiProfile', 'aiProfile.aiCredit'],
     });
 
     if (!user) {
@@ -190,8 +171,15 @@ export class AiAuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        aiProfile: user.aiProfile,
         isEmailVerified: user.isEmailVerified,
+        planType: user.planType,
+        subscriptionStatus: user.subscriptionStatus,
+        promptsLimit: user.promptsLimit,
+        imagesLimit: user.imagesLimit,
+        videosLimit: user.videosLimit,
+        audioLimit: user.audioLimit,
+        threeDLimit: user.threeDLimit,
+        subscriptionEndDate: user.subscriptionEndDate,
         type: 'ai',
       },
     };
@@ -228,7 +216,6 @@ export class AiAuthService {
     const normalizedEmail = email.trim().toLowerCase();
     const user = await this.aiUserRepo.findOne({
       where: { email: normalizedEmail },
-      relations: ['aiProfile', 'aiProfile.aiCredit'],
     });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
@@ -262,8 +249,9 @@ export class AiAuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        aiProfile: user.aiProfile,
         isEmailVerified: user.isEmailVerified,
+        planType: user.planType,
+        subscriptionStatus: user.subscriptionStatus,
         type: 'ai',
       },
     };

@@ -1,8 +1,7 @@
 import { Invoice } from 'src/invoices/entities/invoice.entity';
-import { AiSubscriptionProfile } from 'src/profiles/entities/ai-subscription-profile.entity';
-import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { Project } from 'src/projects/entities/project.entity';
-import { AiSubscription } from 'src/subscriptions/entities/ai-subscription.entity';
+import { AiUser } from 'src/ai/entities/ai-user.entity';
+import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
   Column,
@@ -75,10 +74,10 @@ export class Payment {
   @ManyToOne(() => ClientProfile, (c) => c.payments, { onDelete: 'CASCADE' })
   client?: ClientProfile;
 
-  @ManyToOne(() => AiSubscriptionProfile, (a) => a.payments, {
+  @ManyToOne(() => AiUser, (a) => a.payments, {
     onDelete: 'CASCADE',
   })
-  aiProfile?: AiSubscriptionProfile;
+  aiUser?: AiUser;
 
   @OneToOne(() => Project, (p) => p.payment, { onDelete: 'CASCADE' })
   @JoinColumn()
@@ -87,8 +86,4 @@ export class Payment {
   @OneToOne(() => Invoice, (i) => i.payment, { onDelete: 'CASCADE' })
   @JoinColumn()
   invoice?: Invoice;
-
-  @OneToOne(() => AiSubscription, (s) => s.payment)
-  @JoinColumn()
-  aiSubscription?: AiSubscription;
 }

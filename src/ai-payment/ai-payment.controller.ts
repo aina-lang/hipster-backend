@@ -12,6 +12,34 @@ import { Public } from '../common/decorators/public.decorator';
 export class AiPaymentController {
   constructor(private readonly aiPaymentService: AiPaymentService) {}
 
+  @ApiOperation({ summary: "Récupérer mon profil d'abonnement" })
+  @Get('me')
+  async getMySubscription(@Req() req) {
+    return this.aiPaymentService.getSubscriptionProfile(req.user.sub);
+  }
+
+  @Public()
+  @ApiOperation({ summary: "Lister les plans d'abonnement" })
+  @Get('plans')
+  async getPlans() {
+    return this.aiPaymentService.getPlans();
+  }
+
+  @ApiOperation({
+    summary: "Lister les plans d'abonnement (utilisateur connecté)",
+  })
+  @Get('plans/me')
+  async getPlansForUser(@Req() req) {
+    const userId = req.user.sub;
+    return this.aiPaymentService.getPlansForUser(userId);
+  }
+
+  @ApiOperation({ summary: 'Souscrire à un abonnement' })
+  @Post('subscribe')
+  async subscribe(@Req() req, @Body() body: { planId: string }) {
+    return this.aiPaymentService.confirmPlan(req.user.sub, body.planId);
+  }
+
   @ApiOperation({ summary: 'Créer une feuille de paiement Stripe pour IA' })
   @Post('create-payment-sheet')
   async createPaymentSheet(

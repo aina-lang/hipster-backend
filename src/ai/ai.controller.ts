@@ -24,7 +24,7 @@ import { Role } from '../common/enums/role.enum';
 import { ResponseMessage } from '../common/decorators/response-message.decorator';
 import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
-import { PlanType } from '../profiles/entities/ai-subscription-profile.entity';
+import { PlanType } from './entities/ai-user.entity';
 
 @ApiTags('AI')
 @Controller('ai')
@@ -159,7 +159,7 @@ export class AiController {
       // We check the AI subscription profile linked to this AI account.
       // Fetch user with profile to check planType
       const aiUser = await this.aiService.getAiUserWithProfile(req.user.sub);
-      const isPremium = aiUser?.aiProfile?.planType !== PlanType.CURIEUX;
+      const isPremium = aiUser?.planType !== PlanType.CURIEUX;
 
       const result = await this.aiService.generateImage(
         body.params,

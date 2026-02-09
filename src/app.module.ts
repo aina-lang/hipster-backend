@@ -12,8 +12,6 @@ import { OtpModule } from './otp/otp.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
 
-import { SubscriptionsModule } from './subscriptions/subscriptions.module';
-
 import { PaymentsModule } from './payments/payments.module';
 import { ProjectsModule } from './projects/projects.module';
 import { InvoicesModule } from './invoices/invoices.module';
@@ -73,9 +71,8 @@ import { AiPaymentModule } from './ai-payment/ai-payment.module';
     MailModule,
     OtpModule,
     TasksModule,
-// test
+    // test
     // Legacy subscriptions (keep for backwards compatibility)
-    SubscriptionsModule,
     PaymentsModule,
     ProjectsModule,
     InvoicesModule,

@@ -17,15 +17,11 @@ import * as ExcelJS from 'exceljs';
 import OpenAI from 'openai';
 // Native fetch used
 
-import { AiUser } from './entities/ai-user.entity';
+import { AiUser, PlanType } from './entities/ai-user.entity';
 import {
   AiGeneration,
   AiGenerationType,
 } from './entities/ai-generation.entity';
-import {
-  AiSubscriptionProfile,
-  PlanType,
-} from '../profiles/entities/ai-subscription-profile.entity';
 import { AiPaymentService } from '../ai-payment/ai-payment.service';
 
 @Injectable()
@@ -50,7 +46,6 @@ export class AiService {
   async getAiUserWithProfile(id: number) {
     return this.aiUserRepo.findOne({
       where: { id },
-      relations: ['aiProfile', 'aiProfile.aiCredit'],
     });
   }
 
@@ -133,19 +128,18 @@ export class AiService {
     const start = Date.now();
     try {
       if (userId) {
-        // Fetch user with profile
+        // Fetch user
         const user = await this.aiUserRepo.findOne({
           where: { id: userId },
-          relations: ['aiProfile'],
         });
 
-        if (!user || !user.aiProfile) {
-          throw new ForbiddenException('Utilisateur ou profil non trouvé');
+        if (!user) {
+          throw new ForbiddenException('Utilisateur non trouvé');
         }
 
         // Check Pack Curieux message limit (10 messages per conversation)
         // We only check if it's an existing conversation
-        if (user.aiProfile.planType === PlanType.CURIEUX && conversationId) {
+        if (user.planType === PlanType.CURIEUX && conversationId) {
           const conversation = await this.aiGenRepo.findOne({
             where: { id: parseInt(conversationId), user: { id: userId } },
           });
@@ -282,24 +276,19 @@ export class AiService {
       const userObj = await this.getAiUserWithProfile(userId);
       if (userObj) {
         userName = userObj.name || userObj.email;
-        const profile = userObj.aiProfile;
-        if (profile) {
-          const parts = [
-            `Nom: ${userName}`,
-            profile.professionalEmail
-              ? `Email: ${profile.professionalEmail}`
-              : '',
-            profile.professionalAddress || profile.city || profile.postalCode
-              ? `Adresse: ${profile.professionalAddress || ''} ${profile.city || ''} ${profile.postalCode || ''}`.trim()
-              : '',
-            profile.professionalPhone
-              ? `Tél: ${profile.professionalPhone}`
-              : '',
-            profile.websiteUrl ? `Site: ${profile.websiteUrl}` : '',
-          ].filter(Boolean);
-          if (parts.length > 0)
-            identityContext = `INFOS CONTACT/BRANDING:\n${parts.join('\n')}`;
-        }
+        const parts = [
+          `Nom: ${userName}`,
+          userObj.professionalEmail
+            ? `Email: ${userObj.professionalEmail}`
+            : '',
+          userObj.professionalAddress || userObj.city || userObj.postalCode
+            ? `Adresse: ${userObj.professionalAddress || ''} ${userObj.city || ''} ${userObj.postalCode || ''}`.trim()
+            : '',
+          userObj.professionalPhone ? `Tél: ${userObj.professionalPhone}` : '',
+          userObj.websiteUrl ? `Site: ${userObj.websiteUrl}` : '',
+        ].filter(Boolean);
+        if (parts.length > 0)
+          identityContext = `INFOS CONTACT/BRANDING:\n${parts.join('\n')}`;
       }
     }
 
@@ -310,6 +299,7 @@ export class AiService {
       ? Object.entries(workflowAnswers)
           .map(([k, v]) => `• ${k.replace(/_/g, ' ').toUpperCase()}: ${v}`)
           .join('\n')
+          .substring(0, 1000)
       : '';
 
     const parts = [
@@ -377,8 +367,10 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     style?: string,
     isNewRequest?: boolean,
   ) {
-    const userProfile = await this.getAiUserWithProfile(userId);
-    const planId = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
+    const user = await this.getAiUserWithProfile(userId);
+    if (!user) throw new ForbiddenException('Utilisateur non trouvé');
+
+    const planId = user.planType || PlanType.CURIEUX;
 
     // Get plan configuration from PaymentService
     const plans = await this.aiPaymentService.getPlans();
@@ -392,11 +384,11 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     if (planId === PlanType.CURIEUX) {
       // Daily limits for Curieux
-      const createdAt = userProfile.createdAt;
+      const createdAt = user.createdAt;
       const diffMs = now.getTime() - createdAt.getTime();
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-      if (diffDays > 7) {
+      if (diffDays > 7 && !user.hasUsedTrial) {
         throw new BadRequestException(
           "Votre période d'essai de 7 jours est terminée. Veuillez passer à un pack premium pour continuer.",
         );
@@ -543,7 +535,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     if (userId) {
       const userProfile = await this.getAiUserWithProfile(userId);
-      const plan = userProfile?.aiProfile?.planType || PlanType.CURIEUX;
+      const plan = userProfile?.planType || PlanType.CURIEUX;
 
       if (plan === PlanType.ATELIER || plan === PlanType.STUDIO) {
         // Atelier/Studio -> SD 3.5 Large Turbo
