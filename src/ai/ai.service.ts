@@ -137,43 +137,10 @@ export class AiService {
           throw new ForbiddenException('Utilisateur non trouvé');
         }
 
-        // Check Pack Curieux message limit (10 messages per conversation)
-        // We only check if it's an existing conversation
-        if (user.planType === PlanType.CURIEUX && conversationId) {
-          const conversation = await this.aiGenRepo.findOne({
-            where: { id: parseInt(conversationId), user: { id: userId } },
-          });
-
-          if (conversation) {
-            try {
-              // Parse the prompt which contains the message array
-              const storedMessages = JSON.parse(conversation.prompt);
-              if (Array.isArray(storedMessages)) {
-                // Count user messages in the conversation
-                const userMessageCount = storedMessages.filter(
-                  (m) => m.role === 'user',
-                ).length;
-
-                if (userMessageCount >= 10) {
-                  throw new ForbiddenException(
-                    'Limite de 10 messages atteinte pour cette conversation. Démarrez une nouvelle conversation pour continuer.',
-                  );
-                }
-              }
-            } catch (e) {
-              this.logger.warn(
-                `Failed to check message limit for conversation ${conversationId}: ${e.message}`,
-              );
-            }
-          }
-        }
-
-        // Use existing checkLimits for daily/monthly budget
-        await this.checkLimits(
+        // Check limits before proceeding
+        await this.aiPaymentService.decrementCredits(
           userId,
           AiGenerationType.TEXT,
-          null,
-          !conversationId,
         );
       }
 
@@ -340,7 +307,10 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     ];
 
     if (userId)
-      await this.checkLimits(userId, AiGenerationType.TEXT, null, true);
+      await this.aiPaymentService.decrementCredits(
+        userId,
+        AiGenerationType.TEXT,
+      );
     const chatResult = await this.chat(messages, userId);
     const result = chatResult.content;
 
@@ -361,147 +331,6 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
   }
 
   /* --------------------- IMAGE GENERATION --------------------- */
-  private async checkLimits(
-    userId: number,
-    type: AiGenerationType,
-    style?: string,
-    isNewRequest?: boolean,
-  ) {
-    const user = await this.getAiUserWithProfile(userId);
-    if (!user) throw new ForbiddenException('Utilisateur non trouvé');
-
-    const planId = user.planType || PlanType.CURIEUX;
-
-    // Get plan configuration from PaymentService
-    const plans = await this.aiPaymentService.getPlans();
-    const curieuxPlan = plans.find((p) => p.id === 'curieux');
-    const currentPlanConfig =
-      plans.find((p) => p.id === planId.toLowerCase()) || curieuxPlan;
-
-    // Get date range for limit checking
-    const now = new Date();
-    let sinceDate: Date;
-
-    if (planId === PlanType.CURIEUX) {
-      // Daily limits for Curieux
-      const createdAt = user.createdAt;
-      const diffMs = now.getTime() - createdAt.getTime();
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-      if (diffDays > 7 && !user.hasUsedTrial) {
-        throw new BadRequestException(
-          "Votre période d'essai de 7 jours est terminée. Veuillez passer à un pack premium pour continuer.",
-        );
-      }
-
-      // Check daily limits
-      sinceDate = new Date();
-      sinceDate.setHours(0, 0, 0, 0);
-    } else {
-      // Monthly limits for others
-      sinceDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    }
-
-    // Special logic for Curieux: limit 2 CONVERSATIONS per day, not 2 messages.
-    // If it's an existing conversation, we don't check the daily TEXT limit here
-    // (it's checked via the 10-message rule in the chat method).
-    if (
-      planId === PlanType.CURIEUX &&
-      type === AiGenerationType.TEXT &&
-      !isNewRequest
-    ) {
-      return;
-    }
-
-    // Count usage since the date range started
-    // For 3D/Sketch, we filter by attributes.style if type is IMAGE
-    const isThreeDRequest =
-      type === AiGenerationType.IMAGE && (style === '3d' || style === 'sketch');
-
-    // For Curieux TEXT, we count only CHAT entries (unique conversation starts)
-    const countType =
-      planId === PlanType.CURIEUX && type === AiGenerationType.TEXT
-        ? AiGenerationType.CHAT
-        : type;
-
-    const count = await this.aiGenRepo.count({
-      where: {
-        user: { id: userId },
-        type: countType,
-        createdAt: MoreThan(sinceDate),
-        ...(isThreeDRequest
-          ? {
-              attributes: Raw(
-                (alias) => `${alias} ->> 'style' IN ('3d', 'sketch')`,
-              ),
-            }
-          : {}),
-        ...(!isThreeDRequest && type === AiGenerationType.IMAGE
-          ? {
-              attributes: Raw(
-                (alias) =>
-                  `(${alias} ->> 'style' NOT IN ('3d', 'sketch') OR ${alias} ->> 'style' IS NULL)`,
-              ),
-            }
-          : {}),
-      },
-    });
-
-    const periodStr = planId === PlanType.CURIEUX ? 'par jour' : 'par mois';
-
-    // Check limits based on type
-    if (isThreeDRequest) {
-      if (currentPlanConfig.threeDLimit === 0) {
-        throw new BadRequestException(
-          `Le plan ${currentPlanConfig.name} ne permet pas la génération 3D / Sketch.`,
-        );
-      }
-      if (count >= currentPlanConfig.threeDLimit) {
-        throw new BadRequestException(
-          `Limite atteinte : ${currentPlanConfig.threeDLimit} générations 3D / Sketch ${periodStr} avec le plan ${currentPlanConfig.name}.`,
-        );
-      }
-      return;
-    }
-
-    if (type === AiGenerationType.TEXT) {
-      if (count >= currentPlanConfig.promptsLimit) {
-        const itemStr =
-          planId === PlanType.CURIEUX ? 'conversations' : 'textes';
-        throw new BadRequestException(
-          `Limite atteinte : ${currentPlanConfig.promptsLimit} ${itemStr} ${periodStr} avec le plan ${currentPlanConfig.name}.`,
-        );
-      }
-    } else if (type === AiGenerationType.IMAGE) {
-      if (count >= currentPlanConfig.imagesLimit) {
-        throw new BadRequestException(
-          `Limite atteinte : ${currentPlanConfig.imagesLimit} images ${periodStr} avec le plan ${currentPlanConfig.name}.`,
-        );
-      }
-    } else if (type === AiGenerationType.VIDEO) {
-      if (currentPlanConfig.videosLimit === 0) {
-        throw new BadRequestException(
-          `Le plan ${currentPlanConfig.name} ne permet pas la génération de vidéos.`,
-        );
-      }
-      if (count >= currentPlanConfig.videosLimit) {
-        throw new BadRequestException(
-          `Limite atteinte : ${currentPlanConfig.videosLimit} vidéos ${periodStr} avec le plan ${currentPlanConfig.name}.`,
-        );
-      }
-    } else if (type === AiGenerationType.AUDIO) {
-      if (currentPlanConfig.audioLimit === 0) {
-        throw new BadRequestException(
-          `Le plan ${currentPlanConfig.name} ne permet pas la génération d'audios.`,
-        );
-      }
-      if (count >= currentPlanConfig.audioLimit) {
-        throw new BadRequestException(
-          `Limite atteinte : ${currentPlanConfig.audioLimit} audios ${periodStr} avec le plan ${currentPlanConfig.name}.`,
-        );
-      }
-    }
-  }
 
   async generateImage(
     params: any,
@@ -509,7 +338,11 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     userId?: number,
     manualNegativePrompt?: string,
   ) {
-    if (userId) await this.checkLimits(userId, AiGenerationType.IMAGE, style);
+    if (userId)
+      await this.aiPaymentService.decrementCredits(
+        userId,
+        AiGenerationType.IMAGE,
+      );
 
     if (typeof params === 'string') params = { userQuery: params };
     const basePrompt = await this.buildPrompt(params, userId);
