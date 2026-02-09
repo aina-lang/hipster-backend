@@ -138,8 +138,21 @@ export class AiPaymentService {
     return Math.round(priceNum * 100);
   }
 
-  async createPaymentSheet(userId: number, priceId: string, planId?: string) {
+  async createPaymentSheet(userId: number, priceId?: string, planId?: string) {
     const plans = await this.getPlans();
+
+    // DEBUG: List all prices
+    try {
+      const prices = await this.stripe.prices.list({ limit: 20 });
+      this.logger.warn('DEBUG: AVAILABLE STRIPE PRICES:');
+      prices.data.forEach((p) => {
+        this.logger.warn(
+          `- ID: ${p.id} | Amount: ${p.unit_amount} | Currency: ${p.currency} | Product: ${p.product}`,
+        );
+      });
+    } catch (e) {
+      this.logger.error('Failed to list prices', e);
+    }
 
     // Prefer planId if available, otherwise find by priceId
     let selectedPlan;
