@@ -306,12 +306,18 @@ export class AiPaymentService {
     user.aiProfile.planType =
       PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] ||
       PlanType.CURIEUX;
-    user.aiProfile.subscriptionStatus = SubscriptionStatus.ACTIVE;
-
     // Set subscription dates
+    const isTrial = selectedPlan.id === 'curieux';
     const startDate = new Date();
     const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + 1);
+
+    if (isTrial) {
+      endDate.setDate(endDate.getDate() + 7);
+      user.aiProfile.subscriptionStatus = SubscriptionStatus.TRIAL;
+    } else {
+      endDate.setMonth(endDate.getMonth() + 1);
+      user.aiProfile.subscriptionStatus = SubscriptionStatus.ACTIVE;
+    }
 
     user.aiProfile.subscriptionStartDate = startDate;
     user.aiProfile.subscriptionEndDate = endDate;
