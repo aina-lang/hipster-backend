@@ -9,6 +9,7 @@ import {
 import { Otp } from 'src/otp/enitities/otp.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
 import { AiUsageLog } from './ai-usage-log.entity';
+
 export enum SubscriptionStatus {
   ACTIVE = 'active',
   CANCELED = 'canceled',
