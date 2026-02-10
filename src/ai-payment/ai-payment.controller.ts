@@ -54,13 +54,27 @@ export class AiPaymentController {
     );
   }
 
+  @ApiOperation({ summary: 'Annuler mon abonnement' })
+  @Post('cancel')
+  async cancelSubscription(@Req() req) {
+    const userId = req.user.sub;
+    return this.aiPaymentService.cancelSubscription(userId);
+  }
+
   @ApiOperation({
     summary: "Confirmer un plan et appliquer les limites d'utilisation",
   })
   @Post('confirm-plan')
-  async confirmPlan(@Req() req, @Body() body: { planId: string }) {
+  async confirmPlan(
+    @Req() req,
+    @Body() body: { planId: string; subscriptionId?: string },
+  ) {
     const userId = req.user.sub;
-    return this.aiPaymentService.confirmPlan(userId, body.planId);
+    return this.aiPaymentService.confirmPlan(
+      userId,
+      body.planId,
+      body.subscriptionId,
+    );
   }
 
   @ApiOperation({ summary: "Récupérer les limites d'utilisation actuelles" })

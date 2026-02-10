@@ -66,6 +66,11 @@ export class AiPaymentWebhookController {
       case 'invoice.payment_succeeded':
         // Optional: handle successful payments for logging or other logic
         break;
+      case 'customer.subscription.deleted':
+        await this.handleSubscriptionDeleted(
+          event.data.object as Stripe.Subscription,
+        );
+        break;
       default:
         this.logger.log(`Unhandled event type ${event.type}`);
     }
@@ -95,11 +100,11 @@ export class AiPaymentWebhookController {
     // Check previous status vs current status
     // If it was trialing and now active, it means the user upgraded (or trial ended successfully)
     if (subscription.status === 'active') {
-      // Check if we should upgrade the plan to STUDIO (if it was Curieux)
+      // Check if we should upgrade the plan to ATELIER (if it was Curieux)
       if (user.planType === PlanType.CURIEUX) {
-        user.planType = PlanType.STUDIO;
+        user.planType = PlanType.ATELIER;
         this.logger.log(
-          `Upgrading user ${user.id} to STUDIO after trial ended/activation.`,
+          `Upgrading user ${user.id} to ATELIER after trial ended/activation.`,
         );
       }
       user.subscriptionStatus = SubscriptionStatus.ACTIVE;
@@ -118,5 +123,23 @@ export class AiPaymentWebhookController {
     user.subscriptionEndDate = new Date(sub.current_period_end * 1000);
 
     await this.aiUserRepo.save(user);
+  }
+
+  private async handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+    this.logger.log(`Subscription deleted: ${subscription.id}`);
+
+    const customerId =
+      typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
+
+    const user = await this.aiUserRepo.findOne({
+      where: { stripeCustomerId: customerId },
+    });
+
+    if (user) {
+      user.subscriptionStatus = SubscriptionStatus.CANCELED;
+      await this.aiUserRepo.save(user);
+    }
   }
 }

@@ -193,8 +193,9 @@ export class AiPaymentService {
       { apiVersion: '2024-06-20' as any },
     );
 
+    let subscription: Stripe.Subscription;
+
     if (selectedPlan.id === 'curieux') {
-      // Allow if they are currently on curieux plan but haven't added a card yet
       if (user.hasUsedTrial && user.planType !== PlanType.CURIEUX) {
         this.logger.warn(
           `User ${userId} already used trial and is not on curieux plan`,
@@ -202,35 +203,53 @@ export class AiPaymentService {
         throw new BadRequestException('Essai gratuit déjà utilisé');
       }
 
-      const setupIntent = await this.stripe.setupIntents.create({
+      // Transitions to ATELIER after trial
+      const atelierPriceId =
+        plans.find((p) => p.id === 'atelier')?.stripePriceId ||
+        'price_Atelier990';
+
+      subscription = await this.stripe.subscriptions.create({
         customer: customerId,
-        payment_method_types: ['card'],
-        usage: 'off_session',
+        items: [{ price: atelierPriceId }],
+        trial_period_days: 7,
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['pending_setup_intent'],
         metadata: { userId: userId.toString(), planId: 'curieux' },
       });
 
       return {
-        setupIntentClientSecret: setupIntent.client_secret,
+        setupIntentClientSecret: (
+          subscription.pending_setup_intent as Stripe.SetupIntent
+        )?.client_secret,
+        subscriptionId: subscription.id,
         ephemeralKey: ephemeralKey.secret,
         customerId: customerId,
       };
     }
 
-    const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: this.getPriceInCents(selectedPlan.price),
-      currency: 'eur',
+    // For paid plans (Atelier, Studio, Agence)
+    subscription = await this.stripe.subscriptions.create({
       customer: customerId,
-      automatic_payment_methods: { enabled: true },
+      items: [{ price: selectedPlan.stripePriceId }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
+      metadata: { userId: userId.toString(), planId: selectedPlan.id },
     });
+
+    const invoice = subscription.latest_invoice as any;
+    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
 
     return {
       paymentIntentClientSecret: paymentIntent.client_secret,
+      subscriptionId: subscription.id,
       ephemeralKey: ephemeralKey.secret,
       customerId: customerId,
     };
   }
 
-  async confirmPlan(userId: number, planId: string) {
+  async confirmPlan(userId: number, planId: string, subscriptionId?: string) {
     const plans = await this.getPlans();
     const selectedPlan = plans.find((p) => p.id === planId);
     if (!selectedPlan) throw new BadRequestException('Plan invalide');
@@ -248,6 +267,10 @@ export class AiPaymentService {
     user.planType =
       PlanType[selectedPlan.id.toUpperCase() as keyof typeof PlanType] ||
       PlanType.CURIEUX;
+
+    if (subscriptionId) {
+      user.stripeSubscriptionId = subscriptionId;
+    }
 
     const startDate = new Date();
     const endDate = new Date();
@@ -288,14 +311,8 @@ export class AiPaymentService {
     const plan = user.planType || PlanType.CURIEUX;
 
     let sinceDate: Date;
-    if (plan === PlanType.CURIEUX) {
-      sinceDate = new Date();
-      sinceDate.setHours(0, 0, 0, 0);
-    } else {
-      sinceDate =
-        user.subscriptionStartDate ||
-        new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-    }
+    sinceDate = new Date();
+    sinceDate.setHours(0, 0, 0, 0);
 
     const usage = await Promise.all([
       this.aiGenRepo.count({
@@ -382,12 +399,8 @@ export class AiPaymentService {
     }
 
     let sinceDate: Date;
-    if (user.planType === PlanType.CURIEUX) {
-      sinceDate = new Date();
-      sinceDate.setHours(0, 0, 0, 0);
-    } else {
-      sinceDate = user.subscriptionStartDate || new Date(0);
-    }
+    sinceDate = new Date();
+    sinceDate.setHours(0, 0, 0, 0);
 
     const currentUsage = await this.aiGenRepo.count({
       where: {
@@ -408,6 +421,29 @@ export class AiPaymentService {
       used: currentUsage,
       limit: limit,
       type: generationType,
+    };
+  }
+
+  async cancelSubscription(userId: number): Promise<any> {
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
+    if (!user || !user.stripeSubscriptionId) {
+      throw new BadRequestException('Aucun abonnement actif trouvé');
+    }
+
+    const subscription = (await this.stripe.subscriptions.update(
+      user.stripeSubscriptionId,
+      {
+        cancel_at_period_end: true,
+      },
+    )) as any;
+
+    this.logger.log(
+      `Subscription ${subscription.id} set to cancel at period end for user ${userId}`,
+    );
+
+    return {
+      message: 'Votre abonnement sera annulé à la fin de la période en cours.',
+      cancelAt: new Date(subscription.current_period_end * 1000),
     };
   }
 

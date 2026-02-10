@@ -97,6 +97,9 @@ export class AiUser {
   @Column({ nullable: true })
   stripeCustomerId?: string;
 
+  @Column({ nullable: true })
+  stripeSubscriptionId?: string;
+
   // Branding & Professional (Merged from AiSubscriptionProfile)
   @Column({ nullable: true })
   isSetupComplete: boolean;

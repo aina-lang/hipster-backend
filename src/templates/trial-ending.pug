@@ -1,0 +1,23 @@
+extends layout
+
+block content
+  h2 Fin de votre essai gratuit - Demain 🚀
+  p Bonjour #{name},
+  p Votre période d'essai gratuit de 7 jours sur Hipster IA arrive à son terme le **#{endDate}**.
+  
+  p Nous espérons que vous avez apprécié l'expérience ! 
+  
+  div(style="background-color: #f8f9fa; padding: 24px; border-radius: 12px; margin: 32px 0; border: 1px solid #e4e4e7;")
+    p(style="margin: 0; font-weight: 700; color: #18181b;") Ce qu'il se passe ensuite :
+    ul(style="color: #52525b; font-size: 14px; margin-top: 12px;")
+      li Votre abonnement passera automatiquement au **Pack Atelier** pour **#{amount}/mois**.
+      li Vous conserverez un accès illimité à la génération de texte et à vos outils créatifs.
+      li Le prélèvement sera effectué automatiquement demain via votre carte enregistrée.
+
+  p(style="font-style: italic; color: #71717a; font-size: 14px;") 
+    | Vous pouvez vous désabonner à tout moment depuis les réglages de votre application mobile si vous ne souhaitez pas poursuivre l'aventure.
+
+  div.divider
+
+  p(style="font-size: 13px; color: #52525b; text-align: center;") 
+    | Merci de votre confiance,<br/>L'équipe Hipster IA
