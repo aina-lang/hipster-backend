@@ -311,8 +311,14 @@ export class AiPaymentService {
     const plan = user.planType || PlanType.CURIEUX;
 
     let sinceDate: Date;
-    sinceDate = new Date();
-    sinceDate.setHours(0, 0, 0, 0);
+    if (plan === PlanType.CURIEUX) {
+      sinceDate = new Date();
+      sinceDate.setHours(0, 0, 0, 0);
+    } else {
+      sinceDate =
+        user.subscriptionStartDate ||
+        new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    }
 
     const usage = await Promise.all([
       this.aiGenRepo.count({
@@ -399,8 +405,12 @@ export class AiPaymentService {
     }
 
     let sinceDate: Date;
-    sinceDate = new Date();
-    sinceDate.setHours(0, 0, 0, 0);
+    if (user.planType === PlanType.CURIEUX) {
+      sinceDate = new Date();
+      sinceDate.setHours(0, 0, 0, 0);
+    } else {
+      sinceDate = user.subscriptionStartDate || new Date(0);
+    }
 
     const currentUsage = await this.aiGenRepo.count({
       where: {
