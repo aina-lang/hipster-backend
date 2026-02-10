@@ -12,6 +12,7 @@ import {
   AiGeneration,
   AiGenerationType,
 } from '../ai/entities/ai-generation.entity';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AiPaymentService {
@@ -24,6 +25,7 @@ export class AiPaymentService {
     private readonly aiUserRepo: Repository<AiUser>,
     @InjectRepository(AiGeneration)
     private readonly aiGenRepo: Repository<AiGeneration>,
+    private readonly mailService: MailService,
   ) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (apiKey) {
@@ -464,7 +466,9 @@ export class AiPaymentService {
     }
 
     const plans = await this.getPlans();
-    const currentPlan = plans.find((p) => p.id === user.planType?.toLowerCase());
+    const currentPlan = plans.find(
+      (p) => p.id === user.planType?.toLowerCase(),
+    );
     const newPlan = plans.find((p) => p.id === newPlanId);
 
     if (!newPlan || !newPlan.stripePriceId) {
@@ -476,7 +480,8 @@ export class AiPaymentService {
     }
 
     // Déterminer si c'est un upgrade ou downgrade
-    const currentPrice = typeof currentPlan?.price === 'number' ? currentPlan.price : 0;
+    const currentPrice =
+      typeof currentPlan?.price === 'number' ? currentPlan.price : 0;
     const newPrice = typeof newPlan.price === 'number' ? newPlan.price : 0;
     const isUpgrade = newPrice > currentPrice;
 
@@ -502,7 +507,8 @@ export class AiPaymentService {
 
     // Si upgrade, mettre à jour immédiatement
     if (isUpgrade) {
-      user.planType = PlanType[newPlanId.toUpperCase() as keyof typeof PlanType];
+      user.planType =
+        PlanType[newPlanId.toUpperCase() as keyof typeof PlanType];
       await this.aiUserRepo.save(user);
 
       // Appliquer les nouvelles limites
@@ -525,6 +531,30 @@ export class AiPaymentService {
       newPlan: newPlan.name,
       isUpgrade,
     };
+  }
+
+  async sendPaymentFailedEmail(user: AiUser, invoice: any): Promise<void> {
+    const attemptNumber = invoice.attempt_count || 1;
+    const maxAttempts = 4; // Stripe default
+    const nextAttemptDate = invoice.next_payment_attempt
+      ? new Date(invoice.next_payment_attempt * 1000)
+      : null;
+
+    await this.mailService.sendEmail({
+      to: user.email,
+      subject: '⚠️ Échec de paiement - Action requise',
+      template: 'payment-failed',
+      context: {
+        userName: user.name,
+        attemptNumber,
+        maxAttempts,
+        nextAttemptDate: nextAttemptDate?.toLocaleDateString('fr-FR'),
+        invoiceAmount: (invoice.amount_due / 100).toFixed(2),
+        updatePaymentUrl: `${process.env.FRONTEND_URL || 'https://app.hipster.fr'}/profile`,
+      },
+    });
+
+    this.logger.log(`Payment failed email sent to ${user.email}`);
   }
 
   private getTypeLabel(type: AiGenerationType): string {

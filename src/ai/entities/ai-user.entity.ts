@@ -15,6 +15,7 @@ export enum SubscriptionStatus {
   CANCELED = 'canceled',
   PAUSED = 'paused',
   TRIAL = 'trial',
+  PAST_DUE = 'past_due',
 }
 
 export enum PlanType {

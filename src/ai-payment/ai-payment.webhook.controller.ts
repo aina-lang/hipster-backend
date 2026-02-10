@@ -76,6 +76,9 @@ export class AiPaymentWebhookController {
           event.data.object as Stripe.Subscription,
         );
         break;
+      case 'invoice.payment_failed':
+        await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
+        break;
       default:
         this.logger.log(`Unhandled event type ${event.type}`);
     }
@@ -167,6 +170,46 @@ export class AiPaymentWebhookController {
     if (user) {
       user.subscriptionStatus = SubscriptionStatus.CANCELED;
       await this.aiUserRepo.save(user);
+    }
+  }
+
+  private async handlePaymentFailed(invoice: Stripe.Invoice) {
+    this.logger.log(`Payment failed for invoice: ${invoice.id}`);
+
+    const customerId =
+      typeof invoice.customer === 'string'
+        ? invoice.customer
+        : invoice.customer?.id;
+
+    if (!customerId) {
+      this.logger.warn('No customer ID found in invoice');
+      return;
+    }
+
+    const user = await this.aiUserRepo.findOne({
+      where: { stripeCustomerId: customerId },
+    });
+
+    if (!user) {
+      this.logger.warn(`No user found for customer ${customerId}`);
+      return;
+    }
+
+    // Update status to PAST_DUE if not already
+    if (user.subscriptionStatus !== SubscriptionStatus.PAST_DUE) {
+      user.subscriptionStatus = SubscriptionStatus.PAST_DUE;
+      await this.aiUserRepo.save(user);
+      this.logger.log(`User ${user.id} status updated to PAST_DUE`);
+    }
+
+    // Send payment failed email
+    try {
+      await this.aiPaymentService.sendPaymentFailedEmail(user, invoice);
+      this.logger.log(`Payment failed email sent to ${user.email}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send payment failed email: ${error.message}`,
+      );
     }
   }
 }
