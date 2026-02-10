@@ -56,7 +56,7 @@ export class AiService {
     });
 
     // Filter out usage logs that were created just for credit decrementing
-    // We only want to show the main conversations (type: CHAT) and other generations
+    // We only want to show the main conversations (type: CHAT) and other standalone generations
     const filtered = history.filter((item) => {
       let attrs = item.attributes;
       if (typeof attrs === 'string') {
@@ -66,7 +66,17 @@ export class AiService {
           // ignore error
         }
       }
-      return !(attrs as any)?.isUsageLog;
+
+      const isUsageLog =
+        (attrs as any)?.isUsageLog === true ||
+        (attrs as any)?.isUsageLog === 'true' ||
+        (attrs as any)?.isUsageLog === 1;
+
+      // Also exclude if it's a sub-item of a CHAT (has conversationId in attributes and is not CHAT itself)
+      const isSubItem =
+        item.type !== AiGenerationType.CHAT && (attrs as any)?.conversationId;
+
+      return !isUsageLog && !isSubItem;
     });
 
     const breakdown = filtered.reduce((acc, item) => {
