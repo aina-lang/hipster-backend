@@ -457,6 +457,76 @@ export class AiPaymentService {
     };
   }
 
+  async switchPlan(userId: number, newPlanId: string): Promise<any> {
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
+    if (!user || !user.stripeSubscriptionId) {
+      throw new BadRequestException('Aucun abonnement actif trouvé');
+    }
+
+    const plans = await this.getPlans();
+    const currentPlan = plans.find((p) => p.id === user.planType?.toLowerCase());
+    const newPlan = plans.find((p) => p.id === newPlanId);
+
+    if (!newPlan || !newPlan.stripePriceId) {
+      throw new BadRequestException('Plan invalide');
+    }
+
+    if (newPlanId === 'curieux') {
+      throw new BadRequestException('Impossible de revenir au plan Curieux');
+    }
+
+    // Déterminer si c'est un upgrade ou downgrade
+    const currentPrice = typeof currentPlan?.price === 'number' ? currentPlan.price : 0;
+    const newPrice = typeof newPlan.price === 'number' ? newPlan.price : 0;
+    const isUpgrade = newPrice > currentPrice;
+
+    // Récupérer la subscription Stripe
+    const stripeSubscription = (await this.stripe.subscriptions.retrieve(
+      user.stripeSubscriptionId,
+    )) as any;
+
+    // Mettre à jour la subscription Stripe
+    const updatedSubscription = (await this.stripe.subscriptions.update(
+      user.stripeSubscriptionId,
+      {
+        items: [
+          {
+            id: stripeSubscription.items.data[0].id,
+            price: newPlan.stripePriceId,
+          },
+        ],
+        proration_behavior: isUpgrade ? 'create_prorations' : 'none',
+        billing_cycle_anchor: isUpgrade ? 'now' : 'unchanged',
+      },
+    )) as any;
+
+    // Si upgrade, mettre à jour immédiatement
+    if (isUpgrade) {
+      user.planType = PlanType[newPlanId.toUpperCase() as keyof typeof PlanType];
+      await this.aiUserRepo.save(user);
+
+      // Appliquer les nouvelles limites
+      await this.confirmPlan(userId, newPlanId, user.stripeSubscriptionId);
+
+      this.logger.log(`User ${userId} upgraded to ${newPlanId}`);
+    } else {
+      this.logger.log(
+        `User ${userId} scheduled downgrade to ${newPlanId} at end of period`,
+      );
+    }
+
+    return {
+      message: isUpgrade
+        ? 'Upgrade effectué avec succès !'
+        : 'Downgrade planifié pour la fin de votre cycle actuel.',
+      effectiveDate: isUpgrade
+        ? new Date()
+        : new Date(updatedSubscription.current_period_end * 1000),
+      newPlan: newPlan.name,
+      isUpgrade,
+    };
+  }
+
   private getTypeLabel(type: AiGenerationType): string {
     switch (type) {
       case AiGenerationType.TEXT:

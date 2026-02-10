@@ -5,6 +5,8 @@ import {
   Req,
   BadRequestException,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,6 +18,7 @@ import {
   SubscriptionStatus,
 } from '../ai/entities/ai-user.entity';
 import { Public } from '../common/decorators/public.decorator';
+import { AiPaymentService } from './ai-payment.service';
 
 @Controller('ai/payment/webhook')
 export class AiPaymentWebhookController {
@@ -26,6 +29,8 @@ export class AiPaymentWebhookController {
     private readonly configService: ConfigService,
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
+    @Inject(forwardRef(() => AiPaymentService))
+    private readonly aiPaymentService: AiPaymentService,
   ) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (apiKey) {
@@ -107,6 +112,28 @@ export class AiPaymentWebhookController {
           `Upgrading user ${user.id} to ATELIER after trial ended/activation.`,
         );
       }
+
+      // Detect plan change (e.g., scheduled downgrade)
+      const priceId = subscription.items.data[0]?.price.id;
+      const plans = await this.aiPaymentService.getPlans();
+      const newPlan = plans.find((p) => p.stripePriceId === priceId);
+
+      if (newPlan && user.planType?.toLowerCase() !== newPlan.id) {
+        const oldPlan = user.planType;
+        user.planType =
+          PlanType[newPlan.id.toUpperCase() as keyof typeof PlanType];
+        this.logger.log(
+          `Plan changed from ${oldPlan} to ${newPlan.id} for user ${user.id}`,
+        );
+
+        // Apply new limits
+        await this.aiPaymentService.confirmPlan(
+          user.id,
+          newPlan.id,
+          subscription.id,
+        );
+      }
+
       user.subscriptionStatus = SubscriptionStatus.ACTIVE;
     } else if (subscription.status === 'trialing') {
       user.subscriptionStatus = SubscriptionStatus.TRIAL;

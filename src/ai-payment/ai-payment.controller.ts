@@ -61,6 +61,13 @@ export class AiPaymentController {
     return this.aiPaymentService.cancelSubscription(userId);
   }
 
+  @ApiOperation({ summary: 'Changer de plan (upgrade/downgrade)' })
+  @Post('switch-plan')
+  async switchPlan(@Req() req, @Body() body: { newPlanId: string }) {
+    const userId = req.user.sub;
+    return this.aiPaymentService.switchPlan(userId, body.newPlanId);
+  }
+
   @ApiOperation({
     summary: "Confirmer un plan et appliquer les limites d'utilisation",
   })
