@@ -203,22 +203,24 @@ export class AiService {
 
         generationId = generation.id.toString();
 
-        // Save a separate usage record of type TEXT for EACH turn in the conversation.
-        // This ensures the credit system (which counts TEXT entries) decrements
-        // a credit for every message in the conversation.
-        const lastUserMsg = [...messages]
-          .reverse()
-          .find((m) => m.role === 'user');
-        await this.aiGenRepo.save({
-          user: { id: userId } as AiUser,
-          type: AiGenerationType.TEXT,
-          prompt: lastUserMsg?.content || 'Chat message',
-          result: content,
-          attributes: {
-            isUsageLog: true,
-            conversationId: generation.id,
-          },
-        });
+        // Save a separate usage record of type TEXT for EACH turn in the conversation,
+        // but ONLY for Free Mode (where isUsageLog is false).
+        // Guided Mode (where isUsageLog is true) already saves its own TEXT record.
+        if (!isUsageLog) {
+          const lastUserMsg = [...messages]
+            .reverse()
+            .find((m) => m.role === 'user');
+          await this.aiGenRepo.save({
+            user: { id: userId } as AiUser,
+            type: AiGenerationType.TEXT,
+            prompt: lastUserMsg?.content || 'Chat message',
+            result: content,
+            attributes: {
+              isUsageLog: true,
+              conversationId: generation.id,
+            },
+          });
+        }
       }
 
       return { content, conversationId: generationId };
