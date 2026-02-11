@@ -45,15 +45,15 @@ export class AiPaymentService {
     const isEarlyBird = activeSubscribersCount < 30;
     const atelierPrice = isEarlyBird ? 9.9 : 17.9;
     const atelierPriceId = isEarlyBird
-      ? 'price_Atelier990'
-      : 'price_Atelier1790';
+      ? 'prod_TxVMFgCnXDP6sS'
+      : 'prod_TxVOYUq7EbqBkV';
 
     return [
       {
         id: 'curieux',
         name: 'Curieux',
         price: 'Gratuit',
-        stripePriceId: 'price_Studio2990',
+        stripePriceId: null,
         promptsLimit: 2,
         imagesLimit: 2,
         videosLimit: 0,
@@ -90,7 +90,7 @@ export class AiPaymentService {
         id: 'studio',
         name: 'Studio',
         price: 29.9,
-        stripePriceId: 'price_Studio2990',
+        stripePriceId: 'prod_TxVQOs9LuXzEnh',
         promptsLimit: 999999,
         imagesLimit: 100,
         videosLimit: 0,
@@ -109,7 +109,7 @@ export class AiPaymentService {
         id: 'agence',
         name: 'Agence',
         price: 69.99,
-        stripePriceId: 'price_Agence6990',
+        stripePriceId: 'prod_TxVQJWDy0mMhNw',
         promptsLimit: 999999,
         imagesLimit: 300,
         videosLimit: 10,
@@ -208,7 +208,7 @@ export class AiPaymentService {
       // Transitions to ATELIER after trial
       const atelierPriceId =
         plans.find((p) => p.id === 'atelier')?.stripePriceId ||
-        'price_Atelier990';
+        'prod_TxVMFgCnXDP6sS';
 
       subscription = await this.stripe.subscriptions.create({
         customer: customerId,
