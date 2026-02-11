@@ -28,6 +28,8 @@ export class AiPaymentService {
     private readonly mailService: MailService,
   ) {
     const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
+    this.logger.log('Stripe API Key loaded: ' + apiKey);
+
     if (apiKey) {
       this.stripe = new Stripe(apiKey, { apiVersion: '2024-06-20' as any });
     }
