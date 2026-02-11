@@ -192,12 +192,40 @@ export class AiPaymentService {
       await this.aiUserRepo.save(user);
     }
 
-    const ephemeralKey = await this.stripe.ephemeralKeys.create(
-      { customer: customerId },
-      { apiVersion: '2024-06-20' as any },
-    );
+    // Prepare variables for retry logic
+    let ephemeralKey;
+    let subscription;
 
-    let subscription: Stripe.Subscription;
+    try {
+      ephemeralKey = await this.stripe.ephemeralKeys.create(
+        { customer: customerId },
+        { apiVersion: '2024-06-20' as any },
+      );
+    } catch (error: any) {
+      // Auto-healing: If customer doesn't exist in Stripe (e.g. env changed), create a new one
+      if (error.code === 'resource_missing' && error.param === 'customer') {
+        this.logger.warn(
+          `Customer ${customerId} not found in Stripe. Creating new customer for user ${userId}.`,
+        );
+
+        const newCustomer = await this.stripe.customers.create({
+          email: user.email,
+          metadata: { userId: user.id.toString() },
+        });
+
+        customerId = newCustomer.id;
+        user.stripeCustomerId = customerId;
+        await this.aiUserRepo.save(user);
+
+        // Retry with new customer ID
+        ephemeralKey = await this.stripe.ephemeralKeys.create(
+          { customer: customerId },
+          { apiVersion: '2024-06-20' as any },
+        );
+      } else {
+        throw error;
+      }
+    }
 
     if (selectedPlan.id === 'curieux') {
       if (user.hasUsedTrial && user.planType !== PlanType.CURIEUX) {
