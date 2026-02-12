@@ -503,7 +503,11 @@ natural color grading, editorial fashion photography, no beauty filter, no plast
 `;
 
     const commonNegative = `
-text, typography, watermark, logo, letters, words, 
+text, typography, letters, words, numbers, watermark, logo, signature, 
+brand name, label, caption, quote, heading, title, billboard, poster text, 
+newspaper, book, magazine, characters, font, written content, letters, 
+digits, symbols, script, calligraphy, advertising, signage, shop sign, 
+menu text, instructions, prompt text, AI gibberish, 
 overly smooth skin, plastic skin, cgi look, 3d render, 
 cartoon, illustration, perfect symmetry, ai face, fake face, 
 blurred face, low detail skin, low quality, blurry, 
@@ -518,10 +522,10 @@ low resolution, text errors, random letters, flat lighting, amateur photography
 Ultra high contrast black and white portrait of ${contextualSubject}, 
 editorial poster style, strong cinematic lighting (${light}), 
 dramatic shadows, sharp facial details, subject centered, minimal background (${bg}).
-Large bold typography integrated into the composition (letters behind or in front of the subject, partially masking the face or body).
 Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
 One ${accent} accent color used in small geometric shapes or highlights.
 High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting, angle: ${angle}.
+No text, no letters, no words, no signatures, no watermarks.
 ${realismQuality}
 `.trim();
     } else if (style === 'Hero Studio') {
@@ -705,9 +709,10 @@ Do not change the person's face, age, ethnicity, gender, or identity.
     if (typeof params === 'string') params = { userQuery: params };
 
     // Only generate image, no text per user request
+    const selectedStyle = params.style || 'Minimal Studio';
     const imageRes = await this.generateImage(
       { ...params, instructions: 'Image pour réseaux sociaux' },
-      'Minimal Studio',
+      selectedStyle as any,
       userId,
       file,
     );
@@ -850,9 +855,10 @@ Do not change the person's face, age, ethnicity, gender, or identity.
 
     console.log('[generateFlyer] Using OpenAI with refined prompts');
 
+    const selectedStyle = params.style || 'Minimal Studio';
     const imageResult = await this.generateImage(
       { ...params, userQuery: flyerPrompt },
-      'Minimal Studio',
+      selectedStyle as any,
       userId,
       file,
     );
