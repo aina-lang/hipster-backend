@@ -493,11 +493,13 @@ ${realismQuality}
     let endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
     let model: string | undefined = undefined;
     let outputFormat = 'png';
+    const referenceImage = params.reference_image;
 
-    // Default / Fallback (Curieux)
-    // Curieux -> Core (already default endpoint)
-
-    if (userId) {
+    if (referenceImage) {
+      // Use Control Structure for Img2Img flow
+      endpoint =
+        'https://api.stability.ai/v2beta/stable-image/control/structure';
+    } else if (userId) {
       const userProfile = await this.getAiUserWithProfile(userId);
       const plan = userProfile?.planType || PlanType.CURIEUX;
 
@@ -516,10 +518,18 @@ ${realismQuality}
     formData.append('prompt', visualDescription);
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
     formData.append('output_format', outputFormat);
-    if (model) formData.append('model', model);
-    // If using Core/Ultra, 'aspect_ratio' might be needed instead of size options, depending on API.
-    // Core/Ultra/SD3 support 'aspect_ratio'. (e.g. "1:1")
-    formData.append('aspect_ratio', '1:1');
+
+    if (referenceImage) {
+      // Handle Image-to-Image (Structure Control)
+      const imageBuffer = Buffer.from(referenceImage, 'base64');
+      // Append as blob for multipart form
+      formData.append('image', new Blob([imageBuffer]), 'input.png');
+    } else {
+      // Handle Text-to-Image
+      if (model) formData.append('model', model);
+      // aspect_ratio is only for T2I endpoints (Core/Ultra/SD3)
+      formData.append('aspect_ratio', '1:1');
+    }
 
     const response = await fetch(endpoint, {
       method: 'POST',
