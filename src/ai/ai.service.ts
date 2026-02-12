@@ -437,131 +437,130 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     }
 
     // ------------------------------------------------------------------
-    // STRUCTURE MODE (Image → Image)
     // ------------------------------------------------------------------
+    // PROMPT BUILDING (Unified for both Structure and Text-to-Image)
+    // ------------------------------------------------------------------
+    const job = params.job || '';
+    const functionName = params.function || '';
     const imageProvided = !!file || !!referenceImage;
 
-    if (imageProvided) {
-      // STRUCTURE MODE: Preserve the person, apply style
-      const userSubject =
-        params.userQuery || params.job || 'professional portrait';
+    // 1. Build context-aware subject description
+    let contextualSubject = params.userQuery || params.job || 'portrait';
 
-      visualDescription = `
-Keep the exact same person from the input image with all facial features, identity, and body structure preserved.
-Apply professional photography style: ${userSubject}
-Lighting: ${light}
-Camera angle: ${angle}
-Background: ${bg}
-Accent color: ${accent}
-High quality photography, cinematic composition, professional studio quality.
-Realistic skin texture, natural details, sharp focus.
-Do not change the person's face, age, ethnicity, gender, or identity.
-`.trim();
+    if (
+      job.toLowerCase().includes('restaurant') ||
+      job.toLowerCase().includes('chef')
+    ) {
+      contextualSubject = `${contextualSubject} for a restaurant/culinary business`;
+    } else if (
+      job.toLowerCase().includes('coach') ||
+      job.toLowerCase().includes('sport')
+    ) {
+      contextualSubject = `${contextualSubject} for a fitness/coaching professional`;
+    } else if (
+      job.toLowerCase().includes('artisan') ||
+      job.toLowerCase().includes('craft')
+    ) {
+      contextualSubject = `${contextualSubject} for an artisan/craftsperson`;
+    } else if (
+      job.toLowerCase().includes('commerce') ||
+      job.toLowerCase().includes('shop')
+    ) {
+      contextualSubject = `${contextualSubject} for a retail/commerce business`;
+    } else if (job.toLowerCase().includes('service')) {
+      contextualSubject = `${contextualSubject} for a service professional`;
+    }
 
-      negativePrompt = `
-text, letters, words, numbers, typography, writing, captions, subtitles, labels, 
-watermark, logo, signature, symbols, characters, font, written content,
-quote, heading, title, advert, billboard, poster text, newspaper, book, magazine,
-different person, changed face, swapped identity, new person, face swap,
-low quality, blurry, distorted, bad anatomy, deformed, ugly, 
-artificial, fake, cartoon, cgi, illustration
-`;
-    } else {
-      // ------------------------------------------------------------------
-      // TEXT → IMAGE MODE
-      // ------------------------------------------------------------------
-      const userSubject = params.userQuery || params.job || 'portrait';
-      const job = params.job || '';
-      const functionName = params.function || '';
+    // Adapt based on function (exact frontend labels)
+    if (
+      functionName.toLowerCase().includes('contenu réseaux') ||
+      functionName.toLowerCase().includes('social')
+    ) {
+      contextualSubject += ', social media content optimized';
+    } else if (functionName.toLowerCase().includes('visuel publicitaire')) {
+      contextualSubject += ', advertising visual style';
+    } else if (functionName.toLowerCase().includes('texte marketing')) {
+      contextualSubject += ', marketing content focus';
+    } else if (
+      functionName.toLowerCase().includes('page web') ||
+      functionName.toLowerCase().includes('seo')
+    ) {
+      contextualSubject += ', web page optimized';
+    } else if (functionName.toLowerCase().includes('email')) {
+      contextualSubject += ', email marketing style';
+    } else if (functionName.toLowerCase().includes('script vidéo')) {
+      contextualSubject += ', video script thumbnail';
+    } else if (functionName.toLowerCase().includes('miniatures')) {
+      contextualSubject += ', video thumbnail style';
+    }
 
-      // Build context-aware subject description
-      let contextualSubject = userSubject;
-
-      // Adapt based on job type
-      if (
-        job.toLowerCase().includes('restaurant') ||
-        job.toLowerCase().includes('chef')
-      ) {
-        contextualSubject = `${userSubject} for a restaurant/culinary business`;
-      } else if (
-        job.toLowerCase().includes('coach') ||
-        job.toLowerCase().includes('sport')
-      ) {
-        contextualSubject = `${userSubject} for a fitness/coaching professional`;
-      } else if (
-        job.toLowerCase().includes('artisan') ||
-        job.toLowerCase().includes('craft')
-      ) {
-        contextualSubject = `${userSubject} for an artisan/craftsperson`;
-      } else if (
-        job.toLowerCase().includes('commerce') ||
-        job.toLowerCase().includes('shop')
-      ) {
-        contextualSubject = `${userSubject} for a retail/commerce business`;
-      } else if (job.toLowerCase().includes('service')) {
-        contextualSubject = `${userSubject} for a service professional`;
-      }
-
-      // Adapt based on function (exact frontend labels)
-      if (
-        functionName.toLowerCase().includes('contenu réseaux') ||
-        functionName.toLowerCase().includes('social')
-      ) {
-        contextualSubject += ', social media content optimized';
-      } else if (functionName.toLowerCase().includes('visuel publicitaire')) {
-        contextualSubject += ', advertising visual style';
-      } else if (functionName.toLowerCase().includes('texte marketing')) {
-        contextualSubject += ', marketing content focus';
-      } else if (
-        functionName.toLowerCase().includes('page web') ||
-        functionName.toLowerCase().includes('seo')
-      ) {
-        contextualSubject += ', web page optimized';
-      } else if (functionName.toLowerCase().includes('email')) {
-        contextualSubject += ', email marketing style';
-      } else if (functionName.toLowerCase().includes('script vidéo')) {
-        contextualSubject += ', video script thumbnail';
-      } else if (functionName.toLowerCase().includes('miniatures')) {
-        contextualSubject += ', video thumbnail style';
-      }
-
-      const realismQuality = `
+    const realismQuality = `
 ultra realistic photography, real human skin texture, visible pores,
-natural facial features, cinematic lighting, 35mm photography
+natural skin imperfections, subtle asymmetry, natural facial features,
+cinematic lighting, 35mm photography, shot on Canon EOS R5,
+professional studio photography, high dynamic range, fine skin details,
+natural color grading, editorial fashion photography, no beauty filter, no plastic skin
 `;
 
-      const realismNegative = `
-text, letters, words, numbers, typography, writing, captions, subtitles, labels,
-watermark, logo, signature, symbols, characters, font, written content,
-quote, heading, title, advert, billboard, poster text, newspaper, book, magazine,
-smooth skin, cgi, fake face, cartoon, illustration, distorted face, bad anatomy
+    const commonNegative = `
+text, typography, watermark, logo, letters, words, 
+overly smooth skin, plastic skin, cgi look, 3d render, 
+cartoon, illustration, perfect symmetry, ai face, fake face, 
+blurred face, low detail skin, low quality, blurry, 
+oversaturated, too colorful, messy background, bad typography, 
+distorted face, extra fingers, extra limbs, bad anatomy, 
+low resolution, text errors, random letters, flat lighting, amateur photography
 `;
 
-      negativePrompt = realismNegative;
-
-      if (style === 'Monochrome') {
-        visualDescription = `
-Professional monochrome photography of ${userSubject}, high contrast black and white,
-cinematic lighting (${light}), deep shadows, sharp details, minimal background (${bg}),
-subtle ${accent} accent, angle: ${angle}.
+    // 2. Build visualDescription based on style
+    if (style === 'Monochrome') {
+      visualDescription = `
+Ultra high contrast black and white portrait of ${contextualSubject}, 
+editorial poster style, strong cinematic lighting (${light}), 
+dramatic shadows, sharp facial details, subject centered, minimal background (${bg}).
+Large bold typography integrated into the composition (letters behind or in front of the subject, partially masking the face or body).
+Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
+One ${accent} accent color used in small geometric shapes or highlights.
+High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting, angle: ${angle}.
+${realismQuality}
 `.trim();
-      }
-
-      if (style === 'Hero Studio') {
-        visualDescription = `
-Hero-style dramatic studio portrait of ${userSubject}, ${light}, high contrast, 
+    } else if (style === 'Hero Studio') {
+      visualDescription = `
+Hero-style dramatic studio portrait of ${contextualSubject}, ${light}, high contrast, 
 rim light, volumetric effects, ${accent} accent lighting, premium studio photography, angle ${angle}.
 ${realismQuality}
 `.trim();
-      }
-
-      if (style === 'Minimal Studio') {
-        visualDescription = `
-Minimal clean studio portrait of ${userSubject}, bright and soft lighting (${light}),
+    } else if (style === 'Minimal Studio') {
+      visualDescription = `
+Minimal clean studio portrait of ${contextualSubject}, bright and soft lighting (${light}),
 neutral background (${bg}), ${accent} color accent, lots of negative space, angle ${angle}.
 ${realismQuality}
 `.trim();
-      }
+    } else {
+      // Default / Unknown style
+      visualDescription = `
+Professional photography of ${contextualSubject}, ${light} lighting,
+${bg} background, ${accent} accents, angle: ${angle}.
+${realismQuality}
+`.trim();
+    }
+
+    negativePrompt = `
+${commonNegative},
+smooth skin, cgi, fake face, cartoon, illustration, distorted face, bad anatomy
+`.trim();
+
+    // 3. If imageProvided, add structure protection instructions
+    if (imageProvided) {
+      visualDescription = `
+Keep the exact same person from the input image with all facial features, identity, and body structure preserved.
+${visualDescription}
+Do not change the person's face, age, ethnicity, gender, or identity.
+`.trim();
+
+      negativePrompt += `
+, different person, changed face, swapped identity, new person, face swap
+`.trim();
     }
 
     // ------------------------------------------------------------------
