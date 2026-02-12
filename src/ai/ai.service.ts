@@ -496,9 +496,9 @@ ${realismQuality}
     const referenceImage = params.reference_image;
 
     if (referenceImage) {
-      // Use Control Structure for Img2Img flow
+      // Use Search and Replace for Img2Img flow
       endpoint =
-        'https://api.stability.ai/v2beta/stable-image/control/structure';
+        'https://api.stability.ai/v2beta/stable-image/edit/search-and-replace';
     } else if (userId) {
       const userProfile = await this.getAiUserWithProfile(userId);
       const plan = userProfile?.planType || PlanType.CURIEUX;
@@ -520,10 +520,11 @@ ${realismQuality}
     formData.append('output_format', outputFormat);
 
     if (referenceImage) {
-      // Handle Image-to-Image (Structure Control)
+      // Handle Image-to-Image (Search and Replace)
       const imageBuffer = Buffer.from(referenceImage, 'base64');
       // Append as blob for multipart form
       formData.append('image', new Blob([imageBuffer]), 'input.png');
+      formData.append('search_prompt', params.search_prompt || userSubject);
     } else {
       // Handle Text-to-Image
       if (model) formData.append('model', model);
