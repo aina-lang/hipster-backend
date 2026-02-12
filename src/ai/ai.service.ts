@@ -372,14 +372,17 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     const realismNegative = `text, typography, watermark, logo, letters, words, brand, label, sign, signature, overly smooth skin, plastic skin, cgi look, 3d render, cartoon, illustration, perfect symmetry, ai face, fake face, blurred face, low detail skin`;
 
+    const referenceImage = params.reference_image;
     let negativePrompt = realismNegative;
 
-    // Use user query or job from params as the subject
     const jobSubject = params.job?.trim();
     const querySubject = params.userQuery?.trim();
 
-    const userSubject =
-      querySubject && querySubject.length > 0
+    // If we have a reference image, the subject is the person/thing in that image.
+    // We shouldn't use the user's query (which often contains style instructions) as the subject name.
+    const userSubject = referenceImage
+      ? jobSubject || 'subject'
+      : querySubject && querySubject.length > 0
         ? querySubject
         : jobSubject && jobSubject.length > 0
           ? jobSubject
@@ -427,20 +430,18 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const angle = getRandom(anglesPool);
     const bg = getRandom(backgroundsPool);
     const accent = getRandom(accentColors);
-    const referenceImage = params.reference_image;
-
     const identityPreservation = referenceImage
-      ? ', preserve original facial features and identity, consistent subject resemblance'
+      ? ', (preserve original facial features and subject identity:0.9), (exact resemblance to the provided image:0.9)'
       : '';
     if (style === 'Monochrome') {
       visualDescription = `
-Ultra high contrast black and white portrait of ${userSubject}, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg})${identityPreservation}.
+Professional monochrome photography of ${userSubject}, ultra high contrast black and white, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg})${identityPreservation}.
 Angle: ${angle}.
 
 Graphic design elements: subtle geometric lines, minimalist composition, modern aesthetic.
-Add one accent color only (${accent}) used in small geometric highlights.
+(Optional: one subtle accent color (${accent}) used in tiny geometric highlights).
 
-High fashion magazine aesthetic, luxury campaign, sharp focus, ultra clean, professional studio lighting.
+Luxury campaign aesthetic, sharp focus, ultra clean, professional studio lighting.
 `.trim();
 
       this.logger.log(
@@ -449,7 +450,7 @@ High fashion magazine aesthetic, luxury campaign, sharp focus, ultra clean, prof
 
       // Force specific negative prompt for Monochrome
       negativePrompt =
-        'low quality, blurry, oversaturated, too colorful, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography, ' +
+        'color, colorful, red, blue, green, yellow, orange, purple, pink, low quality, blurry, oversaturated, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography, ' +
         realismNegative;
     }
 
@@ -523,9 +524,9 @@ ${realismQuality}
       endpoint =
         'https://api.stability.ai/v2beta/stable-image/edit/search-and-replace';
     } else if (referenceImage) {
-      // Default to proper Image-to-Image (Img2Img) for modifications
-      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
-      model = 'sd3.5-large-turbo'; // High quality fast model for i2i
+      // ADVANCED: Use Control Structure for modifications to keep identity
+      endpoint =
+        'https://api.stability.ai/v2beta/stable-image/control/structure';
     } else if (userId) {
       const userProfile = await this.getAiUserWithProfile(userId);
       const plan = userProfile?.planType || PlanType.CURIEUX;
@@ -615,6 +616,12 @@ ${realismQuality}
         if (params.grow_mask !== undefined) {
           formData.append('grow_mask', params.grow_mask.toString());
         }
+      } else if (endpoint.includes('/control/structure')) {
+        // Control Structure logic
+        formData.append(
+          'control_strength',
+          (params.control_strength || 0.7).toString(),
+        );
       } else {
         // Image-to-Image (SD3) logic
         formData.append('mode', 'image-to-image');
