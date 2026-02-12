@@ -148,7 +148,7 @@ export class AiController {
     @Body()
     body: {
       params: any;
-      style: 'realistic' | 'cartoon' | 'sketch';
+      style: 'realistic' | 'cartoon' | 'sketch' | 'Monochrome';
       negativePrompt?: string;
     },
     @Req() req,

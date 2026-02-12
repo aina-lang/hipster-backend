@@ -347,12 +347,11 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     return { content: result, generationId };
   }
-
   /* --------------------- IMAGE GENERATION --------------------- */
 
   async generateImage(
     params: any,
-    style: 'realistic' | 'cartoon' | 'sketch' | '3d', // added 3d
+    style: 'realistic' | 'cartoon' | 'sketch' | '3d' | 'Monochrome', // added 3d
     userId?: number,
     manualNegativePrompt?: string,
   ) {
@@ -364,8 +363,81 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     if (typeof params === 'string') params = { userQuery: params };
     const basePrompt = await this.buildPrompt(params, userId);
-    const visualDescription = params.userQuery || '';
+
+    // Default prompt from user query
+    let visualDescription = params.userQuery || '';
     const negativePrompt = manualNegativePrompt || '';
+
+    // --- MONOCHROME PROMPT LOGIC ---
+    if (style === 'Monochrome') {
+      const subjects = [
+        'athletic coach portrait',
+        'barber holding scissors',
+        'fashion model in black dress',
+        'architect in suit',
+        'restaurant chef portrait',
+        'burger close-up dramatic',
+      ];
+      const accentColors = [
+        'deep red',
+        'burnt orange',
+        'electric purple',
+        'muted gold',
+      ];
+      const lighting = [
+        'side lighting dramatic',
+        'top light cinematic',
+        'rim light silhouette',
+        'split lighting high contrast',
+        'soft diffused studio light',
+      ];
+      const angles = [
+        'slight low angle',
+        'slight high angle',
+        'profile view',
+        'three quarter view',
+        'centered frontal portrait',
+      ];
+      const backgrounds = [
+        'textured dark concrete background',
+        'minimal white seamless studio',
+        'grainy film texture',
+        'matte charcoal backdrop',
+        'soft gradient grey background',
+      ];
+
+      const getRandom = (arr: string[]) =>
+        arr[Math.floor(Math.random() * arr.length)];
+
+      const subject = getRandom(subjects);
+      const accent = getRandom(accentColors);
+      const light = getRandom(lighting);
+      const angle = getRandom(angles);
+      const bg = getRandom(backgrounds);
+
+      // Use user query if substantive, else random subject
+      const userSubject =
+        params.userQuery && params.userQuery.length > 5
+          ? params.userQuery
+          : subject;
+
+      visualDescription = `
+Ultra high contrast black and white portrait of ${userSubject}, editorial poster style, strong cinematic lighting (${light}), dramatic shadows, sharp facial details, subject centered, minimal background (${bg}).
+Angle: ${angle}.
+
+Large bold typography integrated into the composition (letters behind or in front of the subject, partially masking the face or body).
+
+Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
+
+Add one accent color only (${accent}) used in small geometric shapes or highlights.
+
+High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting.
+
+No watermark, no random text, no logo.
+`.trim();
+
+      this.logger.log(`[Monochrome] Generated prompt: ${visualDescription}`);
+    }
 
     const apiKey =
       this.configService.get<string>('STABLE_API_KEY') ||

@@ -1,8 +1,7 @@
-const Stripe = require('stripe');
+// const Stripe = require('stripe');
 
 // ⚠️ Mets ta vraie clé secrète ici
-const stripe = new Stripe("sk_test_51SCdnjFhrfQ5vRxFew8tebrthJWj7rs7aR9gRcvBAPnAtEj2SjQcHhZCaUcy0APClppLMmW1xEpUNcWJqXJTuhiH00LRKoEPXg");
-
+// 
 
 // async function resetStripeProducts() {
 //   try {
@@ -174,33 +173,38 @@ const stripe = new Stripe("sk_test_51SCdnjFhrfQ5vRxFew8tebrthJWj7rs7aR9gRcvBAPnA
 
 // createProducts();
 
-async function listProducts() {
-  try {
-    const products = await stripe.products.list({
-      limit: 100,
-      expand: ['data.default_price'],
-    });
+// async function listProducts() {
+//   try {
+//     const products = await stripe.products.list({
+//       limit: 100,
+//       expand: ['data.default_price'],
+//     });
 
-    console.log('📦 Produits trouvés :\n');
+//     console.log('📦 Produits trouvés :\n');
 
-    for (const product of products.data) {
-      console.log('------------------------');
-      console.log('Nom:', product.name);
-      console.log('Product ID:', product.id);
+//     for (const product of products.data) {
+//       console.log('------------------------');
+//       console.log('Nom:', product.name);
+//       console.log('Product ID:', product.id);
 
-      if (product.default_price) {
-        console.log('Price ID:', product.default_price.id);
-        console.log(
-          'Prix:',
-          product.default_price.unit_amount / 100,
-          product.default_price.currency.toUpperCase()
-        );
-      }
-    }
+//       if (product.default_price) {
+//         console.log('Price ID:', product.default_price.id);
+//         console.log(
+//           'Prix:',
+//           product.default_price.unit_amount / 100,
+//           product.default_price.currency.toUpperCase()
+//         );
+//       }
+//     }
 
-  } catch (error) {
-    console.error('❌ Erreur:', error.message);
-  }
-}
+//   } catch (error) {
+//     console.error('❌ Erreur:', error.message);
+//   }
+// }
 
-listProducts();
+// listProducts();
+
+
+
+
+
