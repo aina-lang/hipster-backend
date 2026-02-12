@@ -534,12 +534,12 @@ ${realismQuality}
     let outputFormat = 'png';
 
     const isModifying = !!referenceImage;
-    const hasSearchPrompt = !!(referenceImage && params.search_prompt);
 
-    if (hasSearchPrompt || isModifying) {
-      // Use Search and Replace for targeted edits or modifications
+    if (isModifying) {
+      // Use Control Structure as explicitly requested by user
+      // https://api.stability.ai/v2beta/stable-image/control/structure
       endpoint =
-        'https://api.stability.ai/v2beta/stable-image/edit/search-and-replace';
+        'https://api.stability.ai/v2beta/stable-image/control/structure';
     } else if (userId) {
       const userProfile = await this.getAiUserWithProfile(userId);
       const plan = userProfile?.planType || PlanType.CURIEUX;
@@ -562,6 +562,15 @@ ${realismQuality}
 
     if (stylePreset) {
       formData.append('style_preset', stylePreset);
+    } else if (endpoint.includes('/control/structure')) {
+      // Map our styles to Stability Presets for Structure endpoint
+      if (style === 'Monochrome')
+        formData.append('style_preset', 'analog-film');
+      else if (style === 'Hero Studio')
+        formData.append('style_preset', 'photographic');
+      else if (style === 'Minimal Studio')
+        formData.append('style_preset', 'enhance');
+      else formData.append('style_preset', 'photographic'); // Default
     }
 
     // Common optional parameter: seed
@@ -623,35 +632,12 @@ ${realismQuality}
         new Blob([imageBuffer as any], { type: finalMime }),
         `input.${extension}`,
       );
-      if (endpoint.includes('/search-and-replace')) {
-        formData.append(
-          'search_prompt',
-          params.search_prompt || 'the background',
-        );
-        // Optional search-and-replace parameter: grow_mask
-        if (params.grow_mask !== undefined) {
-          formData.append('grow_mask', params.grow_mask.toString());
-        }
-      } else if (endpoint.includes('/edit/replace-background')) {
-        // Replace Background logic
-        // Background prompt should only describe the background as per Stability's recommended usage for this endpoint
-        formData.append('background_prompt', visualDescription);
-      } else if (endpoint.includes('/generate/sd3') && referenceImage) {
-        // SD3 Image-to-Image logic
-        formData.append('mode', 'image-to-image');
-        formData.append('strength', (params.strength || 0.35).toString());
-        if (model) formData.append('model', model);
-      } else if (endpoint.includes('/control/structure')) {
-        // Control Structure logic
+      if (endpoint.includes('/control/structure')) {
+        // Control Structure Analysis
         formData.append(
           'control_strength',
           (params.control_strength || 0.7).toString(),
         );
-      } else {
-        // standard Image-to-Image logic (deprecated or fallback)
-        formData.append('mode', 'image-to-image');
-        formData.append('strength', (params.strength || 0.45).toString());
-        if (model) formData.append('model', model);
       }
     } else {
       // Handle Text-to-Image
