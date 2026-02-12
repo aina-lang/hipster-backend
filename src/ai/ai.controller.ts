@@ -144,6 +144,7 @@ export class AiController {
   @ResponseMessage('Image générée avec succès')
   @Post('image')
   @Roles(Role.AI_USER)
+  @UseInterceptors(FileInterceptor('image'))
   async generateImage(
     @Body()
     body: {
@@ -151,19 +152,32 @@ export class AiController {
       style: 'Monochrome' | 'Hero Studio' | 'Minimal Studio';
     },
     @Req() req,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
     try {
-      console.log('--- API POST /ai/image ---', JSON.stringify(body, null, 2));
-      // AI isolation: we don't fetch roles from standard user.
-      // We check the AI subscription profile linked to this AI account.
-      // Fetch user with profile to check planType
+      let params = body.params;
+      if (typeof params === 'string') {
+        try {
+          params = JSON.parse(params);
+        } catch (e) {
+          throw new BadRequestException('Invalid params JSON');
+        }
+      }
+
+      console.log('--- API POST /ai/image ---', {
+        ...body,
+        params,
+        hasFile: !!file,
+      });
+
       const aiUser = await this.aiService.getAiUserWithProfile(req.user.sub);
       const isPremium = aiUser?.planType !== PlanType.CURIEUX;
 
       const result = await this.aiService.generateImage(
-        body.params,
+        params,
         body.style,
         req.user.sub,
+        file,
       );
       return {
         url: await this.aiService.applyWatermark(result.url, isPremium),
@@ -199,15 +213,30 @@ export class AiController {
   }
 
   @ApiOperation({ summary: 'Générer un post réseaux sociaux (Image + Texte)' })
-  @ResponseMessage('Post généré avec succès')
+  @ResponseMessage('Post généré succès')
   @Post('social')
   @Roles(Role.AI_USER)
-  async generateSocial(@Body() body: { params: any }, @Req() req) {
+  @UseInterceptors(FileInterceptor('image'))
+  async generateSocial(
+    @Body() body: { params: any },
+    @Req() req,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
     try {
-      console.log('--- API POST /ai/social ---', JSON.stringify(body, null, 2));
+      let params = body.params;
+      if (typeof params === 'string') {
+        try {
+          params = JSON.parse(params);
+        } catch (e) {
+          throw new BadRequestException('Invalid params JSON');
+        }
+      }
+
+      console.log('--- API POST /ai/social ---', { params, hasFile: !!file });
       const result = await this.aiService.generateSocial(
-        body.params,
+        params,
         req.user.sub,
+        file,
       );
       console.log('--- API SOCIAL RESULT SUCCESS ---');
       return result;
@@ -260,12 +289,27 @@ export class AiController {
   @ResponseMessage('Image de flyer générée avec succès')
   @Post('flyer')
   @Roles(Role.AI_USER)
-  async generateFlyer(@Body() body: { params: any }, @Req() req) {
+  @UseInterceptors(FileInterceptor('image'))
+  async generateFlyer(
+    @Body() body: { params: any },
+    @Req() req,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
     try {
-      console.log('--- API POST /ai/flyer ---', JSON.stringify(body, null, 2));
+      let params = body.params;
+      if (typeof params === 'string') {
+        try {
+          params = JSON.parse(params);
+        } catch (e) {
+          throw new BadRequestException('Invalid params JSON');
+        }
+      }
+
+      console.log('--- API POST /ai/flyer ---', { params, hasFile: !!file });
       const result = await this.aiService.generateFlyer(
-        body.params,
+        params,
         req.user.sub,
+        file,
       );
       console.log('--- FLYER GENERATION SUCCESS ---');
       return {

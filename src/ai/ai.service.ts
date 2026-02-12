@@ -353,6 +353,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     params: any,
     style: 'Monochrome' | 'Hero Studio' | 'Minimal Studio',
     userId?: number,
+    file?: Express.Multer.File,
   ) {
     if (userId)
       await this.aiPaymentService.decrementCredits(
@@ -542,40 +543,58 @@ ${realismQuality}
       formData.append('seed', params.seed.toString());
     }
 
-    if (referenceImage) {
+    if (file || referenceImage) {
       // Handle Image-to-Image (Search and Replace)
-      // Clean base64: strip all whitespace and potential data URL prefix
-      const cleanBase64 = referenceImage
-        .replace(/^data:image\/\w+;base64,/, '')
-        .replace(/\s/g, '');
-      const imageBuffer = Buffer.from(cleanBase64, 'base64');
-
-      // Detect MIME type from magic bytes
-      let mimeType = 'image/png';
+      let imageBuffer: Buffer;
+      let mimeType: string | undefined = undefined;
       let extension = 'png';
 
+      if (file) {
+        imageBuffer = file.buffer;
+        mimeType = file.mimetype;
+        extension = file.originalname.split('.').pop() || 'png';
+      } else {
+        // Fallback to base64 for legacy or if no file provided
+        const cleanBase64 = referenceImage
+          .replace(/^data:image\/\w+;base64,/, '')
+          .replace(/\s/g, '');
+        imageBuffer = Buffer.from(cleanBase64, 'base64');
+      }
+
+      // Detect MIME type from magic bytes if not already set or generic
       if (imageBuffer.length > 4) {
         const hex = imageBuffer.slice(0, 4).toString('hex');
-        if (hex.startsWith('89504e47')) {
+        if (
+          hex.startsWith('89504e47') &&
+          (!mimeType || mimeType === 'application/octet-stream')
+        ) {
           mimeType = 'image/png';
           extension = 'png';
-        } else if (hex.startsWith('ffd8ff')) {
+        } else if (
+          hex.startsWith('ffd8ff') &&
+          (!mimeType || mimeType === 'application/octet-stream')
+        ) {
           mimeType = 'image/jpeg';
           extension = 'jpg';
-        } else if (imageBuffer.slice(0, 4).toString() === 'RIFF') {
+        } else if (
+          imageBuffer.slice(0, 4).toString() === 'RIFF' &&
+          (!mimeType || mimeType === 'application/octet-stream')
+        ) {
           mimeType = 'image/webp';
           extension = 'webp';
         }
       }
 
+      const finalMime = mimeType || 'image/png';
+
       this.logger.log(
-        `Detected image type: ${mimeType} (${imageBuffer.length} bytes)`,
+        `Processing image: ${finalMime} (${imageBuffer.length} bytes), Source: ${file ? 'Multipart' : 'Base64'}`,
       );
 
       // Append as blob for multipart form with detected type
       formData.append(
         'image',
-        new Blob([imageBuffer], { type: mimeType }),
+        new Blob([imageBuffer as any], { type: finalMime }),
         `input.${extension}`,
       );
       formData.append('search_prompt', params.search_prompt || userSubject);
@@ -635,7 +654,11 @@ ${realismQuality}
   }
 
   /* --------------------- SOCIAL POSTS --------------------- */
-  async generateSocial(params: any, userId?: number) {
+  async generateSocial(
+    params: any,
+    userId?: number,
+    file?: Express.Multer.File,
+  ) {
     if (typeof params === 'string') params = { userQuery: params };
     const [textRes, imageRes] = await Promise.all([
       this.generateText(
@@ -651,6 +674,7 @@ ${realismQuality}
         { ...params, instructions: 'Image pour réseaux sociaux' },
         'Minimal Studio',
         userId,
+        file,
       ),
     ]);
 
@@ -782,7 +806,11 @@ ${realismQuality}
 
   /* --------------------- FLYERS & POSTERS --------------------- */
 
-  async generateFlyer(params: any, userId?: number) {
+  async generateFlyer(
+    params: any,
+    userId?: number,
+    file?: Express.Multer.File,
+  ) {
     const flyerPrompt = this.constructFlyerPrompt(params);
     const systemNegative = this.constructNegativeFlyerPrompt();
 
@@ -792,6 +820,7 @@ ${realismQuality}
       { ...params, userQuery: flyerPrompt },
       'Minimal Studio',
       userId,
+      file,
     );
 
     return {
