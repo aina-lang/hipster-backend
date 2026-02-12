@@ -442,23 +442,26 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const imageProvided = !!file || !!referenceImage;
 
     if (imageProvided) {
-      // STYLE GUIDE MODE: Describe what you want to see in the output
+      // STRUCTURE MODE: Preserve the person, apply style
       const userSubject =
         params.userQuery || params.job || 'professional portrait';
 
       visualDescription = `
-Professional ${userSubject} in the style of the reference image.
+Keep the exact same person from the input image with all facial features, identity, and body structure preserved.
+Apply professional photography style: ${userSubject}
 Lighting: ${light}
 Camera angle: ${angle}
 Background: ${bg}
 Accent color: ${accent}
 High quality photography, cinematic composition, professional studio quality.
 Realistic skin texture, natural details, sharp focus.
+Do not change the person's face, age, ethnicity, gender, or identity.
 `.trim();
 
       negativePrompt = `
 text, letters, words, numbers, typography, writing, captions, subtitles, labels, 
 watermark, logo, signature, symbols, characters, font, written content,
+different person, changed face, swapped identity, new person, face swap,
 low quality, blurry, distorted, bad anatomy, deformed, ugly, 
 artificial, fake, cartoon, cgi, illustration
 `;
@@ -520,8 +523,9 @@ ${realismQuality}
     let outputFormat = 'png';
 
     if (imageProvided) {
-      // STYLE GUIDE ENDPOINT
-      endpoint = 'https://api.stability.ai/v2beta/stable-image/control/style';
+      // STRUCTURE ENDPOINT - Preserves person identity
+      endpoint =
+        'https://api.stability.ai/v2beta/stable-image/control/structure';
     } else {
       // TEXT → IMAGE
       endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
@@ -576,8 +580,11 @@ ${realismQuality}
         new Blob([new Uint8Array(imageBuffer)], { type: mime }),
         'input',
       );
-      // Fidelity: how closely the output resembles the input style (0-1)
-      formData.append('fidelity', params.fidelity?.toString() || '0.5');
+      // Control strength: how closely to follow the structure (0-1)
+      formData.append(
+        'control_strength',
+        params.control_strength?.toString() || '0.7',
+      );
     }
 
     // ------------------------------------------------------------------
