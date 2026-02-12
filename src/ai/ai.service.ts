@@ -370,14 +370,6 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     // --- MONOCHROME PROMPT LOGIC ---
     if (style === 'Monochrome') {
-      const subjects = [
-        'athletic coach portrait',
-        'barber holding scissors',
-        'fashion model in black dress',
-        'architect in suit',
-        'restaurant chef portrait',
-        'burger close-up dramatic',
-      ];
       const accentColors = [
         'deep red',
         'burnt orange',
@@ -409,16 +401,21 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       const getRandom = (arr: string[]) =>
         arr[Math.floor(Math.random() * arr.length)];
 
-      const subject = getRandom(subjects);
       const accent = getRandom(accentColors);
       const light = getRandom(lighting);
       const angle = getRandom(angles);
       const bg = getRandom(backgrounds);
 
-      // Ensure we have a valid subject even if params.userQuery is empty or just whitespace
-      const userQuery = params.userQuery?.trim();
+      // Use user query or job from params as the subject
+      const jobSubject = params.job?.trim();
+      const querySubject = params.userQuery?.trim();
+
       const userSubject =
-        userQuery && userQuery.length > 0 ? userQuery : subject;
+        querySubject && querySubject.length > 0
+          ? querySubject
+          : jobSubject && jobSubject.length > 0
+            ? jobSubject
+            : 'portrait'; // Fallback if nothing provided
 
       visualDescription = `
 Ultra high contrast black and white portrait of ${userSubject}, editorial poster style, strong cinematic lighting (${light}), dramatic shadows, sharp facial details, subject centered, minimal background (${bg}).
