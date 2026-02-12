@@ -533,16 +533,13 @@ ${realismQuality}
     let model: string | undefined = undefined;
     let outputFormat = 'png';
 
-    const isSearchAndReplace = !!(referenceImage && params.search_prompt);
+    const isModifying = !!referenceImage;
+    const hasSearchPrompt = !!(referenceImage && params.search_prompt);
 
-    if (isSearchAndReplace) {
-      // Use Search and Replace for targeted edits
+    if (hasSearchPrompt || isModifying) {
+      // Use Search and Replace for targeted edits or modifications
       endpoint =
         'https://api.stability.ai/v2beta/stable-image/edit/search-and-replace';
-    } else if (referenceImage) {
-      // SPECIALIZED: Use Replace Background to preserve subject and change world
-      endpoint =
-        'https://api.stability.ai/v2beta/stable-image/edit/replace-background';
     } else if (userId) {
       const userProfile = await this.getAiUserWithProfile(userId);
       const plan = userProfile?.planType || PlanType.CURIEUX;
@@ -626,8 +623,11 @@ ${realismQuality}
         new Blob([imageBuffer as any], { type: finalMime }),
         `input.${extension}`,
       );
-      if (isSearchAndReplace) {
-        formData.append('search_prompt', params.search_prompt || userSubject);
+      if (endpoint.includes('/search-and-replace')) {
+        formData.append(
+          'search_prompt',
+          params.search_prompt || 'the background',
+        );
         // Optional search-and-replace parameter: grow_mask
         if (params.grow_mask !== undefined) {
           formData.append('grow_mask', params.grow_mask.toString());
