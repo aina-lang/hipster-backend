@@ -369,17 +369,8 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       );
     }
 
-    if (typeof params === 'string') params = { userQuery: params };
-
-    const basePrompt = await this.buildPrompt(params, userId);
-    const referenceImage = params.reference_image;
-
-    let visualDescription = '';
-    let negativePrompt = '';
-    let stylePreset = params.style_preset;
-
     // ------------------------------------------------------------------
-    // RANDOMIZATION POOLS (same as your original)
+    // RANDOMIZATION POOLS
     // ------------------------------------------------------------------
     const getRandom = (arr: string[]) =>
       arr[Math.floor(Math.random() * arr.length)];
@@ -426,23 +417,11 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const bg = getRandom(backgroundsPool);
     const accent = getRandom(accentColors);
 
-    // ------------------------------------------------------------------
-    // STYLE → STABILITY PRESETS
-    // ------------------------------------------------------------------
-    if (!stylePreset) {
-      if (style === 'Monochrome') stylePreset = 'analog-film';
-      else if (style === 'Hero Studio') stylePreset = 'photographic';
-      else if (style === 'Minimal Studio') stylePreset = 'enhance';
-      else stylePreset = 'photographic';
-    }
-
-    // ------------------------------------------------------------------
-    // ------------------------------------------------------------------
-    // PROMPT BUILDING (Unified for both Structure and Text-to-Image)
-    // ------------------------------------------------------------------
     const job = params.job || '';
     const functionName = params.function || '';
-    const imageProvided = !!file || !!referenceImage;
+
+    let visualDescription = '';
+    let negativePrompt = '';
 
     // 1. Build context-aware subject description
     let contextualSubject = params.userQuery || params.job || 'portrait';
@@ -554,21 +533,8 @@ ${commonNegative},
 smooth skin, cgi, fake face, cartoon, illustration, distorted face, bad anatomy
 `.trim();
 
-    // 3. If imageProvided, add structure protection instructions
-    if (imageProvided) {
-      visualDescription = `
-Keep the exact same person from the input image with all facial features, identity, and body structure preserved.
-${visualDescription}
-Do not change the person's face, age, ethnicity, gender, or identity.
-`.trim();
-
-      negativePrompt += `
-, different person, changed face, swapped identity, new person, face swap
-`.trim();
-    }
-
     // ------------------------------------------------------------------
-    // SELECT ENDPOINT
+    // SELECT ENDPOINT (Pure Text-to-Image)
     // ------------------------------------------------------------------
     const apiKey =
       this.configService.get('STABLE_API_KEY') ||
@@ -576,19 +542,10 @@ Do not change the person's face, age, ethnicity, gender, or identity.
 
     if (!apiKey) throw new Error('Missing STABILITY API KEY');
 
-    let endpoint = '';
-    let model = undefined;
-    let outputFormat = 'png';
-
-    if (imageProvided) {
-      // STRUCTURE ENDPOINT - Preserves person identity
-      endpoint =
-        'https://api.stability.ai/v2beta/stable-image/control/structure';
-    } else {
-      // TEXT → IMAGE
-      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
-      model = 'sd3.5-large-turbo';
-    }
+    const endpoint =
+      'https://api.stability.ai/v2beta/stable-image/generate/core';
+    const model = 'sd3.5-large-turbo';
+    const outputFormat = 'png';
 
     // ------------------------------------------------------------------
     // FORM DATA BUILD
@@ -598,51 +555,11 @@ Do not change the person's face, age, ethnicity, gender, or identity.
     formData.append('prompt', visualDescription);
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
     formData.append('output_format', outputFormat);
-    formData.append('style_preset', stylePreset);
+    formData.append('aspect_ratio', '1:1');
+    formData.append('model', model);
 
     if (params.seed) {
       formData.append('seed', params.seed.toString());
-    }
-
-    // Aspect ratio for both text-to-image and style guide
-    formData.append('aspect_ratio', '1:1');
-
-    if (!imageProvided && model) {
-      formData.append('model', model);
-    }
-
-    // ------------------------ IMAGE -----------------------
-    if (imageProvided) {
-      let imageBuffer: Buffer;
-
-      if (file) {
-        imageBuffer = file.buffer;
-      } else {
-        const cleanBase64 = referenceImage
-          .replace(/^data:image\/\w+;base64,/, '')
-          .replace(/\s/g, '');
-        imageBuffer = Buffer.from(cleanBase64, 'base64');
-      }
-
-      // MIME detection
-      let mime = 'image/png';
-      const h = imageBuffer.slice(0, 4).toString('hex');
-
-      if (h.startsWith('89504e47')) mime = 'image/png';
-      else if (h.startsWith('ffd8ff')) mime = 'image/jpeg';
-      else if (imageBuffer.slice(0, 4).toString() === 'RIFF')
-        mime = 'image/webp';
-
-      formData.append(
-        'image',
-        new Blob([new Uint8Array(imageBuffer)], { type: mime }),
-        'input',
-      );
-      // Control strength: how closely to follow the structure (0-1)
-      formData.append(
-        'control_strength',
-        params.control_strength?.toString() || '0.7',
-      );
     }
 
     // ------------------------------------------------------------------
@@ -651,7 +568,6 @@ Do not change the person's face, age, ethnicity, gender, or identity.
     this.logger.log(
       `[generateImage] Calling Stability AI endpoint: ${endpoint}`,
     );
-    this.logger.log(`[generateImage] Image provided: ${imageProvided}`);
 
     try {
       const response = await fetch(endpoint, {
