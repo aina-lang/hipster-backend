@@ -355,40 +355,28 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     userId?: number,
     file?: Express.Multer.File,
   ) {
-    if (userId)
+    if (userId) {
       await this.aiPaymentService.decrementCredits(
         userId,
         AiGenerationType.IMAGE,
       );
+    }
 
     if (typeof params === 'string') params = { userQuery: params };
+
     const basePrompt = await this.buildPrompt(params, userId);
-
-    // Default prompt from user query
-    let visualDescription = params.userQuery || '';
-
-    // Base realism quality prompts from user
-    const realismQuality = `ultra realistic photography, real human skin texture, visible pores, natural skin imperfections, subtle asymmetry, natural facial features, cinematic lighting, 35mm photography, shot on Canon EOS R5, professional studio photography, high dynamic range, fine skin details, natural color grading, editorial fashion photography, no beauty filter, no plastic skin`;
-
-    const realismNegative = `text, typography, watermark, logo, letters, words, brand, label, sign, signature, overly smooth skin, plastic skin, cgi look, 3d render, cartoon, illustration, perfect symmetry, ai face, fake face, blurred face, low detail skin`;
-
     const referenceImage = params.reference_image;
-    let negativePrompt = realismNegative;
 
-    const jobSubject = params.job?.trim();
-    const querySubject = params.userQuery?.trim();
+    let visualDescription = '';
+    let negativePrompt = '';
+    let stylePreset = params.style_preset;
 
-    // For control/structure with reference image: describe the transformation, not a new subject
-    // The endpoint preserves the structure/content, we just describe the desired style
-    const userSubject = referenceImage
-      ? 'the person in the image'
-      : querySubject && querySubject.length > 0
-        ? querySubject
-        : jobSubject && jobSubject.length > 0
-          ? jobSubject
-          : 'portrait';
+    // ------------------------------------------------------------------
+    // RANDOMIZATION POOLS (same as your original)
+    // ------------------------------------------------------------------
+    const getRandom = (arr: string[]) =>
+      arr[Math.floor(Math.random() * arr.length)];
 
-    // Photographic Randomization Pools
     const lightingPool = [
       'side lighting dramatic',
       'top light cinematic',
@@ -398,6 +386,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       'volumetric lighting',
       'dramatic butterfly lighting',
     ];
+
     const anglesPool = [
       'slight low angle',
       'slight high angle',
@@ -406,6 +395,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       'centered frontal portrait',
       'eye-level close-up',
     ];
+
     const backgroundsPool = [
       'textured dark concrete background',
       'minimal white seamless studio',
@@ -415,6 +405,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       'abstract blurred architectural space',
       'clean light grey professional studio',
     ];
+
     const accentColors = [
       'deep red',
       'burnt orange',
@@ -423,287 +414,203 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       'vibrant cyan',
     ];
 
-    const getRandom = (arr: string[]) =>
-      arr[Math.floor(Math.random() * arr.length)];
-
     const light = getRandom(lightingPool);
     const angle = getRandom(anglesPool);
     const bg = getRandom(backgroundsPool);
     const accent = getRandom(accentColors);
 
-    const identityPreservation = referenceImage ? '' : '';
-
-    // --- MONOCHROME PROMPT LOGIC ---
-    if (style === 'Monochrome') {
-      // For control/structure with reference image: describe the style/transformation only
-      // The endpoint preserves the structure automatically
-      visualDescription = referenceImage
-        ? `ultra high contrast black and white monochrome, dramatic cinematic lighting, deep shadows, sharp details, professional studio aesthetic, luxury campaign style, minimalist composition, modern aesthetic`
-        : `
-Professional monochrome photography of ${userSubject}, ultra high contrast black and white, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg}).
-Angle: ${angle}.
-
-Graphic design elements: subtle geometric lines, minimalist composition, modern aesthetic.
-(Optional: one subtle accent color (${accent}) used in tiny geometric highlights).
-
-Luxury campaign aesthetic, sharp focus, ultra clean, professional studio lighting.
-`.trim();
-
-      this.logger.log(
-        `[Monochrome] Generated prompt (${visualDescription.length} chars): ${visualDescription}`,
-      );
-
-      // Force specific negative prompt for Monochrome
-      negativePrompt =
-        'color, colorful, red, blue, green, yellow, orange, purple, pink, low quality, blurry, oversaturated, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography, ' +
-        realismNegative;
-    }
-
-    this.logger.log(
-      `[generateImage] Style processing complete. Style Preset: ${params.style_preset || 'random'}`,
-    );
-
-    // Determine style preset for Stability AI
-    let stylePreset: string | undefined = params.style_preset;
+    // ------------------------------------------------------------------
+    // STYLE → STABILITY PRESETS
+    // ------------------------------------------------------------------
     if (!stylePreset) {
       if (style === 'Monochrome') stylePreset = 'analog-film';
       else if (style === 'Hero Studio') stylePreset = 'photographic';
-      else if (style === 'Minimal Studio') stylePreset = 'photographic';
-      else {
-        const presets = ['photographic', 'analog-film', 'cinematic', 'enhance'];
-        stylePreset = getRandom(presets);
+      else if (style === 'Minimal Studio') stylePreset = 'enhance';
+      else stylePreset = 'photographic';
+    }
+
+    // ------------------------------------------------------------------
+    // STRUCTURE MODE (Image → Image)
+    // ------------------------------------------------------------------
+    const imageProvided = !!file || !!referenceImage;
+
+    if (imageProvided) {
+      // IDENTITY LOCK SPECIAL PROMPT
+      visualDescription = `
+Apply the requested style without changing the identity.
+Preserve the exact same person, face, facial features, skin tone, hairline, proportions, and body structure from the input image.
+Do NOT alter age, ethnicity, gender or identity.
+
+Lighting style: ${light}
+Camera angle: ${angle}
+Background mood: ${bg}
+
+Apply ONLY stylistic changes:
+- lighting mood
+- color grading
+- photography style
+- artistic tone
+
+Do not change: face shape, eyes, nose, lips, jaw, body proportions, clothes structure unless requested.
+Realistic skin texture, no AI artifacts.
+`.trim();
+
+      negativePrompt = `
+different person, changed face, swapped identity, new person, artificial face, distorted face,
+extra limbs, wrong anatomy, cartoon, cgi, illustration, plastic skin,
+smooth fake skin, watermark, text, logo, letters, signature
+`;
+    } else {
+      // ------------------------------------------------------------------
+      // TEXT → IMAGE MODE
+      // ------------------------------------------------------------------
+      const userSubject = params.userQuery || params.job || 'portrait';
+
+      const realismQuality = `
+ultra realistic photography, real human skin texture, visible pores,
+natural facial features, cinematic lighting, 35mm photography
+`;
+
+      const realismNegative = `
+text, letters, watermark, logo, smooth skin, cgi, fake face, cartoon,
+illustration, distorted face, bad anatomy
+`;
+
+      negativePrompt = realismNegative;
+
+      if (style === 'Monochrome') {
+        visualDescription = `
+Professional monochrome photography of ${userSubject}, high contrast black and white,
+cinematic lighting (${light}), deep shadows, sharp details, minimal background (${bg}),
+angle: ${angle}.
+`.trim();
+      }
+
+      if (style === 'Hero Studio') {
+        visualDescription = `
+Hero-style dramatic studio portrait of ${userSubject}, ${light}, high contrast, 
+rim light, volumetric effects, premium studio photography, angle ${angle}.
+${realismQuality}
+`.trim();
+      }
+
+      if (style === 'Minimal Studio') {
+        visualDescription = `
+Minimal clean studio portrait of ${userSubject}, bright and soft lighting (${light}),
+neutral background (${bg}), lots of negative space, angle ${angle}.
+${realismQuality}
+`.trim();
       }
     }
 
-    // --- HERO STUDIO PROMPT LOGIC ---
-    if (style === 'Hero Studio') {
-      visualDescription = referenceImage
-        ? `professional studio photography, dramatic lighting, high contrast, strong visual impact, cinematic rim lighting, volumetric light rays, premium aesthetic, commercial photography style, 8k resolution, highly detailed`
-        : `
-Professional studio photography of ${userSubject}, iconic product shot, dramatic lighting (${light}), high contrast, strong visual impact, "wow" effect.
-Centered composition, angle (${angle}), sharp focus on the subject, premium aesthetic, commercial photography, 8k resolution, highly detailed.
-Lighting: Volumetric lighting, rim light, highlighting textures and details.
-Background: ${bg}, depth of field.
-
-${realismQuality}
-`.trim();
-      this.logger.log(`[Hero Studio] Generated prompt: ${visualDescription}`);
-    }
-
-    // --- MINIMAL STUDIO PROMPT LOGIC ---
-    if (style === 'Minimal Studio') {
-      visualDescription = referenceImage
-        ? `clean minimalist studio photography, bright and airy, soft diffused lighting, white or light neutral background, modern aesthetic, professional e-commerce style, plenty of negative space, pastel tones`
-        : `
-Minimalist studio photography of ${userSubject}, bright and airy, soft diffused lighting (${light}), white or light neutral background (${bg}).
-Clean composition, angle (${angle}), plenty of negative space, modern aesthetic, high-end look, ultra readable.
-Soft shadows, pastel tones (optional), sharp details, professional e-commerce style.
-
-${realismQuality}
-`.trim();
-      this.logger.log(
-        `[Minimal Studio] Generated prompt: ${visualDescription}`,
-      );
-    }
-
-    // Final safety check for empty prompt
-    if (!visualDescription || visualDescription.length === 0) {
-      this.logger.warn('[generateImage] Prompt is empty, using fallback.');
-      visualDescription = 'Artistic abstract composition, high quality, 8k';
-    }
-
+    // ------------------------------------------------------------------
+    // SELECT ENDPOINT
+    // ------------------------------------------------------------------
     const apiKey =
-      this.configService.get<string>('STABLE_API_KEY') ||
-      this.configService.get<string>('STABILITY_API_KEY');
-    if (!apiKey) throw new Error('Configuration manquante : STABLE_API_KEY');
+      this.configService.get('STABLE_API_KEY') ||
+      this.configService.get('STABILITY_API_KEY');
 
-    this.logger.log(
-      `[generateImage] Stability AI check. Style: ${style || 'default'}, ReferenceImage present: ${!!referenceImage}`,
-    );
+    if (!apiKey) throw new Error('Missing STABILITY API KEY');
 
-    // Determine Model & Endpoint based on Plan & Request
-    let endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
-    let model: string | undefined = undefined;
+    let endpoint = '';
+    let model = undefined;
     let outputFormat = 'png';
 
-    const isModifying = !!referenceImage;
-
-    if (isModifying) {
-      // Use Control Structure as explicitly requested by user
-      // https://api.stability.ai/v2beta/stable-image/control/structure
+    if (imageProvided) {
+      // FORCE STRUCTURE ENDPOINT
       endpoint =
         'https://api.stability.ai/v2beta/stable-image/control/structure';
-    } else if (userId) {
-      const userProfile = await this.getAiUserWithProfile(userId);
-      const plan = userProfile?.planType || PlanType.CURIEUX;
-
-      if (plan === PlanType.STUDIO) {
-        // Studio -> SD 3.5 Large Turbo
-        endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
-        model = 'sd3.5-large-turbo';
-      } else if (plan === PlanType.AGENCE) {
-        // Agence -> Ultra
-        endpoint =
-          'https://api.stability.ai/v2beta/stable-image/generate/ultra';
-      }
+    } else {
+      // TEXT → IMAGE
+      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
+      model = 'sd3.5-large-turbo';
     }
 
+    // ------------------------------------------------------------------
+    // FORM DATA BUILD
+    // ------------------------------------------------------------------
     const formData = new FormData();
+
     formData.append('prompt', visualDescription);
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
     formData.append('output_format', outputFormat);
+    formData.append('style_preset', stylePreset);
 
-    if (stylePreset) {
-      formData.append('style_preset', stylePreset);
-    } else if (endpoint.includes('/control/structure')) {
-      // Map our styles to Stability Presets for Structure endpoint
-      if (style === 'Monochrome')
-        formData.append('style_preset', 'analog-film');
-      else if (style === 'Hero Studio')
-        formData.append('style_preset', 'photographic');
-      else if (style === 'Minimal Studio')
-        formData.append('style_preset', 'enhance');
-      else formData.append('style_preset', 'photographic'); // Default
-    }
-
-    // Common optional parameter: seed
     if (params.seed) {
       formData.append('seed', params.seed.toString());
     }
 
-    if (file || referenceImage) {
-      // Handle Image-to-Image (Search and Replace)
+    if (!imageProvided) {
+      formData.append('aspect_ratio', '1:1');
+      if (model) formData.append('model', model);
+    }
+
+    // ------------------------ IMAGE -----------------------
+    if (imageProvided) {
       let imageBuffer: Buffer;
-      let mimeType: string | undefined = undefined;
-      let extension = 'png';
 
       if (file) {
         imageBuffer = file.buffer;
-        mimeType = file.mimetype;
-        extension = file.originalname.split('.').pop() || 'png';
       } else {
-        // Fallback to base64 for legacy or if no file provided
         const cleanBase64 = referenceImage
           .replace(/^data:image\/\w+;base64,/, '')
           .replace(/\s/g, '');
         imageBuffer = Buffer.from(cleanBase64, 'base64');
       }
 
-      // Detect MIME type from magic bytes if not already set or generic
-      if (imageBuffer.length > 4) {
-        const hex = imageBuffer.slice(0, 4).toString('hex');
-        if (
-          hex.startsWith('89504e47') &&
-          (!mimeType || mimeType === 'application/octet-stream')
-        ) {
-          mimeType = 'image/png';
-          extension = 'png';
-        } else if (
-          hex.startsWith('ffd8ff') &&
-          (!mimeType || mimeType === 'application/octet-stream')
-        ) {
-          mimeType = 'image/jpeg';
-          extension = 'jpg';
-        } else if (
-          imageBuffer.slice(0, 4).toString() === 'RIFF' &&
-          (!mimeType || mimeType === 'application/octet-stream')
-        ) {
-          mimeType = 'image/webp';
-          extension = 'webp';
-        }
-      }
+      // MIME detection
+      let mime = 'image/png';
+      const h = imageBuffer.slice(0, 4).toString('hex');
 
-      const finalMime = mimeType || 'image/png';
+      if (h.startsWith('89504e47')) mime = 'image/png';
+      else if (h.startsWith('ffd8ff')) mime = 'image/jpeg';
+      else if (imageBuffer.slice(0, 4).toString() === 'RIFF')
+        mime = 'image/webp';
 
-      this.logger.log(
-        `Processing image: ${finalMime} (${imageBuffer.length} bytes), Source: ${file ? 'Multipart' : 'Base64'}`,
-      );
-
-      // Append as blob for multipart form with detected type
       formData.append(
         'image',
-        new Blob([imageBuffer as any], { type: finalMime }),
-        `input.${extension}`,
+        new Blob([new Uint8Array(imageBuffer)], { type: mime }),
+        'input',
       );
-      if (endpoint.includes('/control/structure')) {
-        // Control Structure Analysis
-        formData.append(
-          'control_strength',
-          (params.control_strength || 0.7).toString(),
-        );
-      }
-    } else {
-      // Handle Text-to-Image
-      if (model) formData.append('model', model);
-      // aspect_ratio is only for T2I endpoints (Core/Ultra/SD3)
-      formData.append('aspect_ratio', '1:1');
+      formData.append(
+        'control_strength',
+        params.control_strength?.toString() || '0.75',
+      );
     }
 
-    this.logger.log(`[generateImage] Calling Stability AI at ${endpoint}...`);
-    const startFetch = Date.now();
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+    // ------------------------------------------------------------------
+    // FETCH CALL
+    // ------------------------------------------------------------------
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        Accept: 'image/*',
+      },
+      body: formData,
+    });
 
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, Accept: 'image/*' },
-        body: formData,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      this.logger.log(
-        `[generateImage] Stability AI response received in ${Date.now() - startFetch}ms. Status: ${response.status} ${response.statusText}`,
-      );
-
-      if (!response.ok) {
-        if (response.status === 402) {
-          throw new Error(
-            'Crédits insuffisants sur Stability AI (402). Veuillez recharger votre compte.',
-          );
-        }
-        const errText = await response.text();
-        throw new Error(
-          `Stability Error: ${response.status} ${response.statusText} - ${errText}`,
-        );
-      }
-
-      const buffer = Buffer.from(await response.arrayBuffer());
-      const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
-      if (!fs.existsSync(uploadDir))
-        fs.mkdirSync(uploadDir, { recursive: true });
-      // Save with ID to track better?
-      const fileName = `gen_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.${outputFormat}`;
-      const filePath = path.join(uploadDir, fileName);
-      fs.writeFileSync(filePath, buffer);
-      const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-      this.logger.log(`[generateImage] Image saved to: ${filePath}`);
-      this.logger.log(`[generateImage] Public URL: ${publicUrl}`);
-
-      let generationId: number | undefined;
-      if (userId) {
-        const saved = await this.aiGenRepo.save({
-          user: { id: userId } as AiUser,
-          type: AiGenerationType.IMAGE,
-          prompt: basePrompt.substring(0, 1000),
-          result: publicUrl,
-          title: (params.userQuery || 'AI Image').substring(0, 40),
-          attributes: { ...params, engine: model || 'core', style },
-        });
-        generationId = saved.id;
-      }
-
-      return { url: publicUrl, generationId };
-    } catch (err: any) {
-      clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        throw new Error(
-          'Délai d’attente dépassé (60s) pour Stability AI. Le service est peut-être surchargé.',
-        );
-      }
-      throw err;
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Stability failed: ${response.status} - ${err}`);
     }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+    const fileName = `gen_${Date.now()}_${crypto.randomBytes(5).toString('hex')}.${outputFormat}`;
+    const filePath = path.join(uploadDir, fileName);
+
+    fs.writeFileSync(filePath, buffer);
+
+    const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+    return {
+      url: publicUrl,
+      generationId: null,
+    };
   }
 
   /* --------------------- SOCIAL POSTS --------------------- */
