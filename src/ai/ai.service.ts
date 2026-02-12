@@ -384,44 +384,51 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
           ? jobSubject
           : 'portrait';
 
+    // Photographic Randomization Pools
+    const lightingPool = [
+      'side lighting dramatic',
+      'top light cinematic',
+      'rim light silhouette',
+      'split lighting high contrast',
+      'soft diffused studio light',
+      'volumetric lighting',
+      'dramatic butterfly lighting',
+    ];
+    const anglesPool = [
+      'slight low angle',
+      'slight high angle',
+      'profile view',
+      'three quarter view',
+      'centered frontal portrait',
+      'eye-level close-up',
+    ];
+    const backgroundsPool = [
+      'textured dark concrete background',
+      'minimal white seamless studio',
+      'grainy film texture',
+      'matte charcoal backdrop',
+      'soft gradient grey background',
+      'abstract blurred architectural space',
+      'clean light grey professional studio',
+    ];
+    const accentColors = [
+      'deep red',
+      'burnt orange',
+      'electric purple',
+      'muted gold',
+      'vibrant cyan',
+    ];
+
+    const getRandom = (arr: string[]) =>
+      arr[Math.floor(Math.random() * arr.length)];
+
+    const light = getRandom(lightingPool);
+    const angle = getRandom(anglesPool);
+    const bg = getRandom(backgroundsPool);
+    const accent = getRandom(accentColors);
+
     // --- MONOCHROME PROMPT LOGIC ---
     if (style === 'Monochrome') {
-      const accentColors = [
-        'deep red',
-        'burnt orange',
-        'electric purple',
-        'muted gold',
-      ];
-      const lighting = [
-        'side lighting dramatic',
-        'top light cinematic',
-        'rim light silhouette',
-        'split lighting high contrast',
-        'soft diffused studio light',
-      ];
-      const angles = [
-        'slight low angle',
-        'slight high angle',
-        'profile view',
-        'three quarter view',
-        'centered frontal portrait',
-      ];
-      const backgrounds = [
-        'textured dark concrete background',
-        'minimal white seamless studio',
-        'grainy film texture',
-        'matte charcoal backdrop',
-        'soft gradient grey background',
-      ];
-
-      const getRandom = (arr: string[]) =>
-        arr[Math.floor(Math.random() * arr.length)];
-
-      const accent = getRandom(accentColors);
-      const light = getRandom(lighting);
-      const angle = getRandom(angles);
-      const bg = getRandom(backgrounds);
-
       visualDescription = `
 Ultra high contrast black and white portrait of ${userSubject}, editorial poster style, strong cinematic lighting (${light}), dramatic shadows, sharp facial details, subject centered, minimal background (${bg}).
 Angle: ${angle}.
@@ -447,13 +454,20 @@ No watermark, no random text, no logo.
         realismNegative;
     }
 
+    // Determine style preset for Stability AI
+    let stylePreset: string | undefined = params.style_preset;
+    if (!stylePreset) {
+      const presets = ['photographic', 'analog-film', 'cinematic', 'enhance'];
+      stylePreset = getRandom(presets);
+    }
+
     // --- HERO STUDIO PROMPT LOGIC ---
     if (style === 'Hero Studio') {
       visualDescription = `
-Professional studio photography of ${userSubject}, iconic product shot, dramatic lighting, high contrast, strong visual impact, "wow" effect.
-Centered composition, sharp focus on the subject, premium aesthetic, commercial photography, 8k resolution, highly detailed.
+Professional studio photography of ${userSubject}, iconic product shot, dramatic lighting (${light}), high contrast, strong visual impact, "wow" effect.
+Centered composition, angle (${angle}), sharp focus on the subject, premium aesthetic, commercial photography, 8k resolution, highly detailed.
 Lighting: Volumetric lighting, rim light, highlighting textures and details.
-Background: Abstract yet complimentary, depth of field.
+Background: ${bg}, depth of field.
 
 ${realismQuality}
 `.trim();
@@ -463,8 +477,8 @@ ${realismQuality}
     // --- MINIMAL STUDIO PROMPT LOGIC ---
     if (style === 'Minimal Studio') {
       visualDescription = `
-Minimalist studio photography of ${userSubject}, bright and airy, soft diffused lighting, white or light neutral background.
-Clean composition, plenty of negative space, modern aesthetic, high-end look, ultra readable.
+Minimalist studio photography of ${userSubject}, bright and airy, soft diffused lighting (${light}), white or light neutral background (${bg}).
+Clean composition, angle (${angle}), plenty of negative space, modern aesthetic, high-end look, ultra readable.
 Soft shadows, pastel tones (optional), sharp details, professional e-commerce style.
 
 ${realismQuality}
@@ -519,12 +533,32 @@ ${realismQuality}
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
     formData.append('output_format', outputFormat);
 
+    if (stylePreset) {
+      formData.append('style_preset', stylePreset);
+    }
+
+    // Common optional parameter: seed
+    if (params.seed) {
+      formData.append('seed', params.seed.toString());
+    }
+
     if (referenceImage) {
       // Handle Image-to-Image (Search and Replace)
-      const imageBuffer = Buffer.from(referenceImage, 'base64');
-      // Append as blob for multipart form
-      formData.append('image', new Blob([imageBuffer]), 'input.png');
+      // Clean base64 if it has metadata prefix (strip data:image/...;base64,)
+      const base64Data = referenceImage.replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      // Append as blob for multipart form with explicit type
+      formData.append(
+        'image',
+        new Blob([imageBuffer], { type: 'image/png' }),
+        'input.png',
+      );
       formData.append('search_prompt', params.search_prompt || userSubject);
+
+      // Optional search-and-replace parameter: grow_mask
+      if (params.grow_mask !== undefined) {
+        formData.append('grow_mask', params.grow_mask.toString());
+      }
     } else {
       // Handle Text-to-Image
       if (model) formData.append('model', model);
