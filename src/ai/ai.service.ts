@@ -431,11 +431,16 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const bg = getRandom(backgroundsPool);
     const accent = getRandom(accentColors);
     const identityPreservation = referenceImage
-      ? ', (preserve original facial features and subject identity:0.9), (exact resemblance to the provided image:0.9)'
+      ? ", (preserve EXACT facial features and identity:1.0), (exact resemblance to the provided image:0.9)"
       : '';
+
+    // --- MONOCHROME PROMPT LOGIC ---
     if (style === 'Monochrome') {
+      const transformPrefix = referenceImage
+        ? 'Transform the subject in the photo into a professional monochrome version. '
+        : '';
       visualDescription = `
-Professional monochrome photography of ${userSubject}, ultra high contrast black and white, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg})${identityPreservation}.
+${transformPrefix}Professional monochrome photography of ${userSubject}, ultra high contrast black and white, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg})${identityPreservation}.
 Angle: ${angle}.
 
 Graphic design elements: subtle geometric lines, minimalist composition, modern aesthetic.
@@ -524,9 +529,9 @@ ${realismQuality}
       endpoint =
         'https://api.stability.ai/v2beta/stable-image/edit/search-and-replace';
     } else if (referenceImage) {
-      // ADVANCED: Use Control Structure for modifications to keep identity
-      endpoint =
-        'https://api.stability.ai/v2beta/stable-image/control/structure';
+      // Switch back to SD3 Image-to-Image for modifications to keep identity
+      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
+      model = 'sd3.5-large-turbo';
     } else if (userId) {
       const userProfile = await this.getAiUserWithProfile(userId);
       const plan = userProfile?.planType || PlanType.CURIEUX;
@@ -616,6 +621,11 @@ ${realismQuality}
         if (params.grow_mask !== undefined) {
           formData.append('grow_mask', params.grow_mask.toString());
         }
+      } else if (endpoint.includes('/generate/sd3') && referenceImage) {
+        // SD3 Image-to-Image logic
+        formData.append('mode', 'image-to-image');
+        formData.append('strength', (params.strength || 0.35).toString());
+        if (model) formData.append('model', model);
       } else if (endpoint.includes('/control/structure')) {
         // Control Structure logic
         formData.append(
@@ -623,7 +633,7 @@ ${realismQuality}
           (params.control_strength || 0.7).toString(),
         );
       } else {
-        // Image-to-Image (SD3) logic
+        // standard Image-to-Image logic (deprecated or fallback)
         formData.append('mode', 'image-to-image');
         formData.append('strength', (params.strength || 0.45).toString());
         if (model) formData.append('model', model);
