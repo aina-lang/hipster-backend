@@ -430,17 +430,22 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const angle = getRandom(anglesPool);
     const bg = getRandom(backgroundsPool);
     const accent = getRandom(accentColors);
+
     const identityPreservation = referenceImage
-      ? ", (preserve EXACT facial features and identity:1.0), (exact resemblance to the provided image:0.9)"
+      ? ', (preserve EXACT facial features and identity:1.0), (exact resemblance to the provided image:1.0)'
       : '';
 
     // --- MONOCHROME PROMPT LOGIC ---
     if (style === 'Monochrome') {
-      const transformPrefix = referenceImage
-        ? 'Transform the subject in the photo into a professional monochrome version. '
-        : '';
-      visualDescription = `
-${transformPrefix}Professional monochrome photography of ${userSubject}, ultra high contrast black and white, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg})${identityPreservation}.
+      const isModification = !!referenceImage && !params.search_prompt;
+      const transformPrefix = isModification
+        ? `Clean monochrome black and white photography background, professional studio setting, minimalist concrete texture, ${bg}, dramatic lighting.`
+        : `Professional monochrome photography of ${userSubject}, ultra high contrast black and white, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg})${identityPreservation}.`;
+
+      visualDescription = isModification
+        ? transformPrefix
+        : `
+${transformPrefix}
 Angle: ${angle}.
 
 Graphic design elements: subtle geometric lines, minimalist composition, modern aesthetic.
@@ -477,7 +482,10 @@ Luxury campaign aesthetic, sharp focus, ultra clean, professional studio lightin
 
     // --- HERO STUDIO PROMPT LOGIC ---
     if (style === 'Hero Studio') {
-      visualDescription = `
+      const isModification = !!referenceImage && !params.search_prompt;
+      visualDescription = isModification
+        ? `Professional studio background for a luxury product/person shot, ${bg}, cinematic rim lighting, volumetric light rays, deep shadows, high-end commercial aesthetic, 8k resolution.`
+        : `
 Professional studio photography of ${userSubject}, iconic product shot, dramatic lighting (${light}), high contrast, strong visual impact, "wow" effect${identityPreservation}.
 Centered composition, angle (${angle}), sharp focus on the subject, premium aesthetic, commercial photography, 8k resolution, highly detailed.
 Lighting: Volumetric lighting, rim light, highlighting textures and details.
@@ -490,7 +498,10 @@ ${realismQuality}
 
     // --- MINIMAL STUDIO PROMPT LOGIC ---
     if (style === 'Minimal Studio') {
-      visualDescription = `
+      const isModification = !!referenceImage && !params.search_prompt;
+      visualDescription = isModification
+        ? `Clean minimalist studio background, bright and airy, soft diffused light, ${bg}, pastel tones, professional e-commerce style, negative space, clean aesthetic.`
+        : `
 Minimalist studio photography of ${userSubject}, bright and airy, soft diffused lighting (${light}), white or light neutral background (${bg})${identityPreservation}.
 Clean composition, angle (${angle}), plenty of negative space, modern aesthetic, high-end look, ultra readable.
 Soft shadows, pastel tones (optional), sharp details, professional e-commerce style.
@@ -529,9 +540,9 @@ ${realismQuality}
       endpoint =
         'https://api.stability.ai/v2beta/stable-image/edit/search-and-replace';
     } else if (referenceImage) {
-      // Switch back to SD3 Image-to-Image for modifications to keep identity
-      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
-      model = 'sd3.5-large-turbo';
+      // SPECIALIZED: Use Replace Background to preserve subject and change world
+      endpoint =
+        'https://api.stability.ai/v2beta/stable-image/edit/replace-background';
     } else if (userId) {
       const userProfile = await this.getAiUserWithProfile(userId);
       const plan = userProfile?.planType || PlanType.CURIEUX;
@@ -621,6 +632,10 @@ ${realismQuality}
         if (params.grow_mask !== undefined) {
           formData.append('grow_mask', params.grow_mask.toString());
         }
+      } else if (endpoint.includes('/edit/replace-background')) {
+        // Replace Background logic
+        // Background prompt should only describe the background as per Stability's recommended usage for this endpoint
+        formData.append('background_prompt', visualDescription);
       } else if (endpoint.includes('/generate/sd3') && referenceImage) {
         // SD3 Image-to-Image logic
         formData.append('mode', 'image-to-image');
