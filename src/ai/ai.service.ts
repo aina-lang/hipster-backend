@@ -427,11 +427,14 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const angle = getRandom(anglesPool);
     const bg = getRandom(backgroundsPool);
     const accent = getRandom(accentColors);
+    const referenceImage = params.reference_image;
 
-    // --- MONOCHROME PROMPT LOGIC ---
+    const identityPreservation = referenceImage
+      ? ', preserve original facial features and identity, consistent subject resemblance'
+      : '';
     if (style === 'Monochrome') {
       visualDescription = `
-Ultra high contrast black and white portrait of ${userSubject}, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg}).
+Ultra high contrast black and white portrait of ${userSubject}, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg})${identityPreservation}.
 Angle: ${angle}.
 
 Graphic design elements: subtle geometric lines, minimalist composition, modern aesthetic.
@@ -457,14 +460,19 @@ High fashion magazine aesthetic, luxury campaign, sharp focus, ultra clean, prof
     // Determine style preset for Stability AI
     let stylePreset: string | undefined = params.style_preset;
     if (!stylePreset) {
-      const presets = ['photographic', 'analog-film', 'cinematic', 'enhance'];
-      stylePreset = getRandom(presets);
+      if (style === 'Monochrome') stylePreset = 'analog-film';
+      else if (style === 'Hero Studio') stylePreset = 'photographic';
+      else if (style === 'Minimal Studio') stylePreset = 'photographic';
+      else {
+        const presets = ['photographic', 'analog-film', 'cinematic', 'enhance'];
+        stylePreset = getRandom(presets);
+      }
     }
 
     // --- HERO STUDIO PROMPT LOGIC ---
     if (style === 'Hero Studio') {
       visualDescription = `
-Professional studio photography of ${userSubject}, iconic product shot, dramatic lighting (${light}), high contrast, strong visual impact, "wow" effect.
+Professional studio photography of ${userSubject}, iconic product shot, dramatic lighting (${light}), high contrast, strong visual impact, "wow" effect${identityPreservation}.
 Centered composition, angle (${angle}), sharp focus on the subject, premium aesthetic, commercial photography, 8k resolution, highly detailed.
 Lighting: Volumetric lighting, rim light, highlighting textures and details.
 Background: ${bg}, depth of field.
@@ -477,7 +485,7 @@ ${realismQuality}
     // --- MINIMAL STUDIO PROMPT LOGIC ---
     if (style === 'Minimal Studio') {
       visualDescription = `
-Minimalist studio photography of ${userSubject}, bright and airy, soft diffused lighting (${light}), white or light neutral background (${bg}).
+Minimalist studio photography of ${userSubject}, bright and airy, soft diffused lighting (${light}), white or light neutral background (${bg})${identityPreservation}.
 Clean composition, angle (${angle}), plenty of negative space, modern aesthetic, high-end look, ultra readable.
 Soft shadows, pastel tones (optional), sharp details, professional e-commerce style.
 
@@ -498,8 +506,6 @@ ${realismQuality}
       this.configService.get<string>('STABLE_API_KEY') ||
       this.configService.get<string>('STABILITY_API_KEY');
     if (!apiKey) throw new Error('Configuration manquante : STABLE_API_KEY');
-
-    const referenceImage = params.reference_image;
 
     this.logger.log(
       `[generateImage] Stability AI check. Style: ${style || 'default'}, ReferenceImage present: ${!!referenceImage}`,
@@ -612,7 +618,7 @@ ${realismQuality}
       } else {
         // Image-to-Image (SD3) logic
         formData.append('mode', 'image-to-image');
-        formData.append('strength', (params.strength || 0.6).toString());
+        formData.append('strength', (params.strength || 0.45).toString());
         if (model) formData.append('model', model);
       }
     } else {
