@@ -470,6 +470,59 @@ artificial, fake, cartoon, cgi, illustration
       // TEXT → IMAGE MODE
       // ------------------------------------------------------------------
       const userSubject = params.userQuery || params.job || 'portrait';
+      const job = params.job || '';
+      const functionName = params.function || '';
+
+      // Build context-aware subject description
+      let contextualSubject = userSubject;
+
+      // Adapt based on job type
+      if (
+        job.toLowerCase().includes('restaurant') ||
+        job.toLowerCase().includes('chef')
+      ) {
+        contextualSubject = `${userSubject} for a restaurant/culinary business`;
+      } else if (
+        job.toLowerCase().includes('coach') ||
+        job.toLowerCase().includes('sport')
+      ) {
+        contextualSubject = `${userSubject} for a fitness/coaching professional`;
+      } else if (
+        job.toLowerCase().includes('artisan') ||
+        job.toLowerCase().includes('craft')
+      ) {
+        contextualSubject = `${userSubject} for an artisan/craftsperson`;
+      } else if (
+        job.toLowerCase().includes('commerce') ||
+        job.toLowerCase().includes('shop')
+      ) {
+        contextualSubject = `${userSubject} for a retail/commerce business`;
+      } else if (job.toLowerCase().includes('service')) {
+        contextualSubject = `${userSubject} for a service professional`;
+      }
+
+      // Adapt based on function (exact frontend labels)
+      if (
+        functionName.toLowerCase().includes('contenu réseaux') ||
+        functionName.toLowerCase().includes('social')
+      ) {
+        contextualSubject += ', social media content optimized';
+      } else if (functionName.toLowerCase().includes('visuel publicitaire')) {
+        contextualSubject += ', advertising visual style';
+      } else if (functionName.toLowerCase().includes('texte marketing')) {
+        contextualSubject += ', marketing content focus';
+      } else if (
+        functionName.toLowerCase().includes('page web') ||
+        functionName.toLowerCase().includes('seo')
+      ) {
+        contextualSubject += ', web page optimized';
+      } else if (functionName.toLowerCase().includes('email')) {
+        contextualSubject += ', email marketing style';
+      } else if (functionName.toLowerCase().includes('script vidéo')) {
+        contextualSubject += ', video script thumbnail';
+      } else if (functionName.toLowerCase().includes('miniatures')) {
+        contextualSubject += ', video thumbnail style';
+      }
 
       const realismQuality = `
 ultra realistic photography, real human skin texture, visible pores,
