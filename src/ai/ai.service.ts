@@ -449,7 +449,9 @@ No watermark, no random text, no logo.
         `[Monochrome] Generated prompt (${visualDescription.length} chars): ${visualDescription}`,
       );
 
-      'low quality, blurry, oversaturated, too colorful, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography, ' +
+      // Force specific negative prompt for Monochrome
+      negativePrompt =
+        'low quality, blurry, oversaturated, too colorful, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography, ' +
         realismNegative;
     }
 
@@ -615,50 +617,67 @@ ${realismQuality}
 
     this.logger.log(`[generateImage] Calling Stability AI at ${endpoint}...`);
     const startFetch = Date.now();
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, Accept: 'image/*' },
-      body: formData,
-    });
-    this.logger.log(
-      `[generateImage] Stability AI response received in ${Date.now() - startFetch}ms. Status: ${response.status} ${response.statusText}`,
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
-    if (!response.ok) {
-      if (response.status === 402) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}`, Accept: 'image/*' },
+        body: formData,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      this.logger.log(
+        `[generateImage] Stability AI response received in ${Date.now() - startFetch}ms. Status: ${response.status} ${response.statusText}`,
+      );
+
+      if (!response.ok) {
+        if (response.status === 402) {
+          throw new Error(
+            'Crédits insuffisants sur Stability AI (402). Veuillez recharger votre compte.',
+          );
+        }
+        const errText = await response.text();
         throw new Error(
-          'Crédits insuffisants sur Stability AI (402). Veuillez recharger votre compte.',
+          `Stability Error: ${response.status} ${response.statusText} - ${errText}`,
         );
       }
-      const errText = await response.text();
-      throw new Error(
-        `Stability Error: ${response.status} ${response.statusText} - ${errText}`,
-      );
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
+      if (!fs.existsSync(uploadDir))
+        fs.mkdirSync(uploadDir, { recursive: true });
+      // Save with ID to track better?
+      const fileName = `gen_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.${outputFormat}`;
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, buffer);
+      const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+      let generationId: number | undefined;
+      if (userId) {
+        const saved = await this.aiGenRepo.save({
+          user: { id: userId } as AiUser,
+          type: AiGenerationType.IMAGE,
+          prompt: basePrompt.substring(0, 1000),
+          result: publicUrl,
+          title: (params.userQuery || 'AI Image').substring(0, 40),
+          attributes: { ...params, engine: model || 'core', style },
+        });
+        generationId = saved.id;
+      }
+
+      return { url: publicUrl, generationId };
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error(
+          'Délai d’attente dépassé (60s) pour Stability AI. Le service est peut-être surchargé.',
+        );
+      }
+      throw err;
     }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-    // Save with ID to track better?
-    const fileName = `gen_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.${outputFormat}`;
-    const filePath = path.join(uploadDir, fileName);
-    fs.writeFileSync(filePath, buffer);
-    const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-
-    let generationId: number | undefined;
-    if (userId) {
-      const saved = await this.aiGenRepo.save({
-        user: { id: userId } as AiUser,
-        type: AiGenerationType.IMAGE,
-        prompt: basePrompt.substring(0, 1000),
-        result: publicUrl,
-        title: (params.userQuery || 'AI Image').substring(0, 40),
-        attributes: { ...params, engine: model || 'core', style },
-      });
-      generationId = saved.id;
-    }
-
-    return { url: publicUrl, generationId };
   }
 
   /* --------------------- SOCIAL POSTS --------------------- */
