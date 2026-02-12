@@ -461,6 +461,7 @@ Do not change the person's face, age, ethnicity, gender, or identity.
       negativePrompt = `
 text, letters, words, numbers, typography, writing, captions, subtitles, labels, 
 watermark, logo, signature, symbols, characters, font, written content,
+quote, heading, title, advert, billboard, poster text, newspaper, book, magazine,
 different person, changed face, swapped identity, new person, face swap,
 low quality, blurry, distorted, bad anatomy, deformed, ugly, 
 artificial, fake, cartoon, cgi, illustration
@@ -532,6 +533,7 @@ natural facial features, cinematic lighting, 35mm photography
       const realismNegative = `
 text, letters, words, numbers, typography, writing, captions, subtitles, labels,
 watermark, logo, signature, symbols, characters, font, written content,
+quote, heading, title, advert, billboard, poster text, newspaper, book, magazine,
 smooth skin, cgi, fake face, cartoon, illustration, distorted face, bad anatomy
 `;
 
@@ -702,28 +704,19 @@ ${realismQuality}
     file?: Express.Multer.File,
   ) {
     if (typeof params === 'string') params = { userQuery: params };
-    const [textRes, imageRes] = await Promise.all([
-      this.generateText(
-        {
-          ...params,
-          instructions:
-            'Génère légende pour post réseaux sociaux, sans inventer info, texte brut uniquement',
-        },
-        'social',
-        userId,
-      ),
-      this.generateImage(
-        { ...params, instructions: 'Image pour réseaux sociaux' },
-        'Minimal Studio',
-        userId,
-        file,
-      ),
-    ]);
+
+    // Only generate image, no text per user request
+    const imageRes = await this.generateImage(
+      { ...params, instructions: 'Image pour réseaux sociaux' },
+      'Minimal Studio',
+      userId,
+      file,
+    );
 
     return {
-      content: textRes.content,
+      content: '', // No text content
       url: imageRes.url,
-      generationId: textRes.generationId,
+      generationId: imageRes.generationId,
     };
   }
 
