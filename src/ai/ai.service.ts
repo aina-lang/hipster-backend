@@ -654,6 +654,8 @@ ${realismQuality}
       const filePath = path.join(uploadDir, fileName);
       fs.writeFileSync(filePath, buffer);
       const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+      this.logger.log(`[generateImage] Image saved to: ${filePath}`);
+      this.logger.log(`[generateImage] Public URL: ${publicUrl}`);
 
       let generationId: number | undefined;
       if (userId) {
