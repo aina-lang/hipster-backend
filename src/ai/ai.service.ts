@@ -544,14 +544,39 @@ ${realismQuality}
 
     if (referenceImage) {
       // Handle Image-to-Image (Search and Replace)
-      // Clean base64 if it has metadata prefix (strip data:image/...;base64,)
-      const base64Data = referenceImage.replace(/^data:image\/\w+;base64,/, '');
-      const imageBuffer = Buffer.from(base64Data, 'base64');
-      // Append as blob for multipart form with explicit type
+      // Clean base64: strip all whitespace and potential data URL prefix
+      const cleanBase64 = referenceImage
+        .replace(/^data:image\/\w+;base64,/, '')
+        .replace(/\s/g, '');
+      const imageBuffer = Buffer.from(cleanBase64, 'base64');
+
+      // Detect MIME type from magic bytes
+      let mimeType = 'image/png';
+      let extension = 'png';
+
+      if (imageBuffer.length > 4) {
+        const hex = imageBuffer.slice(0, 4).toString('hex');
+        if (hex.startsWith('89504e47')) {
+          mimeType = 'image/png';
+          extension = 'png';
+        } else if (hex.startsWith('ffd8ff')) {
+          mimeType = 'image/jpeg';
+          extension = 'jpg';
+        } else if (imageBuffer.slice(0, 4).toString() === 'RIFF') {
+          mimeType = 'image/webp';
+          extension = 'webp';
+        }
+      }
+
+      this.logger.log(
+        `Detected image type: ${mimeType} (${imageBuffer.length} bytes)`,
+      );
+
+      // Append as blob for multipart form with detected type
       formData.append(
         'image',
-        new Blob([imageBuffer], { type: 'image/png' }),
-        'input.png',
+        new Blob([imageBuffer], { type: mimeType }),
+        `input.${extension}`,
       );
       formData.append('search_prompt', params.search_prompt || userSubject);
 
