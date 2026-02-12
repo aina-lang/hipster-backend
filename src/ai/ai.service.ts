@@ -370,7 +370,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     // Base realism quality prompts from user
     const realismQuality = `ultra realistic photography, real human skin texture, visible pores, natural skin imperfections, subtle asymmetry, natural facial features, cinematic lighting, 35mm photography, shot on Canon EOS R5, professional studio photography, high dynamic range, fine skin details, natural color grading, editorial fashion photography, no beauty filter, no plastic skin`;
 
-    const realismNegative = `text, typography, watermark, logo, letters, words, overly smooth skin, plastic skin, cgi look, 3d render, cartoon, illustration, perfect symmetry, ai face, fake face, blurred face, low detail skin`;
+    const realismNegative = `text, typography, watermark, logo, letters, words, brand, label, sign, signature, overly smooth skin, plastic skin, cgi look, 3d render, cartoon, illustration, perfect symmetry, ai face, fake face, blurred face, low detail skin`;
 
     let negativePrompt = realismNegative;
 
@@ -431,18 +431,13 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     // --- MONOCHROME PROMPT LOGIC ---
     if (style === 'Monochrome') {
       visualDescription = `
-Ultra high contrast black and white portrait of ${userSubject}, editorial poster style, strong cinematic lighting (${light}), dramatic shadows, sharp facial details, subject centered, minimal background (${bg}).
+Ultra high contrast black and white portrait of ${userSubject}, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg}).
 Angle: ${angle}.
 
-Large bold typography integrated into the composition (letters behind or in front of the subject, partially masking the face or body).
+Graphic design elements: subtle geometric lines, minimalist composition, modern aesthetic.
+Add one accent color only (${accent}) used in small geometric highlights.
 
-Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
-
-Add one accent color only (${accent}) used in small geometric shapes or highlights.
-
-High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting.
-
-No watermark, no random text, no logo.
+High fashion magazine aesthetic, luxury campaign, sharp focus, ultra clean, professional studio lighting.
 `.trim();
 
       this.logger.log(
@@ -515,10 +510,16 @@ ${realismQuality}
     let model: string | undefined = undefined;
     let outputFormat = 'png';
 
-    if (referenceImage) {
-      // Use Search and Replace for Img2Img flow
+    const isSearchAndReplace = !!(referenceImage && params.search_prompt);
+
+    if (isSearchAndReplace) {
+      // Use Search and Replace for targeted edits
       endpoint =
         'https://api.stability.ai/v2beta/stable-image/edit/search-and-replace';
+    } else if (referenceImage) {
+      // Default to proper Image-to-Image (Img2Img) for modifications
+      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
+      model = 'sd3.5-large-turbo'; // High quality fast model for i2i
     } else if (userId) {
       const userProfile = await this.getAiUserWithProfile(userId);
       const plan = userProfile?.planType || PlanType.CURIEUX;
@@ -602,11 +603,17 @@ ${realismQuality}
         new Blob([imageBuffer as any], { type: finalMime }),
         `input.${extension}`,
       );
-      formData.append('search_prompt', params.search_prompt || userSubject);
-
-      // Optional search-and-replace parameter: grow_mask
-      if (params.grow_mask !== undefined) {
-        formData.append('grow_mask', params.grow_mask.toString());
+      if (isSearchAndReplace) {
+        formData.append('search_prompt', params.search_prompt || userSubject);
+        // Optional search-and-replace parameter: grow_mask
+        if (params.grow_mask !== undefined) {
+          formData.append('grow_mask', params.grow_mask.toString());
+        }
+      } else {
+        // Image-to-Image (SD3) logic
+        formData.append('mode', 'image-to-image');
+        formData.append('strength', (params.strength || 0.6).toString());
+        if (model) formData.append('model', model);
       }
     } else {
       // Handle Text-to-Image
