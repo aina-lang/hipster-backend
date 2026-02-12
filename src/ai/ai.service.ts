@@ -435,30 +435,23 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const imageProvided = !!file || !!referenceImage;
 
     if (imageProvided) {
-      // IDENTITY LOCK SPECIAL PROMPT
+      // STYLE GUIDE MODE: Describe what you want to see in the output
+      const userSubject =
+        params.userQuery || params.job || 'professional portrait';
+
       visualDescription = `
-Apply the requested style without changing the identity.
-Preserve the exact same person, face, facial features, skin tone, hairline, proportions, and body structure from the input image.
-Do NOT alter age, ethnicity, gender or identity.
-
-Lighting style: ${light}
+Professional ${userSubject} in the style of the reference image.
+Lighting: ${light}
 Camera angle: ${angle}
-Background mood: ${bg}
-
-Apply ONLY stylistic changes:
-- lighting mood
-- color grading
-- photography style
-- artistic tone
-
-Do not change: face shape, eyes, nose, lips, jaw, body proportions, clothes structure unless requested.
-Realistic skin texture, no AI artifacts.
+Background: ${bg}
+Accent color: ${accent}
+High quality photography, cinematic composition, professional studio quality.
+Realistic skin texture, natural details, sharp focus.
 `.trim();
 
       negativePrompt = `
-different person, changed face, swapped identity, new person, artificial face, distorted face,
-extra limbs, wrong anatomy, cartoon, cgi, illustration, plastic skin,
-smooth fake skin, watermark, text, logo, letters, signature
+low quality, blurry, distorted, bad anatomy, deformed, ugly, 
+artificial, fake, cartoon, cgi, illustration, watermark, text, logo, letters, signature
 `;
     } else {
       // ------------------------------------------------------------------
@@ -482,14 +475,14 @@ illustration, distorted face, bad anatomy
         visualDescription = `
 Professional monochrome photography of ${userSubject}, high contrast black and white,
 cinematic lighting (${light}), deep shadows, sharp details, minimal background (${bg}),
-angle: ${angle}.
+subtle ${accent} accent, angle: ${angle}.
 `.trim();
       }
 
       if (style === 'Hero Studio') {
         visualDescription = `
 Hero-style dramatic studio portrait of ${userSubject}, ${light}, high contrast, 
-rim light, volumetric effects, premium studio photography, angle ${angle}.
+rim light, volumetric effects, ${accent} accent lighting, premium studio photography, angle ${angle}.
 ${realismQuality}
 `.trim();
       }
@@ -497,7 +490,7 @@ ${realismQuality}
       if (style === 'Minimal Studio') {
         visualDescription = `
 Minimal clean studio portrait of ${userSubject}, bright and soft lighting (${light}),
-neutral background (${bg}), lots of negative space, angle ${angle}.
+neutral background (${bg}), ${accent} color accent, lots of negative space, angle ${angle}.
 ${realismQuality}
 `.trim();
       }
@@ -517,9 +510,8 @@ ${realismQuality}
     let outputFormat = 'png';
 
     if (imageProvided) {
-      // FORCE STRUCTURE ENDPOINT
-      endpoint =
-        'https://api.stability.ai/v2beta/stable-image/control/structure';
+      // STYLE GUIDE ENDPOINT
+      endpoint = 'https://api.stability.ai/v2beta/stable-image/control/style';
     } else {
       // TEXT → IMAGE
       endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
@@ -540,9 +532,11 @@ ${realismQuality}
       formData.append('seed', params.seed.toString());
     }
 
-    if (!imageProvided) {
-      formData.append('aspect_ratio', '1:1');
-      if (model) formData.append('model', model);
+    // Aspect ratio for both text-to-image and style guide
+    formData.append('aspect_ratio', '1:1');
+
+    if (!imageProvided && model) {
+      formData.append('model', model);
     }
 
     // ------------------------ IMAGE -----------------------
@@ -572,10 +566,8 @@ ${realismQuality}
         new Blob([new Uint8Array(imageBuffer)], { type: mime }),
         'input',
       );
-      formData.append(
-        'control_strength',
-        params.control_strength?.toString() || '0.75',
-      );
+      // Fidelity: how closely the output resembles the input style (0-1)
+      formData.append('fidelity', params.fidelity?.toString() || '0.5');
     }
 
     // ------------------------------------------------------------------
