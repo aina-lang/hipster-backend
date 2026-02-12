@@ -457,8 +457,10 @@ Realistic skin texture, natural details, sharp focus.
 `.trim();
 
       negativePrompt = `
+text, letters, words, numbers, typography, writing, captions, subtitles, labels, 
+watermark, logo, signature, symbols, characters, font, written content,
 low quality, blurry, distorted, bad anatomy, deformed, ugly, 
-artificial, fake, cartoon, cgi, illustration, watermark, text, logo, letters, signature
+artificial, fake, cartoon, cgi, illustration
 `;
     } else {
       // ------------------------------------------------------------------
@@ -472,8 +474,9 @@ natural facial features, cinematic lighting, 35mm photography
 `;
 
       const realismNegative = `
-text, letters, watermark, logo, smooth skin, cgi, fake face, cartoon,
-illustration, distorted face, bad anatomy
+text, letters, words, numbers, typography, writing, captions, subtitles, labels,
+watermark, logo, signature, symbols, characters, font, written content,
+smooth skin, cgi, fake face, cartoon, illustration, distorted face, bad anatomy
 `;
 
       negativePrompt = realismNegative;
