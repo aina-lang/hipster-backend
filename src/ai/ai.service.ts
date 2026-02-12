@@ -351,9 +351,8 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
   async generateImage(
     params: any,
-    style: 'realistic' | 'cartoon' | 'sketch' | '3d' | 'Monochrome', // added 3d
+    style: 'Monochrome' | 'Hero Studio' | 'Minimal Studio',
     userId?: number,
-    manualNegativePrompt?: string,
   ) {
     if (userId)
       await this.aiPaymentService.decrementCredits(
@@ -366,7 +365,24 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     // Default prompt from user query
     let visualDescription = params.userQuery || '';
-    let negativePrompt = manualNegativePrompt || '';
+
+    // Base realism quality prompts from user
+    const realismQuality = `ultra realistic photography, real human skin texture, visible pores, natural skin imperfections, subtle asymmetry, natural facial features, cinematic lighting, 35mm photography, shot on Canon EOS R5, professional studio photography, high dynamic range, fine skin details, natural color grading, editorial fashion photography, no beauty filter, no plastic skin`;
+
+    const realismNegative = `text, typography, watermark, logo, letters, words, overly smooth skin, plastic skin, cgi look, 3d render, cartoon, illustration, perfect symmetry, ai face, fake face, blurred face, low detail skin`;
+
+    let negativePrompt = realismNegative;
+
+    // Use user query or job from params as the subject
+    const jobSubject = params.job?.trim();
+    const querySubject = params.userQuery?.trim();
+
+    const userSubject =
+      querySubject && querySubject.length > 0
+        ? querySubject
+        : jobSubject && jobSubject.length > 0
+          ? jobSubject
+          : 'portrait';
 
     // --- MONOCHROME PROMPT LOGIC ---
     if (style === 'Monochrome') {
@@ -406,17 +422,6 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       const angle = getRandom(angles);
       const bg = getRandom(backgrounds);
 
-      // Use user query or job from params as the subject
-      const jobSubject = params.job?.trim();
-      const querySubject = params.userQuery?.trim();
-
-      const userSubject =
-        querySubject && querySubject.length > 0
-          ? querySubject
-          : jobSubject && jobSubject.length > 0
-            ? jobSubject
-            : 'portrait'; // Fallback if nothing provided
-
       visualDescription = `
 Ultra high contrast black and white portrait of ${userSubject}, editorial poster style, strong cinematic lighting (${light}), dramatic shadows, sharp facial details, subject centered, minimal background (${bg}).
 Angle: ${angle}.
@@ -438,7 +443,35 @@ No watermark, no random text, no logo.
 
       // Force specific negative prompt for Monochrome
       negativePrompt =
-        'low quality, blurry, oversaturated, too colorful, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography';
+        'low quality, blurry, oversaturated, too colorful, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography, ' +
+        realismNegative;
+    }
+
+    // --- HERO STUDIO PROMPT LOGIC ---
+    if (style === 'Hero Studio') {
+      visualDescription = `
+Professional studio photography of ${userSubject}, iconic product shot, dramatic lighting, high contrast, strong visual impact, "wow" effect.
+Centered composition, sharp focus on the subject, premium aesthetic, commercial photography, 8k resolution, highly detailed.
+Lighting: Volumetric lighting, rim light, highlighting textures and details.
+Background: Abstract yet complimentary, depth of field.
+
+${realismQuality}
+`.trim();
+      this.logger.log(`[Hero Studio] Generated prompt: ${visualDescription}`);
+    }
+
+    // --- MINIMAL STUDIO PROMPT LOGIC ---
+    if (style === 'Minimal Studio') {
+      visualDescription = `
+Minimalist studio photography of ${userSubject}, bright and airy, soft diffused lighting, white or light neutral background.
+Clean composition, plenty of negative space, modern aesthetic, high-end look, ultra readable.
+Soft shadows, pastel tones (optional), sharp details, professional e-commerce style.
+
+${realismQuality}
+`.trim();
+      this.logger.log(
+        `[Minimal Studio] Generated prompt: ${visualDescription}`,
+      );
     }
 
     // Final safety check for empty prompt
@@ -468,24 +501,14 @@ No watermark, no random text, no logo.
       const userProfile = await this.getAiUserWithProfile(userId);
       const plan = userProfile?.planType || PlanType.CURIEUX;
 
-      if (plan === PlanType.ATELIER || plan === PlanType.STUDIO) {
-        // Atelier/Studio -> SD 3.5 Large Turbo
+      if (plan === PlanType.STUDIO) {
+        // Studio -> SD 3.5 Large Turbo
         endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
         model = 'sd3.5-large-turbo';
       } else if (plan === PlanType.AGENCE) {
         // Agence -> Ultra
         endpoint =
           'https://api.stability.ai/v2beta/stable-image/generate/ultra';
-
-        // Agence 3D Case
-        if (style === '3d') {
-          // Note: stable-fast-3d is Image-to-3D.
-          // If we wanted Text-to-3D, we'd need a different pipeline.
-          // For now, if "3d" style is requested via Text-to-Image, we use Ultra with strong 3D prompting
-          // OR we could throw if the user expects an actual 3D model from text.
-          // Assuming "3D Render Image" for this method signature (returns image URL).
-          // Use Ultra for best quality 3D renders.
-        }
       }
     }
 
@@ -556,7 +579,7 @@ No watermark, no random text, no logo.
       ),
       this.generateImage(
         { ...params, instructions: 'Image pour réseaux sociaux' },
-        'realistic',
+        'Minimal Studio',
         userId,
       ),
     ]);
@@ -689,24 +712,16 @@ No watermark, no random text, no logo.
 
   /* --------------------- FLYERS & POSTERS --------------------- */
 
-  async generateFlyer(
-    params: any,
-    userId?: number,
-    manualNegativePrompt?: string,
-  ) {
+  async generateFlyer(params: any, userId?: number) {
     const flyerPrompt = this.constructFlyerPrompt(params);
     const systemNegative = this.constructNegativeFlyerPrompt();
-    const negativePrompt = manualNegativePrompt
-      ? `${systemNegative}, ${manualNegativePrompt}`
-      : systemNegative;
 
     console.log('[generateFlyer] Using OpenAI with refined prompts');
 
     const imageResult = await this.generateImage(
       { ...params, userQuery: flyerPrompt },
-      'realistic',
+      'Minimal Studio',
       userId,
-      negativePrompt,
     );
 
     return {
