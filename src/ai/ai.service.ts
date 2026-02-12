@@ -378,10 +378,10 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const jobSubject = params.job?.trim();
     const querySubject = params.userQuery?.trim();
 
-    // If we have a reference image, the subject is the person/thing in that image.
-    // We shouldn't use the user's query (which often contains style instructions) as the subject name.
+    // For control/structure with reference image: describe the transformation, not a new subject
+    // The endpoint preserves the structure/content, we just describe the desired style
     const userSubject = referenceImage
-      ? jobSubject || 'subject'
+      ? 'the person in the image'
       : querySubject && querySubject.length > 0
         ? querySubject
         : jobSubject && jobSubject.length > 0
@@ -431,9 +431,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const bg = getRandom(backgroundsPool);
     const accent = getRandom(accentColors);
 
-    const identityPreservation = referenceImage
-      ? ', (preserve EXACT facial features and identity:1.0), (exact resemblance to the provided image:1.0)'
-      : '';
+    const identityPreservation = referenceImage ? '' : '';
 
     // --- MONOCHROME PROMPT LOGIC ---
     if (style === 'Monochrome') {
