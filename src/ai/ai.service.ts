@@ -449,11 +449,13 @@ No watermark, no random text, no logo.
         `[Monochrome] Generated prompt (${visualDescription.length} chars): ${visualDescription}`,
       );
 
-      // Force specific negative prompt for Monochrome
-      negativePrompt =
-        'low quality, blurry, oversaturated, too colorful, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography, ' +
+      'low quality, blurry, oversaturated, too colorful, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography, ' +
         realismNegative;
     }
+
+    this.logger.log(
+      `[generateImage] Style processing complete. Style Preset: ${params.style_preset || 'random'}`,
+    );
 
     // Determine style preset for Stability AI
     let stylePreset: string | undefined = params.style_preset;
@@ -500,15 +502,16 @@ ${realismQuality}
       this.configService.get<string>('STABILITY_API_KEY');
     if (!apiKey) throw new Error('Configuration manquante : STABLE_API_KEY');
 
+    const referenceImage = params.reference_image;
+
     this.logger.log(
-      `Generating image with Stability AI. Style: ${style || 'default'}`,
+      `[generateImage] Stability AI check. Style: ${style || 'default'}, ReferenceImage present: ${!!referenceImage}`,
     );
 
     // Determine Model & Endpoint based on Plan & Request
     let endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
     let model: string | undefined = undefined;
     let outputFormat = 'png';
-    const referenceImage = params.reference_image;
 
     if (referenceImage) {
       // Use Search and Replace for Img2Img flow
@@ -610,11 +613,16 @@ ${realismQuality}
       formData.append('aspect_ratio', '1:1');
     }
 
+    this.logger.log(`[generateImage] Calling Stability AI at ${endpoint}...`);
+    const startFetch = Date.now();
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { Authorization: `Bearer ${apiKey}`, Accept: 'image/*' },
       body: formData,
     });
+    this.logger.log(
+      `[generateImage] Stability AI response received in ${Date.now() - startFetch}ms. Status: ${response.status} ${response.statusText}`,
+    );
 
     if (!response.ok) {
       if (response.status === 402) {
