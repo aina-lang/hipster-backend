@@ -437,15 +437,8 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     // --- MONOCHROME PROMPT LOGIC ---
     if (style === 'Monochrome') {
-      const isModification = !!referenceImage && !params.search_prompt;
-      const transformPrefix = isModification
-        ? `Clean monochrome black and white photography background, professional studio setting, minimalist concrete texture, ${bg}, dramatic lighting.`
-        : `Professional monochrome photography of ${userSubject}, ultra high contrast black and white, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg})${identityPreservation}.`;
-
-      visualDescription = isModification
-        ? transformPrefix
-        : `
-${transformPrefix}
+      visualDescription = `
+Professional monochrome photography of ${userSubject}, ultra high contrast black and white, dramatic cinematic lighting (${light}), deep shadows, sharp facial details, subject centered, minimal clean background (${bg})${identityPreservation}.
 Angle: ${angle}.
 
 Graphic design elements: subtle geometric lines, minimalist composition, modern aesthetic.
@@ -482,10 +475,7 @@ Luxury campaign aesthetic, sharp focus, ultra clean, professional studio lightin
 
     // --- HERO STUDIO PROMPT LOGIC ---
     if (style === 'Hero Studio') {
-      const isModification = !!referenceImage && !params.search_prompt;
-      visualDescription = isModification
-        ? `Professional studio background for a luxury product/person shot, ${bg}, cinematic rim lighting, volumetric light rays, deep shadows, high-end commercial aesthetic, 8k resolution.`
-        : `
+      visualDescription = `
 Professional studio photography of ${userSubject}, iconic product shot, dramatic lighting (${light}), high contrast, strong visual impact, "wow" effect${identityPreservation}.
 Centered composition, angle (${angle}), sharp focus on the subject, premium aesthetic, commercial photography, 8k resolution, highly detailed.
 Lighting: Volumetric lighting, rim light, highlighting textures and details.
@@ -498,10 +488,7 @@ ${realismQuality}
 
     // --- MINIMAL STUDIO PROMPT LOGIC ---
     if (style === 'Minimal Studio') {
-      const isModification = !!referenceImage && !params.search_prompt;
-      visualDescription = isModification
-        ? `Clean minimalist studio background, bright and airy, soft diffused light, ${bg}, pastel tones, professional e-commerce style, negative space, clean aesthetic.`
-        : `
+      visualDescription = `
 Minimalist studio photography of ${userSubject}, bright and airy, soft diffused lighting (${light}), white or light neutral background (${bg})${identityPreservation}.
 Clean composition, angle (${angle}), plenty of negative space, modern aesthetic, high-end look, ultra readable.
 Soft shadows, pastel tones (optional), sharp details, professional e-commerce style.
