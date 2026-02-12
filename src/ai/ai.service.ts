@@ -355,6 +355,13 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     userId?: number,
     file?: Express.Multer.File,
   ) {
+    this.logger.log(
+      `[generateImage] START - Style: ${style}, UserId: ${userId}, HasFile: ${!!file}`,
+    );
+    this.logger.log(
+      `[generateImage] Params keys: ${Object.keys(params || {}).join(', ')}`,
+    );
+
     if (userId) {
       await this.aiPaymentService.decrementCredits(
         userId,
@@ -573,36 +580,56 @@ ${realismQuality}
     // ------------------------------------------------------------------
     // FETCH CALL
     // ------------------------------------------------------------------
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: 'image/*',
-      },
-      body: formData,
-    });
+    this.logger.log(
+      `[generateImage] Calling Stability AI endpoint: ${endpoint}`,
+    );
+    this.logger.log(`[generateImage] Image provided: ${imageProvided}`);
 
-    if (!response.ok) {
-      const err = await response.text();
-      throw new Error(`Stability failed: ${response.status} - ${err}`);
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'image/*',
+        },
+        body: formData,
+      });
+
+      this.logger.log(
+        `[generateImage] Stability AI response status: ${response.status}`,
+      );
+
+      if (!response.ok) {
+        const err = await response.text();
+        this.logger.error(
+          `[generateImage] Stability AI error: ${response.status} - ${err}`,
+        );
+        throw new Error(`Stability failed: ${response.status} - ${err}`);
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
+      if (!fs.existsSync(uploadDir))
+        fs.mkdirSync(uploadDir, { recursive: true });
+
+      const fileName = `gen_${Date.now()}_${crypto.randomBytes(5).toString('hex')}.${outputFormat}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      fs.writeFileSync(filePath, buffer);
+
+      const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+      this.logger.log(`[generateImage] SUCCESS - Image saved: ${fileName}`);
+
+      return {
+        url: publicUrl,
+        generationId: null,
+      };
+    } catch (error) {
+      this.logger.error(`[generateImage] FATAL ERROR:`, error);
+      throw error;
     }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-
-    const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-    const fileName = `gen_${Date.now()}_${crypto.randomBytes(5).toString('hex')}.${outputFormat}`;
-    const filePath = path.join(uploadDir, fileName);
-
-    fs.writeFileSync(filePath, buffer);
-
-    const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-
-    return {
-      url: publicUrl,
-      generationId: null,
-    };
   }
 
   /* --------------------- SOCIAL POSTS --------------------- */
