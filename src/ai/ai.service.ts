@@ -366,7 +366,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     // Default prompt from user query
     let visualDescription = params.userQuery || '';
-    const negativePrompt = manualNegativePrompt || '';
+    let negativePrompt = manualNegativePrompt || '';
 
     // --- MONOCHROME PROMPT LOGIC ---
     if (style === 'Monochrome') {
@@ -415,11 +415,10 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       const angle = getRandom(angles);
       const bg = getRandom(backgrounds);
 
-      // Use user query if substantive, else random subject
+      // Ensure we have a valid subject even if params.userQuery is empty or just whitespace
+      const userQuery = params.userQuery?.trim();
       const userSubject =
-        params.userQuery && params.userQuery.length > 5
-          ? params.userQuery
-          : subject;
+        userQuery && userQuery.length > 0 ? userQuery : subject;
 
       visualDescription = `
 Ultra high contrast black and white portrait of ${userSubject}, editorial poster style, strong cinematic lighting (${light}), dramatic shadows, sharp facial details, subject centered, minimal background (${bg}).
@@ -436,7 +435,19 @@ High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus,
 No watermark, no random text, no logo.
 `.trim();
 
-      this.logger.log(`[Monochrome] Generated prompt: ${visualDescription}`);
+      this.logger.log(
+        `[Monochrome] Generated prompt (${visualDescription.length} chars): ${visualDescription}`,
+      );
+
+      // Force specific negative prompt for Monochrome
+      negativePrompt =
+        'low quality, blurry, oversaturated, too colorful, messy background, bad typography, watermark, logo, distorted face, extra fingers, extra limbs, bad anatomy, low resolution, text errors, random letters, flat lighting, amateur photography';
+    }
+
+    // Final safety check for empty prompt
+    if (!visualDescription || visualDescription.length === 0) {
+      this.logger.warn('[generateImage] Prompt is empty, using fallback.');
+      visualDescription = 'Artistic abstract composition, high quality, 8k';
     }
 
     const apiKey =
