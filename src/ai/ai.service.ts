@@ -431,31 +431,6 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     }
 
     // ------------------------------------------------------------------
-    // TRANSLATION MAPPING
-    // ------------------------------------------------------------------
-    const getTranslation = (text: string) => {
-      const mapping = {
-        'coiffure & esthétique': 'hairdressing and beauty',
-        'restaurant / bar': 'restaurant and bar',
-        'commerce / boutique': 'retail shop',
-        'artisans du bâtiment': 'construction craftsman',
-        'service local': 'local service',
-        'profession libérale': 'independent professional',
-        'bien-être / santé alternative': 'wellness and alternative health',
-        'contenu réseaux': 'social media content',
-        'visuel publicitaire': 'advertising visual',
-        'texte marketing': 'marketing visual focus',
-        'page web / seo': 'web page and seo optimization',
-        'email': 'email marketing',
-      };
-      const key = (text || '').toLowerCase().trim();
-      return mapping[key] || text;
-    };
-
-    const jobTranslation = getTranslation(params.job);
-    const functionTranslation = getTranslation(params.function);
-
-    // ------------------------------------------------------------------
     // RANDOMIZATION POOLS
     // ------------------------------------------------------------------
     const getRandom = (arr: string[]) =>
@@ -474,7 +449,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     // ------------------------------------------------------------------
     const refinedQuery = await this.refineUserQuery(
       params.userQuery,
-      jobTranslation,
+      params.job,
     );
 
     // ------------------------------------------------------------------
@@ -482,6 +457,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     // ------------------------------------------------------------------
     let visualDescription = '';
     let negativePrompt = `
+      smooth, neon, 3D render,
       text, typography, letters, words, numbers, watermark, logo, signature,
       AI artifacts, CGI, illustration, cartoon, blur, low resolution,
       extra limbs, unrealistic proportions, oversaturated, messy background,
@@ -489,6 +465,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     `.trim();
 
     const commonRealism = `
+      magical realism photo portrait, candid shot, soft natural light,
       ultra realistic photography, real human skin texture, visible pores,
       natural skin imperfections, cinematic lighting, shot on Canon EOS R5,
       high dynamic range, fine details, natural color grading, editorial quality,
@@ -499,7 +476,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       visualDescription = `
         Ultra high contrast black and white composition, deep cinematic contrast, dramatic light sculpting, strong chiaroscuro, editorial campaign poster aesthetic.
         Minimalist environment with dominant negative space, refined visual hierarchy, controlled shadows and highlights, carefully balanced exposure.
-        Primary subject: An artistic and conceptual interpretation of a ${jobTranslation}.
+        Primary subject: An artistic and conceptual interpretation of a ${params.job || 'professional context'}.
         Additional thematic influence: ${refinedQuery || 'elegant and refined interpretation, minimal and premium aesthetic'}.
         Dynamic asymmetrical composition, subject position optimized for balance, not centering.
         Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction, fine art photography style.
@@ -511,7 +488,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
-        Hero-style cinematic action shot representing ${jobTranslation}.
+        Hero-style cinematic action shot representing ${params.job || 'professional activity'}.
         Visual theme: ${refinedQuery || 'powerful movement, dramatic perspective, premium atmosphere'}.
         Powerful mid-movement pose, dramatic lighting, rim lighting, volumetric atmosphere, accent lighting, wide framing.
         Environmental interaction, dynamic fashion campaign photography aesthetic.
@@ -520,7 +497,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       `.trim();
     } else if (style === 'Minimal Studio') {
       visualDescription = `
-        Minimal clean studio shot centered on ${jobTranslation}.
+        Minimal clean studio shot centered on ${params.job || 'professional item'}.
         Visual theme: ${refinedQuery || 'natural candid posture, soft lighting, neutral background'}.
         Negative space composition, editorial minimal fashion aesthetic, soft diffused studio light.
         ${commonRealism}
@@ -528,7 +505,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       `.trim();
     } else {
       visualDescription = `
-        Professional commercial shot for ${jobTranslation} (${functionTranslation}).
+        Professional commercial shot for ${params.job || 'business'} (${params.function || 'marketing'}).
         Subject details: ${refinedQuery || 'high-end professional representation'}.
         ${commonRealism}
       `.trim();
@@ -559,7 +536,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     if (params['seed']) formData.append('seed', params['seed'].toString());
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); 
+    const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     this.logger.log(
       `[generateImage] Calling Stability AI endpoint: ${endpoint}`,
