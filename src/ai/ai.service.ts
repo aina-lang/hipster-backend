@@ -444,14 +444,6 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const functionName = getTranslation(params.function || '');
     const userQuery = params.userQuery || '';
 
-    let userName = '';
-    if (userId) {
-      const userObj = await this.getAiUserWithProfile(userId);
-      if (userObj) {
-        userName = userObj.name || '';
-      }
-    }
-
     let visualDescription = '';
     let negativePrompt = '';
 
@@ -485,10 +477,8 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       functionName.toLowerCase().includes('advertising') ||
       functionName.toLowerCase().includes('flyer')
     ) {
-      const nameTypo = userName
-        ? `featuring the brand name "${userName}" (representing the professional, business, or boutique identity) appearing exactly once in beautiful professional typography, clean and well-written text integrated into the design, `
-        : '';
-      functionDescriptor = `${nameTypo}high-end polished commercial production, premium advertising campaign aesthetic, professional studio quality, bold high-fashion layout`;
+      functionDescriptor =
+        'high-end polished commercial production, premium advertising campaign aesthetic, professional studio quality, bold high-fashion layout';
     }
 
     if (functionDescriptor) {
@@ -516,6 +506,8 @@ non-static framing, storytelling composition
 
     const commonNegative = `
 text, typography, letters, words, numbers, watermark, logo, signature,
+no text at all, no signage, no letters, no words, no numbers,
+no writing, no symbols, no digits, no typeface, no font,
 brand name, label, caption, heading, billboard, poster text,
 newspaper, book, magazine, font, written content,
 digits, symbols, script, calligraphy, signage,
