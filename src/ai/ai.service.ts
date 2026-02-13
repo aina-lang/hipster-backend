@@ -444,6 +444,14 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const functionName = getTranslation(params.function || '');
     const userQuery = params.userQuery || '';
 
+    let userName = '';
+    if (userId) {
+      const userObj = await this.getAiUserWithProfile(userId);
+      if (userObj) {
+        userName = userObj.name || '';
+      }
+    }
+
     let visualDescription = '';
     let negativePrompt = '';
 
@@ -477,8 +485,10 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       functionName.toLowerCase().includes('advertising') ||
       functionName.toLowerCase().includes('flyer')
     ) {
-      functionDescriptor =
-        'high-end polished commercial production, premium advertising campaign aesthetic, professional studio quality, bold high-fashion layout';
+      const nameTypo = userName
+        ? `featuring the name "${userName}" in beautiful professional typography, clean and well-written text integrated into the design, `
+        : '';
+      functionDescriptor = `${nameTypo}high-end polished commercial production, premium advertising campaign aesthetic, professional studio quality, bold high-fashion layout`;
     }
 
     if (functionDescriptor) {
