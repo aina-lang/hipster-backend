@@ -468,6 +468,23 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       subject = `${subject}, optimized for ${functionName}`;
     }
 
+    // Add specific visual context per function to create a distinct look
+    let functionDescriptor = '';
+    if (functionName.toLowerCase().includes('social')) {
+      functionDescriptor =
+        'candid lifestyle photography, authentic atmosphere, relatable real-world setting, engaging social media aesthetic';
+    } else if (
+      functionName.toLowerCase().includes('advertising') ||
+      functionName.toLowerCase().includes('flyer')
+    ) {
+      functionDescriptor =
+        'high-end polished commercial production, premium advertising campaign aesthetic, professional studio quality, bold high-fashion layout';
+    }
+
+    if (functionDescriptor) {
+      subject = `${subject}, ${functionDescriptor}`;
+    }
+
     const contextualSubject = subject;
     const realismQuality = `
 ultra realistic photography, real human skin texture, visible pores,
