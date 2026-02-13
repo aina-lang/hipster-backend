@@ -253,6 +253,49 @@ export class AiService {
     }
   }
 
+  /**
+   * Refines a raw user query into premium aesthetic keywords using AI.
+   * This ensures consistent high-end results regardless of raw user input.
+   */
+  private async refineUserQuery(query: string, job?: string): Promise<string> {
+    if (!query) return '';
+    try {
+      const systemContext = `
+        Role: Prompt Engineer specializing in high-end advertising photography.
+        Objective: Transform raw user input into a list of 5-8 premium aesthetic keywords.
+        Style: Minimalist, luxury, sophisticated, editorial.
+        
+        Rules:
+        1. Remove all cliché/cheap words (e.g., "mignon", "deco", "ballons", "coeur").
+        2. Translate into English aesthetic terms (e.g., "sophisticated mood", "raw textures", "balanced composition").
+        3. Maintain the core theme (e.g., "Saint-Valentine" -> "romantic atmosphere, refined interpretation, minimal and premium aesthetic").
+        4. Output ONLY the list of keywords, separated by commas. No intro/outro.
+      `;
+
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemContext },
+          {
+            role: 'user',
+            content: `Refine this query for a ${job || 'professional'} context: "${query}"`,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 100,
+      });
+
+      const refined = response.choices[0].message.content || query;
+      this.logger.log(
+        `[refineUserQuery] Original: "${query}" -> Refined: "${refined}"`,
+      );
+      return refined.trim();
+    } catch (e) {
+      this.logger.error(`[refineUserQuery] Failed: ${e.message}`);
+      return query; // Fallback to raw query
+    }
+  }
+
   private async buildPrompt(params: any, userId?: number): Promise<string> {
     const {
       job,
@@ -366,136 +409,205 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
   }
   /* --------------------- IMAGE GENERATION --------------------- */
 
-async generateImage(
-  params: {
-    job: string;
-    function: string;
-    userQuery: string;
-  },
-  style: 'Monochrome' | 'Hero Studio' | 'Minimal Studio',
-  userId?: number,
-  file?: Express.Multer.File,
-) {
-  this.logger.log(`[generateImage] START - Style: ${style}, UserId: ${userId}`);
+  async generateImage(
+    params: {
+      job: string;
+      function: string;
+      userQuery: string;
+    },
+    style: 'Monochrome' | 'Hero Studio' | 'Minimal Studio',
+    userId?: number,
+    file?: Express.Multer.File,
+  ) {
+    this.logger.log(
+      `[generateImage] START - Style: ${style}, UserId: ${userId}`,
+    );
 
-  if (userId) {
-    await this.aiPaymentService.decrementCredits(userId, AiGenerationType.IMAGE);
-  }
-
-  // ------------------------------------------------------------------
-  // RANDOMIZATION POOLS
-  // ------------------------------------------------------------------
-  const getRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
-  const accentColors = ['red', 'orange', 'deep purple'];
-
-  // ------------------------------------------------------------------
-  // PARAMS INJECTION
-  // ------------------------------------------------------------------
-  const { job, function: functionName, userQuery } = params;
-
-  // Fetch user name for branding if needed
-  let brandName = '';
-  if (userId) {
-    const userObj = await this.getAiUserWithProfile(userId);
-    if (userObj) brandName = userObj.name || '';
-  }
-
-  // ------------------------------------------------------------------
-  // VISUAL DESCRIPTION GENERATION
-  // ------------------------------------------------------------------
-  let visualDescription = '';
-  let negativePrompt = `
-text, typography, letters, words, numbers, watermark, logo, signature,
-AI artifacts, CGI, illustration, cartoon, blur, low resolution,
-extra limbs, unrealistic proportions, oversaturated, messy background
-`.trim();
-
-  if (style === 'Monochrome') {
-    const subject = `
-Professional visual related to "${job}",
-created for "${functionName}",
-concept: "${userQuery}".
-`.trim();
-
-    visualDescription = `
-Ultra high contrast black and white composition, deep cinematic contrast, dramatic light sculpting, strong chiaroscuro, editorial campaign poster aesthetic.
-Minimalist environment with dominant negative space, refined visual hierarchy, controlled shadows and highlights, carefully balanced exposure.
-Primary subject: ${subject}, represented realistically and authentically.
-Dynamic asymmetrical composition, subject position optimized for balance, not centering.
-Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction, fine art photography style.
-Ultra sharp focus on key subject textures: refined material rendering (metal, glass, stone, fabric, organic textures), natural human presence if applicable.
-Large subtle typography may appear minimally for branding purposes, without distracting from realism.
-Graphic design elements included: thin geometric lines, subtle frame corners, layout guides, modern poster grid system, refined spatial alignment.
-Color: Monochrome black and white with one minimal accent color (${getRandom(accentColors)}) used ONLY in small geometric highlights or thin lines.
-Professional studio lighting, cinematic atmosphere, dramatic shadow gradients.
-The image must look like a real photograph, photorealistic, with no CGI, no digital painting, no AI artifacts.
-`.trim();
-  }
-
-  // ------------------------------------------------------------------
-  // CALL STABILITY.AI API
-  // ------------------------------------------------------------------
-  const apiKey = this.configService.get('STABLE_API_KEY') || this.configService.get('STABILITY_API_KEY');
-  if (!apiKey) throw new Error('Missing STABILITY API KEY');
-
-  const endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
-  const model = 'sd3.5-large-turbo';
-  const outputFormat = 'png';
-
-  const formData = new FormData();
-  formData.append('prompt', visualDescription);
-  formData.append('negative_prompt', negativePrompt);
-  formData.append('output_format', outputFormat);
-  formData.append('aspect_ratio', '1:1');
-  formData.append('model', model);
-
-  if (params['seed']) formData.append('seed', params['seed'].toString());
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min
-
-  this.logger.log(`[generateImage] Calling Stability AI endpoint: ${endpoint}`);
-
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: 'image/*',
-      },
-      body: formData,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const err = await response.text();
-      this.logger.error(`[generateImage] Stability AI error: ${response.status} - ${err}`);
-      throw new Error(`Stability AI failed: ${response.status} - ${err}`);
+    if (userId) {
+      await this.aiPaymentService.decrementCredits(
+        userId,
+        AiGenerationType.IMAGE,
+      );
     }
 
-    const buffer = Buffer.from(await response.arrayBuffer());
-    const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-    const fileName = `gen_${Date.now()}_${crypto.randomBytes(5).toString('hex')}.${outputFormat}`;
-    const filePath = path.join(uploadDir, fileName);
-
-    fs.writeFileSync(filePath, buffer);
-
-    const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-    this.logger.log(`[generateImage] SUCCESS - Image saved: ${fileName}`);
-
-    return {
-      url: publicUrl,
-      generationId: null,
+    // ------------------------------------------------------------------
+    // TRANSLATION MAPPING
+    // ------------------------------------------------------------------
+    const getTranslation = (text: string) => {
+      const mapping = {
+        'coiffure & esthétique': 'hairdressing and beauty',
+        'restaurant / bar': 'restaurant and bar',
+        'commerce / boutique': 'retail shop',
+        'artisans du bâtiment': 'construction craftsman',
+        'service local': 'local service',
+        'profession libérale': 'independent professional',
+        'bien-être / santé alternative': 'wellness and alternative health',
+        'contenu réseaux': 'social media content',
+        'visuel publicitaire': 'advertising visual',
+        'texte marketing': 'marketing visual focus',
+        'page web / seo': 'web page and seo optimization',
+        'email': 'email marketing',
+      };
+      const key = (text || '').toLowerCase().trim();
+      return mapping[key] || text;
     };
-  } catch (error) {
-    this.logger.error(`[generateImage] FATAL ERROR:`, error);
-    throw error;
+
+    const jobTranslation = getTranslation(params.job);
+    const functionTranslation = getTranslation(params.function);
+
+    // ------------------------------------------------------------------
+    // RANDOMIZATION POOLS
+    // ------------------------------------------------------------------
+    const getRandom = (arr: string[]) =>
+      arr[Math.floor(Math.random() * arr.length)];
+    const accentColors = ['red', 'orange', 'deep purple'];
+
+    // Fetch user name for branding if needed
+    let brandName = 'Premium';
+    if (userId) {
+      const userObj = await this.getAiUserWithProfile(userId);
+      if (userObj) brandName = userObj.name || 'Premium';
+    }
+
+    // ------------------------------------------------------------------
+    // QUERY REFORMULATION (Aesthetic Keywords)
+    // ------------------------------------------------------------------
+    const refinedQuery = await this.refineUserQuery(
+      params.userQuery,
+      jobTranslation,
+    );
+
+    // ------------------------------------------------------------------
+    // VISUAL DESCRIPTION GENERATION (Master Prompts)
+    // ------------------------------------------------------------------
+    let visualDescription = '';
+    let negativePrompt = `
+      text, typography, letters, words, numbers, watermark, logo, signature,
+      AI artifacts, CGI, illustration, cartoon, blur, low resolution,
+      extra limbs, unrealistic proportions, oversaturated, messy background,
+      cheap decoration, cliché, low quality, hearts, balloons, cute
+    `.trim();
+
+    const commonRealism = `
+      ultra realistic photography, real human skin texture, visible pores,
+      natural skin imperfections, cinematic lighting, shot on Canon EOS R5,
+      high dynamic range, fine details, natural color grading, editorial quality,
+      no beauty filter, no plastic skin
+    `;
+
+    if (style === 'Monochrome') {
+      visualDescription = `
+        Ultra high contrast black and white composition, deep cinematic contrast, dramatic light sculpting, strong chiaroscuro, editorial campaign poster aesthetic.
+        Minimalist environment with dominant negative space, refined visual hierarchy, controlled shadows and highlights, carefully balanced exposure.
+        Primary subject: An artistic and conceptual interpretation of a ${jobTranslation}.
+        Additional thematic influence: ${refinedQuery || 'elegant and refined interpretation, minimal and premium aesthetic'}.
+        Dynamic asymmetrical composition, subject position optimized for balance, not centering.
+        Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction, fine art photography style.
+        Ultra sharp focus on key subject textures: refined material rendering (metal, glass, stone, fabric, organic textures).
+        Large bold typography integrated into the composition featuring the name "${brandName}" — interacting with depth, positioned with realistic perspective.
+        Graphic design elements included: thin geometric lines, subtle frame corners, modern poster grid system.
+        Color: Monochrome black and white with one minimal accent color (${getRandom(accentColors)}) used ONLY in small geometric highlights or thin lines.
+        The image must look like a real photograph, flawless professional quality.
+      `.trim();
+    } else if (style === 'Hero Studio') {
+      visualDescription = `
+        Hero-style cinematic action shot representing ${jobTranslation}.
+        Visual theme: ${refinedQuery || 'powerful movement, dramatic perspective, premium atmosphere'}.
+        Powerful mid-movement pose, dramatic lighting, rim lighting, volumetric atmosphere, accent lighting, wide framing.
+        Environmental interaction, dynamic fashion campaign photography aesthetic.
+        ${commonRealism}
+        The image must look like a high-end commercial photograph.
+      `.trim();
+    } else if (style === 'Minimal Studio') {
+      visualDescription = `
+        Minimal clean studio shot centered on ${jobTranslation}.
+        Visual theme: ${refinedQuery || 'natural candid posture, soft lighting, neutral background'}.
+        Negative space composition, editorial minimal fashion aesthetic, soft diffused studio light.
+        ${commonRealism}
+        The image must look like a clean modern professional photograph.
+      `.trim();
+    } else {
+      visualDescription = `
+        Professional commercial shot for ${jobTranslation} (${functionTranslation}).
+        Subject details: ${refinedQuery || 'high-end professional representation'}.
+        ${commonRealism}
+      `.trim();
+    }
+
+    this.logger.log(`[generateImage] Final Prompt: ${visualDescription}`);
+
+    // ------------------------------------------------------------------
+    // CALL STABILITY.AI API
+    // ------------------------------------------------------------------
+    const apiKey =
+      this.configService.get('STABLE_API_KEY') ||
+      this.configService.get('STABILITY_API_KEY');
+    if (!apiKey) throw new Error('Missing STABILITY API KEY');
+
+    const endpoint =
+      'https://api.stability.ai/v2beta/stable-image/generate/core';
+    const model = 'sd3.5-large-turbo';
+    const outputFormat = 'png';
+
+    const formData = new FormData();
+    formData.append('prompt', visualDescription);
+    formData.append('negative_prompt', negativePrompt);
+    formData.append('output_format', outputFormat);
+    formData.append('aspect_ratio', '1:1');
+    formData.append('model', model);
+
+    if (params['seed']) formData.append('seed', params['seed'].toString());
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); 
+
+    this.logger.log(
+      `[generateImage] Calling Stability AI endpoint: ${endpoint}`,
+    );
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'image/*',
+        },
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const err = await response.text();
+        this.logger.error(
+          `[generateImage] Stability AI error: ${response.status} - ${err}`,
+        );
+        throw new Error(`Stability AI failed: ${response.status} - ${err}`);
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
+      if (!fs.existsSync(uploadDir))
+        fs.mkdirSync(uploadDir, { recursive: true });
+
+      const fileName = `gen_${Date.now()}_${crypto.randomBytes(5).toString('hex')}.${outputFormat}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      fs.writeFileSync(filePath, buffer);
+
+      const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+      this.logger.log(`[generateImage] SUCCESS - Image saved: ${fileName}`);
+
+      return {
+        url: publicUrl,
+        generationId: null,
+      };
+    } catch (error) {
+      this.logger.error(`[generateImage] FATAL ERROR:`, error);
+      throw error;
+    }
   }
-}
 
   /* --------------------- SOCIAL POSTS --------------------- */
   async generateSocial(
