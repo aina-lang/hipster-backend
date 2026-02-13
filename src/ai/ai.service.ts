@@ -417,8 +417,31 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const bg = getRandom(backgroundsPool);
     const accent = getRandom(accentColors);
 
-    const job = params.job || '';
-    const functionName = params.function || '';
+    const getTranslation = (text: string) => {
+      const mapping = {
+        // Jobs
+        'coiffure & esthétique': 'hairdressing and beauty',
+        'restaurant / bar': 'restaurant and bar',
+        'commerce / boutique': 'retail shop',
+        'artisans du bâtiment': 'construction craftsman',
+        'service local': 'local service',
+        'profession libérale': 'independent professional',
+        'bien-être / santé alternative': 'wellness and alternative health',
+        // Functions
+        'contenu réseaux': 'social media content',
+        'visuel publicitaire': 'advertising visual',
+        'texte marketing': 'marketing visual focus',
+        'page web / seo': 'web page and seo optimization',
+        email: 'email marketing',
+        'script vidéo': 'video production context',
+        miniatures: 'youtube thumbnail style',
+      };
+      const key = text.toLowerCase().trim();
+      return mapping[key] || text;
+    };
+
+    const job = getTranslation(params.job || '');
+    const functionName = getTranslation(params.function || '');
     const userQuery = params.userQuery || '';
 
     let visualDescription = '';
@@ -437,7 +460,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       subject = `${subject} for a ${job} professional`;
     }
 
-    // Add function context generically (e.g., "optimized for Social Media")
+    // Add function context generically
     if (
       functionName &&
       !subject.toLowerCase().includes(functionName.toLowerCase())
