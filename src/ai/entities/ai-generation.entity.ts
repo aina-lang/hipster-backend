@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  Index,
 } from 'typeorm';
 import { AiUser } from './ai-user.entity';
 
@@ -46,6 +47,7 @@ export class AiGeneration {
   @Column({ type: 'json', nullable: true })
   attributes?: Record<string, any>;
 
+  @Index()
   @CreateDateColumn()
   createdAt: Date;
 

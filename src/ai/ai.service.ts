@@ -53,6 +53,16 @@ export class AiService {
     const history = await this.aiGenRepo.find({
       where: { user: { id: userId } },
       order: { createdAt: 'DESC' },
+      select: [
+        'id',
+        'type',
+        'title',
+        'createdAt',
+        'attributes',
+        'imageUrl',
+        'fileUrl',
+      ],
+      take: 50,
     });
 
     // Filter out usage logs that were created just for credit decrementing
@@ -597,10 +607,13 @@ ${realismQuality}
     }
 
     // ------------------------------------------------------------------
-    // FETCH CALL
+    // FETCH CALL WITH TIMEOUT
     // ------------------------------------------------------------------
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes
+
     this.logger.log(
-      `[generateImage] Calling Stability AI endpoint: ${endpoint}`,
+      `[generateImage] Calling Stability AI endpoint: ${endpoint} (timeout: 120s)`,
     );
 
     try {
@@ -611,7 +624,10 @@ ${realismQuality}
           Accept: 'image/*',
         },
         body: formData,
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       this.logger.log(
         `[generateImage] Stability AI response status: ${response.status}`,
