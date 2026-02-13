@@ -260,6 +260,8 @@ export class AiService {
       context,
       userQuery,
       workflowAnswers,
+      tone,
+      target,
       instructions = '',
     } = params;
 
@@ -298,7 +300,12 @@ export class AiService {
 
     const parts = [
       `Métier: ${job || 'Non spécifié'}`,
+      `Catégorie: ${params.category || 'Non spécifiée'}`,
       `Type de contenu: ${cleanFunction}`,
+      params.style ? `Style visuel souhaité: ${params.style}` : '',
+      params.intention ? `Intention du message: ${params.intention}` : '',
+      tone ? `Ton de voix: ${tone}` : '',
+      target ? `Cible visée: ${target}` : '',
       workflowDetails ? `Détails de personnalisation:\n${workflowDetails}` : '',
       context ? `Contexte supplémentaire: ${context}` : '',
       userQuery ? `Demande spécifique de l'utilisateur: ${userQuery}` : '',
@@ -530,9 +537,12 @@ centered static composition, literal low-quality stock photo aesthetic.
 `.trim();
     } else if (style === 'Hero Studio') {
       const subject = userQuery || job || 'professional visual content';
+      const intentionText = params.intention
+        ? ` with an intention of ${params.intention}`
+        : '';
       visualDescription = `
-Hero-style cinematic action shot of ${subject},
-powerful mid-movement pose, dramatic lighting,
+Hero-style cinematic action shot of ${subject}${intentionText},
+poweful mid-movement pose, dramatic lighting,
 rim lighting, volumetric atmosphere,
 accent lighting, wide framing, strong perspective,
 environment interaction, dynamic fashion campaign photography.
@@ -543,8 +553,11 @@ ${realismQuality}
         `${commonNegative}, static pose, centered composition`.trim();
     } else if (style === 'Minimal Studio') {
       const subject = userQuery || job || 'professional visual content';
+      const intentionText = params.intention
+        ? ` expressing ${params.intention}`
+        : '';
       visualDescription = `
-Minimal clean full body studio shot of ${subject},
+Minimal clean full body studio shot of ${subject}${intentionText},
 natural candid posture, soft lighting,
 neutral background, negative space composition,
 editorial minimal fashion aesthetic.
@@ -568,6 +581,9 @@ ${realismQuality}
         !subject.toLowerCase().includes(functionName.toLowerCase())
       ) {
         subject = `${subject}, optimized for ${functionName}`;
+      }
+      if (params.intention) {
+        subject = `${subject}, with the goal of ${params.intention}`;
       }
 
       visualDescription = `(Style: ${style}) ${subject}. ${realismQuality} ${dynamicComposition}`;
@@ -843,12 +859,12 @@ ${realismQuality}
     );
 
     const type = workflowAnswers?.type || 'Flyer';
-    const style = workflowAnswers?.style || 'Modern';
+    const style = params.style || workflowAnswers?.style || 'Modern';
     const promotion =
       workflowAnswers?.promotion && workflowAnswers.promotion !== 'Aucune'
         ? workflowAnswers.promotion
         : '';
-    const tone = workflowAnswers?.tone || 'Professional';
+    const tone = params.intention || workflowAnswers?.tone || 'Professional';
 
     // Include other workflow answers specifically
     const details = Object.entries(workflowAnswers || {})
