@@ -419,118 +419,121 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     const job = params.job || '';
     const functionName = params.function || '';
+    const userQuery = params.userQuery || '';
 
     let visualDescription = '';
     let negativePrompt = '';
 
     // 1. Build context-aware subject description
-    let contextualSubject = params.userQuery || params.job || 'portrait';
+    // Base subject: use userQuery if present, otherwise job, otherwise fallback
+    let subject = userQuery || job || 'professional visual content';
 
+    // If job is defined and not redundant with the subject, add it as context
     if (
-      job.toLowerCase().includes('restaurant') ||
-      job.toLowerCase().includes('chef')
+      job &&
+      subject !== job &&
+      !subject.toLowerCase().includes(job.toLowerCase())
     ) {
-      contextualSubject = `${contextualSubject} for a restaurant/culinary business`;
-    } else if (
-      job.toLowerCase().includes('coach') ||
-      job.toLowerCase().includes('sport')
-    ) {
-      contextualSubject = `${contextualSubject} for a fitness/coaching professional`;
-    } else if (
-      job.toLowerCase().includes('artisan') ||
-      job.toLowerCase().includes('craft')
-    ) {
-      contextualSubject = `${contextualSubject} for an artisan/craftsperson`;
-    } else if (
-      job.toLowerCase().includes('commerce') ||
-      job.toLowerCase().includes('shop')
-    ) {
-      contextualSubject = `${contextualSubject} for a retail/commerce business`;
-    } else if (job.toLowerCase().includes('service')) {
-      contextualSubject = `${contextualSubject} for a service professional`;
+      subject = `${subject} for a ${job} professional`;
     }
 
-    // Adapt based on function (exact frontend labels)
+    // Add function context generically (e.g., "optimized for Social Media")
     if (
-      functionName.toLowerCase().includes('contenu réseaux') ||
-      functionName.toLowerCase().includes('social')
+      functionName &&
+      !subject.toLowerCase().includes(functionName.toLowerCase())
     ) {
-      contextualSubject += ', social media content optimized';
-    } else if (functionName.toLowerCase().includes('visuel publicitaire')) {
-      contextualSubject += ', advertising visual style';
-    } else if (functionName.toLowerCase().includes('texte marketing')) {
-      contextualSubject += ', marketing content focus';
-    } else if (
-      functionName.toLowerCase().includes('page web') ||
-      functionName.toLowerCase().includes('seo')
-    ) {
-      contextualSubject += ', web page optimized';
-    } else if (functionName.toLowerCase().includes('email')) {
-      contextualSubject += ', email marketing style';
-    } else if (functionName.toLowerCase().includes('script vidéo')) {
-      contextualSubject += ', video script thumbnail';
-    } else if (functionName.toLowerCase().includes('miniatures')) {
-      contextualSubject += ', video thumbnail style';
+      subject = `${subject}, optimized for ${functionName}`;
     }
 
+    const contextualSubject = subject;
     const realismQuality = `
 ultra realistic photography, real human skin texture, visible pores,
 natural skin imperfections, subtle asymmetry, natural facial features,
-cinematic lighting, 35mm photography, shot on Canon EOS R5,
-professional studio photography, high dynamic range, fine skin details,
-natural color grading, editorial fashion photography, no beauty filter, no plastic skin
+cinematic lighting, shot on Canon EOS R5, 35mm photography,
+high dynamic range, fine skin details,
+natural color grading, editorial fashion photography,
+no beauty filter, no plastic skin
+`;
+
+    const dynamicComposition = `
+full body shot, dynamic pose, mid-action movement,
+natural body posture, environmental interaction,
+rule of thirds composition, subject off-center,
+cinematic depth of field, foreground elements,
+background motion blur, perspective depth,
+non-static framing, storytelling composition
 `;
 
     const commonNegative = `
-text, typography, letters, words, numbers, watermark, logo, signature, 
-brand name, label, caption, quote, heading, title, billboard, poster text, 
-newspaper, book, magazine, characters, font, written content, letters, 
-digits, symbols, script, calligraphy, advertising, signage, shop sign, 
-menu text, instructions, prompt text, AI gibberish, 
-overly smooth skin, plastic skin, cgi look, 3d render, 
-cartoon, illustration, perfect symmetry, ai face, fake face, 
-blurred face, low detail skin, low quality, blurry, 
-oversaturated, too colorful, messy background, bad typography, 
-distorted face, extra fingers, extra limbs, bad anatomy, 
-low resolution, text errors, random letters, flat lighting, amateur photography
+text, typography, letters, words, numbers, watermark, logo, signature,
+brand name, label, caption, heading, billboard, poster text,
+newspaper, book, magazine, font, written content,
+digits, symbols, script, calligraphy, signage,
+AI gibberish, overly smooth skin, plastic skin,
+cgi look, 3d render, cartoon, illustration,
+perfect symmetry, ai face, fake face,
+blurred face, low detail skin, low quality,
+oversaturated, messy background, distorted face,
+extra fingers, extra limbs, bad anatomy,
+low resolution, random letters, flat lighting,
+tight headshot, cropped head, passport photo
 `;
 
-    // 2. Build visualDescription based on style
     if (style === 'Monochrome') {
       visualDescription = `
-Ultra high contrast black and white portrait of ${contextualSubject}, 
-editorial poster style, strong cinematic lighting (${light}), 
-dramatic shadows, sharp facial details, subject centered, minimal background (${bg}).
-Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
-One ${accent} accent color used in small geometric shapes or highlights.
-High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting, angle: ${angle}.
-No text, no letters, no words, no signatures, no watermarks.
+Ultra high contrast black and white full body portrait of ${contextualSubject},
+mid-motion stance, strong cinematic lighting (${light}),
+dramatic shadows, environmental background (${bg}),
+rule of thirds composition, asymmetrical layout,
+dynamic posture, storytelling energy.
+Subtle ${accent} accent color in minimal geometric elements.
+Luxury editorial campaign aesthetic.
+Angle: ${angle}.
+${dynamicComposition}
 ${realismQuality}
 `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
-Hero-style dramatic studio portrait of ${contextualSubject}, ${light}, high contrast, 
-rim light, volumetric effects, ${accent} accent lighting, premium studio photography, angle ${angle}.
+Hero-style cinematic action shot of ${contextualSubject},
+powerful mid-movement pose, dramatic ${light},
+rim lighting, volumetric atmosphere,
+${accent} accent lighting,
+wide framing, strong perspective,
+environment interaction (${bg}),
+dynamic fashion campaign photography.
+Angle: ${angle}.
+${dynamicComposition}
 ${realismQuality}
 `.trim();
     } else if (style === 'Minimal Studio') {
       visualDescription = `
-Minimal clean studio portrait of ${contextualSubject}, bright and soft lighting (${light}),
-neutral background (${bg}), ${accent} color accent, lots of negative space, angle ${angle}.
+Minimal clean full body studio shot of ${contextualSubject},
+natural candid posture, soft ${light},
+neutral background (${bg}),
+subtle ${accent} accent color,
+negative space composition,
+editorial minimal fashion aesthetic.
+Angle: ${angle}.
+${dynamicComposition}
 ${realismQuality}
 `.trim();
     } else {
-      // Default / Unknown style
       visualDescription = `
-Professional photography of ${contextualSubject}, ${light} lighting,
-${bg} background, ${accent} accents, angle: ${angle}.
+Professional cinematic full body photography of ${contextualSubject},
+natural movement, ${light} lighting,
+environmental background (${bg}),
+${accent} accents,
+dynamic storytelling composition.
+Angle: ${angle}.
+${dynamicComposition}
 ${realismQuality}
 `.trim();
     }
 
     negativePrompt = `
 ${commonNegative},
-smooth skin, cgi, fake face, cartoon, illustration, distorted face, bad anatomy
+static pose, centered composition, studio headshot,
+identity photo, linkedin profile picture
 `.trim();
 
     // ------------------------------------------------------------------
