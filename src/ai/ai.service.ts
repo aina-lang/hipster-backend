@@ -444,48 +444,21 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const functionName = getTranslation(params.function || '');
     const userQuery = params.userQuery || '';
 
+    // Fetch user name for "Monochrome" typography or branding
+    let userName = '';
+    if (userId) {
+      const userObj = await this.getAiUserWithProfile(userId);
+      if (userObj) {
+        userName = userObj.name || '';
+      }
+    }
+
     let visualDescription = '';
     let negativePrompt = '';
 
-    // 1. Build context-aware subject description
-    // Base subject: use userQuery if present, otherwise job, otherwise fallback
-    let subject = userQuery || job || 'professional visual content';
-
-    // If job is defined and not redundant with the subject, add it as context
-    if (
-      job &&
-      subject !== job &&
-      !subject.toLowerCase().includes(job.toLowerCase())
-    ) {
-      subject = `${subject} for a ${job} professional`;
-    }
-
-    // Add function context generically
-    if (
-      functionName &&
-      !subject.toLowerCase().includes(functionName.toLowerCase())
-    ) {
-      subject = `${subject}, optimized for ${functionName}`;
-    }
-
-    // Add specific visual context per function to create a distinct look
-    let functionDescriptor = '';
-    if (functionName.toLowerCase().includes('social')) {
-      functionDescriptor =
-        'candid lifestyle photography, authentic atmosphere, relatable real-world setting, engaging social media aesthetic';
-    } else if (
-      functionName.toLowerCase().includes('advertising') ||
-      functionName.toLowerCase().includes('flyer')
-    ) {
-      functionDescriptor =
-        'high-end polished commercial production, premium advertising campaign aesthetic, professional studio quality, bold high-fashion layout';
-    }
-
-    if (functionDescriptor) {
-      subject = `${subject}, ${functionDescriptor}`;
-    }
-
-    const contextualSubject = subject;
+    // ------------------------------------------------------------------
+    // PROMPT CONSTRUCTION
+    // ------------------------------------------------------------------
     const realismQuality = `
 ultra realistic photography, real human skin texture, visible pores,
 natural skin imperfections, subtle asymmetry, natural facial features,
@@ -521,62 +494,78 @@ low resolution, random letters, flat lighting,
 tight headshot, cropped head, passport photo
 `;
 
+    // Specialized Logic for "Monochrome" Style
     if (style === 'Monochrome') {
+      const professionContext = job || 'Professional Business';
+      const brandName = userName || 'Premium';
+
       visualDescription = `
-Ultra high contrast black and white full body portrait of ${contextualSubject},
-mid-motion stance, strong cinematic lighting (${light}),
-dramatic shadows, environmental background (${bg}),
-rule of thirds composition, asymmetrical layout,
-dynamic posture, storytelling energy.
-Subtle ${accent} accent color in minimal geometric elements.
-Luxury editorial campaign aesthetic.
-Angle: ${angle}.
-${dynamicComposition}
-${realismQuality}
+Ultra high contrast black and white composition, deep cinematic contrast, dramatic light sculpting, strong chiaroscuro, editorial campaign poster aesthetic.
+Minimalist environment with dominant negative space, refined visual hierarchy, controlled shadows and highlights, carefully balanced exposure.
+Primary subject: ${userQuery || `An artistic and conceptual interpretation of ${professionContext} (abstract form, tools, or atmosphere)`}, interpreted in a non-literal artistic way.
+Dynamic asymmetrical composition, subject position optimized for balance not centering.
+Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction, fine art photography style.
+Ultra sharp focus on key subject textures: refined material rendering (metal, glass, stone, fabric, organic textures).
+Large bold typography integrated into the composition featuring the name "${brandName}" — interacting with depth, partially masking or revealing the subject, positioned with realistic perspective.
+Graphic design elements included: thin geometric lines, subtle frame corners, layout guides, modern poster grid system, refined spatial alignment.
+Color: Monochrome black and white with one minimal accent color (red or orange or deep purple) used ONLY in small geometric highlights or thin lines.
+Professional studio lighting, cinematic atmosphere, dramatic shadow gradients.
+`.trim();
+
+      negativePrompt = `
+${commonNegative},
+watermark, random text, stock logo, default branding template, cliché imagery, 
+low contrast, blurry text, messy layout, multiple colors, vibrant colors, 
+centered static composition, literal low-quality stock photo aesthetic.
 `.trim();
     } else if (style === 'Hero Studio') {
+      const subject = userQuery || job || 'professional visual content';
       visualDescription = `
-Hero-style cinematic action shot of ${contextualSubject},
-powerful mid-movement pose, dramatic ${light},
+Hero-style cinematic action shot of ${subject},
+powerful mid-movement pose, dramatic lighting,
 rim lighting, volumetric atmosphere,
-${accent} accent lighting,
-wide framing, strong perspective,
-environment interaction (${bg}),
-dynamic fashion campaign photography.
-Angle: ${angle}.
+accent lighting, wide framing, strong perspective,
+environment interaction, dynamic fashion campaign photography.
 ${dynamicComposition}
 ${realismQuality}
 `.trim();
+      negativePrompt =
+        `${commonNegative}, static pose, centered composition`.trim();
     } else if (style === 'Minimal Studio') {
+      const subject = userQuery || job || 'professional visual content';
       visualDescription = `
-Minimal clean full body studio shot of ${contextualSubject},
-natural candid posture, soft ${light},
-neutral background (${bg}),
-subtle ${accent} accent color,
-negative space composition,
+Minimal clean full body studio shot of ${subject},
+natural candid posture, soft lighting,
+neutral background, negative space composition,
 editorial minimal fashion aesthetic.
-Angle: ${angle}.
 ${dynamicComposition}
 ${realismQuality}
 `.trim();
+      negativePrompt =
+        `${commonNegative}, static pose, centered composition`.trim();
     } else {
-      visualDescription = `
-Professional cinematic full body photography of ${contextualSubject},
-natural movement, ${light} lighting,
-environmental background (${bg}),
-${accent} accents,
-dynamic storytelling composition.
-Angle: ${angle}.
-${dynamicComposition}
-${realismQuality}
-`.trim();
+      // Default / Standard
+      let subject = userQuery || job || 'professional visual content';
+      if (
+        job &&
+        subject !== job &&
+        !subject.toLowerCase().includes(job.toLowerCase())
+      ) {
+        subject = `${subject} for a ${job} professional`;
+      }
+      if (
+        functionName &&
+        !subject.toLowerCase().includes(functionName.toLowerCase())
+      ) {
+        subject = `${subject}, optimized for ${functionName}`;
+      }
+
+      visualDescription = `(Style: ${style}) ${subject}. ${realismQuality} ${dynamicComposition}`;
+      negativePrompt =
+        `${commonNegative}, static pose, centered composition`.trim();
     }
 
-    negativePrompt = `
-${commonNegative},
-static pose, centered composition, studio headshot,
-identity photo, linkedin profile picture
-`.trim();
+    console.log('[AiService] [generateImage] Final Prompt:', visualDescription);
 
     // ------------------------------------------------------------------
     // SELECT ENDPOINT (Pure Text-to-Image)
