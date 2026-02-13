@@ -514,24 +514,48 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     this.logger.log(`[generateImage] Final Prompt: ${visualDescription}`);
 
     // ------------------------------------------------------------------
-    // CALL STABILITY.AI API
+    // CALL STABILITY.AI API (Plan-based Endpoint selection)
     // ------------------------------------------------------------------
     const apiKey =
       this.configService.get('STABLE_API_KEY') ||
       this.configService.get('STABILITY_API_KEY');
     if (!apiKey) throw new Error('Missing STABILITY API KEY');
 
-    const endpoint =
-      'https://api.stability.ai/v2beta/stable-image/generate/core';
-    const model = 'sd3.5-large-turbo';
+    // Fetch user plan to select endpoint
+    let userPlan = PlanType.CURIEUX;
+    if (userId) {
+      const user = await this.aiUserRepo.findOne({ where: { id: userId } });
+      if (user) userPlan = user.planType || PlanType.CURIEUX;
+    }
+
+    let endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
+    let model = 'sd3.5-large-turbo';
     const outputFormat = 'png';
+    let useModelParam = true;
+    let useNegativePrompt = true;
+
+    if (userPlan === PlanType.ATELIER) {
+      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
+      model = 'sd3.5-large-turbo';
+    } else if (userPlan === PlanType.STUDIO || userPlan === PlanType.AGENCE) {
+      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/ultra';
+      useModelParam = false; // Ultra doesn't take a model param
+    }
+
+    this.logger.log(
+      `[generateImage] Using Plan: ${userPlan} -> Endpoint: ${endpoint}`,
+    );
 
     const formData = new FormData();
     formData.append('prompt', visualDescription);
-    formData.append('negative_prompt', negativePrompt);
+    if (useNegativePrompt && negativePrompt) {
+      formData.append('negative_prompt', negativePrompt);
+    }
     formData.append('output_format', outputFormat);
     formData.append('aspect_ratio', '1:1');
-    formData.append('model', model);
+    if (useModelParam) {
+      formData.append('model', model);
+    }
 
     if (params['seed']) formData.append('seed', params['seed'].toString());
 
@@ -539,7 +563,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     this.logger.log(
-      `[generateImage] Calling Stability AI endpoint: ${endpoint}`,
+      `[generateImage] Calling Stability AI: ${endpoint} (Model: ${useModelParam ? model : 'N/A'})`,
     );
 
     try {
