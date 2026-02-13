@@ -486,7 +486,7 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       functionName.toLowerCase().includes('flyer')
     ) {
       const nameTypo = userName
-        ? `featuring the name "${userName}" in beautiful professional typography, clean and well-written text integrated into the design, `
+        ? `featuring the brand name "${userName}" (representing the professional, business, or boutique identity) in beautiful professional typography, clean and well-written text integrated into the design, `
         : '';
       functionDescriptor = `${nameTypo}high-end polished commercial production, premium advertising campaign aesthetic, professional studio quality, bold high-fashion layout`;
     }
