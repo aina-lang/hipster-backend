@@ -529,15 +529,45 @@ CRITICAL RULES:
 
     if (style === 'Monochrome') {
       visualDescription = `
-        Black and white photo. No color. Pure grayscale only.
+        MONOCHROME EDITORIAL COMPOSITION
+
+        Dark editorial visual with dominant deep blacks and strong cinematic contrast.
+        High contrast dramatic lighting. Strong shadows, depth and atmosphere.
+        Composition: Minimalist but powerful. Asymmetrical framing preferred.
         
-        ${refinedQuery}
-        Job: ${params.job}. For: ${params.userQuery || 'professional use'}.
+        SUBJECT DIRECTION:
+        Profession: ${params.job}
+        User request: ${refinedQuery}
+        Visual interpretation: Refined, non-literal, premium way. Through environment, tools, materials, objects or human presence. AVOID clichés and cheap decorative elements.
+
+        VISUAL TREATMENT:
+        Material realism. Tactile textures. Natural imperfections visible.
+        Strong film grain. Cinematic quality.
         
-        Real black and white photograph - not stylized. Strong shadows and light. Texture visible.
-        Actual person/object/moment. No polish. Show real details - wrinkles, grain, genuine light.
-        Natural contrast. Shadows and highlights from real light, not perfect studio lighting.
-        Keep it real and unadorned.
+        ${params.job && params.job.includes('person') || params.userQuery?.includes('person') ? `
+        HUMAN PRESENCE:
+        - Natural skin texture, visible pores
+        - Subtle asymmetry in facial features
+        - Realistic skin tone variation
+        - Small imperfections included
+        - Cinematic film grain
+        - NO beauty filter, NO airbrushing, NO plastic skin look, NO CGI character look
+        ` : `
+        OBJECT/ENVIRONMENT FOCUS:
+        - Realistic material rendering
+        - Natural light falloff and reflections
+        - Organic irregularities
+        - NO 3D mockup style, NO overly smooth digital surfaces
+        `}
+
+        WHAT TO AVOID:
+        - Stock photography look
+        - Artificial perfection
+        - Flat graphic overlays
+        - Text, typography, letters, logos, signage
+        - CGI or 3D render appearance
+        
+        CORE: Pure visual storytelling through light, shadow, depth and realism.
       `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
