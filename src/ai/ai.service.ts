@@ -262,17 +262,17 @@ export class AiService {
     if (!query) return '';
     try {
       const systemContext = `
-        Tâche: Enrichir la requête utilisateur en pensant comme UN PROFESSIONNEL RÉEL, pas comme un créatif.
-        Objectif: Garder le langage pratique et direct de l'utilisateur. Améliorer sans inventer.
-        CRITIQUE: Préserver TOUS les détails fournis. Un restaurateur dit "promo pizza" pas "composition gastronomique premium".
+        Task: Enhance user query thinking like a REAL PROFESSIONAL, not a creative.
+        Goal: Keep user's practical and direct language. Enhance without inventing.
+        CRITICAL: Preserve ALL details provided. A restaurant owner says "pizza promo" not "premium culinary composition".
         
-        Règles:
-        1. Garder le vocabulaire simple et pratique (promo pizza, on recrute, avant après, menu, ouverture).
-        2. Enrichir avec des détails visuels/pratiques concrets, pas des mots vides.
-        3. Si l'utilisateur a dit quelque chose d'imprécis, l'interpréter comme il le ferait (pas de creativity marketing).
-        4. Supprimer uniquement les clichés qui ne correspondent pas à ce travail réel.
-        5. Format: [Texte utilisateur] + [Clarifications pratiques pour l'IA].
-        6. Output: Description complète, directe, sans fioritures.
+        Rules:
+        1. Keep vocabulary simple and practical (pizza promo, hiring, before after, menu, opening).
+        2. Enrich with concrete visual/practical details, not empty words.
+        3. If user was imprecise, interpret as they would (no marketing creativity).
+        4. Remove only clichés that don't fit this real work.
+        5. Format: [User text] + [Practical clarifications for AI].
+        6. Output: Complete description, direct, no flourish.
       `;
 
       const response = await this.openai.chat.completions.create({
@@ -374,21 +374,21 @@ export class AiService {
     const basePrompt = await this.buildPrompt(params, userId);
 
     const systemContext = `
-Identité: Hipster IA
-Rôle: Assistant pratique pour petits business (restaurant, artisan, coach)
-Contexte: Génération de contenu ${type}
+Identity: Hipster IA
+Role: Practical assistant for small businesses (restaurant, craftsman, coach)
+Context: Generating ${type} content
 
-À RETENIR: Tu n'es pas un créatif marketing d'agence, tu aides des gens à vendre leurs choses:
-- Un restaurateur tape "promo pizza" pas "composition culinaire innovante"
-- Un artisan tape "on recrute" pas "appel à talents créatifs"
-- Un coach tape "motivation" pas "contenu aspirationnel premium"
-- Quelqu'un tape "avant après" pas "transformation documentaire"
+REMEMBER: You're not a marketing creative from an agency, you help real people sell their things:
+- A restaurant owner says "pizza promo" not "premium culinary innovation"
+- A craftsman says "hiring" not "creative talent call"
+- A coach says "motivation" not "aspirational premium content"
+- Someone says "before after" not "documentary transformation"
 
-RÈGLES CRITIQUES: 
-1. Pense comme L'UTILISATEUR (vocabulaire direct, simple, pratique)
-2. N'INVENTE JAMAIS d'informations non fournies
-3. Parle simplement, pas comme une agence marketing
-4. Utilise les mots que Les VRAIS GENS utiliseraient
+CRITICAL RULES: 
+1. Think like the USER (direct, simple, practical vocabulary)
+2. NEVER invent information not provided
+3. Speak simply, not like a marketing agency
+4. Use words REAL PEOPLE would actually use
 `;
 
     const messages = [
@@ -507,56 +507,56 @@ RÈGLES CRITIQUES:
 
     if (style === 'Monochrome') {
       visualDescription = `
-        DÉTAILS FOURNIS PAR L'UTILISATEUR (À RESPECTER): ${refinedQuery}
-        Métier: ${params.job || 'Non spécifié'}. Intention: ${params.intention || 'Professionnelle'}.
-        Ce qu'il/elle a demandé: ${params.userQuery || 'Contexte professionnel'}.
+        USER-PROVIDED DETAILS (RESPECT EXACTLY): ${refinedQuery}
+        Job: ${params.job || 'Not specified'}. Intention: ${params.intention || 'Professional'}.
+        What they asked for: ${params.userQuery || 'Professional context'}.
         
-        Style: Noir et blanc contrasté et magazine, pas hyper créatif - simple et pro.
-        IMPORTANT: Respecte EXACTEMENT ce que l'utilisateur a décrit: location, contexte, activité.
-        Ne PAS inventer une mise en scène différente si l'utilisateur a spécifié quelque chose précis.
-        Composition équilibrée, nette, un peu dynamique mais pas trop cinématique.
-        Les textures sont bien visibles (tissus, objets, matériaux dans le contexte de travail).
-        Intégrer le nom "${brandName}" de façon lisible et naturelle dans la composition.
-        Couleur: Noir et blanc + légèrement une couleur d'accent (${getRandom(accentColors)}) en trait fin ou détail.
-        La photo doit être réelle, professionnelle. Pas de fiction, pas de cinéma - juste bon.
+        Style: Black and white magazine style, contrasty, not overly creative - simple and professional.
+        IMPORTANT: Respect EXACTLY what the user described: location, context, activity.
+        Do NOT invent a different scene if user specified something specific.
+        Balanced, sharp composition, a bit dynamic but not too cinematic.
+        Textures clearly visible (fabrics, objects, materials in work context).
+        Integrate the name "${brandName}" in a readable and natural way in the composition.
+        Color: Black and white + slightly one accent color (${getRandom(accentColors)}) as thin line or detail.
+        The photo must be real, professional. No fiction, no cinema - just good work.
       `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
-        CE QUE L'UTILISATEUR A DIT (À RESPECTER): ${refinedQuery}
-        Métier: ${params.job || 'Non spécifié'}. Intention: ${params.intention || 'Professionnelle'}.
-        Respecte EXACTEMENT: ${params.userQuery || 'Contexte professionnel'}.
-        Ne pas changer la location ou le contexte que l'utilisateur a mentionné.
+        WHAT THE USER SAID (RESPECT EXACTLY): ${refinedQuery}
+        Job: ${params.job || 'Not specified'}. Intention: ${params.intention || 'Professional'}.
+        Respect EXACTLY: ${params.userQuery || 'Professional context'}.
+        Don't change the location or context the user mentioned.
         
-        Photo de travail réelle en mouvement / en action pour ${params.job || 'activité professionnelle'}.
-        Thème: ${refinedQuery || 'action réelle, lumière naturelle, atmosphère professionnelle'}.  
-        Photo des vraies personnes en train de travailler, lumière naturelle intéressante, dynamique mais authentique.
-        Pas de posing exagéré - juste quelqu'un en train de faire son truc.
+        Real photo of work in motion / in action for ${params.job || 'professional activity'}.
+        Theme: ${refinedQuery || 'real action, natural light, professional atmosphere'}.  
+        Photo of real people doing their work, interesting natural light, dynamic but authentic.
+        No exaggerated posing - just someone doing their job.
         ${commonRealism}
-        Doit ressembler à une vraie photo commerciale, quasi-agence. Pas de film, juste bon.
+        Must look like a real commercial photo, quasi-agency quality. No movie, just good.
       `.trim();
     } else if (style === 'Minimal Studio') {
       visualDescription = `
-        CE QUE L'UTILISATEUR DIT: ${refinedQuery}
-        Métier: ${params.job || 'Non spécifié'}. Intention: ${params.intention || 'Professionnelle'}.
-        Respecter EXACTEMENT: ${params.userQuery || 'Contexte professionnel'}.
-        Garde la location/contexte exactement comme décrit.
+        WHAT THE USER SAID: ${refinedQuery}
+        Job: ${params.job || 'Not specified'}. Intention: ${params.intention || 'Professional'}.
+        Respect EXACTLY: ${params.userQuery || 'Professional context'}.
+        Keep the location/context exactly as described.
         
-        Photo simple et nette du truc/personne pour ${params.job || 'contexte professionnel'}.
-        Thème: ${refinedQuery || 'naturel, éclairage soft, fond simple'}.  
-        Style clean: pas trop d'éléments, beaucoup d'espace blanc, bon éclairage.
-        Composition basique, bien équilibrée, nette, professionnelle.
+        Simple and sharp photo of the thing/person for ${params.job || 'professional context'}.
+        Theme: ${refinedQuery || 'natural, soft lighting, simple background'}.  
+        Clean style: not too many elements, lots of white space, good lighting.
+        Basic composition, well-balanced, sharp, professional.
         ${commonRealism}
-        Doit ressembler à une photo pro simple. Bon marché.
+        Should look like a simple pro photo. Good market value.
       `.trim();
     } else {
       visualDescription = `
-        INFOS DE L'UTILISATEUR (À RESPECTER): ${refinedQuery}
-        Métier: ${params.job || 'Non spécifié'}. Intention: ${params.intention || 'Professionnelle'}.
-        Respecte: ${params.userQuery || 'Contexte professionnel'}.
-        Garde la location/contexte exactement comme fourni.
+        USER INFORMATION (RESPECT): ${refinedQuery}
+        Job: ${params.job || 'Not specified'}. Intention: ${params.intention || 'Professional'}.
+        Respect: ${params.userQuery || 'Professional context'}.
+        Keep the location/context exactly as provided.
         
-        Photo pro pour ${params.job || 'business'} - pour ${params.function || 'utilisation'}.
-        Détails: ${refinedQuery || 'représentation professionnelle réelle'}.
+        Pro photo for ${params.job || 'business'} - for ${params.function || 'use'}.
+        Details: ${refinedQuery || 'real professional representation'}.
         ${commonRealism}
       `.trim();
     }
@@ -854,14 +854,14 @@ RÈGLES CRITIQUES:
       .map(([key, value]) => `${key}: ${value}`)
       .join(', ');
 
-    return `Un simple ${type} pro, ${style}, bien organisé, lisible, pas trop chargé.
-     Texte principal visible et correct: "${userText}".
-     ${promotion ? `Annonce: ${promotion}.` : ''}
-     ${details ? `Détails: ${details}.` : ''}
-     Ton: ${tone}.
-     Utilise une vraie mise en page de ${type} (pas mockup). Couleurs claires, bon contraste, espace blanc.
-     Impression de quelque chose que tu verrais vraiment chez un business réel.
-     Résolution bonne, lisible.`.replace(/\s+/g, ' ');
+    return `A simple pro ${type}, ${style}, well-organized, readable, not cluttered.
+     Main text clearly visible and correct: "${userText}".
+     ${promotion ? `Announcement: ${promotion}.` : ''}
+     ${details ? `Details: ${details}.` : ''}
+     Tone: ${tone}.
+     Use a real ${type} layout (not mockup). Clear colors, good contrast, white space.
+     Feels like something you'd actually see at a real business.
+     Good resolution, readable.`.replace(/\s+/g, ' ');
   }
 
   private cleanUserPrompt(query: string): string {
