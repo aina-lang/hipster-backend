@@ -155,7 +155,7 @@ export class AiService {
         });
 
         if (!user) {
-          throw new ForbiddenException('Utilisateur non trouvé');
+          throw new ForbiddenException('User not found');
         }
 
         // Check limits before proceeding
@@ -249,7 +249,7 @@ export class AiService {
         throw error;
       }
       const msg = error instanceof Error ? error.message : String(error);
-      throw new Error(`Erreur AI: ${msg}`);
+      throw new Error(`AI Error: ${msg}`);
     }
   }
 
@@ -312,29 +312,29 @@ export class AiService {
     } = params;
 
     let identityContext = '';
-    let userName = "l'utilisateur";
+    let userName = "user";
 
     if (userId) {
       const userObj = await this.getAiUserWithProfile(userId);
       if (userObj) {
         userName = userObj.name || userObj.email;
         const parts = [
-          `Nom: ${userName}`,
+          `Name: ${userName}`,
           userObj.professionalEmail
             ? `Email: ${userObj.professionalEmail}`
             : '',
           userObj.professionalAddress || userObj.city || userObj.postalCode
-            ? `Adresse: ${userObj.professionalAddress || ''} ${userObj.city || ''} ${userObj.postalCode || ''}`.trim()
+            ? `Address: ${userObj.professionalAddress || ''} ${userObj.city || ''} ${userObj.postalCode || ''}`.trim()
             : '',
-          userObj.professionalPhone ? `Tél: ${userObj.professionalPhone}` : '',
-          userObj.websiteUrl ? `Site: ${userObj.websiteUrl}` : '',
+          userObj.professionalPhone ? `Phone: ${userObj.professionalPhone}` : '',
+          userObj.websiteUrl ? `Website: ${userObj.websiteUrl}` : '',
         ].filter(Boolean);
         if (parts.length > 0)
-          identityContext = `INFOS CONTACT/BRANDING:\n${parts.join('\n')}`;
+          identityContext = `CONTACT/BRANDING INFO:\n${parts.join('\n')}`;
       }
     }
 
-    const cleanFunction = (funcName || 'Création de contenu')
+    const cleanFunction = (funcName || 'Content creation')
       .replace(/\s*\(.*?\)\s*/g, '')
       .trim();
     const workflowDetails = workflowAnswers
@@ -345,20 +345,20 @@ export class AiService {
       : '';
 
     const parts = [
-      `Métier: ${job || 'Non spécifié'}`,
-      `Catégorie: ${params.category || 'Non spécifiée'}`,
-      `Type de contenu: ${cleanFunction}`,
-      params.style ? `Style visuel souhaité: ${params.style}` : '',
-      params.intention ? `Intention du message: ${params.intention}` : '',
-      tone ? `Ton de voix: ${tone}` : '',
-      target ? `Cible visée: ${target}` : '',
-      workflowDetails ? `Détails de personnalisation:\n${workflowDetails}` : '',
-      context ? `Contexte supplémentaire: ${context}` : '',
-      userQuery ? `Demande spécifique de l'utilisateur: ${userQuery}` : '',
+      `Job: ${job || 'Not specified'}`,
+      `Category: ${params.category || 'Not specified'}`,
+      `Content type: ${cleanFunction}`,
+      params.style ? `Visual style: ${params.style}` : '',
+      params.intention ? `Message intention: ${params.intention}` : '',
+      tone ? `Tone of voice: ${tone}` : '',
+      target ? `Target audience: ${target}` : '',
+      workflowDetails ? `Customization details:\n${workflowDetails}` : '',
+      context ? `Additional context: ${context}` : '',
+      userQuery ? `Specific request: ${userQuery}` : '',
       params.instruction_speciale
-        ? `NOTE IMPORTANTE: ${params.instruction_speciale}`
+        ? `IMPORTANT NOTE: ${params.instruction_speciale}`
         : '',
-      instructions ? `Instructions de formatage: ${instructions}` : '',
+      instructions ? `Formatting instructions: ${instructions}` : '',
       identityContext ? `\n${identityContext}` : '',
     ].filter(Boolean);
 
@@ -412,7 +412,7 @@ CRITICAL RULES:
         type: AiGenerationType.TEXT,
         prompt: basePrompt.substring(0, 1000),
         result,
-        title: (params.userQuery || 'Sans titre').substring(0, 30) + '...',
+        title: (params.userQuery || 'Untitled').substring(0, 30) + '...',
         attributes: params,
       });
       generationId = saved.id;
@@ -675,7 +675,7 @@ CRITICAL RULES:
     // Only generate image, no text per user request
     const selectedStyle = params.style || 'Minimal Studio';
     const imageRes = await this.generateImage(
-      { ...params, instructions: 'Image pour réseaux sociaux' },
+      { ...params, instructions: 'Image for social media' },
       selectedStyle as any,
       userId,
       file,
@@ -713,7 +713,7 @@ CRITICAL RULES:
     const generation = await this.aiGenRepo.findOne({
       where: { id, user: { id: userId } },
     });
-    if (!generation) throw new Error('Document non trouvé');
+    if (!generation) throw new Error('Document not found');
 
     const contentData = this.parseDocumentContent(generation.result);
     let buffer: Buffer;
@@ -736,7 +736,7 @@ CRITICAL RULES:
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         break;
       default:
-        throw new Error('Format non supporté');
+        throw new Error('Unsupported format');
     }
 
     return { buffer, fileName, mimeType };
@@ -751,7 +751,7 @@ CRITICAL RULES:
         return JSON.parse(jsonStr);
       }
     } catch (e) {}
-    return { title: 'Document', sections: [{ title: 'Contenu', text }] };
+    return { title: 'Document', sections: [{ title: 'Content', text }] };
   }
 
   private async generatePdfBuffer(data: any) {
