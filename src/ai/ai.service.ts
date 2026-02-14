@@ -262,17 +262,27 @@ export class AiService {
     if (!query) return '';
     try {
       const systemContext = `
-        Task: Enhance user query thinking like a REAL PROFESSIONAL, not a creative.
-        Goal: Keep user's practical and direct language. Enhance without inventing.
-        CRITICAL: Preserve ALL details provided. A restaurant owner says "pizza promo" not "premium culinary composition".
+        Task: Interpret simple user request and translate to concrete VISUAL DIRECTION.
+        Goal: Convert "pizza promo" into realistic atmospheric direction (not marketing fluff).
+        
+        SIMPLE INPUT → VISUAL ATMOSPHERE:
+        - "promo Saint Valentin" → romantic intimate mood, subtle warm glow, refined styling, no kitsch
+        - "nouvelle carte" → fresh product detail, refined presentation, refined side lighting
+        - "on recrute" → confident human presence, industrial realistic lighting, authentic textures
+        - "chantier en cours" → raw materials, construction atmosphere, dramatic industrial light
+        - "avant après" → contrast-driven composition, transformation through strong lighting difference
+        - "nouvelle coiffure" → texture detail, hair strand clarity, directional side lighting
+        - "nouveau projet" → geometric structure focus, minimal dramatic lighting, clean lines
+        - "nouvelle collection" → product spotlit, tactile textures, refined dark background
+        - "motivation" → focused powerful expression, deep shadows, intense eye contact
+        - "inscription ouvertes" → inviting strong presence, forward movement, accessible light
         
         Rules:
-        1. Keep vocabulary simple and practical (pizza promo, hiring, before after, menu, opening).
-        2. Enrich with concrete visual/practical details, not empty words.
-        3. If user was imprecise, interpret as they would (no marketing creativity).
-        4. Remove only clichés that don't fit this real work.
-        5. Format: [User text] + [Practical clarifications for AI].
-        6. Output: Complete description, direct, no flourish.
+        1. Translate simple intent to VISUAL ATMOSPHERE and LIGHTING DIRECTION
+        2. Use REALISTIC PHOTOGRAPHY language (grain, texture, authentic presence)
+        3. NO TEXT in final image - only visual elements
+        4. Avoid ALL clichés (no hearts, balloons, fake decorations, stock poses)
+        5. Output: [Atmospheric direction] + [Specific lighting & texture directives]
       `;
 
       const response = await this.openai.chat.completions.create({
@@ -281,21 +291,21 @@ export class AiService {
           { role: 'system', content: systemContext },
           {
             role: 'user',
-            content: `Enhance and preserve this query for a ${job || 'professional'} context: "${query}"`,
+            content: `For a ${job || 'professional'}, translate this simple request into visual direction (photography language, no marketing): "${query}"`,
           },
         ],
         temperature: 0.3,
-        max_tokens: 300,
+        max_tokens: 250,
       });
 
       const refined = response.choices[0].message.content || query;
       this.logger.log(
-        `[refineUserQuery] Original: "${query}" -> Enriched: "${refined}"`,
+        `[refineUserQuery] Original: "${query}" -> Visual direction: "${refined}"`,
       );
       return refined.trim();
     } catch (e) {
       this.logger.error(`[refineUserQuery] Failed: ${e.message}`);
-      return query; // Fallback to raw query
+      return query;
     }
   }
 
@@ -489,6 +499,7 @@ CRITICAL RULES:
     // VISUAL DESCRIPTION GENERATION (Master Prompts)
     // ------------------------------------------------------------------
     let visualDescription = '';
+    
     let negativePrompt = `
       smooth, neon, 3D render,
       text, typography, letters, words, numbers, watermark, logo, signature,
@@ -496,6 +507,17 @@ CRITICAL RULES:
       extra limbs, unrealistic proportions, oversaturated, messy background,
       cheap decoration, cliché, low quality, hearts, balloons, cute
     `.trim();
+
+    // Monochrome-specific negative prompt
+    if (style === 'Monochrome') {
+      negativePrompt = `
+        color, colored, vibrant colors, saturation, colorful, chromatic,
+        red, blue, green, yellow, orange, purple, pink,
+        text, typography, letters, words, numbers, watermark, logo, signature,
+        AI artifacts, CGI, illustration, cartoon, blur, low resolution,
+        extra limbs, unrealistic proportions, messy, cheap decoration, cliché, low quality
+      `.trim();
+    }
 
     const commonRealism = `
       magical realism photo portrait, candid shot, soft natural light,
@@ -507,57 +529,66 @@ CRITICAL RULES:
 
     if (style === 'Monochrome') {
       visualDescription = `
-        USER-PROVIDED DETAILS (RESPECT EXACTLY): ${refinedQuery}
-        Job: ${params.job || 'Not specified'}. Intention: ${params.intention || 'Professional'}.
-        What they asked for: ${params.userQuery || 'Professional context'}.
+        MONOCHROME STYLE: Black and white photograph ONLY. No colors. Pure grayscale.
         
-        Style: Black and white magazine style, contrasty, not overly creative - simple and professional.
-        IMPORTANT: Respect EXACTLY what the user described: location, context, activity.
-        Do NOT invent a different scene if user specified something specific.
-        Balanced, sharp composition, a bit dynamic but not too cinematic.
-        Textures clearly visible (fabrics, objects, materials in work context).
-        Integrate the name "${brandName}" in a readable and natural way in the composition.
-        Color: Black and white + slightly one accent color (${getRandom(accentColors)}) as thin line or detail.
-        The photo must be real, professional. No fiction, no cinema - just good work.
+        VISUAL DIRECTION FROM REQUEST: ${refinedQuery}
+        Job: ${params.job || 'Not specified'}. Request: ${params.userQuery || 'Professional context'}.
+        NO TEXT IN IMAGE - visual elements only.
+        
+        Format: Black and white high-contrast magazine format. Strong dramatic contrast.
+        Composition: Balanced sharp focus. Textures clearly visible (materials, objects, work context).
+        Lighting: Directional to emphasize form and texture - creates strong shadows.
+        Contrast: Deep blacks, bright whites, rich grays - magazine quality grayscale.
+        Brand: Integrate "${brandName}" naturally if needed (grayscale only).
+        Realism: Real product/person/scene, professional quality, no artificial styling.
+        Lock Direction: Respect above visual interpretation exactly - no scene invention.
       `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
-        WHAT THE USER SAID (RESPECT EXACTLY): ${refinedQuery}
-        Job: ${params.job || 'Not specified'}. Intention: ${params.intention || 'Professional'}.
-        Respect EXACTLY: ${params.userQuery || 'Professional context'}.
-        Don't change the location or context the user mentioned.
+        VISUAL DIRECTION FROM REQUEST: ${refinedQuery}
+        Job: ${params.job || 'professional activity'}. Request: ${params.userQuery || 'Professional context'}.
+        NO TEXT IN IMAGE - visual elements only.
         
-        Real photo of work in motion / in action for ${params.job || 'professional activity'}.
-        Theme: ${refinedQuery || 'real action, natural light, professional atmosphere'}.  
-        Photo of real people doing their work, interesting natural light, dynamic but authentic.
-        No exaggerated posing - just someone doing their job.
+        Photo Type: Real authentic action - person doing actual work for ${params.job || 'professional context'}.
+        Atmosphere: ${refinedQuery || 'dynamic authentic professional presence'}.
+        Lighting: Industrial-natural directional light (golden hour, side-lit, or overhead work light).
+        Realism: Visible authentic detail (texture, sweat, genuine effort, work reality) - not polished.
+        Grain: Natural photography grain visible - documentary style, not studio-perfect.
+        Emotion: Confident capable presence showing real competence - no artificial posing or theatrics.
         ${commonRealism}
-        Must look like a real commercial photo, quasi-agency quality. No movie, just good.
+        Result: Looks like real documentary or commercial photography - trustworthy and authentic.
       `.trim();
     } else if (style === 'Minimal Studio') {
       visualDescription = `
-        WHAT THE USER SAID: ${refinedQuery}
-        Job: ${params.job || 'Not specified'}. Intention: ${params.intention || 'Professional'}.
-        Respect EXACTLY: ${params.userQuery || 'Professional context'}.
-        Keep the location/context exactly as described.
+        VISUAL DIRECTION FROM REQUEST: ${refinedQuery}
+        Job: ${params.job || 'Not specified'}. Request: ${params.userQuery || 'Professional context'}.
+        NO TEXT IN IMAGE - subject focus only.
         
-        Simple and sharp photo of the thing/person for ${params.job || 'professional context'}.
-        Theme: ${refinedQuery || 'natural, soft lighting, simple background'}.  
-        Clean style: not too many elements, lots of white space, good lighting.
-        Basic composition, well-balanced, sharp, professional.
+        Composition: Subject (product/person) centered and sharp, dark minimal background (no clutter).
+        Atmosphere: ${refinedQuery || 'clean refined professional presence'}.
+        Lighting: Directional side or top light revealing texture and form with clarity.
+        Texture Detail: Fine detail visible and realistic (material weave, skin texture, finish) - authentic.
+        Style: High-end minimal studio aesthetic - intentional, purposeful, no excess elements.
+        Negative Space: Significant breathing room in dark or neutral space around subject.
+        Brand: Integrate "${brandName}" subtly if needed - not dominant.
         ${commonRealism}
-        Should look like a simple pro photo. Good market value.
+        Result: Premium intentional aesthetic - commercial quality without overstaging.
       `.trim();
     } else {
       visualDescription = `
-        USER INFORMATION (RESPECT): ${refinedQuery}
-        Job: ${params.job || 'Not specified'}. Intention: ${params.intention || 'Professional'}.
-        Respect: ${params.userQuery || 'Professional context'}.
-        Keep the location/context exactly as provided.
+        VISUAL DIRECTION FROM REQUEST: ${refinedQuery}
+        Job: ${params.job || 'professional'}. Request: ${params.userQuery || 'Professional context'}.
+        NO TEXT IN IMAGE.
         
-        Pro photo for ${params.job || 'business'} - for ${params.function || 'use'}.
-        Details: ${refinedQuery || 'real professional representation'}.
+        Purpose: ${params.function || 'professional use'} for ${params.job || 'business'}.
+        Direction: ${refinedQuery || 'authentic professional representation'}.
+        Tone: Real trustworthy professional - authentic not artificial or marketing-heavy.
+        Lighting: Natural directional light revealing context and authentic texture.
+        Context Lock: Respect user's specified context exactly - do not invent scenes.
+        Authenticity: Real material/person/setting visible - grain present, unpolished authenticity.
+        Brand: Integrate "${brandName}" naturally if applicable.
         ${commonRealism}
+        Result: Real professional photography - commercial quality with authentic presence.
       `.trim();
     }
 
@@ -565,7 +596,9 @@ CRITICAL RULES:
       `[generateImage] User Input Summary: userQuery=${params.userQuery}, intention=${params.intention}, context=${params.context}`,
     );
     this.logger.log(`[generateImage] Refined Query: ${refinedQuery}`);
-    this.logger.log(`[generateImage] Final Prompt: ${visualDescription}`);
+    this.logger.log(`[generateImage] Style: ${style}`);
+    this.logger.log(`[generateImage] Final Positive Prompt: ${visualDescription}`);
+    this.logger.log(`[generateImage] Final Negative Prompt: ${negativePrompt}`);
 
     // ------------------------------------------------------------------
     // CALL STABILITY.AI API (Plan-based Endpoint selection)
@@ -672,8 +705,11 @@ CRITICAL RULES:
   ) {
     if (typeof params === 'string') params = { userQuery: params };
 
+    // Get style from either direct param or from workflow answers
+    const selectedStyle = params.style || params.workflowAnswers?.style || 'Minimal Studio';
+    this.logger.log(`[generateSocial] Selected style: ${selectedStyle}`);
+
     // Only generate image, no text per user request
-    const selectedStyle = params.style || 'Minimal Studio';
     const imageRes = await this.generateImage(
       { ...params, instructions: 'Image for social media' },
       selectedStyle as any,
@@ -819,7 +855,10 @@ CRITICAL RULES:
 
     console.log('[generateFlyer] Using OpenAI with refined prompts');
 
-    const selectedStyle = params.style || 'Minimal Studio';
+    // Get style from either direct param or from workflow answers
+    const selectedStyle = params.style || params.workflowAnswers?.style || 'Minimal Studio';
+    this.logger.log(`[generateFlyer] Selected style: ${selectedStyle}`);
+    
     const imageResult = await this.generateImage(
       { ...params, userQuery: flyerPrompt },
       selectedStyle as any,
