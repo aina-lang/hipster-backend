@@ -529,66 +529,48 @@ CRITICAL RULES:
 
     if (style === 'Monochrome') {
       visualDescription = `
-        MONOCHROME STYLE: Black and white photograph ONLY. No colors. Pure grayscale.
+        Black and white photo. No color. Pure grayscale only.
         
-        VISUAL DIRECTION FROM REQUEST: ${refinedQuery}
-        Job: ${params.job || 'Not specified'}. Request: ${params.userQuery || 'Professional context'}.
-        NO TEXT IN IMAGE - visual elements only.
+        ${refinedQuery}
+        Job: ${params.job}. For: ${params.userQuery || 'professional use'}.
         
-        Format: Black and white high-contrast magazine format. Strong dramatic contrast.
-        Composition: Balanced sharp focus. Textures clearly visible (materials, objects, work context).
-        Lighting: Directional to emphasize form and texture - creates strong shadows.
-        Contrast: Deep blacks, bright whites, rich grays - magazine quality grayscale.
-        Brand: Integrate "${brandName}" naturally if needed (grayscale only).
-        Realism: Real product/person/scene, professional quality, no artificial styling.
-        Lock Direction: Respect above visual interpretation exactly - no scene invention.
+        Real black and white photograph - not stylized. Strong shadows and light. Texture visible.
+        Actual person/object/moment. No polish. Show real details - wrinkles, grain, genuine light.
+        Natural contrast. Shadows and highlights from real light, not perfect studio lighting.
+        Keep it real and unadorned.
       `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
-        VISUAL DIRECTION FROM REQUEST: ${refinedQuery}
-        Job: ${params.job || 'professional activity'}. Request: ${params.userQuery || 'Professional context'}.
-        NO TEXT IN IMAGE - visual elements only.
+        ${refinedQuery}
+        For: ${params.job}. Job: ${params.userQuery}.
         
-        Photo Type: Real authentic action - person doing actual work for ${params.job || 'professional context'}.
-        Atmosphere: ${refinedQuery || 'dynamic authentic professional presence'}.
-        Lighting: Industrial-natural directional light (golden hour, side-lit, or overhead work light).
-        Realism: Visible authentic detail (texture, sweat, genuine effort, work reality) - not polished.
-        Grain: Natural photography grain visible - documentary style, not studio-perfect.
-        Emotion: Confident capable presence showing real competence - no artificial posing or theatrics.
-        ${commonRealism}
-        Result: Looks like real documentary or commercial photography - trustworthy and authentic.
+        Real person doing their actual job. Not posed. Not perfect. Maybe tired, maybe focused, maybe busy.
+        Natural light - golden hour, window light, work light. Whatever's real.
+        You can see texture - sweat, dust, wrinkles, tired face, real hands doing work.
+        No makeup artist. No perfect styling. No smoke and mirrors.
+        Grain visible. Film-like quality. Authentic moment captured.
+        No professional model vibes. Real human energy.
       `.trim();
     } else if (style === 'Minimal Studio') {
       visualDescription = `
-        VISUAL DIRECTION FROM REQUEST: ${refinedQuery}
-        Job: ${params.job || 'Not specified'}. Request: ${params.userQuery || 'Professional context'}.
-        NO TEXT IN IMAGE - subject focus only.
+        ${refinedQuery}
+        For: ${params.job}. Show: ${params.userQuery || 'the subject'}.
         
-        Composition: Subject (product/person) centered and sharp, dark minimal background (no clutter).
-        Atmosphere: ${refinedQuery || 'clean refined professional presence'}.
-        Lighting: Directional side or top light revealing texture and form with clarity.
-        Texture Detail: Fine detail visible and realistic (material weave, skin texture, finish) - authentic.
-        Style: High-end minimal studio aesthetic - intentional, purposeful, no excess elements.
-        Negative Space: Significant breathing room in dark or neutral space around subject.
-        Brand: Integrate "${brandName}" subtly if needed - not dominant.
-        ${commonRealism}
-        Result: Premium intentional aesthetic - commercial quality without overstaging.
+        Subject in middle, sharp and clear. Dark or simple background - nothing distracting.
+        Clean simple photo. Not fancy. Real light hitting it - you see texture and detail.
+        Empty space around subject. Room to breathe. No cluttered background.
+        Real texture visible - material, skin, whatever it is. Not overly smooth.
+        Just straightforward photo. No tricks. No drama. Just clear and honest.
       `.trim();
     } else {
       visualDescription = `
-        VISUAL DIRECTION FROM REQUEST: ${refinedQuery}
-        Job: ${params.job || 'professional'}. Request: ${params.userQuery || 'Professional context'}.
-        NO TEXT IN IMAGE.
+        ${refinedQuery}
+        For: ${params.job}. Need: ${params.userQuery || 'professional photo'}.
         
-        Purpose: ${params.function || 'professional use'} for ${params.job || 'business'}.
-        Direction: ${refinedQuery || 'authentic professional representation'}.
-        Tone: Real trustworthy professional - authentic not artificial or marketing-heavy.
-        Lighting: Natural directional light revealing context and authentic texture.
-        Context Lock: Respect user's specified context exactly - do not invent scenes.
-        Authenticity: Real material/person/setting visible - grain present, unpolished authenticity.
-        Brand: Integrate "${brandName}" naturally if applicable.
-        ${commonRealism}
-        Result: Real professional photography - commercial quality with authentic presence.
+        Real straightforward photo. Not overproduced. Natural light preferred.
+        Texture and detail you can actually see - real materials, real skin, real context.
+        Professional but honest - not trying too hard to impress.
+        Authentic moment or scene. Keep it genuine.
       `.trim();
     }
 
