@@ -254,22 +254,24 @@ export class AiService {
   }
 
   /**
-   * Refines a raw user query into premium aesthetic keywords using AI.
-   * This ensures consistent high-end results regardless of raw user input.
+   * Refines a raw user query while PRESERVING all user information.
+   * Enhances with aesthetic keywords without losing the original intent.
+   * Critical: Every detail the user provides is captured and enriched.
    */
   private async refineUserQuery(query: string, job?: string): Promise<string> {
     if (!query) return '';
     try {
       const systemContext = `
         Role: Prompt Engineer specializing in high-end advertising photography.
-        Objective: Transform raw user input into a list of 5-8 premium aesthetic keywords.
-        Style: Minimalist, luxury, sophisticated, editorial.
+        Objective: Enhance raw user input by adding premium aesthetic keywords while preserving ALL original user information.
+        CRITICAL: Never remove or summarize user details. Return the original query enriched with additional aesthetic context.
         
         Rules:
-        1. Remove all cliché/cheap words (e.g., "mignon", "deco", "ballons", "coeur").
-        2. Translate into English aesthetic terms (e.g., "sophisticated mood", "raw textures", "balanced composition").
-        3. Maintain the core theme (e.g., "Saint-Valentine" -> "romantic atmosphere, refined interpretation, minimal and premium aesthetic").
-        4. Output ONLY the list of keywords, separated by commas. No intro/outro.
+        1. Preserve EVERY detail the user mentioned (location, objects, actions, emotions, style, etc.).
+        2. Add 3-5 premium aesthetic keywords that enhance the user's description.
+        3. Remove only obvious clichés if they conflict with premium aesthetic (e.g., "cute" -> "refined").
+        4. Format: [Original user text] + [Enhanced aesthetic keywords]
+        5. Output the complete enriched description. Do not shorten or summarize.
       `;
 
       const response = await this.openai.chat.completions.create({
@@ -278,16 +280,16 @@ export class AiService {
           { role: 'system', content: systemContext },
           {
             role: 'user',
-            content: `Refine this query for a ${job || 'professional'} context: "${query}"`,
+            content: `Enhance and preserve this query for a ${job || 'professional'} context: "${query}"`,
           },
         ],
         temperature: 0.3,
-        max_tokens: 100,
+        max_tokens: 300,
       });
 
       const refined = response.choices[0].message.content || query;
       this.logger.log(
-        `[refineUserQuery] Original: "${query}" -> Refined: "${refined}"`,
+        `[refineUserQuery] Original: "${query}" -> Enriched: "${refined}"`,
       );
       return refined.trim();
     } catch (e) {
@@ -445,10 +447,11 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     }
 
     // ------------------------------------------------------------------
-    // QUERY REFORMULATION (Aesthetic Keywords)
+    // QUERY REFORMULATION (Enhance user query while preserving all details)
     // ------------------------------------------------------------------
+    const userQueryFull = `${params.userQuery || ''}${params.context ? ' | Extra context: ' + params.context : ''}${params.intention ? ' | Intention: ' + params.intention : ''}`;
     const refinedQuery = await this.refineUserQuery(
-      params.userQuery,
+      userQueryFull,
       params.job,
     );
 
@@ -474,10 +477,12 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     if (style === 'Monochrome') {
       visualDescription = `
+        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
+        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        
         Ultra high contrast black and white composition, deep cinematic contrast, dramatic light sculpting, strong chiaroscuro, editorial campaign poster aesthetic.
-        Minimalist environment with dominant negative space, refined visual hierarchy, controlled shadows and highlights, carefully balanced exposure.
-        Primary subject: An artistic and conceptual interpretation of a ${params.job || 'professional context'}.
-        Additional thematic influence: ${refinedQuery || 'elegant and refined interpretation, minimal and premium aesthetic'}.
+        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
+        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
         Dynamic asymmetrical composition, subject position optimized for balance, not centering.
         Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction, fine art photography style.
         Ultra sharp focus on key subject textures: refined material rendering (metal, glass, stone, fabric, organic textures).
@@ -488,6 +493,11 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
+        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
+        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
+        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
+        
         Hero-style cinematic action shot representing ${params.job || 'professional activity'}.
         Visual theme: ${refinedQuery || 'powerful movement, dramatic perspective, premium atmosphere'}.
         Powerful mid-movement pose, dramatic lighting, rim lighting, volumetric atmosphere, accent lighting, wide framing.
@@ -497,6 +507,11 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       `.trim();
     } else if (style === 'Minimal Studio') {
       visualDescription = `
+        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
+        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
+        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
+        
         Minimal clean studio shot centered on ${params.job || 'professional item'}.
         Visual theme: ${refinedQuery || 'natural candid posture, soft lighting, neutral background'}.
         Negative space composition, editorial minimal fashion aesthetic, soft diffused studio light.
@@ -505,12 +520,19 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       `.trim();
     } else {
       visualDescription = `
+        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
+        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
+        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
+        
         Professional commercial shot for ${params.job || 'business'} (${params.function || 'marketing'}).
         Subject details: ${refinedQuery || 'high-end professional representation'}.
         ${commonRealism}
       `.trim();
     }
 
+    this.logger.log(`[generateImage] User Input Summary: userQuery=${params.userQuery}, intention=${params.intention}, context=${params.context}`);
+    this.logger.log(`[generateImage] Refined Query: ${refinedQuery}`);
     this.logger.log(`[generateImage] Final Prompt: ${visualDescription}`);
 
     // ------------------------------------------------------------------
