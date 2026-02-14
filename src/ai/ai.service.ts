@@ -262,16 +262,17 @@ export class AiService {
     if (!query) return '';
     try {
       const systemContext = `
-        Role: Prompt Engineer specializing in high-end advertising photography.
-        Objective: Enhance raw user input by adding premium aesthetic keywords while preserving ALL original user information.
-        CRITICAL: Never remove or summarize user details. Return the original query enriched with additional aesthetic context.
+        Tâche: Enrichir la requête utilisateur en pensant comme UN PROFESSIONNEL RÉEL, pas comme un créatif.
+        Objectif: Garder le langage pratique et direct de l'utilisateur. Améliorer sans inventer.
+        CRITIQUE: Préserver TOUS les détails fournis. Un restaurateur dit "promo pizza" pas "composition gastronomique premium".
         
-        Rules:
-        1. Preserve EVERY detail the user mentioned (location, objects, actions, emotions, style, etc.).
-        2. Add 3-5 premium aesthetic keywords that enhance the user's description.
-        3. Remove only obvious clichés if they conflict with premium aesthetic (e.g., "cute" -> "refined").
-        4. Format: [Original user text] + [Enhanced aesthetic keywords]
-        5. Output the complete enriched description. Do not shorten or summarize.
+        Règles:
+        1. Garder le vocabulaire simple et pratique (promo pizza, on recrute, avant après, menu, ouverture).
+        2. Enrichir avec des détails visuels/pratiques concrets, pas des mots vides.
+        3. Si l'utilisateur a dit quelque chose d'imprécis, l'interpréter comme il le ferait (pas de creativity marketing).
+        4. Supprimer uniquement les clichés qui ne correspondent pas à ce travail réel.
+        5. Format: [Texte utilisateur] + [Clarifications pratiques pour l'IA].
+        6. Output: Description complète, directe, sans fioritures.
       `;
 
       const response = await this.openai.chat.completions.create({
@@ -374,10 +375,20 @@ export class AiService {
 
     const systemContext = `
 Identité: Hipster IA
-Rôle: Expert assistant créatif
+Rôle: Assistant pratique pour petits business (restaurant, artisan, coach)
 Contexte: Génération de contenu ${type}
 
-RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
+À RETENIR: Tu n'es pas un créatif marketing d'agence, tu aides des gens à vendre leurs choses:
+- Un restaurateur tape "promo pizza" pas "composition culinaire innovante"
+- Un artisan tape "on recrute" pas "appel à talents créatifs"
+- Un coach tape "motivation" pas "contenu aspirationnel premium"
+- Quelqu'un tape "avant après" pas "transformation documentaire"
+
+RÈGLES CRITIQUES: 
+1. Pense comme L'UTILISATEUR (vocabulaire direct, simple, pratique)
+2. N'INVENTE JAMAIS d'informations non fournies
+3. Parle simplement, pas comme une agence marketing
+4. Utilise les mots que Les VRAIS GENS utiliseraient
 `;
 
     const messages = [
@@ -496,56 +507,56 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
     if (style === 'Monochrome') {
       visualDescription = `
-        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
-        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        DÉTAILS FOURNIS PAR L'UTILISATEUR (À RESPECTER): ${refinedQuery}
+        Métier: ${params.job || 'Non spécifié'}. Intention: ${params.intention || 'Professionnelle'}.
+        Ce qu'il/elle a demandé: ${params.userQuery || 'Contexte professionnel'}.
         
-        Ultra high contrast black and white composition, deep cinematic contrast, dramatic light sculpting, strong chiaroscuro, editorial campaign poster aesthetic.
-        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
-        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
-        Dynamic asymmetrical composition, subject position optimized for balance, not centering.
-        Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction, fine art photography style.
-        Ultra sharp focus on key subject textures: refined material rendering (metal, glass, stone, fabric, organic textures).
-        Large bold typography integrated into the composition featuring the name "${brandName}" — interacting with depth, positioned with realistic perspective.
-        Graphic design elements included: thin geometric lines, subtle frame corners, modern poster grid system.
-        Color: Monochrome black and white with one minimal accent color (${getRandom(accentColors)}) used ONLY in small geometric highlights or thin lines.
-        The image must look like a real photograph, flawless professional quality.
+        Style: Noir et blanc contrasté et magazine, pas hyper créatif - simple et pro.
+        IMPORTANT: Respecte EXACTEMENT ce que l'utilisateur a décrit: location, contexte, activité.
+        Ne PAS inventer une mise en scène différente si l'utilisateur a spécifié quelque chose précis.
+        Composition équilibrée, nette, un peu dynamique mais pas trop cinématique.
+        Les textures sont bien visibles (tissus, objets, matériaux dans le contexte de travail).
+        Intégrer le nom "${brandName}" de façon lisible et naturelle dans la composition.
+        Couleur: Noir et blanc + légèrement une couleur d'accent (${getRandom(accentColors)}) en trait fin ou détail.
+        La photo doit être réelle, professionnelle. Pas de fiction, pas de cinéma - juste bon.
       `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
-        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
-        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
-        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
-        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
+        CE QUE L'UTILISATEUR A DIT (À RESPECTER): ${refinedQuery}
+        Métier: ${params.job || 'Non spécifié'}. Intention: ${params.intention || 'Professionnelle'}.
+        Respecte EXACTEMENT: ${params.userQuery || 'Contexte professionnel'}.
+        Ne pas changer la location ou le contexte que l'utilisateur a mentionné.
         
-        Hero-style cinematic action shot representing ${params.job || 'professional activity'}.
-        Visual theme: ${refinedQuery || 'powerful movement, dramatic perspective, premium atmosphere'}.
-        Powerful mid-movement pose, dramatic lighting, rim lighting, volumetric atmosphere, accent lighting, wide framing.
-        Environmental interaction, dynamic fashion campaign photography aesthetic.
+        Photo de travail réelle en mouvement / en action pour ${params.job || 'activité professionnelle'}.
+        Thème: ${refinedQuery || 'action réelle, lumière naturelle, atmosphère professionnelle'}.  
+        Photo des vraies personnes en train de travailler, lumière naturelle intéressante, dynamique mais authentique.
+        Pas de posing exagéré - juste quelqu'un en train de faire son truc.
         ${commonRealism}
-        The image must look like a high-end commercial photograph.
+        Doit ressembler à une vraie photo commerciale, quasi-agence. Pas de film, juste bon.
       `.trim();
     } else if (style === 'Minimal Studio') {
       visualDescription = `
-        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
-        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
-        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
-        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
+        CE QUE L'UTILISATEUR DIT: ${refinedQuery}
+        Métier: ${params.job || 'Non spécifié'}. Intention: ${params.intention || 'Professionnelle'}.
+        Respecter EXACTEMENT: ${params.userQuery || 'Contexte professionnel'}.
+        Garde la location/contexte exactement comme décrit.
         
-        Minimal clean studio shot centered on ${params.job || 'professional item'}.
-        Visual theme: ${refinedQuery || 'natural candid posture, soft lighting, neutral background'}.
-        Negative space composition, editorial minimal fashion aesthetic, soft diffused studio light.
+        Photo simple et nette du truc/personne pour ${params.job || 'contexte professionnel'}.
+        Thème: ${refinedQuery || 'naturel, éclairage soft, fond simple'}.  
+        Style clean: pas trop d'éléments, beaucoup d'espace blanc, bon éclairage.
+        Composition basique, bien équilibrée, nette, professionnelle.
         ${commonRealism}
-        The image must look like a clean modern professional photograph.
+        Doit ressembler à une photo pro simple. Bon marché.
       `.trim();
     } else {
       visualDescription = `
-        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
-        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
-        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
-        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
+        INFOS DE L'UTILISATEUR (À RESPECTER): ${refinedQuery}
+        Métier: ${params.job || 'Non spécifié'}. Intention: ${params.intention || 'Professionnelle'}.
+        Respecte: ${params.userQuery || 'Contexte professionnel'}.
+        Garde la location/contexte exactement comme fourni.
         
-        Professional commercial shot for ${params.job || 'business'} (${params.function || 'marketing'}).
-        Subject details: ${refinedQuery || 'high-end professional representation'}.
+        Photo pro pour ${params.job || 'business'} - pour ${params.function || 'utilisation'}.
+        Détails: ${refinedQuery || 'représentation professionnelle réelle'}.
         ${commonRealism}
       `.trim();
     }
@@ -843,14 +854,14 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       .map(([key, value]) => `${key}: ${value}`)
       .join(', ');
 
-    return `A clean, professional commercial ${type} layout. ${style} graphic design, high-quality composition,
-     perfect alignment, bold readable typography, centered title, ${tone} message.
-     ${promotion ? `Promotional focus: ${promotion}.` : ''}
-     ${details ? `Additional focus details: ${details}.` : ''}
-     Include the following text exactly and fully visible, with correct spelling and spacing: "${userText}".
-     Use a real ${type} design aesthetic, not a mockup. Use clean shapes, balanced layout,
-     proper margins, and high-quality print-ready design. Vibrant but controlled colors.
-     High resolution, sharp details.`.replace(/\s+/g, ' ');
+    return `Un simple ${type} pro, ${style}, bien organisé, lisible, pas trop chargé.
+     Texte principal visible et correct: "${userText}".
+     ${promotion ? `Annonce: ${promotion}.` : ''}
+     ${details ? `Détails: ${details}.` : ''}
+     Ton: ${tone}.
+     Utilise une vraie mise en page de ${type} (pas mockup). Couleurs claires, bon contraste, espace blanc.
+     Impression de quelque chose que tu verrais vraiment chez un business réel.
+     Résolution bonne, lisible.`.replace(/\s+/g, ' ');
   }
 
   private cleanUserPrompt(query: string): string {
