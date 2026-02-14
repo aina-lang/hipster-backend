@@ -413,9 +413,16 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
 
   async generateImage(
     params: {
-      job: string;
-      function: string;
-      userQuery: string;
+      job?: string;
+      function?: string;
+      userQuery?: string;
+      context?: string;
+      intention?: string;
+      seed?: number | string;
+      tone?: string;
+      target?: string;
+      category?: string;
+      workflowAnswers?: Record<string, string>;
     },
     style: 'Monochrome' | 'Hero Studio' | 'Minimal Studio',
     userId?: number,
@@ -449,12 +456,24 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
     // ------------------------------------------------------------------
     // QUERY REFORMULATION (Enhance user query while preserving all details)
     // ------------------------------------------------------------------
-    const userQueryFull = `${params.userQuery || ''}${params.context ? ' | Extra context: ' + params.context : ''}${params.intention ? ' | Intention: ' + params.intention : ''}`;
-    const refinedQuery = await this.refineUserQuery(
-      userQueryFull,
-      params.job,
-    );
+    const workflowDetails = params.workflowAnswers
+      ? Object.entries(params.workflowAnswers)
+          .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`)
+          .join(', ')
+      : '';
 
+    const userQueryFull = [
+      params.userQuery || '',
+      params.context ? `Context: ${params.context}` : '',
+      params.intention ? `Intention: ${params.intention}` : '',
+      params.tone ? `Tone: ${params.tone}` : '',
+      params.target ? `Target Audience: ${params.target}` : '',
+      workflowDetails ? `Details: ${workflowDetails}` : '',
+    ]
+      .filter(Boolean)
+      .join(' | ');
+
+    const refinedQuery = await this.refineUserQuery(userQueryFull, params.job);
     // ------------------------------------------------------------------
     // VISUAL DESCRIPTION GENERATION (Master Prompts)
     // ------------------------------------------------------------------
@@ -531,7 +550,9 @@ RÈGLE CRITIQUE: N'INVENTE JAMAIS d'informations non fournies.
       `.trim();
     }
 
-    this.logger.log(`[generateImage] User Input Summary: userQuery=${params.userQuery}, intention=${params.intention}, context=${params.context}`);
+    this.logger.log(
+      `[generateImage] User Input Summary: userQuery=${params.userQuery}, intention=${params.intention}, context=${params.context}`,
+    );
     this.logger.log(`[generateImage] Refined Query: ${refinedQuery}`);
     this.logger.log(`[generateImage] Final Prompt: ${visualDescription}`);
 
