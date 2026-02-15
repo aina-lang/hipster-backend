@@ -258,56 +258,6 @@ export class AiService {
    * Enhances with aesthetic keywords without losing the original intent.
    * Critical: Every detail the user provides is captured and enriched.
    */
-  private async refineUserQuery(query: string, job?: string): Promise<string> {
-    if (!query) return '';
-    try {
-      const systemContext = `
-        Task: Interpret simple user request and translate to concrete VISUAL DIRECTION.
-        Goal: Convert "pizza promo" into realistic atmospheric direction (not marketing fluff).
-        
-        SIMPLE INPUT → VISUAL ATMOSPHERE:
-        - "promo Saint Valentin" → romantic intimate mood, subtle warm glow, refined styling, no kitsch
-        - "nouvelle carte" → fresh product detail, refined presentation, refined side lighting
-        - "on recrute" → confident human presence, industrial realistic lighting, authentic textures
-        - "chantier en cours" → raw materials, construction atmosphere, dramatic industrial light
-        - "avant après" → contrast-driven composition, transformation through strong lighting difference
-        - "nouvelle coiffure" → texture detail, hair strand clarity, directional side lighting
-        - "nouveau projet" → geometric structure focus, minimal dramatic lighting, clean lines
-        - "nouvelle collection" → product spotlit, tactile textures, refined dark background
-        - "motivation" → focused powerful expression, deep shadows, intense eye contact
-        - "inscription ouvertes" → inviting strong presence, forward movement, accessible light
-        
-        Rules:
-        1. Translate simple intent to VISUAL ATMOSPHERE and LIGHTING DIRECTION
-        2. Use REALISTIC PHOTOGRAPHY language (grain, texture, authentic presence)
-        3. NO TEXT in final image - only visual elements
-        4. Avoid ALL clichés (no hearts, balloons, fake decorations, stock poses)
-        5. Output: [Atmospheric direction] + [Specific lighting & texture directives]
-      `;
-
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: systemContext },
-          {
-            role: 'user',
-            content: `For a ${job || 'professional'}, translate this simple request into visual direction (photography language, no marketing): "${query}"`,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 250,
-      });
-
-      const refined = response.choices[0].message.content || query;
-      this.logger.log(
-        `[refineUserQuery] Original: "${query}" -> Visual direction: "${refined}"`,
-      );
-      return refined.trim();
-    } catch (e) {
-      this.logger.error(`[refineUserQuery] Failed: ${e.message}`);
-      return query;
-    }
-  }
 
   async generateText(
     params: any,
@@ -433,30 +383,34 @@ CRITICAL RULES:
       .filter(Boolean)
       .join(' | ');
 
-    const refinedQuery = await this.refineUserQuery(userQueryFull, params.job);
+    const refinedQuery = userQueryFull;
+
     // ------------------------------------------------------------------
     // VISUAL DESCRIPTION GENERATION (Master Prompts)
     // ------------------------------------------------------------------
     let visualDescription = '';
 
     const negativePrompt = `
-      text, typography, letters, words, numbers, watermark, logo, signature,
-       AI artifacts, CGI, illustration, cartoon, blur, low resolution,
-      extra limbs, unrealistic proportions, oversaturated, messy background,
-      cheap decoration, cliché, low quality, hearts, balloons, cute,
-      bad anatomy, bad hands, missing fingers, extra fingers, cropped, 
-      out of frame, worst quality, jpeg artifacts, deformed, disfigured, 
-      gross proportions, malformed limbs, missing arms, missing legs, 
-      extra arms, extra legs, fused fingers, too many fingers, long neck, 
-      plastic skin, smooth skin, neon, 3D render
+      text, typography, letters, words, numbers, watermarks, logos, signatures,
+       AI artifacts, CGI, illustration, cartoon, anime, 3d render, plastic,
+       blur, airbrush, smooth skin, doll-like, fake, oversaturated,
+       extra limbs, unrealistic proportions, messy background,
+       cheap decoration, cliché, low quality, hearts, balloons, cute,
+       bad anatomy, bad hands, missing fingers, extra fingers, cropped, 
+       out of frame, worst quality, jpeg artifacts, deformed, disfigured, 
+       gross proportions, malformed limbs, missing arms, missing legs, 
+       extra arms, extra legs, fused fingers, too many fingers, long neck, 
+       plastic skin, smooth skin, neon, overly polished, denoised
     `.trim();
 
     const commonRealism = `
       magical realism photo portrait, candid shot, soft natural light,
       ultra realistic photography, real human skin texture, visible pores,
-      natural skin imperfections, cinematic lighting, shot on Canon EOS R5,
-      high dynamic range, fine details, natural color grading, editorial quality,
-      no beauty filter, no plastic skin
+      film grain, iso 400, fujifilm color science, kodak portra 400,
+      natural imperfections, micro-contrast, tactile textures,
+      cinematic lighting, shot on Canon EOS R5, 85mm lens,
+      high dynamic range, natural color grading, editorial quality,
+      no beauty filter, no plastic skin, structural realism
     `;
 
     if (style === 'Premium') {
@@ -464,15 +418,19 @@ CRITICAL RULES:
         USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
         User's job: ${params.job || 'Not specified'}.
         
-        Ultra high contrast black and white composition, deep cinematic contrast, dramatic light sculpting, strong chiaroscuro, editorial campaign poster aesthetic.
+        STYLE: ULTRA HIGH CONTRAST BLACK & WHITE (PREMIUM / NOIR).
+        Visual rules:
+        1. STRICTLY BLACK AND WHITE. NO COLOR (except minimal ${getRandom(accentColors)} accent).
+        2. Chiaroscuro lighting, deep shadows, dramatic silhouettes, rim lighting.
+        3. Texture focus: skin pores, fabric weave, metal sheen, stone roughness.
+        4. Composition: Dynamic, asymmetrical, cinematic angles.
+        
         Match the user's description exactly: ${params.userQuery || 'Professional context'}.
-        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
-        Dynamic asymmetrical composition, subject position optimized for balance, not centering.
-        Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction, fine art photography style.
-        Ultra sharp focus on key subject textures: refined material rendering (metal, glass, stone, fabric, organic textures).
-        Large bold typography integrated into the composition featuring the name "${brandName}" — interacting with depth, positioned with realistic perspective.
-        Graphic design elements included: thin geometric lines, subtle frame corners, modern poster grid system.
-        Color: Monochrome black and white with one minimal accent color (${getRandom(accentColors)}) used ONLY in small geometric highlights or thin lines.
+        Environmental context preserved: Follow user's location/setting exactly.
+        
+        Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction.
+        Large bold typography integrated into the composition featuring the name "${brandName}" — interacting with depth.
+        Graphic design elements: thin geometric lines, subtle frame corners.
         The image must look like a real photograph, flawless professional quality.
       `.trim();
     } else if (style === 'Hero Studio') {
@@ -480,11 +438,16 @@ CRITICAL RULES:
         USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
         User's job: ${params.job || 'Not specified'}.
         Match the user's description exactly: ${params.userQuery || 'Professional context'}.
-        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
+        
+        STYLE: HERO STUDIO (DYNAMIC ACTION / BLOCKBUSTER).
+        Visual rules:
+        1. DYNAMIC ANGLES: Low angle, wide angle, dutch angle, motion blur on edges.
+        2. DRAMATIC LIGHTING: Rim light, volumetric beams, lens flare, high contrast.
+        3. COLOR GRADING: Teal & Orange, Cinematic Warm, Vibrant but realistic.
+        4. TEXTURE: Sweat, dust particles, motion streaks, detailed fabric.
         
         Hero-style cinematic action shot representing ${params.job || 'professional activity'}.
-        Visual theme: ${refinedQuery || 'powerful movement, dramatic perspective, premium atmosphere'}.
-        Powerful mid-movement pose, dramatic lighting, rim lighting, volumetric atmosphere, accent lighting, wide framing.
+        Powerful mid-movement pose, dramatic lighting, volumetric atmosphere.
         Environmental interaction, dynamic fashion campaign photography aesthetic.
         ${commonRealism}
         The image must look like a high-end commercial photograph.
@@ -494,10 +457,15 @@ CRITICAL RULES:
         USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
         User's job: ${params.job || 'Not specified'}.
         Match the user's description exactly: ${params.userQuery || 'Professional context'}.
-        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
+        
+        STYLE: MINIMAL STUDIO (CLEAN / SCANDINAVIAN).
+        Visual rules:
+        1. COMPOSITION: Negative space, center-weighted or rule of thirds, un-cluttered.
+        2. LIGHTING: Soft diffused window light, lightbox style, no harsh shadows.
+        3. COLORS: Pastels, neutrals, white, beige, desaturated tones.
+        4. TEXTURE: Paper texture, linen, matte finish, ceramic, organic wood.
         
         Minimal clean studio shot centered on ${params.job || 'professional item'}.
-        Visual theme: ${refinedQuery || 'natural candid posture, soft lighting, neutral background'}.
         Negative space composition, editorial minimal fashion aesthetic, soft diffused studio light.
         ${commonRealism}
         The image must look like a clean modern professional photograph.
