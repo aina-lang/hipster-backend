@@ -369,10 +369,11 @@ REMEMBER: You're not a marketing creative from an agency, you help real people s
 
 CRITICAL RULES: 
 1. Think like the USER (direct, simple, practical vocabulary)
-2. NEVER invent information not provided (if user address is missing, don't invent one)
-3. Speak simply, not like a marketing agency
-4. Use words REAL PEOPLE would actually use
-5. Integrate the USER'S NAME, PHONE, or ADDRESS naturally in the output if it makes sense for the content type.
+2. NEVER invent information and NEVER use placeholders like "[votre numéro]" or "[votre adresse]".
+3. If a specific piece of information (phone, address, name) is not present in the USER PROFILE provided below, DO NOT mention it in the generated text.
+4. Speak simply, not like a marketing agency.
+5. Use words REAL PEOPLE would actually use.
+6. Integrate the USER'S NAME, PHONE, or ADDRESS naturally ONLY if they are available in the PROFILE.
 `;
 
     const messages = [
@@ -877,9 +878,9 @@ DECISION LOGIC:
 - If userQuery asks to write something (e.g., "Write a promo"), set generateText: true.
 - If it's ambiguous, default to both: true.
 - IMAGE_PROMPT MUST BE IN ENGLISH.
-- CAPTION_PROMPT MUST BE IN FRENCH.
-
-Respond ONLY with a valid JSON object.
+- CAPTION_PROMPT must be in FRENCH, focused on the tone and call to action. 
+- IMPORTANT: If a piece of information is missing from the USER CONTEXT, tell the caption engine NOT to use it. DO NOT USE PLACEHOLDERS.
+- Respond ONLY with a valid JSON object.
 `;
 
     try {
