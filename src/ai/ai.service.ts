@@ -771,7 +771,11 @@ CRITICAL RULES:
     }
   }
 
-  /* --------------------- SOCIAL POSTS --------------------- */
+  /* --------------------- SOCIAL POSTS (ORCHESTRATED) --------------------- */
+  /**
+   * Main entry point for Social Posts.
+   * This method uses an AI Orchestrator to decide what to generate based on a single user input.
+   */
   async generateSocial(
     params: any,
     userId?: number,
@@ -779,33 +783,131 @@ CRITICAL RULES:
   ) {
     if (typeof params === 'string') params = { userQuery: params };
 
-    // Get style
     const selectedStyle = params.style || 'Minimal Studio';
-    this.logger.log(`[generateSocial] Selected style: ${selectedStyle}`);
+    this.logger.log(`[generateSocial] START - Style: ${selectedStyle}`);
 
-    // Generate image
-    const imageRes = await this.generateImage(
-      { ...params, instructions: 'High-end visual for a social media post' },
-      selectedStyle as any,
-      userId,
-      file,
+    // Fetch user profile for orchestration context
+    let brandingContext = '';
+    if (userId) {
+      const u = await this.getAiUserWithProfile(userId);
+      if (u) {
+        const fields = [];
+        if (u.name) fields.push(`- Nom: ${u.name}`);
+        if (u.job || params.job)
+          fields.push(`- Métier: ${u.job || params.job}`);
+        fields.push(`- Email: ${u.professionalEmail || 'N/A'}`);
+        brandingContext = fields.join('\n');
+      }
+    }
+
+    // Orchestrate: Split user query into specific instructions for Image and Text
+    // This allows a single text field to handle "I want an image of X" or "Write a post about Y" or both.
+    const orchestration = await this.orchestrateSocial(
+      params.userQuery,
+      brandingContext,
+    );
+    this.logger.log(
+      `[generateSocial] Orchestration result: ${JSON.stringify(orchestration)}`,
     );
 
-    // Generate real text caption via GPT
-    const textRes = await this.generateText(
-      {
-        ...params,
-        userQuery: params.userQuery || 'Une publication engageante',
-      },
-      'social',
-      userId,
-    );
+    let imageRes: {
+      url: string | null;
+      generationId?: number | null;
+      seed?: number;
+    } = { url: null, generationId: null };
+    let textRes: { content: string | null; generationId?: number | null } = {
+      content: null,
+      generationId: null,
+    };
+
+    // 1. Generate Image if orchestrator decided it's needed
+    if (orchestration.generateImage) {
+      imageRes = await this.generateImage(
+        { ...params, userQuery: orchestration.imagePrompt },
+        selectedStyle as any,
+        userId,
+        file,
+      );
+    }
+
+    // 2. Generate Caption if orchestrator decided it's needed
+    if (orchestration.generateText) {
+      textRes = await this.generateText(
+        { ...params, userQuery: orchestration.captionPrompt },
+        'social',
+        userId,
+      );
+    }
 
     return {
       content: textRes.content,
       url: imageRes.url,
-      generationId: imageRes.generationId,
+      generationId: imageRes.generationId || textRes.generationId,
+      orchestration, // Metadata for transparency
     };
+  }
+
+  /**
+   * Orchestrates social media content by splitting a single user request into
+   * specific instructions for the image generation engine and the text generation engine.
+   * It handles cases where user only wants an image, only text, or both.
+   */
+  private async orchestrateSocial(
+    userQuery: string,
+    brandingContext: string,
+  ): Promise<{
+    generateImage: boolean;
+    generateText: boolean;
+    imagePrompt: string;
+    captionPrompt: string;
+  }> {
+    const systemPrompt = `
+You are the Brain Orchestrator for Hipster IA. The user has only ONE text field to express their needs.
+Your job is to parse this single 'userQuery' and determine:
+1. Does the user want an image? (generateImage)
+2. Does the user want a text caption? (generateText)
+3. What is the specific prompt for the IMAGE engine (in ENGLISH, photorealistic, no text)?
+4. What is the specific prompt for the TEXT engine (in FRENCH, marketing tone)?
+
+USER CONTEXT:
+${brandingContext}
+
+DECISION LOGIC:
+- If userQuery describes a visual scene (e.g., "A dog in a park"), set generateImage: true.
+- If userQuery asks to write something (e.g., "Write a promo"), set generateText: true.
+- If it's ambiguous, default to both: true.
+- IMAGE_PROMPT MUST BE IN ENGLISH.
+- CAPTION_PROMPT MUST BE IN FRENCH.
+
+Respond ONLY with a valid JSON object.
+`;
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: userQuery || 'Crée un post pour mon activité',
+          },
+        ],
+        response_format: { type: 'json_object' },
+      });
+
+      return JSON.parse(response.choices[0].message.content) as any;
+    } catch (e) {
+      this.logger.error(
+        '[orchestrateSocial] Orchestration failed, using fallback',
+        e,
+      );
+      return {
+        generateImage: true,
+        generateText: true,
+        imagePrompt: userQuery,
+        captionPrompt: userQuery,
+      };
+    }
   }
 
   /* --------------------- DOCUMENTS --------------------- */
