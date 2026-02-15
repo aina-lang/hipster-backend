@@ -262,15 +262,16 @@ export class AiService {
   ) {
     const styleName = style || params.style || 'Hero Studio';
     this.logger.log(
-      `[generateImage] START - User: ${userId}, Seed: ${seed}, Style: ${styleName}, Subject: ${params.job}`,
+      `[generateImage] START - User: ${userId}, Seed: ${seed}, Style: ${styleName}, Job: ${params.job}, Query: ${params.userQuery}`,
     );
 
-    let subject = params.job || '';
-    if (subject && subject.length > 0) {
-      subject = await this.refineSubject(subject);
+    // For subject refinement, use job field if provided
+    let refinedSubject = '';
+    if (params.job && params.job.length > 0) {
+      refinedSubject = await this.refineSubject(params.job);
     }
 
-    const baseStylePrompt = this.getStyleDescription(styleName, subject);
+    const baseStylePrompt = this.getStyleDescription(styleName, refinedSubject);
     const userQuery = (params.userQuery || '').trim();
 
     const apiKey = this.stabilityApiKey;
@@ -301,12 +302,22 @@ export class AiService {
         NEGATIVE: ${this.NEGATIVE_PROMPT}
       `.trim();
     } else {
-      visualDescription = `
-        ${baseStylePrompt}
-        ${userQuery ? `CONTEXT: ${userQuery}` : ''}
-        QUALITY: highly detailed professional photography, 8k resolution.
-        NEGATIVE: ${this.NEGATIVE_PROMPT}
-      `.trim();
+      // If userQuery is provided, use it as the main visual description
+      // Otherwise, rely on the style prompt based on the job
+      if (userQuery) {
+        visualDescription = `
+          ${userQuery}
+          STYLE: ${baseStylePrompt}
+          QUALITY: highly detailed professional photography, 8k resolution.
+          NEGATIVE: ${this.NEGATIVE_PROMPT}
+        `.trim();
+      } else {
+        visualDescription = `
+          ${baseStylePrompt}
+          QUALITY: highly detailed professional photography, 8k resolution.
+          NEGATIVE: ${this.NEGATIVE_PROMPT}
+        `.trim();
+      }
     }
 
     const formData = new FormData();
@@ -417,7 +428,9 @@ export class AiService {
         ...params,
         subType: type,
       });
-      this.logger.log(`[generateText] SUCCESS - Generated ${result.length} chars, ID: ${saved?.id}`);
+      this.logger.log(
+        `[generateText] SUCCESS - Generated ${result.length} chars, ID: ${saved?.id}`,
+      );
       return { content: result, generationId: saved?.id };
     } catch (error) {
       this.logger.error(`[generateText] Error: ${error.message}`);
