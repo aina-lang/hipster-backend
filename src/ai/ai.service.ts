@@ -322,7 +322,7 @@ export class AiService {
     } = params;
 
     let identityContext = '';
-    let userName = "user";
+    let userName = 'user';
 
     if (userId) {
       const userObj = await this.getAiUserWithProfile(userId);
@@ -336,7 +336,9 @@ export class AiService {
           userObj.professionalAddress || userObj.city || userObj.postalCode
             ? `Address: ${userObj.professionalAddress || ''} ${userObj.city || ''} ${userObj.postalCode || ''}`.trim()
             : '',
-          userObj.professionalPhone ? `Phone: ${userObj.professionalPhone}` : '',
+          userObj.professionalPhone
+            ? `Phone: ${userObj.professionalPhone}`
+            : '',
           userObj.websiteUrl ? `Website: ${userObj.websiteUrl}` : '',
         ].filter(Boolean);
         if (parts.length > 0)
@@ -443,9 +445,31 @@ CRITICAL RULES:
       tone?: string;
       target?: string;
       category?: string;
+      style?: string;
       workflowAnswers?: Record<string, string>;
     },
-    style: 'Monochrome' | 'Hero Studio' | 'Minimal Studio',
+    style:
+      | 'Monochrome'
+      | 'Hero Studio'
+      | 'Minimal Studio'
+      | 'None'
+      | '3d-model'
+      | 'analog-film'
+      | 'anime'
+      | 'cinematic'
+      | 'comic-book'
+      | 'digital-art'
+      | 'enhance'
+      | 'fantasy-art'
+      | 'isometric'
+      | 'line-art'
+      | 'low-poly'
+      | 'modeling-compound'
+      | 'neon-punk'
+      | 'origami'
+      | 'photographic'
+      | 'pixel-art'
+      | 'tile-texture',
     userId?: number,
     file?: Express.Multer.File,
   ) {
@@ -499,27 +523,36 @@ CRITICAL RULES:
     // VISUAL DESCRIPTION GENERATION (Master Prompts)
     // ------------------------------------------------------------------
     let visualDescription = '';
-    
-    let negativePrompt = `
-      smooth, neon, 3D render,
+
+    const negativePrompt = `
       text, typography, letters, words, numbers, watermark, logo, signature,
-      AI artifacts, CGI, illustration, cartoon, blur, low resolution,
+       AI artifacts, CGI, illustration, cartoon, blur, low resolution,
       extra limbs, unrealistic proportions, oversaturated, messy background,
-      cheap decoration, cliché, low quality, hearts, balloons, cute
+      cheap decoration, cliché, low quality, hearts, balloons, cute,
+      bad anatomy, bad hands, missing fingers, extra fingers, cropped, 
+      out of frame, worst quality, jpeg artifacts, deformed, disfigured, 
+      gross proportions, malformed limbs, missing arms, missing legs, 
+      extra arms, extra legs, fused fingers, too many fingers, long neck, 
+      plastic skin, smooth skin, neon, 3D render
     `.trim();
 
-    // Monochrome-specific negative prompt
-    if (style === 'Monochrome') {
-      negativePrompt = `
-        color, colored, vibrant colors, saturation, colorful, chromatic,
-        red, blue, green, yellow, orange, purple, pink,
-        text, typography, letters, words, numbers, watermark, logo, signature,
-        AI artifacts, CGI, illustration, cartoon, blur, low resolution,
-        extra limbs, unrealistic proportions, messy, cheap decoration, cliché, low quality
-      `.trim();
-    }
+    let styleLower = style.toLowerCase();
+    const isArtistic = [
+      'anime',
+      'comic-book',
+      'digital-art',
+      'fantasy-art',
+      'line-art',
+      'low-poly',
+      'pixel-art',
+      'origami',
+      'modeling-compound',
+      '3d-model',
+    ].includes(styleLower);
 
-    const commonRealism = `
+    const commonRealism = isArtistic
+      ? `cinematic lighting, high dynamic range, fine details, editorial quality`
+      : `
       magical realism photo portrait, candid shot, soft natural light,
       ultra realistic photography, real human skin texture, visible pores,
       natural skin imperfections, cinematic lighting, shot on Canon EOS R5,
@@ -529,78 +562,58 @@ CRITICAL RULES:
 
     if (style === 'Monochrome') {
       visualDescription = `
-        MONOCHROME EDITORIAL COMPOSITION
-
-        Dark editorial visual with dominant deep blacks and strong cinematic contrast.
-        High contrast dramatic lighting. Strong shadows, depth and atmosphere.
-        Composition: Minimalist but powerful. Asymmetrical framing preferred.
+        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
+        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
         
-        SUBJECT DIRECTION:
-        Profession: ${params.job}
-        User request: ${refinedQuery}
-        Visual interpretation: Refined, non-literal, premium way. Through environment, tools, materials, objects or human presence. AVOID clichés and cheap decorative elements.
-
-        VISUAL TREATMENT:
-        Material realism. Tactile textures. Natural imperfections visible.
-        Strong film grain. Cinematic quality.
-        
-        ${params.job && params.job.includes('person') || params.userQuery?.includes('person') ? `
-        HUMAN PRESENCE:
-        - Natural skin texture, visible pores
-        - Subtle asymmetry in facial features
-        - Realistic skin tone variation
-        - Small imperfections included
-        - Cinematic film grain
-        - NO beauty filter, NO airbrushing, NO plastic skin look, NO CGI character look
-        ` : `
-        OBJECT/ENVIRONMENT FOCUS:
-        - Realistic material rendering
-        - Natural light falloff and reflections
-        - Organic irregularities
-        - NO 3D mockup style, NO overly smooth digital surfaces
-        `}
-
-        WHAT TO AVOID:
-        - Stock photography look
-        - Artificial perfection
-        - Flat graphic overlays
-        - Text, typography, letters, logos, signage
-        - CGI or 3D render appearance
-        
-        CORE: Pure visual storytelling through light, shadow, depth and realism.
+        Ultra high contrast black and white composition, deep cinematic contrast, dramatic light sculpting, strong chiaroscuro, editorial campaign poster aesthetic.
+        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
+        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
+        Dynamic asymmetrical composition, subject position optimized for balance, not centering.
+        Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction, fine art photography style.
+        Ultra sharp focus on key subject textures: refined material rendering (metal, glass, stone, fabric, organic textures).
+        Large bold typography integrated into the composition featuring the name "${brandName}" — interacting with depth, positioned with realistic perspective.
+        Graphic design elements included: thin geometric lines, subtle frame corners, modern poster grid system.
+        Color: Monochrome black and white with one minimal accent color (${getRandom(accentColors)}) used ONLY in small geometric highlights or thin lines.
+        The image must look like a real photograph, flawless professional quality.
       `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
-        ${refinedQuery}
-        For: ${params.job}. Job: ${params.userQuery}.
+        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
+        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
+        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
         
-        Real person doing their actual job. Not posed. Not perfect. Maybe tired, maybe focused, maybe busy.
-        Natural light - golden hour, window light, work light. Whatever's real.
-        You can see texture - sweat, dust, wrinkles, tired face, real hands doing work.
-        No makeup artist. No perfect styling. No smoke and mirrors.
-        Grain visible. Film-like quality. Authentic moment captured.
-        No professional model vibes. Real human energy.
+        Hero-style cinematic action shot representing ${params.job || 'professional activity'}.
+        Visual theme: ${refinedQuery || 'powerful movement, dramatic perspective, premium atmosphere'}.
+        Powerful mid-movement pose, dramatic lighting, rim lighting, volumetric atmosphere, accent lighting, wide framing.
+        Environmental interaction, dynamic fashion campaign photography aesthetic.
+        ${commonRealism}
+        The image must look like a high-end commercial photograph.
       `.trim();
     } else if (style === 'Minimal Studio') {
       visualDescription = `
-        ${refinedQuery}
-        For: ${params.job}. Show: ${params.userQuery || 'the subject'}.
+        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
+        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
+        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
         
-        Subject in middle, sharp and clear. Dark or simple background - nothing distracting.
-        Clean simple photo. Not fancy. Real light hitting it - you see texture and detail.
-        Empty space around subject. Room to breathe. No cluttered background.
-        Real texture visible - material, skin, whatever it is. Not overly smooth.
-        Just straightforward photo. No tricks. No drama. Just clear and honest.
+        Minimal clean studio shot centered on ${params.job || 'professional item'}.
+        Visual theme: ${refinedQuery || 'natural candid posture, soft lighting, neutral background'}.
+        Negative space composition, editorial minimal fashion aesthetic, soft diffused studio light.
+        ${commonRealism}
+        The image must look like a clean modern professional photograph.
       `.trim();
     } else {
       visualDescription = `
-        ${refinedQuery}
-        For: ${params.job}. Need: ${params.userQuery || 'professional photo'}.
+        USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
+        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        Match the user's description exactly: ${params.userQuery || 'Professional context'}.
+        Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
         
-        Real straightforward photo. Not overproduced. Natural light preferred.
-        Texture and detail you can actually see - real materials, real skin, real context.
-        Professional but honest - not trying too hard to impress.
-        Authentic moment or scene. Keep it genuine.
+        Professional quality representation for ${params.job || 'business'} (${params.function || 'marketing'}).
+        Subject details: ${refinedQuery || 'high-end professional representation'}.
+        Style: ${style}.
+        ${commonRealism}
       `.trim();
     }
 
@@ -609,7 +622,9 @@ CRITICAL RULES:
     );
     this.logger.log(`[generateImage] Refined Query: ${refinedQuery}`);
     this.logger.log(`[generateImage] Style: ${style}`);
-    this.logger.log(`[generateImage] Final Positive Prompt: ${visualDescription}`);
+    this.logger.log(
+      `[generateImage] Final Positive Prompt: ${visualDescription}`,
+    );
     this.logger.log(`[generateImage] Final Negative Prompt: ${negativePrompt}`);
 
     // ------------------------------------------------------------------
@@ -628,14 +643,14 @@ CRITICAL RULES:
     }
 
     let endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
-    let model = 'sd3.5-large-turbo';
+    let model = 'sd3.5-large';
     const outputFormat = 'png';
     let useModelParam = true;
     let useNegativePrompt = true;
 
     if (userPlan === PlanType.ATELIER) {
       endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
-      model = 'sd3.5-large-turbo';
+      model = 'sd3.5-large';
     } else if (userPlan === PlanType.STUDIO || userPlan === PlanType.AGENCE) {
       endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/ultra';
       useModelParam = false; // Ultra doesn't take a model param
@@ -645,6 +660,47 @@ CRITICAL RULES:
       `[generateImage] Using Plan: ${userPlan} -> Endpoint: ${endpoint}`,
     );
 
+    // ------------------------------------------------------------------
+    // Stability AI Style Presets Mapping
+    // ------------------------------------------------------------------
+    const STABILITY_PRESETS = [
+      '3d-model',
+      'analog-film',
+      'anime',
+      'cinematic',
+      'comic-book',
+      'digital-art',
+      'enhance',
+      'fantasy-art',
+      'isometric',
+      'line-art',
+      'low-poly',
+      'modeling-compound',
+      'neon-punk',
+      'origami',
+      'photographic',
+      'pixel-art',
+      'tile-texture',
+    ];
+
+    let stylePreset = 'none';
+    styleLower = style.toLowerCase();
+
+    if (STABILITY_PRESETS.includes(styleLower)) {
+      stylePreset = styleLower;
+    } else if (style === 'Hero Studio') {
+      stylePreset = 'cinematic';
+    } else if (style === 'Minimal Studio' || style === 'Monochrome') {
+      stylePreset = 'photographic';
+    } else if (style === 'None') {
+      stylePreset = 'none';
+    }
+
+    // Allow override from params if specifically requested
+    if (params.style && STABILITY_PRESETS.includes(params.style)) {
+      stylePreset = params.style;
+    }
+
     const formData = new FormData();
     formData.append('prompt', visualDescription);
     if (useNegativePrompt && negativePrompt) {
@@ -652,6 +708,9 @@ CRITICAL RULES:
     }
     formData.append('output_format', outputFormat);
     formData.append('aspect_ratio', '1:1');
+    if (stylePreset && stylePreset !== 'none') {
+      formData.append('style_preset', stylePreset);
+    }
     if (useModelParam) {
       formData.append('model', model);
     }
@@ -718,7 +777,8 @@ CRITICAL RULES:
     if (typeof params === 'string') params = { userQuery: params };
 
     // Get style from either direct param or from workflow answers
-    const selectedStyle = params.style || params.workflowAnswers?.style || 'Minimal Studio';
+    const selectedStyle =
+      params.style || params.workflowAnswers?.style || 'Minimal Studio';
     this.logger.log(`[generateSocial] Selected style: ${selectedStyle}`);
 
     // Only generate image, no text per user request
@@ -868,9 +928,10 @@ CRITICAL RULES:
     console.log('[generateFlyer] Using OpenAI with refined prompts');
 
     // Get style from either direct param or from workflow answers
-    const selectedStyle = params.style || params.workflowAnswers?.style || 'Minimal Studio';
+    const selectedStyle =
+      params.style || params.workflowAnswers?.style || 'Minimal Studio';
     this.logger.log(`[generateFlyer] Selected style: ${selectedStyle}`);
-    
+
     const imageResult = await this.generateImage(
       { ...params, userQuery: flyerPrompt },
       selectedStyle as any,

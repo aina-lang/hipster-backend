@@ -149,7 +149,28 @@ export class AiController {
     @Body()
     body: {
       params: any;
-      style: 'Monochrome' | 'Hero Studio' | 'Minimal Studio';
+      style:
+        | 'Monochrome'
+        | 'Hero Studio'
+        | 'Minimal Studio'
+        | 'None'
+        | '3d-model'
+        | 'analog-film'
+        | 'anime'
+        | 'cinematic'
+        | 'comic-book'
+        | 'digital-art'
+        | 'enhance'
+        | 'fantasy-art'
+        | 'isometric'
+        | 'line-art'
+        | 'low-poly'
+        | 'modeling-compound'
+        | 'neon-punk'
+        | 'origami'
+        | 'photographic'
+        | 'pixel-art'
+        | 'tile-texture';
     },
     @Req() req,
     @UploadedFile() file?: Express.Multer.File,
