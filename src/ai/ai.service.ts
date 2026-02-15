@@ -325,7 +325,7 @@ export class AiService {
   private async callStructure(
     image: Buffer,
     prompt: string,
-    strength: number = 0.7,
+    strength: number = 0,
   ): Promise<Buffer> {
     const formData = new FormData();
     formData.append('image', image, 'source.png');
