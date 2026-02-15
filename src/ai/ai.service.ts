@@ -309,81 +309,15 @@ export class AiService {
     }
   }
 
-  private async buildPrompt(params: any, userId?: number): Promise<string> {
-    const {
-      job,
-      function: funcName,
-      context,
-      userQuery,
-      workflowAnswers,
-      tone,
-      target,
-      instructions = '',
-    } = params;
-
-    let identityContext = '';
-    let userName = 'user';
-
-    if (userId) {
-      const userObj = await this.getAiUserWithProfile(userId);
-      if (userObj) {
-        userName = userObj.name || userObj.email;
-        const parts = [
-          `Name: ${userName}`,
-          userObj.professionalEmail
-            ? `Email: ${userObj.professionalEmail}`
-            : '',
-          userObj.professionalAddress || userObj.city || userObj.postalCode
-            ? `Address: ${userObj.professionalAddress || ''} ${userObj.city || ''} ${userObj.postalCode || ''}`.trim()
-            : '',
-          userObj.professionalPhone
-            ? `Phone: ${userObj.professionalPhone}`
-            : '',
-          userObj.websiteUrl ? `Website: ${userObj.websiteUrl}` : '',
-        ].filter(Boolean);
-        if (parts.length > 0)
-          identityContext = `CONTACT/BRANDING INFO:\n${parts.join('\n')}`;
-      }
-    }
-
-    const cleanFunction = (funcName || 'Content creation')
-      .replace(/\s*\(.*?\)\s*/g, '')
-      .trim();
-    const workflowDetails = workflowAnswers
-      ? Object.entries(workflowAnswers)
-          .map(([k, v]) => `• ${k.replace(/_/g, ' ').toUpperCase()}: ${v}`)
-          .join('\n')
-          .substring(0, 1000)
-      : '';
-
-    const parts = [
-      `Job: ${job || 'Not specified'}`,
-      `Category: ${params.category || 'Not specified'}`,
-      `Content type: ${cleanFunction}`,
-      params.style ? `Visual style: ${params.style}` : '',
-      params.intention ? `Message intention: ${params.intention}` : '',
-      tone ? `Tone of voice: ${tone}` : '',
-      target ? `Target audience: ${target}` : '',
-      workflowDetails ? `Customization details:\n${workflowDetails}` : '',
-      context ? `Additional context: ${context}` : '',
-      userQuery ? `Specific request: ${userQuery}` : '',
-      params.instruction_speciale
-        ? `IMPORTANT NOTE: ${params.instruction_speciale}`
-        : '',
-      instructions ? `Formatting instructions: ${instructions}` : '',
-      identityContext ? `\n${identityContext}` : '',
-    ].filter(Boolean);
-
-    return parts.join('\n\n');
-  }
-
   async generateText(
     params: any,
     type: string,
     userId?: number,
   ): Promise<{ content: string; generationId?: number }> {
     if (typeof params === 'string') params = { userQuery: params };
-    const basePrompt = await this.buildPrompt(params, userId);
+    // Simplified inline prompt construction
+    const { job, userQuery } = params;
+    const basePrompt = `Job: ${job || 'Not specified'}\nRequest: ${userQuery || ''}`;
 
     const systemContext = `
 Identity: Hipster IA
@@ -439,14 +373,7 @@ CRITICAL RULES:
       job?: string;
       function?: string;
       userQuery?: string;
-      context?: string;
-      intention?: string;
-      seed?: number | string;
-      tone?: string;
-      target?: string;
-      category?: string;
       style?: string;
-      workflowAnswers?: Record<string, string>;
     },
     style:
       | 'Monochrome'
@@ -501,20 +428,7 @@ CRITICAL RULES:
     // ------------------------------------------------------------------
     // QUERY REFORMULATION (Enhance user query while preserving all details)
     // ------------------------------------------------------------------
-    const workflowDetails = params.workflowAnswers
-      ? Object.entries(params.workflowAnswers)
-          .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`)
-          .join(', ')
-      : '';
-
-    const userQueryFull = [
-      params.userQuery || '',
-      params.context ? `Context: ${params.context}` : '',
-      params.intention ? `Intention: ${params.intention}` : '',
-      params.tone ? `Tone: ${params.tone}` : '',
-      params.target ? `Target Audience: ${params.target}` : '',
-      workflowDetails ? `Details: ${workflowDetails}` : '',
-    ]
+    const userQueryFull = [params.userQuery || '', params.job || '']
       .filter(Boolean)
       .join(' | ');
 
@@ -563,7 +477,7 @@ CRITICAL RULES:
     if (style === 'Monochrome') {
       visualDescription = `
         USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
-        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        User's job: ${params.job || 'Not specified'}.
         
         Ultra high contrast black and white composition, deep cinematic contrast, dramatic light sculpting, strong chiaroscuro, editorial campaign poster aesthetic.
         Match the user's description exactly: ${params.userQuery || 'Professional context'}.
@@ -579,7 +493,7 @@ CRITICAL RULES:
     } else if (style === 'Hero Studio') {
       visualDescription = `
         USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
-        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        User's job: ${params.job || 'Not specified'}.
         Match the user's description exactly: ${params.userQuery || 'Professional context'}.
         Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
         
@@ -593,7 +507,7 @@ CRITICAL RULES:
     } else if (style === 'Minimal Studio') {
       visualDescription = `
         USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
-        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        User's job: ${params.job || 'Not specified'}.
         Match the user's description exactly: ${params.userQuery || 'Professional context'}.
         Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
         
@@ -606,7 +520,7 @@ CRITICAL RULES:
     } else {
       visualDescription = `
         USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
-        User's job: ${params.job || 'Not specified'}. User's intention: ${params.intention || 'Professional'}.
+        User's job: ${params.job || 'Not specified'}.
         Match the user's description exactly: ${params.userQuery || 'Professional context'}.
         Environmental context preserved: Follow user's location/setting exactly (do not invent or change scenes).
         
@@ -618,7 +532,7 @@ CRITICAL RULES:
     }
 
     this.logger.log(
-      `[generateImage] User Input Summary: userQuery=${params.userQuery}, intention=${params.intention}, context=${params.context}`,
+      `[generateImage] User Input Summary: userQuery=${params.userQuery}, job=${params.job}`,
     );
     this.logger.log(`[generateImage] Refined Query: ${refinedQuery}`);
     this.logger.log(`[generateImage] Style: ${style}`);
@@ -688,15 +602,16 @@ CRITICAL RULES:
 
     if (STABILITY_PRESETS.includes(styleLower)) {
       stylePreset = styleLower;
-    } else if (style === 'Hero Studio') {
-      stylePreset = 'cinematic';
-    } else if (style === 'Minimal Studio' || style === 'Monochrome') {
-      stylePreset = 'photographic';
+    } else if (
+      style === 'Hero Studio' ||
+      style === 'Minimal Studio' ||
+      style === 'Monochrome'
+    ) {
+      stylePreset = 'none'; 
     } else if (style === 'None') {
       stylePreset = 'none';
     }
 
-    // Allow override from params if specifically requested
     if (params.style && STABILITY_PRESETS.includes(params.style)) {
       stylePreset = params.style;
     }
@@ -714,8 +629,6 @@ CRITICAL RULES:
     if (useModelParam) {
       formData.append('model', model);
     }
-
-    if (params['seed']) formData.append('seed', params['seed'].toString());
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000);
@@ -776,9 +689,8 @@ CRITICAL RULES:
   ) {
     if (typeof params === 'string') params = { userQuery: params };
 
-    // Get style from either direct param or from workflow answers
-    const selectedStyle =
-      params.style || params.workflowAnswers?.style || 'Minimal Studio';
+    // Get style
+    const selectedStyle = params.style || 'Minimal Studio';
     this.logger.log(`[generateSocial] Selected style: ${selectedStyle}`);
 
     // Only generate image, no text per user request
@@ -802,7 +714,9 @@ CRITICAL RULES:
     params: any,
     userId?: number,
   ) {
-    const baseContext = await this.buildPrompt(params, userId);
+    // Simplified inline prompt construction
+    const { job, userQuery } = params;
+    const baseContext = `Job: ${job || 'Not specified'}\nRequest: ${userQuery || ''}`;
     const prompt = JSON.stringify({ baseContext, type });
     const { content: resultText, generationId } = await this.generateText(
       prompt,
@@ -927,9 +841,8 @@ CRITICAL RULES:
 
     console.log('[generateFlyer] Using OpenAI with refined prompts');
 
-    // Get style from either direct param or from workflow answers
-    const selectedStyle =
-      params.style || params.workflowAnswers?.style || 'Minimal Studio';
+    // Get style
+    const selectedStyle = params.style || 'Minimal Studio';
     this.logger.log(`[generateFlyer] Selected style: ${selectedStyle}`);
 
     const imageResult = await this.generateImage(
@@ -947,31 +860,17 @@ CRITICAL RULES:
   }
 
   private constructFlyerPrompt(params: any): string {
-    const { userQuery, title, businessName, workflowAnswers } = params;
+    const { userQuery, title, businessName } = params;
     const userText = this.cleanUserPrompt(
       userQuery || title || businessName || 'Promotion',
     );
 
-    const type = workflowAnswers?.type || 'Flyer';
-    const style = params.style || workflowAnswers?.style || 'Modern';
-    const promotion =
-      workflowAnswers?.promotion && workflowAnswers.promotion !== 'Aucune'
-        ? workflowAnswers.promotion
-        : '';
-    const tone = params.intention || workflowAnswers?.tone || 'Professional';
+    const style = params.style || 'Modern';
 
-    // Include other workflow answers specifically
-    const details = Object.entries(workflowAnswers || {})
-      .filter(([key]) => !['type', 'style', 'promotion', 'tone'].includes(key))
-      .map(([key, value]) => `${key}: ${value}`)
-      .join(', ');
-
-    return `A simple pro ${type}, ${style}, well-organized, readable, not cluttered.
+    return `A simple pro Flyer, ${style}, well-organized, readable, not cluttered.
      Main text clearly visible and correct: "${userText}".
-     ${promotion ? `Announcement: ${promotion}.` : ''}
-     ${details ? `Details: ${details}.` : ''}
-     Tone: ${tone}.
-     Use a real ${type} layout (not mockup). Clear colors, good contrast, white space.
+      Tone: Professional.
+     Use a real Flyer layout (not mockup). Clear colors, good contrast, white space.
      Feels like something you'd actually see at a real business.
      Good resolution, readable.`.replace(/\s+/g, ' ');
   }
