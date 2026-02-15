@@ -113,7 +113,10 @@ export class AiController {
   @Roles(Role.AI_USER)
   async generateText(
     @Body()
-    body: { params: any; type: 'blog' | 'social' | 'ad' | 'text' | 'texte' },
+    body: {
+      params: any;
+      type: 'blog' | 'social' | 'ad' | 'text' | 'texte' | 'seo' | 'email';
+    },
     @Req() req,
   ) {
     try {
@@ -363,7 +366,6 @@ export class AiController {
       };
     } catch (error: any) {
       this.logger.error('Flyer generation error:', error);
-      if (error instanceof BadRequestException) throw error;
       throw new HttpException(
         {
           message:
@@ -372,5 +374,35 @@ export class AiController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @ApiOperation({ summary: 'Générer une vidéo via IA' })
+  @Post('video')
+  @Roles(Role.AI_USER)
+  async generateVideo(
+    @Body() body: { params: any; seed?: number },
+    @Req() req,
+  ) {
+    const result = await this.aiService.generateVideo(
+      body.params,
+      req.user.sub,
+      body.seed,
+    );
+    return { data: result };
+  }
+
+  @ApiOperation({ summary: 'Générer un son/audio via IA' })
+  @Post('audio')
+  @Roles(Role.AI_USER)
+  async generateAudio(
+    @Body() body: { params: any; seed?: number },
+    @Req() req,
+  ) {
+    const result = await this.aiService.generateAudio(
+      body.params,
+      req.user.sub,
+      body.seed,
+    );
+    return { data: result };
   }
 }

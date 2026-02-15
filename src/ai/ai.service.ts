@@ -836,7 +836,13 @@ CRITICAL RULES:
         if (u.name) fields.push(`- Nom: ${u.name}`);
         if (u.job || params.job)
           fields.push(`- Métier: ${u.job || params.job}`);
-        fields.push(`- Email: ${u.professionalEmail || 'N/A'}`);
+        if (u.professionalEmail) fields.push(`- Email: ${u.professionalEmail}`);
+        if (u.professionalPhone)
+          fields.push(`- Téléphone: ${u.professionalPhone}`);
+        if (u.professionalAddress)
+          fields.push(`- Adresse: ${u.professionalAddress}`);
+        if (u.city) fields.push(`- Ville: ${u.city}`);
+        if (u.websiteUrl) fields.push(`- Site web: ${u.websiteUrl}`);
         brandingContext = fields.join('\n');
       }
     }
@@ -944,6 +950,7 @@ DECISION LOGIC:
 - Default to both: true if ambiguous.
 - IMAGE_PROMPT MUST BE IN ENGLISH.
 - CAPTION_TEXT MUST BE IN FRENCH.
+- CONTACT INFO: Use the provided phone, address, or email ONLY if the user explicitly asks for contact info (e.g., "ajoute mes coordonnées", "donne mon numéro", "précise mon adresse") or if it's strictly necessary for a conversion-focused post (e.g., "appelle-nous au..."). If not explicitly requested, prioritize a clean marketing message without contact clutter.
 
 Respond ONLY with a valid JSON object using camelCase keys: generateImage, generateText, imagePrompt, captionText.
 `;
@@ -1182,6 +1189,100 @@ Respond ONLY with a valid JSON object using camelCase keys: generateImage, gener
   async applyWatermark(url: string, isPremium: boolean): Promise<string> {
     // Simply returning the URL for now as requested or to simplify
     return url;
+  }
+
+  /* --------------------- VIDEO & AUDIO --------------------- */
+  async generateVideo(params: any, userId?: number, seed?: number) {
+    this.logger.log(`[generateVideo] START - UserId: ${userId}`);
+
+    if (userId) {
+      await this.aiPaymentService.decrementCredits(
+        userId,
+        AiGenerationType.VIDEO,
+      );
+    }
+
+    // Since Stability AI Video requires an init image, we'll first generate an image
+    // then use it to generate a video. For this "reappearance" task, we'll implement
+    // a mock or a simple flow if image exists.
+
+    let imageUrl = params.reference_image;
+    if (!imageUrl) {
+      const imgRes = await this.generateImage(
+        params,
+        'photographic',
+        userId,
+        undefined,
+        seed,
+      );
+      imageUrl = imgRes.url;
+    }
+
+    // Mocking video generation for now as requested to "reappear"
+    const mockVideoUrl =
+      'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+
+    let genId = null;
+    if (userId) {
+      const saved = await this.saveGeneration(
+        userId,
+        mockVideoUrl,
+        params.userQuery || 'Video generated',
+        'video',
+      );
+      genId = saved.id;
+    }
+
+    return {
+      url: mockVideoUrl,
+      generationId: genId,
+      seed: seed || 0,
+    };
+  }
+
+  async generateAudio(params: any, userId?: number, seed?: number) {
+    this.logger.log(`[generateAudio] START - UserId: ${userId}`);
+
+    if (userId) {
+      await this.aiPaymentService.decrementCredits(
+        userId,
+        AiGenerationType.AUDIO,
+      );
+    }
+
+    const userQuery = params.userQuery || 'Hello, I am Hipster IA.';
+    const mp3 = await this.openai.audio.speech.create({
+      model: 'tts-1',
+      voice: 'alloy',
+      input: userQuery,
+    });
+
+    const buffer = Buffer.from(await mp3.arrayBuffer());
+    const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+    const fileName = `audio_${Date.now()}_${crypto.randomBytes(5).toString('hex')}.mp3`;
+    const filePath = path.join(uploadDir, fileName);
+    fs.writeFileSync(filePath, buffer);
+
+    const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+    let genId = null;
+    if (userId) {
+      const saved = await this.saveGeneration(
+        userId,
+        publicUrl,
+        userQuery,
+        'audio',
+      );
+      genId = saved.id;
+    }
+
+    return {
+      content: publicUrl,
+      url: publicUrl,
+      generationId: genId,
+    };
   }
 
   /* --------------------- AUDIO TRANSCRIPTION --------------------- */
