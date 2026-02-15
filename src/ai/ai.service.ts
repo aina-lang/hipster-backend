@@ -609,7 +609,6 @@ CRITICAL RULES:
     // Dynamic Aspect Ratio
     let aspectRatio = '1:1';
 
-    // 2. Fallback to 'function' detection if type not matched
     if (params.function) {
       const funcLower = params.function.toLowerCase();
       if (
