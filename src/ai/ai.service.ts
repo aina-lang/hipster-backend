@@ -254,6 +254,43 @@ export class AiService {
   }
 
   /**
+   * Refines a user's prompt into a single, high-quality descriptive sentence.
+   * STRICTLY NO STYLE ADDITIONS - just better phrasing.
+   */
+  async refineText(text: string): Promise<string> {
+    if (!text) return '';
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a professional editor. 
+            Task: Rewrite the user's input into a SINGLE, CLEAR, high-quality sentence.
+            Rules:
+            1. Keep the original meaning exactly.
+            2. Improve grammar, clarity, and flow.
+            3. Do NOT add any artistic style (like "cinematic", "4k").
+            4. Do NOT add any introduction or quotes.
+            5. Output must be ONE sentence only.`,
+          },
+          {
+            role: 'user',
+            content: text,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 150,
+      });
+      const refined = response.choices[0].message.content || text;
+      return refined.trim().replace(/^"|"$/g, ''); // Remove quotes if present
+    } catch (e) {
+      this.logger.error(`[refineText] Failed: ${e.message}`);
+      return text;
+    }
+  }
+
+  /**
    * Refines a raw user query while PRESERVING all user information.
    * Enhances with aesthetic keywords without losing the original intent.
    * Critical: Every detail the user provides is captured and enriched.
@@ -552,7 +589,7 @@ CRITICAL RULES:
       style === 'Minimal Studio' ||
       style === 'Premium'
     ) {
-      stylePreset = 'none';
+      stylePreset = 'photographic';
     } else if (style === 'None') {
       stylePreset = 'none';
     }

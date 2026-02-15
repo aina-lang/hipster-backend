@@ -140,6 +140,14 @@ export class AiController {
     }
   }
 
+  @ApiOperation({ summary: 'Refiner un text (Amélioration simple)' })
+  @Post('refine-text')
+  @Roles(Role.AI_USER)
+  async refineText(@Body() body: { text: string }, @Req() req) {
+    const refined = await this.aiService.refineText(body.text);
+    return { refined };
+  }
+
   @ApiOperation({ summary: 'Générer une image via IA' })
   @ResponseMessage('Image générée avec succès')
   @Post('image')
