@@ -284,14 +284,16 @@ export class AiService {
     let visualDescription = '';
 
     if (file) {
+      endpoint =
+        'https://api.stability.ai/v2beta/stable-image/control/structure';
       isPostureChange = await this.detectPostureChange(userQuery);
 
+      // More direct prompt for control/structure to ensure style adherence
       visualDescription = `
+        ${userQuery || refinedSubject || 'high quality portrait'}
         STYLE: ${baseStylePrompt}
-        IDENTITY PRESERVATION: Keep face and core features identical to reference.
-        MODIFICATIONS: ${userQuery}.
-        ${isPostureChange ? 'POSITION: Change posture/position as requested.' : 'POSTURE: Maintain original posture exactly.'}
-        QUALITY: Professional photography, 8k, authentic skin textures.
+        IDENTITY: Keep the person's face and features exactly as in the reference image.
+        QUALITY: professional photography, ultra-realistic, 8k.
         NEGATIVE: ${this.NEGATIVE_PROMPT}
       `.trim();
     } else {
@@ -316,13 +318,14 @@ export class AiService {
     const formData = new FormData();
     formData.append('prompt', visualDescription);
     formData.append('output_format', 'png');
-    if (stylePreset) {
-      formData.append('style_preset', stylePreset);
-    }
 
     if (file) {
       formData.append('image', file.buffer, file.originalname);
-      formData.append('strength', isPostureChange ? 0.6 : 0.45);
+      // For control/structure, we use control_strength (0 to 1)
+      // Lower strength = more freedom for the prompt (e.g. for posture change)
+      formData.append('control_strength', isPostureChange ? '0.5' : '0.7');
+    } else if (stylePreset) {
+      formData.append('style_preset', stylePreset);
     }
 
     if (seed) formData.append('seed', seed);
