@@ -362,6 +362,7 @@ CRITICAL RULES:
       userQuery?: string;
       reference_image?: string;
       style?: string;
+      type?: string;
     },
     style:
       | 'Premium'
@@ -604,7 +605,28 @@ CRITICAL RULES:
       formData.append('negative_prompt', negativePrompt);
     }
     formData.append('output_format', outputFormat);
-    formData.append('aspect_ratio', '1:1');
+
+    // Dynamic Aspect Ratio
+    let aspectRatio = '1:1';
+
+    // 2. Fallback to 'function' detection if type not matched
+    if (params.function) {
+      const funcLower = params.function.toLowerCase();
+      if (
+        funcLower.includes('publicitaire') ||
+        funcLower.includes('advertising')
+      ) {
+        aspectRatio = '4:5';
+      } else if (
+        funcLower.includes('réseaux') ||
+        funcLower.includes('social') ||
+        funcLower.includes('story')
+      ) {
+        aspectRatio = '9:16';
+      }
+    }
+    this.logger.log(`[generateImage] Aspect Ratio: ${aspectRatio}`);
+    formData.append('aspect_ratio', aspectRatio);
     if (stylePreset && stylePreset !== 'none') {
       formData.append('style_preset', stylePreset);
     }
