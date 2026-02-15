@@ -450,23 +450,7 @@ CRITICAL RULES:
       plastic skin, smooth skin, neon, 3D render
     `.trim();
 
-    let styleLower = style.toLowerCase();
-    const isArtistic = [
-      'anime',
-      'comic-book',
-      'digital-art',
-      'fantasy-art',
-      'line-art',
-      'low-poly',
-      'pixel-art',
-      'origami',
-      'modeling-compound',
-      '3d-model',
-    ].includes(styleLower);
-
-    const commonRealism = isArtistic
-      ? `cinematic lighting, high dynamic range, fine details, editorial quality`
-      : `
+    const commonRealism = `
       magical realism photo portrait, candid shot, soft natural light,
       ultra realistic photography, real human skin texture, visible pores,
       natural skin imperfections, cinematic lighting, shot on Canon EOS R5,
@@ -598,7 +582,7 @@ CRITICAL RULES:
     ];
 
     let stylePreset = 'none';
-    styleLower = style.toLowerCase();
+    const styleLower = style.toLowerCase();
 
     if (STABILITY_PRESETS.includes(styleLower)) {
       stylePreset = styleLower;
@@ -607,7 +591,7 @@ CRITICAL RULES:
       style === 'Minimal Studio' ||
       style === 'Monochrome'
     ) {
-      stylePreset = 'none'; 
+      stylePreset = 'none';
     } else if (style === 'None') {
       stylePreset = 'none';
     }
