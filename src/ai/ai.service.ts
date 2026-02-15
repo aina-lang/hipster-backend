@@ -394,6 +394,13 @@ export class AiService {
         model: 'gpt-4o-mini',
         messages: [
           {
+            role: 'system',
+            content: `You are a professional ${type} content writer. 
+            CRITICAL FORMATTING RULE: Never use markdown formatting (no **, __, ##, italic, bold, etc.). 
+            Write plain text only. 
+            For social media posts, include relevant hashtags at the end.`,
+          },
+          {
             role: 'user',
             content: `Type: ${type}\nParams: ${JSON.stringify(params)}`,
           },
@@ -520,17 +527,18 @@ export class AiService {
               2. The imagePrompt should focus on the Job/Profession (e.g., plumber, chef, etc.).
               3. The captionText should be about the Job/Profession BUT MUST INCLUDE the user's name/branding for contact/credibility.
               4. If a specific User Query is provided, incorporate it into the content about the Job/Profession.
+              5. FORMATTING: Never use markdown formatting (no **, __, ##, etc.) in captionText. Use plain text only. DO include relevant hashtags at the end for social media.
               
               Example: If Job is "Plombier" and Branding is "Aina Mercia - Coiffure":
               - imagePrompt: "A professional plumber fixing pipes, tools and equipment"
-              - captionText: "Besoin d'un plombier qualifié ? Contactez Aina Mercia pour des services de plomberie professionnels !"
+              - captionText: "Besoin d'un plombier qualifié ? Contactez Aina Mercia pour des services de plomberie professionnels ! #Plomberie #Services #Professionnel"
               
               Respond STRICTLY in JSON with:
               {
                 "generateImage": boolean,
                 "generateText": boolean,
                 "imagePrompt": "visual description for image generation (in English), focused on the Job/Profession",
-                "captionText": "social media post text (in French), about the Job/Profession but mentioning the user's name/branding"
+                "captionText": "social media post text (in French), plain text with hashtags, about the Job/Profession but mentioning the user's name/branding"
               }
             `.trim(),
           },
