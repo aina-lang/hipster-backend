@@ -40,7 +40,11 @@ export class AiService {
     query: string,
     job: string,
     styleName: string,
-  ): Promise<{ tool: 'REPLACE' | 'RECOLOR'; search: string; prompt: string }> {
+  ): Promise<{
+    tool: 'REPLACE' | 'RECOLOR' | 'OUTPAINT' | 'STRUCTURE';
+    search: string;
+    prompt: string;
+  }> {
     const isCustomStyle = ['Premium', 'Hero Studio', 'Minimal Studio'].includes(
       styleName,
     );
@@ -61,18 +65,20 @@ export class AiService {
             role: 'system',
             content: `
               You are an AI image editing assistant. 
-              The user wants to keep their EXACT face from the original photo but change everything else.
+              The user wants to keep their identity but change other parts.
               
-              Based on the user's request and the selected STYLE (${styleName}), determine:
+              Based on the user's request and style (${styleName}), determine the best tool:
               1. "tool": 
-                 - Use "RECOLOR" ONLY if the request is strictly about changing a color (e.g. "change my shirt to red", "blue hair").
-                 - Use "REPLACE" for everything else (backgrounds, new clothes, adding objects, style changes).
-              2. "search": What parts should be IDENTIFIED?
-                 - For "REPLACE" + Style: include "background, environment, and clothes".
-                 - NEVER search for "face", "eyes", "nose" or "mouth". Stay away from the face to preserve identity.
+                 - "RECOLOR": strictly color changes (e.g. "red shirt").
+                 - "OUTPAINT": expand, zoom out, add content on sides.
+                 - "STRUCTURE": dramatic scene recreation, pose changes, keeping composition but changing everything else.
+                 - "REPLACE": target specific areas (background, clothes) while keeping other parts 100% original.
+              2. "search": What parts should be IDENTIFIED (for REPLACE or RECOLOR)?
+                 - For "REPLACE": include "background, environment, and clothes".
+                 - NEVER search for "face".
               3. "prompt": A detailed visual description of the change (in English).
               
-              Respond STRICTLY in JSON: {"tool": "REPLACE" | "RECOLOR", "search": string, "prompt": string}
+              Respond STRICTLY in JSON: {"tool": "REPLACE" | "RECOLOR" | "OUTPAINT" | "STRUCTURE", "search": string, "prompt": string}
             `.trim(),
           },
           {
@@ -84,8 +90,11 @@ export class AiService {
       });
 
       const result = JSON.parse(response.choices[0]?.message?.content || '{}');
+      const validTools = ['REPLACE', 'RECOLOR', 'OUTPAINT', 'STRUCTURE'];
       return {
-        tool: result.tool || 'REPLACE',
+        tool: (validTools.includes(result.tool)
+          ? result.tool
+          : 'REPLACE') as any,
         search: result.search || 'background and clothes',
         prompt: result.prompt || query,
       };
@@ -337,12 +346,20 @@ export class AiService {
     image: Buffer,
     prompt: string,
     strength: number = 0.85,
+    seed?: number,
+    negativePrompt?: string,
+    stylePreset?: string,
   ): Promise<Buffer> {
     const formData = new FormData();
     formData.append('image', image, 'source.png');
     formData.append('prompt', prompt);
     formData.append('control_strength', strength.toString());
     formData.append('output_format', 'png');
+
+    if (seed) formData.append('seed', seed.toString());
+    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (stylePreset) formData.append('style_preset', stylePreset);
+
     return this.callStabilityApi('stable-image/control/structure', formData);
   }
 
@@ -427,6 +444,29 @@ export class AiService {
     );
   }
 
+  private async callOutpaint(
+    image: Buffer,
+    prompt: string,
+    left: number = 0,
+    right: number = 0,
+    top: number = 0,
+    bottom: number = 0,
+    seed?: number,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    if (prompt) formData.append('prompt', prompt);
+    if (left > 0) formData.append('left', left.toString());
+    if (right > 0) formData.append('right', right.toString());
+    if (top > 0) formData.append('top', top.toString());
+    if (bottom > 0) formData.append('bottom', bottom.toString());
+    formData.append('output_format', 'png');
+
+    if (seed) formData.append('seed', seed.toString());
+
+    return this.callStabilityApi('stable-image/edit/outpaint', formData);
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -495,6 +535,29 @@ export class AiService {
             finalPrompt,
             edit.search,
             seed,
+          );
+        } else if (edit.tool === 'OUTPAINT') {
+          this.logger.log('[generateImage] Executing OUTPAINT expansion');
+          finalBuffer = await this.callOutpaint(
+            file.buffer,
+            finalPrompt,
+            128,
+            128,
+            0,
+            0,
+            seed,
+          );
+        } else if (edit.tool === 'STRUCTURE') {
+          this.logger.log(
+            '[generateImage] Executing STRUCTURE scene recreation',
+          );
+          finalBuffer = await this.callStructure(
+            file.buffer,
+            finalPrompt,
+            0.85,
+            seed,
+            this.NEGATIVE_PROMPT,
+            stylePreset,
           );
         } else {
           finalBuffer = await this.callSearchAndReplace(
