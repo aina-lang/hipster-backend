@@ -480,20 +480,14 @@ export class AiService {
       );
     }
 
-    let textRes: any = { content: '' };
-    if (orchestration.generateText) {
-      textRes = await this.generateText(
-        { prompt: orchestration.captionText || params.userQuery },
-        'social',
-        userId,
-      );
-    }
+    // Use the orchestrator's captionText directly instead of regenerating it
+    const textContent = orchestration.captionText || '';
 
     const result = {
       image: imageRes.url || '',
-      text: textRes.content || '',
+      text: textContent,
       orchestration,
-      generationId: imageRes.generationId || textRes.generationId,
+      generationId: imageRes.generationId,
     };
 
     this.logger.log(
