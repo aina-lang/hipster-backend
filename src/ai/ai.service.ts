@@ -448,7 +448,19 @@ export class AiService {
     if (userId) {
       const u = await this.getAiUserWithProfile(userId);
       if (u) {
+        // Build comprehensive branding context with contact info
+        const contactInfo = [];
+        if (u.professionalPhone)
+          contactInfo.push(`Tel: ${u.professionalPhone}`);
+        if (u.email) contactInfo.push(`Email: ${u.email}`);
+        if (u.professionalAddress)
+          contactInfo.push(`Adresse: ${u.professionalAddress}`);
+
         brandingContext = `Nom: ${u.name}, Job: ${u.job}`;
+        if (contactInfo.length > 0) {
+          brandingContext += `, ${contactInfo.join(', ')}`;
+        }
+
         // If no job provided in params, use user's profile job
         if (!effectiveJob) {
           effectiveJob = u.job;
@@ -520,12 +532,13 @@ export class AiService {
               1. The MAIN SUBJECT must be about the Job/Profession provided, NOT about the user's personal branding business.
               2. The imagePrompt should focus on the Job/Profession (e.g., plumber, chef, etc.).
               3. The captionText should be about the Job/Profession BUT MUST INCLUDE the user's name/branding for contact/credibility.
-              4. If a specific User Query is provided, incorporate it into the content about the Job/Profession.
-              5. FORMATTING: Never use markdown formatting (no **, __, ##, etc.) in captionText. Use plain text only. DO include relevant hashtags at the end for social media.
+              4. CONTACT INFO: If the branding includes contact information (Tel, Email, Adresse), include them in the caption text for easy contact.
+              5. If a specific User Query is provided, incorporate it into the content about the Job/Profession.
+              6. FORMATTING: Never use markdown formatting (no **, __, ##, etc.) in captionText. Use plain text only. DO include relevant hashtags at the end for social media.
               
-              Example: If Job is "Plombier" and Branding is "Aina Mercia - Coiffure":
+              Example: If Job is "Plombier" and Branding is "Nom: Aina Mercia, Job: Coiffure, Tel: 0123456789, Email: contact@example.com":
               - imagePrompt: "A professional plumber fixing pipes, tools and equipment"
-              - captionText: "Besoin d'un plombier qualifié ? Contactez Aina Mercia pour des services de plomberie professionnels ! #Plomberie #Services #Professionnel"
+              - captionText: "Vous cherchez un plombier qualifié ? Contactez Aina Mercia au 0123456789 ou par email à contact@example.com pour des services de plomberie professionnels ! #Plombier #Services #Professionnel"
               
               Respond STRICTLY in JSON with:
               {
