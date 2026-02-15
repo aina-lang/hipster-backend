@@ -36,9 +36,13 @@ export class AiService {
   }
 
   /* --------------------- INTENT DETECTION --------------------- */
-  private async detectPipelineIntent(query: string): Promise<string> {
-    if (!query || query.trim().length === 0) return 'GENERIC';
-    this.logger.log(`[detectPipelineIntent] Parsing intent for: "${query}"`);
+  private async detectSearchReplacePrompts(
+    query: string,
+    job: string,
+  ): Promise<{ search: string; prompt: string }> {
+    if (!query || query.trim().length === 0) {
+      return { search: 'background', prompt: `professional ${job} background` };
+    }
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -47,43 +51,29 @@ export class AiService {
           {
             role: 'system',
             content: `
-              You are an AI image pipeline selector.
-              Classify the user's request into one of these categories:
+              You are an AI image editing assistant. 
+              Based on the user's request, determine:
+              1. "search": What specific part of the image should be IDENTIFIED and REPLACED? (e.g., "background", "clothes", "hair", "accessories"). NEVER search for "face" or "person" if requested to keep the same person.
+              2. "prompt": What should it be replaced with? (in English).
               
-              1. POSE_CLOTHES: If user wants to change body posture, physical position, or specific pieces of clothing (e.g., "sitting", "walking", "change my shirt to red").
-              2. BACKGROUND: If user wants to change the environment, decor, background, or location (e.g., "put me on a beach", "in a forest", "change background to office").
-              3. OBJECT_ADD: If user wants to add a specific object to the scene (e.g., "add glasses", "with a watch", "holding a coffee").
-              4. STYLE_CHANGE: If user wants purely artistic or aesthetic changes without modifying the content (e.g., "pencil sketch", "oil painting", "futuristic neon style").
-              5. GENERIC: If the request doesn't fit or is vague.
-              
-              Respond ONLY with the category name.
+              Respond STRICTLY in JSON: {"search": string, "prompt": string}
             `.trim(),
           },
           {
             role: 'user',
-            content: `User Request: "${query}"`,
+            content: `Job: ${job}, Request: "${query}"`,
           },
         ],
-        temperature: 0,
-        max_tokens: 15,
+        response_format: { type: 'json_object' },
       });
 
-      const result = response.choices[0]?.message?.content
-        ?.trim()
-        .toUpperCase();
-      this.logger.log(`[detectPipelineIntent] Result: ${result}`);
-
-      const valid = [
-        'POSE_CLOTHES',
-        'BACKGROUND',
-        'OBJECT_ADD',
-        'STYLE_CHANGE',
-        'GENERIC',
-      ];
-      return valid.includes(result) ? result : 'GENERIC';
+      const result = JSON.parse(response.choices[0]?.message?.content || '{}');
+      return {
+        search: result.search || 'background',
+        prompt: result.prompt || query,
+      };
     } catch (error) {
-      this.logger.error('[detectPipelineIntent] Error:', error);
-      return 'GENERIC';
+      return { search: 'background', prompt: query };
     }
   }
 
@@ -432,65 +422,33 @@ export class AiService {
       let finalDescription = '';
 
       if (file) {
-        // --- IMAGE-GUIDED GENERATION (STRUCTURE vs STYLE) ---
+        // --- DIRECT SEARCH AND REPLACE (MAX IDENTITY FIDELITY) ---
         const orchestratorPrompt = (params.orchestratorPrompt || '').trim();
         const intentSource = userQuery || orchestratorPrompt;
-        const intent = await this.detectPipelineIntent(intentSource);
-        this.logger.log(`[generateImage] Tool selection - Intent: ${intent}`);
 
-        const visualSubject =
-          orchestratorPrompt ||
-          userQuery ||
-          refinedSubject ||
-          'high quality portrait';
+        this.logger.log(
+          `[generateImage] Using Direct Search and Replace for maximum fidelity (Source: ${intentSource.substring(0, 30)}...)`,
+        );
 
-        if (intent === 'STYLE_CHANGE') {
-          this.logger.log(
-            '[generateImage] Using STYLE endpoint for aesthetic transfer',
-          );
-          const stylePrompt = `${visualSubject}, STYLE: ${baseStylePrompt}, artistic, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
-          finalDescription = stylePrompt;
-          finalBuffer = await this.callStyle(file.buffer, stylePrompt, 0.7);
-        } else if (intent === 'BACKGROUND') {
-          this.logger.log(
-            '[generateImage] Using Search and Replace for BACKGROUND (max fidelity)',
-          );
-          const bgPrompt = `${userQuery || 'professional background'}, 8k, photographic. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
-          finalDescription = `SEARCH AND REPLACE (BG): ${bgPrompt}`;
-          finalBuffer = await this.callSearchAndReplace(
-            file.buffer,
-            bgPrompt,
-            'background',
-            3, // Default grow_mask
-            seed,
-            stylePreset,
-          );
-        } else if (intent === 'OBJECT_ADD') {
-          this.logger.log(
-            '[generateImage] Using Search and Replace for OBJECT_ADD',
-          );
-          const objPrompt = `${userQuery}, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
-          finalDescription = `SEARCH AND REPLACE (OBJ): ${objPrompt}`;
-          finalBuffer = await this.callSearchAndReplace(
-            file.buffer,
-            objPrompt,
-            'background and environment',
-            3,
-            seed,
-            stylePreset,
-          );
-        } else {
-          this.logger.log(
-            '[generateImage] Using STRUCTURE endpoint for pose change',
-          );
-          const structurePrompt = `ABSOLUTELY NO CHANGES TO THE FACE. Preserve the exact facial identity, gender, and features of the person in the reference image. ${visualSubject}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
-          finalDescription = structurePrompt;
-          finalBuffer = await this.callStructure(
-            file.buffer,
-            structurePrompt,
-            0.95,
-          );
-        }
+        const sr = await this.detectSearchReplacePrompts(
+          intentSource,
+          refinedSubject || params.job || '',
+        );
+        this.logger.log(
+          `[generateImage] Search: "${sr.search}", Prompt: "${sr.prompt}"`,
+        );
+
+        const finalPrompt = `${sr.prompt}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+        finalDescription = `SEARCH_AND_REPLACE | Search: ${sr.search} | ${finalPrompt}`;
+
+        finalBuffer = await this.callSearchAndReplace(
+          file.buffer,
+          finalPrompt,
+          sr.search,
+          5, // Slightly larger grow_mask for better blending
+          seed,
+          stylePreset,
+        );
       } else {
         // --- STANDARD TEXT-TO-IMAGE (ULTRA) ---
         const visualDescription = userQuery
