@@ -204,7 +204,7 @@ export class AiService {
         Ultra high contrast black and white photography of ${subject}, editorial poster style, 
         ${lighting}, ${angle}, dramatic shadows, sharp facial details, subject centered, ${bg}.
         Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
-        Color Instruction: The image is 99% black and white. Add a single, extremely subtle splash of ${accent} ONLY on one or two or more small geometric shapes or thin lines.
+        Color Instruction: The image is 99% black and white. Add a single, extremely subtle splash of ${accent} ONLY on one or two or more small geometric object .
         Selective color pop aesthetic. High fashion magazine, luxury campaign, premium branding, sharp focus, ultra clean.
         No watermark, no text, no letters, no typography, no words, no logo. Monochrome base with tiny colored accent.
       `.trim();
