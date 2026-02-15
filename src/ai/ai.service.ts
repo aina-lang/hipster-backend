@@ -118,17 +118,11 @@ export class AiService {
   private readonly NEGATIVE_PROMPT = `
     No smooth plastic skin, no neon, no 3d render, no generic AI artifacts, 
     no distorted faces, no extra fingers, no blurry background unless intentional.
+    CRITICAL: No text, no letters, no typography, no words, no watermarks, no captions, no labels in the image.
   `.trim();
 
   private async refineSubject(job: string): Promise<string> {
-    if (!job) return '';
-    const cleanJob = job.replace(/^(autre|other)[:\s-]*/i, '').trim();
-    if (
-      !cleanJob ||
-      cleanJob.toLowerCase() === 'autre' ||
-      cleanJob.toLowerCase() === 'other'
-    )
-      return '';
+    if (!job || job.trim().length === 0) return '';
 
     try {
       const resp = await this.openai.chat.completions.create({
@@ -141,17 +135,17 @@ export class AiService {
             Example: "Développeur fullstack" -> "software engineer", "Chef de cuisine" -> "restaurant chef", "Un gars qui fait du crossfit" -> "crossfit athlete".
             Respond ONLY with the refined subject without any punctuation.`,
           },
-          { role: 'user', content: cleanJob },
+          { role: 'user', content: job },
         ],
         temperature: 0.3,
         max_tokens: 15,
       });
-      const refined = resp.choices[0]?.message?.content?.trim() || cleanJob;
+      const refined = resp.choices[0]?.message?.content?.trim() || job;
       this.logger.log(`[refineSubject] Result: "${refined}"`);
       return refined;
     } catch (e) {
       this.logger.error(`[refineSubject] Error: ${e.message}`);
-      return cleanJob;
+      return job;
     }
   }
 
@@ -164,7 +158,6 @@ export class AiService {
 
     // Premium Style with randomized pools
     if (styleName === 'Premium') {
-  
       const accentColors = [
         'deep red',
         'burnt orange',
@@ -202,11 +195,10 @@ export class AiService {
       return `
         Ultra high contrast black and white portrait of ${subject}, editorial poster style, 
         ${lighting}, ${angle}, dramatic shadows, sharp facial details, subject centered, ${bg}.
-        Large bold typography integrated into the composition (letters behind or in front of the subject, partially masking the face or body).
         Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
         Add one accent color only (${accent}) used in small geometric shapes or highlights.
         High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting.
-        No watermark, no random text, no logo. Monochrome base.
+        No watermark, no text, no letters, no typography, no words, no logo. Monochrome base.
       `.trim();
     }
 
