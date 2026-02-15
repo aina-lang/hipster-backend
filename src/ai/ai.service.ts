@@ -409,59 +409,20 @@ export class AiService {
       let finalDescription = '';
 
       if (file) {
-        // --- INTELLIGENT PIPELINE FOR IMAGE-GUIDED GENERATION ---
-        // CRITICAL: Detect intent using the ORIGINAL query if available,
-        // fallback to orchestrator prompt if original is empty.
-        const intentSource = userQuery || orchestratorPrompt;
-        const intent = await this.detectPipelineIntent(intentSource);
-        this.logger.log(
-          `[generateImage] Pipeline Intent: ${intent} (Source: "${intentSource.substring(0, 50)}...")`,
-        );
-
-        // Use the orchestrator prompt for the visual details, or the subject refinement if missing
+        // --- SIMPLE IMAGE-GUIDED GENERATION (STRUCTURE) ---
         const visualSubject =
-          orchestratorPrompt || refinedSubject || 'high quality portrait';
+          orchestratorPrompt ||
+          userQuery ||
+          refinedSubject ||
+          'high quality portrait';
         const structurePrompt = `${visualSubject}, STYLE: ${baseStylePrompt}, ultra-realistic, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
         finalDescription = structurePrompt;
 
-        let currentBuffer = await this.callStructure(
+        finalBuffer = await this.callStructure(
           file.buffer,
           structurePrompt,
-          intent === 'POSE_CLOTHES' ? 0.5 : 0.75,
+          0.65, // Balanced strength
         );
-
-        // Step 2 & 3: Specialized Processing based on Intent
-        if (intent === 'BACKGROUND') {
-          this.logger.log(
-            '[generateImage] Pipeline: Structure -> ReplaceBackground -> Relight',
-          );
-          // Replace Background
-          currentBuffer = await this.callReplaceBackground(
-            currentBuffer,
-            userQuery,
-          );
-          // Relight to match the new background
-          currentBuffer = await this.callRelight(
-            currentBuffer,
-            `Match lighting to ${userQuery}`,
-          );
-        } else if (intent === 'OBJECT_ADD') {
-          this.logger.log(
-            '[generateImage] Pipeline: Structure -> SearchAndReplace',
-          );
-          // Identify what to replace or where to add.
-          // Search and replace works best when you specify what to find,
-          // but if it's "add glasses", we might need to search for "eyes" or "face".
-          // For simplicity, we use userQuery as prompt and "person face" as search area if adding accessories.
-          const isAccessory = /glasses|watch|hat|jewelry|tie/i.test(userQuery);
-          currentBuffer = await this.callSearchAndReplace(
-            currentBuffer,
-            userQuery,
-            isAccessory ? 'face and body' : 'background',
-          );
-        }
-
-        finalBuffer = currentBuffer;
       } else {
         // --- STANDARD TEXT-TO-IMAGE (ULTRA) ---
         const visualDescription = userQuery
@@ -675,25 +636,23 @@ export class AiService {
               Decide if an image and/or text caption is needed for the given query.
               Most social posts BENEFIT from an image. 
               
-               CRITICAL RULES:
+              CRITICAL RULES:
               1. The MAIN SUBJECT must be about the Job/Profession provided.
-              2. If an Image File or User Query is provided, the imagePrompt MUST include any requested ACTIONS, POSES, or ENTOURAGE (e.g., "photographing an apple", "sitting on a chair", "with a group of people").
-              3. The imagePrompt should focus on the Job/Profession (e.g., plumber, chef, etc.).
-              4. The captionText should be about the Job/Profession BUT MUST INCLUDE the user's name/branding for contact/credibility.
-              5. CONTACT INFO: If the branding includes contact information (Tel, Email, Adresse), include them in the caption text for easy contact.
-              6. If a specific User Query is provided, incorporate it into the content about the Job/Profession.
-              7. FORMATTING: Never use markdown formatting (no **, __, ##, etc.) in captionText. Use plain text only. DO include relevant hashtags at the end for social media.
+              2. The imagePrompt should focus on the Job/Profession (e.g., plumber, chef, etc.).
+              3. The captionText should be about the Job/Profession BUT MUST INCLUDE the user's name/branding for contact/credibility.
+              4. CONTACT INFO: If the branding includes contact information (Tel, Email, Adresse), include them in the caption text for easy contact.
+              5. If a specific User Query is provided, incorporate it into the content about the Job/Profession.
+              6. FORMATTING: Never use markdown formatting (no **, __, ##, etc.) in captionText. Use plain text only. DO include relevant hashtags at the end for social media.
               
-              Example: If Job is "Photographe" and Query is "Moi qui photographe une pomme sur une chaise":
-              - imagePrompt: "A professional photographer photographing a red apple on a minimalist wooden chair in a studio"
-              - captionText: "Capturer l'essence de l'ordinaire... #Photographie #Art"
+              Example: If Job is "Plombier" and Branding is "Nom: Aina Mercia, Job: Coiffure, Tel: 0123456789, Email: contact@example.com":
+              - imagePrompt: "A professional plumber fixing pipes, tools and equipment"
+              - captionText: "Vous cherchez un plombier qualifié ? Contactez Aina Mercia au 0123456789 ou par email à contact@example.com pour des services de plomberie professionnels ! #Plombier #Services #Professionnel"
               
               Respond STRICTLY in JSON with:
               {
                 "generateImage": boolean,
                 "generateText": boolean,
-                "intent": "POSE_CLOTHES" | "BACKGROUND" | "OBJECT_ADD" | "STYLE_CHANGE" | "GENERIC",
-                "imagePrompt": "visual description for image generation (in English), INCLUDING the requested action/pose",
+                "imagePrompt": "visual description for image generation (in English)",
                 "captionText": "social media post text (in French), plain text with hashtags"
               }
             `.trim(),
