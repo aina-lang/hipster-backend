@@ -516,17 +516,21 @@ export class AiService {
               Most social posts BENEFIT from an image. 
               
               CRITICAL RULES:
-              1. The content MUST be about the Job/Profession provided, NOT about the user's personal branding.
-              2. If a specific User Query is provided, incorporate it into the content about the Job/Profession.
-              3. The User Branding is ONLY for context/tone, NOT the subject matter.
-              4. Generate content that promotes or showcases the Job/Profession.
+              1. The MAIN SUBJECT must be about the Job/Profession provided, NOT about the user's personal branding business.
+              2. The imagePrompt should focus on the Job/Profession (e.g., plumber, chef, etc.).
+              3. The captionText should be about the Job/Profession BUT MUST INCLUDE the user's name/branding for contact/credibility.
+              4. If a specific User Query is provided, incorporate it into the content about the Job/Profession.
+              
+              Example: If Job is "Plombier" and Branding is "Aina Mercia - Coiffure":
+              - imagePrompt: "A professional plumber fixing pipes, tools and equipment"
+              - captionText: "Besoin d'un plombier qualifié ? Contactez Aina Mercia pour des services de plomberie professionnels !"
               
               Respond STRICTLY in JSON with:
               {
                 "generateImage": boolean,
                 "generateText": boolean,
                 "imagePrompt": "visual description for image generation (in English), focused on the Job/Profession",
-                "captionText": "the actual social media post text (in French by default), focused on the Job/Profession"
+                "captionText": "social media post text (in French), about the Job/Profession but mentioning the user's name/branding"
               }
             `.trim(),
           },
