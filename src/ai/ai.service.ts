@@ -744,6 +744,25 @@ CRITICAL RULES:
       `.trim();
     }
 
+    // ------------------------------------------------------------------
+    // FACE PRESERVATION & CUSTOM QUERY PRIORITY (if image provided)
+    // ------------------------------------------------------------------
+    if (file) {
+      visualDescription = `
+        CORE REQUIREMENT: Maintain the main subject's features, facial identity, and structural resemblance exactly as in the reference image.
+        
+        USER COMMAND: ${params.userQuery || 'Professional enhancement'}.
+        
+        STRICT RULES:
+        1. DO NOT change the person's face or identity. 
+        2. APPLY these modifications while keeping the person: ${params.userQuery || 'High-end professional lighting and background'}.
+        3. Visual style: ${style}.
+        
+        The final image must look like a real, authentic photograph of the same person from the reference image, but with the requested changes applied.
+        ${commonRealism}
+      `.trim();
+    }
+
     this.logger.log(
       `[generateImage] User Input Summary: userQuery=${params.userQuery}, job=${params.job}`,
     );
@@ -771,10 +790,10 @@ CRITICAL RULES:
 
     let endpoint =
       'https://api.stability.ai/v2beta/stable-image/generate/ultra';
-    // if (file) {
-    //   endpoint =
-    //     'https://api.stability.ai/v2beta/stable-image/generate/image-to-image';
-    // }
+    if (file) {
+      endpoint =
+        'https://api.stability.ai/v2beta/stable-image/control/structure';
+    }
     const outputFormat = 'png';
     let useModelParam = !file; // Ultra doesn't take model, but structure might
     let useNegativePrompt = !file; // Control APIs usually don't take negative_prompt the same way
@@ -868,10 +887,16 @@ CRITICAL RULES:
         new Blob([file.buffer as any], { type: file.mimetype }),
         file.originalname,
       );
-      // Image-to-image strength (0.0 to 1.0)
-      // 0 = original, 1 = totally new
-      const strengthVal = params.strength !== undefined ? params.strength : 0.5;
-      formData.append('strength', strengthVal.toString());
+
+      if (endpoint.includes('control/structure')) {
+        // High fidelity for structure (face/Identity)
+        formData.append('control_strength', '0.8');
+      } else {
+        // Image-to-image fallback
+        const strengthVal =
+          params.strength !== undefined ? params.strength : 0.4;
+        formData.append('strength', strengthVal.toString());
+      }
     }
 
     const controller = new AbortController();
