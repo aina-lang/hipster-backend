@@ -440,7 +440,12 @@ CRITICAL RULES:
       .filter(Boolean)
       .join(' | ');
 
-    const refinedQuery = userQueryFull;
+    let refinedQuery = userQueryFull;
+
+    // If user query is empty, provide a descriptive base for the chosen job
+    if (!params.userQuery?.trim() && params.job) {
+      refinedQuery = `A professional high-end cinematic scene representing the activity of ${params.job}. The image should showcase the professional environment, authentic tools of the trade, and a premium business atmosphere, highly detailed.`;
+    }
 
     // ------------------------------------------------------------------
     // VISUAL DESCRIPTION GENERATION (Master Prompts)
