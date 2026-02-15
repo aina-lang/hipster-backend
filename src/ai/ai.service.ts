@@ -438,17 +438,19 @@ CRITICAL RULES:
        out of frame, worst quality, jpeg artifacts, deformed, disfigured, 
        gross proportions, malformed limbs, missing arms, missing legs, 
        extra arms, extra legs, fused fingers, too many fingers, long neck, 
-       plastic skin, smooth skin, neon, overly polished, denoised
+       plastic skin, smooth skin, neon, overly polished, denoised,
+       grain, noise, blurry, hazy, low resolution, pixelated
     `.trim();
 
     const commonRealism = `
-      magical realism photo portrait, candid shot, soft natural light,
-      ultra realistic photography, real human skin texture, visible pores,
-      film grain, iso 400, fujifilm color science, kodak portra 400,
-      natural imperfections, micro-contrast, tactile textures,
+      ultra realistic photography, sharp focus, crystal clear details,
+      real human skin texture, visible pores,
+      fujifilm color science, kodak portra 400,
+      micro-contrast, tactile textures,
       cinematic lighting, shot on Canon EOS R5, 85mm lens,
       high dynamic range, natural color grading, editorial quality,
-      no beauty filter, no plastic skin, structural realism
+      no beauty filter, no plastic skin, structural realism,
+      8k resolution, highly detailed, perfect focus
     `;
 
     if (style === 'Premium') {
@@ -460,7 +462,7 @@ CRITICAL RULES:
         Visual rules:
         1. STRICTLY BLACK AND WHITE. NO COLOR (except minimal ${getRandom(accentColors)} accent).
         2. Chiaroscuro lighting, deep shadows, dramatic silhouettes, rim lighting.
-        3. Texture focus: skin pores, fabric weave, metal sheen, stone roughness.
+        3. Texture focus: skin pores, fabric weave, metal sheen, stone roughness (High Definition).
         4. Composition: Dynamic, asymmetrical, cinematic angles.
         
         Match the user's description exactly: ${params.userQuery || 'Professional context'}.
@@ -469,7 +471,7 @@ CRITICAL RULES:
         Luxury branding aesthetic, premium campaign visual, high-end magazine quality, modern art direction.
         Large bold typography integrated into the composition featuring the name "${brandName}" — interacting with depth.
         Graphic design elements: thin geometric lines, subtle frame corners.
-        The image must look like a real photograph, flawless professional quality.
+        The image must look like a real photograph, flawless professional quality, sharpest details.
       `.trim();
     } else if (style === 'Hero Studio') {
       visualDescription = `
@@ -482,13 +484,13 @@ CRITICAL RULES:
         1. DYNAMIC ANGLES: Low angle, wide angle, dutch angle, motion blur on edges.
         2. DRAMATIC LIGHTING: Rim light, volumetric beams, lens flare, high contrast.
         3. COLOR GRADING: Teal & Orange, Cinematic Warm, Vibrant but realistic.
-        4. TEXTURE: Sweat, dust particles, motion streaks, detailed fabric.
+        4. TEXTURE: High fidelity textures, detailed fabric, realistic surfaces.
         
         Hero-style cinematic action shot representing ${params.job || 'professional activity'}.
         Powerful mid-movement pose, dramatic lighting, volumetric atmosphere.
         Environmental interaction, dynamic fashion campaign photography aesthetic.
         ${commonRealism}
-        The image must look like a high-end commercial photograph.
+        The image must look like a high-end commercial photograph, sharp focus.
       `.trim();
     } else if (style === 'Minimal Studio') {
       visualDescription = `
@@ -501,12 +503,12 @@ CRITICAL RULES:
         1. COMPOSITION: Negative space, center-weighted or rule of thirds, un-cluttered.
         2. LIGHTING: Soft diffused window light, lightbox style, no harsh shadows.
         3. COLORS: Pastels, neutrals, white, beige, desaturated tones.
-        4. TEXTURE: Paper texture, linen, matte finish, ceramic, organic wood.
+        4. TEXTURE: Paper texture, linen, matte finish, ceramic, organic wood (Clean details).
         
         Minimal clean studio shot centered on ${params.job || 'professional item'}.
         Negative space composition, editorial minimal fashion aesthetic, soft diffused studio light.
         ${commonRealism}
-        The image must look like a clean modern professional photograph.
+        The image must look like a clean modern professional photograph, ultra sharp.
       `.trim();
     } else {
       visualDescription = `
