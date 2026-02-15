@@ -432,19 +432,28 @@ export class AiService {
   ) {
     if (typeof params === 'string') params = { userQuery: params };
     this.logger.log(
-      `[generateSocial] START - User: ${userId}, Query: "${params.userQuery}"`,
+      `[generateSocial] START - User: ${userId}, Job: "${params.job}", Query: "${params.userQuery}"`,
     );
 
     let brandingContext = '';
+    let effectiveJob = params.job; // Use provided job
+
     if (userId) {
       const u = await this.getAiUserWithProfile(userId);
       if (u) {
         brandingContext = `Nom: ${u.name}, Job: ${u.job}`;
+        // If no job provided in params, use user's profile job
+        if (!effectiveJob) {
+          effectiveJob = u.job;
+        }
       }
     }
 
+    // userQuery is independent - it can be empty or filled
+    // effectiveJob is the job to use for content generation
     const orchestration = await this.orchestrateSocial(
-      params.userQuery,
+      params.userQuery || '', // userQuery can be empty
+      effectiveJob || '', // job from params or user profile
       brandingContext,
       `Function: ${params.function || 'General'}`,
     );
@@ -488,11 +497,14 @@ export class AiService {
 
   private async orchestrateSocial(
     query: string,
+    job: string,
     branding: string,
     context: string,
   ) {
     try {
-      this.logger.log(`[orchestrateSocial] Decision for query: "${query}"`);
+      this.logger.log(
+        `[orchestrateSocial] Decision - Job: "${job}", Query: "${query}"`,
+      );
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
@@ -529,8 +541,8 @@ export class AiService {
       return {
         generateImage: true,
         generateText: true,
-        imagePrompt: query,
-        captionText: query,
+        imagePrompt: job || query,
+        captionText: job || query,
       };
     }
   }
