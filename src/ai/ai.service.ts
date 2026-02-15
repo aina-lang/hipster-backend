@@ -17,6 +17,8 @@ import {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private openai: OpenAI;
+  private readonly stabilityApiKey: string;
+  private readonly openAiKey: string;
 
   constructor(
     private configService: ConfigService,
@@ -25,8 +27,11 @@ export class AiService {
     @InjectRepository(AiGeneration)
     private aiGenRepo: Repository<AiGeneration>,
   ) {
+    this.openAiKey = this.configService.get<string>('OPENAI_API_KEY');
+    this.stabilityApiKey = this.configService.get<string>('STABLE_API_KEY');
+
     this.openai = new OpenAI({
-      apiKey: this.configService.get('OPENAI_API_KEY'),
+      apiKey: this.openAiKey,
     });
   }
 
@@ -264,7 +269,7 @@ export class AiService {
     const baseStylePrompt = this.getStyleDescription(styleName, subject);
     const userQuery = (params.userQuery || '').trim();
 
-    const apiKey = this.configService.get('STABILITY_API_KEY');
+    const apiKey = this.stabilityApiKey;
     if (!apiKey) throw new Error('Missing STABILITY API KEY');
 
     // Style Preset handling
