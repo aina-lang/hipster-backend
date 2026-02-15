@@ -321,15 +321,38 @@ export class AiService {
     type: string,
     userId?: number,
   ): Promise<{ content: string; generationId?: number }> {
-    if (typeof params === 'string') params = { userQuery: params };
-    // Simplified inline prompt construction
+    if (typeof params === 'string') {
+      try {
+        params = JSON.parse(params);
+      } catch (e) {
+        params = { userQuery: params };
+      }
+    }
+
     const { job, userQuery } = params;
     const basePrompt = `Job: ${job || 'Not specified'}\nRequest: ${userQuery || ''}`;
 
-    const systemContext = `
+    let brandingContext = '';
+    if (userId) {
+      const u = await this.getAiUserWithProfile(userId);
+      if (u) {
+        brandingContext = `
+USER PROFILE (IMPORTANT: Use these ONLY if relevant):
+- Nom de l'entreprise/utilisateur: ${u.name || 'N/A'}
+- Email pro: ${u.professionalEmail || 'N/A'}
+- Adresse: ${u.professionalAddress || ''} ${u.city || ''}
+- Téléphone: ${u.professionalPhone || 'N/A'}
+- Site Web: ${u.websiteUrl || 'N/A'}
+`.trim();
+      }
+    }
+
+    const systemPrompt = `
 Identity: Hipster IA
 Role: Practical assistant for small businesses (restaurant, craftsman, coach)
 Context: Generating ${type} content
+
+${brandingContext}
 
 REMEMBER: You're not a marketing creative from an agency, you help real people sell their things:
 - A restaurant owner says "pizza promo" not "premium culinary innovation"
@@ -339,13 +362,14 @@ REMEMBER: You're not a marketing creative from an agency, you help real people s
 
 CRITICAL RULES: 
 1. Think like the USER (direct, simple, practical vocabulary)
-2. NEVER invent information not provided
+2. NEVER invent information not provided (if user address is missing, don't invent one)
 3. Speak simply, not like a marketing agency
 4. Use words REAL PEOPLE would actually use
+5. Integrate the USER'S NAME, PHONE, or ADDRESS naturally in the output if it makes sense for the content type.
 `;
 
     const messages = [
-      { role: 'system', content: `Tu es Hipster IA. ${systemContext}` },
+      { role: 'system', content: systemPrompt },
       { role: 'user', content: basePrompt },
     ];
 
@@ -354,6 +378,7 @@ CRITICAL RULES:
         userId,
         AiGenerationType.TEXT,
       );
+
     // Use isUsageLog = true to avoid Guided Mode background chat from appearing in history
     const chatResult = await this.chat(messages, userId, null, true);
     const result = chatResult.content;
@@ -782,16 +807,7 @@ CRITICAL RULES:
     params: any,
     userId?: number,
   ) {
-    // Simplified inline prompt construction
-    const { job, userQuery } = params;
-    const baseContext = `Job: ${job || 'Not specified'}\nRequest: ${userQuery || ''}`;
-    const prompt = JSON.stringify({ baseContext, type });
-    const { content: resultText, generationId } = await this.generateText(
-      prompt,
-      'business',
-      userId,
-    );
-    return { content: resultText, generationId };
+    return await this.generateText(params, type, userId);
   }
 
   async exportDocument(
