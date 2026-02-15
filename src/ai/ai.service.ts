@@ -415,13 +415,13 @@ export class AiService {
           userQuery ||
           refinedSubject ||
           'high quality portrait';
-        const structurePrompt = `${visualSubject}, STYLE: ${baseStylePrompt}, ultra-realistic, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+        const structurePrompt = `EXTREMELY CRITICAL: Preserve the exact facial identity and features of the person in the reference image. ${visualSubject}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
         finalDescription = structurePrompt;
 
         finalBuffer = await this.callStructure(
           file.buffer,
           structurePrompt,
-          0.65, // Balanced strength
+          1, // Higher strength to strictly preserve face and structure
         );
       } else {
         // --- STANDARD TEXT-TO-IMAGE (ULTRA) ---
