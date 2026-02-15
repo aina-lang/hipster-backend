@@ -373,6 +373,7 @@ CRITICAL RULES:
       job?: string;
       function?: string;
       userQuery?: string;
+      reference_image?: string;
       style?: string;
     },
     style:
@@ -540,7 +541,8 @@ CRITICAL RULES:
       if (user) userPlan = user.planType || PlanType.CURIEUX;
     }
 
-    let endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/ultra';
+    let endpoint =
+      'https://api.stability.ai/v2beta/stable-image/generate/ultra';
     const outputFormat = 'png';
     let useModelParam = true;
     let useNegativePrompt = true;
@@ -601,7 +603,6 @@ CRITICAL RULES:
     if (stylePreset && stylePreset !== 'none') {
       formData.append('style_preset', stylePreset);
     }
-
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000);
