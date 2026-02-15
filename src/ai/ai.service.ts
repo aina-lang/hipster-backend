@@ -36,17 +36,18 @@ export class AiService {
   }
 
   /* --------------------- INTENT DETECTION --------------------- */
-  private async detectSearchReplacePrompts(
+  private async detectEditPrompts(
     query: string,
     job: string,
     styleName: string,
-  ): Promise<{ search: string; prompt: string }> {
+  ): Promise<{ tool: 'REPLACE' | 'RECOLOR'; search: string; prompt: string }> {
     const isCustomStyle = ['Premium', 'Hero Studio', 'Minimal Studio'].includes(
       styleName,
     );
 
     if (!query || query.trim().length === 0) {
       return {
+        tool: 'REPLACE',
         search: 'background and environment',
         prompt: `professional ${job} scene in ${styleName} style`,
       };
@@ -63,14 +64,15 @@ export class AiService {
               The user wants to keep their EXACT face from the original photo but change everything else.
               
               Based on the user's request and the selected STYLE (${styleName}), determine:
-              1. "search": What parts should be IDENTIFIED and REPLACED?
-                 - If a STYLE like "${styleName}" is selected, you MUST include "background, environment, and clothes" to make the style visible.
-                 - If the user asks for a specific object (e.g., "glasses"), include it.
-                 - IMPORTANT: NEVER search for "face", "eyes", "nose" or "mouth". Stay away from the face to preserve identity.
-              2. "prompt": A detailed visual description of the replacement area (in English).
-                 - Incorporate the "${styleName}" look into this description.
+              1. "tool": 
+                 - Use "RECOLOR" ONLY if the request is strictly about changing a color (e.g. "change my shirt to red", "blue hair").
+                 - Use "REPLACE" for everything else (backgrounds, new clothes, adding objects, style changes).
+              2. "search": What parts should be IDENTIFIED?
+                 - For "REPLACE" + Style: include "background, environment, and clothes".
+                 - NEVER search for "face", "eyes", "nose" or "mouth". Stay away from the face to preserve identity.
+              3. "prompt": A detailed visual description of the change (in English).
               
-              Respond STRICTLY in JSON: {"search": string, "prompt": string}
+              Respond STRICTLY in JSON: {"tool": "REPLACE" | "RECOLOR", "search": string, "prompt": string}
             `.trim(),
           },
           {
@@ -83,11 +85,16 @@ export class AiService {
 
       const result = JSON.parse(response.choices[0]?.message?.content || '{}');
       return {
+        tool: result.tool || 'REPLACE',
         search: result.search || 'background and clothes',
         prompt: result.prompt || query,
       };
     } catch (error) {
-      return { search: 'background and environment', prompt: query };
+      return {
+        tool: 'REPLACE',
+        search: 'background and environment',
+        prompt: query,
+      };
     }
   }
 
@@ -400,6 +407,26 @@ export class AiService {
     );
   }
 
+  private async callSearchAndRecolor(
+    image: Buffer,
+    prompt: string,
+    selectPrompt: string,
+    seed?: number,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('prompt', prompt);
+    formData.append('select_prompt', selectPrompt);
+    formData.append('output_format', 'png');
+
+    if (seed) formData.append('seed', seed.toString());
+
+    return this.callStabilityApi(
+      'stable-image/edit/search-and-recolor',
+      formData,
+    );
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -443,35 +470,42 @@ export class AiService {
         const intentSource = userQuery || orchestratorPrompt;
 
         this.logger.log(
-          `[generateImage] Using Direct Search and Replace for maximum fidelity (Source: ${intentSource.substring(0, 30)}...)`,
+          `[generateImage] Using Direct Edit Tool for maximum fidelity (Source: ${intentSource.substring(0, 30)}...)`,
         );
 
-        const sr = await this.detectSearchReplacePrompts(
+        const edit = await this.detectEditPrompts(
           intentSource,
           refinedSubject || params.job || '',
           styleName,
         );
         this.logger.log(
-          `[generateImage] Search: "${sr.search}", Prompt: "${sr.prompt}"`,
+          `[generateImage] Tool: ${edit.tool}, Search: "${edit.search}", Prompt: "${edit.prompt}"`,
         );
 
-        // For custom styles, the baseStylePrompt is very important.
-        // We merge it with sr.prompt but ensure baseStylePrompt takes precedence for the "vibe".
         const isCustomStyle = customStyles.includes(styleName);
         const finalPrompt = isCustomStyle
-          ? `${baseStylePrompt}. Request addition: ${sr.prompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
-          : `${sr.prompt}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+          ? `${baseStylePrompt}. Request: ${edit.prompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
+          : `${edit.prompt}, STYLE: ${baseStylePrompt}, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
 
-        finalDescription = `SEARCH_AND_REPLACE | Search: ${sr.search} | ${finalPrompt}`;
+        finalDescription = `EDIT_${edit.tool} | Search: ${edit.search} | ${finalPrompt}`;
 
-        finalBuffer = await this.callSearchAndReplace(
-          file.buffer,
-          finalPrompt,
-          sr.search,
-          5, // Slightly larger grow_mask for better blending
-          seed,
-          stylePreset,
-        );
+        if (edit.tool === 'RECOLOR') {
+          finalBuffer = await this.callSearchAndRecolor(
+            file.buffer,
+            finalPrompt,
+            edit.search,
+            seed,
+          );
+        } else {
+          finalBuffer = await this.callSearchAndReplace(
+            file.buffer,
+            finalPrompt,
+            edit.search,
+            5,
+            seed,
+            stylePreset,
+          );
+        }
       } else {
         // --- STANDARD TEXT-TO-IMAGE (ULTRA) ---
         const visualDescription = userQuery
