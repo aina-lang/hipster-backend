@@ -45,9 +45,11 @@ export class AiService {
     search: string;
     prompt: string;
   }> {
-    const isCustomStyle = ['Premium', 'Hero Studio', 'Minimal Studio'].includes(
-      styleName,
-    );
+    const lowerQuery = (query || '').toLowerCase();
+
+    // Explicit override for the user to test the "Structure" tool
+    const forceStructure =
+      lowerQuery.includes('structure') || lowerQuery.includes('pose');
 
     if (!query || query.trim().length === 0) {
       return {
@@ -67,16 +69,14 @@ export class AiService {
               You are an AI image editing assistant. 
               The user wants to keep their identity but change other parts.
               
-              Based on the user's request and style (${styleName}), determine the best tool:
+              Tool selection rules:
               1. "tool": 
+                 - "STRUCTURE": Use if user mentions "structure", "pose", "posture", or wants a TOTAL transformation of the scene and person's body while keeping their identity.
                  - "RECOLOR": strictly color changes (e.g. "red shirt").
                  - "OUTPAINT": expand, zoom out, add content on sides.
-                 - "STRUCTURE": dramatic scene recreation, pose changes, keeping composition but changing everything else.
                  - "REPLACE": target specific areas (background, clothes) while keeping other parts 100% original.
-              2. "search": What parts should be IDENTIFIED (for REPLACE or RECOLOR)?
-                 - For "REPLACE": include "background, environment, and clothes".
-                 - NEVER search for "face".
-              3. "prompt": A detailed visual description of the change (in English).
+              2. "search": Only for REPLACE or RECOLOR. (e.g. "background", "clothes").
+              3. "prompt": A detailed visual description of the final results (in English).
               
               Respond STRICTLY in JSON: {"tool": "REPLACE" | "RECOLOR" | "OUTPAINT" | "STRUCTURE", "search": string, "prompt": string}
             `.trim(),
@@ -91,16 +91,22 @@ export class AiService {
 
       const result = JSON.parse(response.choices[0]?.message?.content || '{}');
       const validTools = ['REPLACE', 'RECOLOR', 'OUTPAINT', 'STRUCTURE'];
+      let tool = (
+        validTools.includes(result.tool) ? result.tool : 'REPLACE'
+      ) as any;
+
+      if (forceStructure) {
+        tool = 'STRUCTURE';
+      }
+
       return {
-        tool: (validTools.includes(result.tool)
-          ? result.tool
-          : 'REPLACE') as any,
+        tool,
         search: result.search || 'background and clothes',
         prompt: result.prompt || query,
       };
     } catch (error) {
       return {
-        tool: 'REPLACE',
+        tool: forceStructure ? 'STRUCTURE' : 'REPLACE',
         search: 'background and environment',
         prompt: query,
       };
