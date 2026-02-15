@@ -164,14 +164,7 @@ export class AiService {
 
     // Premium Style with randomized pools
     if (styleName === 'Premium') {
-      const subjects = [
-        'athletic coach portrait',
-        'barber holding scissors',
-        'fashion model in black dress',
-        'architect in suit',
-        'restaurant chef portrait',
-        'burger close-up dramatic',
-      ];
+  
       const accentColors = [
         'deep red',
         'burnt orange',
