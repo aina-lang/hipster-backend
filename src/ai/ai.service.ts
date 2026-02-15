@@ -336,14 +336,21 @@ export class AiService {
     if (userId) {
       const u = await this.getAiUserWithProfile(userId);
       if (u) {
-        brandingContext = `
-USER PROFILE (IMPORTANT: Use these ONLY if relevant):
-- Nom de l'entreprise/utilisateur: ${u.name || 'N/A'}
-- Email pro: ${u.professionalEmail || 'N/A'}
-- Adresse: ${u.professionalAddress || ''} ${u.city || ''}
-- Téléphone: ${u.professionalPhone || 'N/A'}
-- Site Web: ${u.websiteUrl || 'N/A'}
-`.trim();
+        const fields = [];
+        if (u.name) fields.push(`- Nom de l'entreprise/utilisateur: ${u.name}`);
+        if (u.professionalEmail)
+          fields.push(`- Email pro: ${u.professionalEmail}`);
+        const fullAddress = [u.professionalAddress, u.city]
+          .filter(Boolean)
+          .join(' ');
+        if (fullAddress) fields.push(`- Adresse: ${fullAddress}`);
+        if (u.professionalPhone)
+          fields.push(`- Téléphone: ${u.professionalPhone}`);
+        if (u.websiteUrl) fields.push(`- Site Web: ${u.websiteUrl}`);
+
+        if (fields.length > 0) {
+          brandingContext = `USER PROFILE (IMPORTANT: Use these ONLY if relevant):\n${fields.join('\n')}`;
+        }
       }
     }
 
