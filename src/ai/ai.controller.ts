@@ -251,7 +251,7 @@ export class AiController {
   @Roles(Role.AI_USER)
   @UseInterceptors(FileInterceptor('image'))
   async generateSocial(
-    @Body() body: { params: any },
+    @Body() body: { params: any; seed?: number },
     @Req() req,
     @UploadedFile() file?: Express.Multer.File,
   ) {
@@ -265,11 +265,16 @@ export class AiController {
         }
       }
 
-      console.log('--- API POST /ai/social ---', { params, hasFile: !!file });
+      console.log('--- API POST /ai/social ---', {
+        params,
+        hasFile: !!file,
+        seed: body.seed,
+      });
       const result = await this.aiService.generateSocial(
         params,
         req.user.sub,
         file,
+        body.seed,
       );
       console.log('--- API SOCIAL RESULT SUCCESS ---');
       return result;
@@ -324,7 +329,7 @@ export class AiController {
   @Roles(Role.AI_USER)
   @UseInterceptors(FileInterceptor('image'))
   async generateFlyer(
-    @Body() body: { params: any },
+    @Body() body: { params: any; seed?: number },
     @Req() req,
     @UploadedFile() file?: Express.Multer.File,
   ) {
@@ -338,17 +343,23 @@ export class AiController {
         }
       }
 
-      console.log('--- API POST /ai/flyer ---', { params, hasFile: !!file });
+      console.log('--- API POST /ai/flyer ---', {
+        params,
+        hasFile: !!file,
+        seed: body.seed,
+      });
       const result = await this.aiService.generateFlyer(
         params,
         req.user.sub,
         file,
+        body.seed,
       );
       console.log('--- FLYER GENERATION SUCCESS ---');
       return {
         url: result.url,
-        imageData: result.imageData,
+        imageData: result.url,
         generationId: result.generationId,
+        seed: result.seed,
       };
     } catch (error: any) {
       this.logger.error('Flyer generation error:', error);

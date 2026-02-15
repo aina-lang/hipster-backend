@@ -292,7 +292,8 @@ export class AiService {
             2. Improve grammar, clarity, and flow.
             3. Do NOT add any artistic style (like "cinematic", "4k").
             4. Do NOT add any introduction or quotes.
-            5. Output must be ONE sentence only.`,
+            5. Output must be ONE sentence only.
+            6. STRICTLY PLAIN TEXT: NEVER use markdown (no **, no #).`,
           },
           {
             role: 'user',
@@ -373,7 +374,8 @@ CRITICAL RULES:
 3. If a specific piece of information (phone, address, name) is not present in the USER PROFILE provided below, DO NOT mention it in the generated text.
 4. Speak simply, not like a marketing agency.
 5. Use words REAL PEOPLE would actually use.
-6. Integrate the USER'S NAME, PHONE, or ADDRESS naturally ONLY if they are available in the PROFILE.
+6. STRICTLY PLAIN TEXT: NEVER use markdown formatting (no bold **, no italics *, no lists #, no links). Just pure text.
+7. INTEGRATE the USER'S NAME, PHONE, or ADDRESS naturally ONLY if they are available in the PROFILE.
 `;
 
     const messages = [
@@ -487,7 +489,7 @@ CRITICAL RULES:
     // ------------------------------------------------------------------
     let visualDescription = '';
 
-    const negativePrompt = `
+    let negativePrompt = `
       text, letters, words, typography, numbers, labels, quotes, heading, 
       advertising text, banner, caption, message, script,
       watermarks, logos, signatures,
@@ -505,6 +507,43 @@ CRITICAL RULES:
       cloned faces, weird eyes, deformed iris, uncanny valley,
       oversmoothed, plastic face, mutation, mutilated, cloned objects
     `.trim();
+
+    // ------------------------------------------------------------------
+    // DYNAMIC NEGATIVE PROMPT ADJUSTMENT
+    // ------------------------------------------------------------------
+    const currentStyleLower = style.toLowerCase();
+    const funcLower = (params.function || '').toLowerCase();
+
+    // If style is 3D, remove 3D-related blocks from negative
+    if (
+      currentStyleLower.includes('3d') ||
+      currentStyleLower.includes('modeling')
+    ) {
+      negativePrompt = negativePrompt
+        .replace(/3d render, plastic,/i, '')
+        .replace(/CGI,/i, '');
+    }
+
+    // If style is Anime, remove anime/illustration blocks
+    if (
+      currentStyleLower.includes('anime') ||
+      currentStyleLower.includes('comic')
+    ) {
+      negativePrompt = negativePrompt
+        .replace(/illustration, cartoon, anime,/i, '')
+        .replace(/CGI,/i, '');
+    }
+
+    // If function is advertising/publicitaire, loosen text restrictions
+    // (Stability AI isn't great at text, but banning it entirely breaks layout)
+    if (funcLower.includes('publicitaire') || funcLower.includes('ads')) {
+      negativePrompt = negativePrompt
+        .replace(
+          /text, letters, words, typography, numbers, labels, quotes, heading,/i,
+          '',
+        )
+        .replace(/advertising text, banner, caption, message, script,/i, '');
+    }
 
     const commonRealism = `
       ultra realistic photography, sharp focus, crystal clear details,
@@ -781,6 +820,7 @@ CRITICAL RULES:
     params: any,
     userId?: number,
     file?: Express.Multer.File,
+    seed?: number,
   ) {
     if (typeof params === 'string') params = { userQuery: params };
 
@@ -803,9 +843,11 @@ CRITICAL RULES:
 
     // Orchestrate: Split user query into specific instructions for Image and Text
     // This allows a single text field to handle "I want an image of X" or "Write a post about Y" or both.
+    const productionContext = `Format: ${params.function || 'General'}`;
     const orchestration = await this.orchestrateSocial(
       params.userQuery,
       brandingContext,
+      productionContext,
     );
     this.logger.log(
       `[generateSocial] Orchestration result: ${JSON.stringify(orchestration)}`,
@@ -828,6 +870,7 @@ CRITICAL RULES:
         selectedStyle as any,
         userId,
         file,
+        seed,
       );
     }
 
@@ -844,6 +887,7 @@ CRITICAL RULES:
       content: textRes.content,
       url: imageRes.url,
       generationId: imageRes.generationId || textRes.generationId,
+      seed: imageRes.seed,
       orchestration, // Metadata for transparency
     };
   }
@@ -856,6 +900,7 @@ CRITICAL RULES:
   private async orchestrateSocial(
     userQuery: string,
     brandingContext: string,
+    productionContext: string = 'General',
   ): Promise<{
     generateImage: boolean;
     generateText: boolean;
@@ -873,6 +918,9 @@ Your job is to parse this single 'userQuery' and determine:
 USER CONTEXT:
 ${brandingContext}
 
+PRODUCTION CONTEXT:
+${productionContext}
+
 DECISION LOGIC:
 - If userQuery describes a visual scene (e.g., "A dog in a park"), set generateImage: true.
 - If userQuery asks to write something (e.g., "Write a promo"), set generateText: true.
@@ -880,6 +928,7 @@ DECISION LOGIC:
 - IMAGE_PROMPT MUST BE IN ENGLISH.
 - CAPTION_PROMPT must be in FRENCH, focused on the tone and call to action. 
 - IMPORTANT: If a piece of information is missing from the USER CONTEXT, tell the caption engine NOT to use it. DO NOT USE PLACEHOLDERS.
+- STRICTLY PLAIN TEXT: Tell the caption engine to NEVER use markdown formatting (no **, no *). Just pure text.
 - Respond ONLY with a valid JSON object.
 `;
 
@@ -1029,6 +1078,7 @@ DECISION LOGIC:
     params: any,
     userId?: number,
     file?: Express.Multer.File,
+    seed?: number,
   ) {
     const flyerPrompt = this.constructFlyerPrompt(params);
     const systemNegative = this.constructNegativeFlyerPrompt();
@@ -1044,12 +1094,14 @@ DECISION LOGIC:
       selectedStyle as any,
       userId,
       file,
+      seed,
     );
 
     return {
       url: imageResult.url,
       imageData: imageResult.url, // For compatibility with controller destructuring
       generationId: imageResult.generationId,
+      seed: imageResult.seed,
     };
   }
 
