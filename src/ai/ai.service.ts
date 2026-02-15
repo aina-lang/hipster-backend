@@ -465,7 +465,10 @@ CRITICAL RULES:
       gross proportions, malformed limbs, missing arms, missing legs, 
       extra arms, extra legs, fused fingers, too many fingers, long neck, 
       plastic skin, smooth skin, neon, overly polished, denoised,
-      grain, noise, blurry, hazy, low resolution, pixelated
+      grain, noise, blurry, hazy, low resolution, pixelated,
+      fused hands, malformed hands, missing digits, extra digits, 
+      cloned faces, weird eyes, deformed iris, uncanny valley,
+      oversmoothed, plastic face, mutation, mutilated, cloned objects
     `.trim();
 
     const commonRealism = `
