@@ -413,7 +413,9 @@ export class AiService {
     let stylePreset = '';
     if (!customStyles.includes(styleName)) {
       stylePreset =
-        styleName === 'None' || !styleName ? 'photographic' : styleName;
+        styleName === 'None' || !styleName
+          ? 'photographic'
+          : styleName.toLowerCase().replace(/\s+/g, '-');
     }
     const orchestratorPrompt = (params.orchestratorPrompt || '').trim();
 
