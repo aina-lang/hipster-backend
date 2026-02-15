@@ -442,9 +442,33 @@ export class AiService {
           const stylePrompt = `${visualSubject}, STYLE: ${baseStylePrompt}, artistic, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
           finalDescription = stylePrompt;
           finalBuffer = await this.callStyle(file.buffer, stylePrompt, 0.7);
+        } else if (intent === 'BACKGROUND') {
+          this.logger.log(
+            '[generateImage] Using Search and Replace for BACKGROUND (max fidelity)',
+          );
+          // Search and replace with "background" ensures the person's face/body pixels are preserved
+          const bgPrompt = `${userQuery || 'professional background'}, STYLE: ${baseStylePrompt}, 8k, photographic. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+          finalDescription = `SEARCH AND REPLACE (BG): ${bgPrompt}`;
+          finalBuffer = await this.callSearchAndReplace(
+            file.buffer,
+            bgPrompt,
+            'background',
+          );
+        } else if (intent === 'OBJECT_ADD') {
+          this.logger.log(
+            '[generateImage] Using Search and Replace for OBJECT_ADD',
+          );
+          const objPrompt = `${userQuery}, STYLE: ${baseStylePrompt}, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+          finalDescription = `SEARCH AND REPLACE (OBJ): ${objPrompt}`;
+          // We search for "background" or "around the person" to add objects
+          finalBuffer = await this.callSearchAndReplace(
+            file.buffer,
+            objPrompt,
+            'background and environment',
+          );
         } else {
           this.logger.log(
-            '[generateImage] Using STRUCTURE endpoint for identity preservation',
+            '[generateImage] Using STRUCTURE endpoint for pose change',
           );
           const structurePrompt = `ABSOLUTELY NO CHANGES TO THE FACE. Preserve the exact facial identity, gender, and features of the person in the reference image. ${visualSubject}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
           finalDescription = structurePrompt;
