@@ -47,15 +47,23 @@ export class AiService {
   }> {
     const lowerQuery = (query || '').toLowerCase();
 
-    // Explicit override for the user to test the "Structure" tool
-    const forceStructure =
-      lowerQuery.includes('structure') || lowerQuery.includes('pose');
+    // Explicitly check if user wants a "surgical" edit (Replace or Recolor)
+    const wantsReplace =
+      lowerQuery.includes('replace') ||
+      lowerQuery.includes('fond') ||
+      lowerQuery.includes('background');
+    const wantsRecolor =
+      lowerQuery.includes('recolor') || lowerQuery.includes('couleur');
+    const wantsOutpaint =
+      lowerQuery.includes('expand') ||
+      lowerQuery.includes('dezoom') ||
+      lowerQuery.includes('élargir');
 
     if (!query || query.trim().length === 0) {
       return {
-        tool: 'REPLACE',
-        search: 'background and environment',
-        prompt: `professional ${job} scene in ${styleName} style`,
+        tool: 'STRUCTURE',
+        search: '',
+        prompt: `professional ${job} portrait in ${styleName} style`,
       };
     }
 
@@ -67,16 +75,14 @@ export class AiService {
             role: 'system',
             content: `
               You are an AI image editing assistant. 
-              The user wants to keep their identity but change other parts.
-              
               Tool selection rules:
               1. "tool": 
-                 - "STRUCTURE": Use if user mentions "structure", "pose", "posture", or wants a TOTAL transformation of the scene and person's body while keeping their identity.
-                 - "RECOLOR": strictly color changes (e.g. "red shirt").
-                 - "OUTPAINT": expand, zoom out, add content on sides.
-                 - "REPLACE": target specific areas (background, clothes) while keeping other parts 100% original.
-              2. "search": Only for REPLACE or RECOLOR. (e.g. "background", "clothes").
-              3. "prompt": A detailed visual description of the final results (in English).
+                 - "STRUCTURE": DEFAULT. Use for most requests, pose changes, clothing changes, and scene recreation.
+                 - "RECOLOR": ONLY for strict color changes (e.g. "red shirt").
+                 - "OUTPAINT": for "expand", "zoom out", "more space".
+                 - "REPLACE": ONLY if user specifically asks to change the "background" (fond) or "replace" a specific part without touching anything else.
+              2. "search": Only for REPLACE or RECOLOR.
+              3. "prompt": A detailed visual description for the final result (in English).
               
               Respond STRICTLY in JSON: {"tool": "REPLACE" | "RECOLOR" | "OUTPAINT" | "STRUCTURE", "search": string, "prompt": string}
             `.trim(),
@@ -92,22 +98,22 @@ export class AiService {
       const result = JSON.parse(response.choices[0]?.message?.content || '{}');
       const validTools = ['REPLACE', 'RECOLOR', 'OUTPAINT', 'STRUCTURE'];
       let tool = (
-        validTools.includes(result.tool) ? result.tool : 'REPLACE'
+        validTools.includes(result.tool) ? result.tool : 'STRUCTURE'
       ) as any;
 
-      if (forceStructure) {
-        tool = 'STRUCTURE';
-      }
+      if (wantsRecolor) tool = 'RECOLOR';
+      if (wantsOutpaint) tool = 'OUTPAINT';
+      if (wantsReplace) tool = 'REPLACE';
 
       return {
         tool,
-        search: result.search || 'background and clothes',
+        search: result.search || (tool === 'RECOLOR' ? 'clothes' : ''),
         prompt: result.prompt || query,
       };
     } catch (error) {
       return {
-        tool: forceStructure ? 'STRUCTURE' : 'REPLACE',
-        search: 'background and environment',
+        tool: 'STRUCTURE',
+        search: '',
         prompt: query,
       };
     }
