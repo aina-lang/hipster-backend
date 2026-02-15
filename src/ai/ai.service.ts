@@ -163,6 +163,14 @@ export class AiService {
         'burnt orange',
         'electric purple',
         'muted gold',
+        'emerald green',
+        'sapphire blue',
+        'rose gold',
+        'crimson',
+        'teal',
+        'amber',
+        'burgundy',
+        'navy blue',
       ];
       const lightings = [
         'side lighting dramatic',
