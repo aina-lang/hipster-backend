@@ -874,13 +874,22 @@ CRITICAL RULES:
       );
     }
 
-    // 2. Generate Caption if orchestrator decided it's needed
-    if (orchestration.generateText) {
-      textRes = await this.generateText(
-        { ...params, userQuery: orchestration.captionPrompt },
-        'social',
-        userId,
-      );
+    // 2. Process final text generation results
+    if (orchestration.generateText && orchestration.captionText) {
+      textRes.content = orchestration.captionText;
+
+      // Save the text generation as a separate log for history/credits tracking
+      if (userId) {
+        const savedText = await this.aiGenRepo.save({
+          user: { id: userId } as AiUser,
+          type: AiGenerationType.TEXT,
+          prompt: `Orchestrated: ${params.userQuery}`.substring(0, 1000),
+          result: orchestration.captionText,
+          title: `Post: ${(params.userQuery || '').substring(0, 20)}...`,
+          attributes: { ...params, orchestrated: true },
+        });
+        textRes.generationId = savedText.id;
+      }
     }
 
     return {
@@ -905,15 +914,15 @@ CRITICAL RULES:
     generateImage: boolean;
     generateText: boolean;
     imagePrompt: string;
-    captionPrompt: string;
+    captionText: string;
   }> {
     const systemPrompt = `
 You are the Brain Orchestrator for Hipster IA. The user has only ONE text field to express their needs.
 Your job is to parse this single 'userQuery' and determine:
 1. Does the user want an image? (generateImage)
 2. Does the user want a text caption? (generateText)
-3. What is the specific prompt for the IMAGE engine (in ENGLISH, photorealistic, no text)?
-4. What is the specific prompt for the TEXT engine (in FRENCH, marketing tone)?
+3. If yes to image: What is the specific prompt for the IMAGE engine (in ENGLISH, photorealistic, no text)? (imagePrompt)
+4. If yes to text: Generate the FINAL marketing text for the user (in FRENCH). (captionText)
 
 USER CONTEXT:
 ${brandingContext}
@@ -921,15 +930,22 @@ ${brandingContext}
 PRODUCTION CONTEXT:
 ${productionContext}
 
+WRITING STYLE (HIPSTER IA IDENTITY):
+- Practical assistant for small businesses.
+- NOT a marketing agency: use simple, direct, practical vocabulary.
+- A restaurant owner says "pizza promo" not "premium culinary innovation".
+- CRITICAL: NO Markdown formatting (no **, no #). Strictly plain text.
+- CRITICAL: NEVER use placeholders like "[votre numéro]" or "[votre adresse]".
+- ONLY mention phone, address, or name if they are explicitly present in the USER CONTEXT. If missing, ignore them.
+
 DECISION LOGIC:
-- If userQuery describes a visual scene (e.g., "A dog in a park"), set generateImage: true.
-- If userQuery asks to write something (e.g., "Write a promo"), set generateText: true.
-- If it's ambiguous, default to both: true.
+- If userQuery describes a visual scene, set generateImage: true.
+- If userQuery asks to write something, set generateText: true.
+- Default to both: true if ambiguous.
 - IMAGE_PROMPT MUST BE IN ENGLISH.
-- CAPTION_PROMPT must be in FRENCH, focused on the tone and call to action. 
-- IMPORTANT: If a piece of information is missing from the USER CONTEXT, tell the caption engine NOT to use it. DO NOT USE PLACEHOLDERS.
-- STRICTLY PLAIN TEXT: Tell the caption engine to NEVER use markdown formatting (no **, no *). Just pure text.
-- Respond ONLY with a valid JSON object.
+- CAPTION_TEXT MUST BE IN FRENCH.
+
+Respond ONLY with a valid JSON object using camelCase keys: generateImage, generateText, imagePrompt, captionText.
 `;
 
     try {
@@ -955,7 +971,7 @@ DECISION LOGIC:
         generateImage: true,
         generateText: true,
         imagePrompt: userQuery,
-        captionPrompt: userQuery,
+        captionText: userQuery,
       };
     }
   }
