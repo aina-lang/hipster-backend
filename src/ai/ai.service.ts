@@ -152,9 +152,6 @@ export class AiService {
 
     if (file) {
       isPostureChange = await this.detectPostureChange(params.userQuery || '');
-      endpoint = isPostureChange
-        ? 'https://api.stability.ai/v2beta/stable-image/generate/image-to-image'
-        : 'https://api.stability.ai/v2beta/stable-image/control/structure';
 
       visualDescription = `
         IDENTITY PRESERVATION: Keep face identical to reference.
