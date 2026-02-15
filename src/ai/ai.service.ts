@@ -201,12 +201,12 @@ export class AiService {
       const bg = this.getRandomItem(backgrounds);
 
       return `
-        Ultra high contrast black and white portrait of ${subject}, editorial poster style, 
+        Ultra high contrast black and white photography of ${subject}, editorial poster style, 
         ${lighting}, ${angle}, dramatic shadows, sharp facial details, subject centered, ${bg}.
         Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
-        Add one accent color only (${accent}) used in small geometric shapes or highlights.
-        High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting.
-        No watermark, no text, no letters, no typography, no words, no logo. Monochrome base.
+        Color Instruction: The image is 99% black and white. Add a single, extremely subtle splash of ${accent} ONLY on one or two or more small geometric shapes or thin lines.
+        Selective color pop aesthetic. High fashion magazine, luxury campaign, premium branding, sharp focus, ultra clean.
+        No watermark, no text, no letters, no typography, no words, no logo. Monochrome base with tiny colored accent.
       `.trim();
     }
 
