@@ -170,7 +170,8 @@ export class AiService {
   private readonly NEGATIVE_PROMPT = `
     No smooth plastic skin, no neon, no 3d render, no generic AI artifacts, 
     no distorted faces, no extra fingers, no blurry background unless intentional.
-    CRITICAL: No text, no letters, no typography, no words, no watermarks, no captions, no labels in the image.
+    CRITICAL: No text, no letters, no typography, no words, no watermarks, no captions, no labels.
+    No mustache, no beard, no facial hair, no stubble.
   `.trim();
 
   private async refineSubject(job: string): Promise<string> {
@@ -415,13 +416,13 @@ export class AiService {
           userQuery ||
           refinedSubject ||
           'high quality portrait';
-        const structurePrompt = `EXTREMELY CRITICAL: Preserve the exact facial identity and features of the person in the reference image. ${visualSubject}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+        const structurePrompt = `ABSOLUTELY NO CHANGES TO THE FACE. Preserve the exact facial identity, gender, and features of the person in the reference image. ${visualSubject}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
         finalDescription = structurePrompt;
 
         finalBuffer = await this.callStructure(
           file.buffer,
           structurePrompt,
-          1, // Higher strength to strictly preserve face and structure
+          0.95, // Near-maximum strength to lock the face and identity
         );
       } else {
         // --- STANDARD TEXT-TO-IMAGE (ULTRA) ---
