@@ -61,6 +61,8 @@ export class AiService {
         'attributes',
         'imageUrl',
         'fileUrl',
+        'prompt',
+        'result',
       ],
       take: 50,
     });
