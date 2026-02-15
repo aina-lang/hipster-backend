@@ -582,7 +582,7 @@ CRITICAL RULES:
     ];
 
     let stylePreset = 'none';
-    const styleLower = style.toLowerCase();
+    const styleLower = style.toLowerCase().replace(/\s+/g, '-');
 
     if (STABILITY_PRESETS.includes(styleLower)) {
       stylePreset = styleLower;
