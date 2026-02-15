@@ -515,18 +515,27 @@ export class AiService {
               Decide if an image and/or text caption is needed for the given query.
               Most social posts BENEFIT from an image. 
               
+              CRITICAL RULES:
+              1. The content MUST be about the Job/Profession provided, NOT about the user's personal branding.
+              2. If a specific User Query is provided, incorporate it into the content about the Job/Profession.
+              3. The User Branding is ONLY for context/tone, NOT the subject matter.
+              4. Generate content that promotes or showcases the Job/Profession.
+              
               Respond STRICTLY in JSON with:
               {
                 "generateImage": boolean,
                 "generateText": boolean,
-                "imagePrompt": "visual description for image generation (in English)",
-                "captionText": "the actual social media post text (in French by default)"
+                "imagePrompt": "visual description for image generation (in English), focused on the Job/Profession",
+                "captionText": "the actual social media post text (in French by default), focused on the Job/Profession"
               }
             `.trim(),
           },
           {
             role: 'user',
-            content: `User Query: "${query}"\nUser Branding: ${branding}\nContext: ${context}`,
+            content: `PRIMARY SUBJECT - Job/Profession: "${job}"
+Additional Context - User Query: "${query}"
+Branding Info (for tone only): ${branding}
+Function: ${context}`,
           },
         ],
         response_format: { type: 'json_object' },
