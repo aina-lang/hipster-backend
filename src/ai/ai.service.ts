@@ -78,7 +78,6 @@ export class AiService {
     try {
       return await this.aiUserRepo.findOne({
         where: { id: userId },
-        relations: ['profile'],
       });
     } catch (error) {
       this.logger.error(`[getAiUserWithProfile] Error: ${error.message}`);
@@ -110,6 +109,140 @@ export class AiService {
     }
   }
 
+  private readonly NEGATIVE_PROMPT = `
+    No smooth plastic skin, no neon, no 3d render, no generic AI artifacts, 
+    no distorted faces, no extra fingers, no blurry background unless intentional.
+  `.trim();
+
+  private async refineSubject(job: string): Promise<string> {
+    if (!job) return '';
+    const cleanJob = job.replace(/^(autre|other)[:\s-]*/i, '').trim();
+    if (
+      !cleanJob ||
+      cleanJob.toLowerCase() === 'autre' ||
+      cleanJob.toLowerCase() === 'other'
+    )
+      return '';
+
+    try {
+      const resp = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Refine the user's job, function, or role into a concise 2-3 word visual subject for an image prompt (in English).
+            If the input is already a good subject, just translate it to English.
+            Example: "Développeur fullstack" -> "software engineer", "Chef de cuisine" -> "restaurant chef", "Un gars qui fait du crossfit" -> "crossfit athlete".
+            Respond ONLY with the refined subject without any punctuation.`,
+          },
+          { role: 'user', content: cleanJob },
+        ],
+        temperature: 0.3,
+        max_tokens: 15,
+      });
+      return resp.choices[0]?.message?.content?.trim() || cleanJob;
+    } catch (e) {
+      return cleanJob;
+    }
+  }
+
+  private getRandomItem(pool: string[]): string {
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  private getStyleDescription(styleName: string, job: string): string {
+    const jobStr = job || 'professional';
+
+    // Premium Style with randomized pools
+    if (styleName === 'Premium') {
+      const subjects = [
+        'athletic coach portrait',
+        'barber holding scissors',
+        'fashion model in black dress',
+        'architect in suit',
+        'restaurant chef portrait',
+        'burger close-up dramatic',
+      ];
+      const accentColors = [
+        'deep red',
+        'burnt orange',
+        'electric purple',
+        'muted gold',
+      ];
+      const lightings = [
+        'side lighting dramatic',
+        'top light cinematic',
+        'rim light silhouette',
+        'split lighting high contrast',
+        'soft diffused studio light',
+      ];
+      const angles = [
+        'slight low angle',
+        'slight high angle',
+        'profile view',
+        'three quarter view',
+        'centered frontal portrait',
+      ];
+      const backgrounds = [
+        'textured dark concrete background',
+        'minimal white seamless studio',
+        'grainy film texture',
+        'matte charcoal backdrop',
+        'soft gradient grey background',
+      ];
+
+      const subject = job ;
+      const accent = this.getRandomItem(accentColors);
+      const lighting = this.getRandomItem(lightings);
+      const angle = this.getRandomItem(angles);
+      const bg = this.getRandomItem(backgrounds);
+
+      return `
+        Ultra high contrast black and white portrait of ${subject}, editorial poster style, 
+        ${lighting}, ${angle}, dramatic shadows, sharp facial details, subject centered, ${bg}.
+        Large bold typography integrated into the composition (letters behind or in front of the subject, partially masking the face or body).
+        Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
+        Add one accent color only (${accent}) used in small geometric shapes or highlights.
+        High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting.
+        No watermark, no random text, no logo. Monochrome base.
+      `.trim();
+    }
+
+    if (styleName === 'Hero Studio') {
+      return `Heroic cinematic studio shot centered on ${jobStr}. Dark premium background, dramatic lighting.`;
+    }
+    if (styleName === 'Minimal Studio') {
+      return `Minimal clean studio shot centered on ${jobStr}. Soft natural light, clean white/neutral background.`;
+    }
+
+    // Standard Stability Style Presets
+    const stabilityPresets: Record<string, string> = {
+      '3d-model': '3D model style, professional rendering',
+      'analog-film': 'Analog film style, grainy, nostalgic',
+      anime: 'Anime style, vibrant colors, clean lines',
+      cinematic: 'Cinematic style, dramatic lighting, high contrast',
+      'comic-book': 'Comic book style, bold lines, stylized',
+      'digital-art': 'Digital art style, polished, multifaceted',
+      enhance: 'Enhanced style, sharpened details, vibrant',
+      'fantasy-art': 'Fantasy art style, magical, ethereal',
+      isometric: 'Isometric style, 3D perspective, geometric',
+      'line-art': 'Line art style, minimalist, clean strokes',
+      'low-poly': 'Low poly style, geometric, simplified',
+      'modeling-compound': 'Modeling compound style, clay-like, textured',
+      'neon-punk': 'Neon punk style, glowing colors, futuristic',
+      origami: 'Origami style, folded paper, geometric',
+      photographic: 'Photographic style, realistic, sharp',
+      'pixel-art': 'Pixel art style, retro, blocky',
+      'tile-texture': 'Tile texture style, repeating pattern',
+    };
+
+    if (stabilityPresets[styleName]) {
+      return `${stabilityPresets[styleName]} of ${jobStr}.`;
+    }
+
+    return `Professional high-quality representation of ${jobStr}. Style: ${styleName}.`;
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -119,61 +252,65 @@ export class AiService {
     seed?: number,
   ) {
     const styleName = style || params.style || 'Hero Studio';
-    this.logger.log(`[generateImage] User: ${userId}, Seed: ${seed}`);
+    this.logger.log(
+      `[generateImage] User: ${userId}, Seed: ${seed}, Style: ${styleName}`,
+    );
 
-    const commonRealism = `
-      QUALITY: highly detailed, professional photography, 8k resolution, authentic skin textures, natural lighting.
-      REALISM: No smooth plastic skin, no neon, no 3d render, no generic AI artifacts.
-    `.trim();
-
-    let visualDescription = '';
-    const refinedQuery = (params.userQuery || '').trim();
-
-    if (styleName === 'Hero Studio') {
-      visualDescription = `Heroic cinematic studio shot centered on ${params.job || 'professional'}. Dark premium background. ${commonRealism}`;
-    } else if (styleName === 'Minimal Studio') {
-      visualDescription = `Minimal clean studio shot centered on ${params.job || 'professional'}. Soft light, clean aesthetic. ${commonRealism}`;
-    } else {
-      visualDescription = `Professional representation for ${params.job || 'business'}. ${commonRealism}`;
+    let subject = params.job || '';
+    if (subject && subject.length > 0) {
+      subject = await this.refineSubject(subject);
     }
+
+    const baseStylePrompt = this.getStyleDescription(styleName, subject);
+    const userQuery = (params.userQuery || '').trim();
 
     const apiKey = this.configService.get('STABILITY_API_KEY');
     if (!apiKey) throw new Error('Missing STABILITY API KEY');
 
-    let userPlan = PlanType.CURIEUX;
-    if (userId) {
-      const user = await this.aiUserRepo.findOne({ where: { id: userId } });
-      if (user) userPlan = user.planType || PlanType.CURIEUX;
+    // Style Preset handling
+    const customStyles = ['Hero Studio', 'Premium', 'Minimal Studio'];
+    let stylePreset = '';
+    if (!customStyles.includes(styleName)) {
+      stylePreset =
+        styleName === 'None' || !styleName ? 'photographic' : styleName;
     }
+
 
     let endpoint =
       'https://api.stability.ai/v2beta/stable-image/generate/ultra';
     let isPostureChange = false;
+    let visualDescription = '';
 
     if (file) {
-      isPostureChange = await this.detectPostureChange(params.userQuery || '');
+      isPostureChange = await this.detectPostureChange(userQuery);
 
       visualDescription = `
-        IDENTITY PRESERVATION: Keep face identical to reference.
-        MODIFICATIONS: ${params.userQuery}.
-        ${isPostureChange ? 'Change posture/position.' : 'Maintain original posture exactly.'}
-        Style: ${styleName}. ${commonRealism}
+        STYLE: ${baseStylePrompt}
+        IDENTITY PRESERVATION: Keep face and core features identical to reference.
+        MODIFICATIONS: ${userQuery}.
+        ${isPostureChange ? 'POSITION: Change posture/position as requested.' : 'POSTURE: Maintain original posture exactly.'}
+        QUALITY: Professional photography, 8k, authentic skin textures.
+        NEGATIVE: ${this.NEGATIVE_PROMPT}
+      `.trim();
+    } else {
+      visualDescription = `
+        ${baseStylePrompt}
+        ${userQuery ? `CONTEXT: ${userQuery}` : ''}
+        QUALITY: highly detailed professional photography, 8k resolution.
+        NEGATIVE: ${this.NEGATIVE_PROMPT}
       `.trim();
     }
 
     const formData = new FormData();
     formData.append('prompt', visualDescription);
     formData.append('output_format', 'png');
+    if (stylePreset) {
+      formData.append('style_preset', stylePreset);
+    }
 
     if (file) {
       formData.append('image', file.buffer, file.originalname);
-      if (endpoint.includes('control/structure')) {
-        formData.append('control_strength', 0.7);
-      } else {
-        formData.append('strength', isPostureChange ? 0.6 : 0.45);
-      }
-    } else {
-      formData.append('model', 'sd3-ultra');
+      formData.append('strength', isPostureChange ? 0.6 : 0.45);
     }
 
     if (seed) formData.append('seed', seed);
@@ -187,10 +324,18 @@ export class AiService {
         },
         responseType: 'arraybuffer',
       });
-
       const buffer = Buffer.from(response.data);
       const fileName = `gen_${Date.now()}.png`;
-      const publicUrl = `https://storage.hypster.com/${fileName}`; // Placeholder
+      const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
+
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, buffer);
+
+      const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
 
       const saved = await this.saveGeneration(
         userId,
