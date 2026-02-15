@@ -325,7 +325,7 @@ export class AiService {
   private async callStructure(
     image: Buffer,
     prompt: string,
-    strength: number = 0,
+    strength: number = 0.85,
   ): Promise<Buffer> {
     const formData = new FormData();
     formData.append('image', image, 'source.png');
@@ -333,6 +333,19 @@ export class AiService {
     formData.append('control_strength', strength.toString());
     formData.append('output_format', 'png');
     return this.callStabilityApi('stable-image/control/structure', formData);
+  }
+
+  private async callStyle(
+    image: Buffer,
+    prompt: string,
+    fidelity: number = 0.7,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('prompt', prompt);
+    formData.append('fidelity', fidelity.toString());
+    formData.append('output_format', 'png');
+    return this.callStabilityApi('stable-image/control/style', formData);
   }
 
   private async callReplaceBackground(
@@ -410,20 +423,37 @@ export class AiService {
       let finalDescription = '';
 
       if (file) {
-        // --- SIMPLE IMAGE-GUIDED GENERATION (STRUCTURE) ---
+        // --- IMAGE-GUIDED GENERATION (STRUCTURE vs STYLE) ---
+        const orchestratorPrompt = (params.orchestratorPrompt || '').trim();
+        const intentSource = userQuery || orchestratorPrompt;
+        const intent = await this.detectPipelineIntent(intentSource);
+        this.logger.log(`[generateImage] Tool selection - Intent: ${intent}`);
+
         const visualSubject =
           orchestratorPrompt ||
           userQuery ||
           refinedSubject ||
           'high quality portrait';
-        const structurePrompt = `ABSOLUTELY NO CHANGES TO THE FACE. Preserve the exact facial identity, gender, and features of the person in the reference image. ${visualSubject}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
-        finalDescription = structurePrompt;
 
-        finalBuffer = await this.callStructure(
-          file.buffer,
-          structurePrompt,
-          0.95, // Near-maximum strength to lock the face and identity
-        );
+        if (intent === 'STYLE_CHANGE') {
+          this.logger.log(
+            '[generateImage] Using STYLE endpoint for aesthetic transfer',
+          );
+          const stylePrompt = `${visualSubject}, STYLE: ${baseStylePrompt}, artistic, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+          finalDescription = stylePrompt;
+          finalBuffer = await this.callStyle(file.buffer, stylePrompt, 0.7);
+        } else {
+          this.logger.log(
+            '[generateImage] Using STRUCTURE endpoint for identity preservation',
+          );
+          const structurePrompt = `ABSOLUTELY NO CHANGES TO THE FACE. Preserve the exact facial identity, gender, and features of the person in the reference image. ${visualSubject}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+          finalDescription = structurePrompt;
+          finalBuffer = await this.callStructure(
+            file.buffer,
+            structurePrompt,
+            0.95,
+          );
+        }
       } else {
         // --- STANDARD TEXT-TO-IMAGE (ULTRA) ---
         const visualDescription = userQuery
