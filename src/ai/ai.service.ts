@@ -191,7 +191,7 @@ export class AiService {
         'soft gradient grey background',
       ];
 
-      const subject = job ;
+      const subject = job;
       const accent = this.getRandomItem(accentColors);
       const lighting = this.getRandomItem(lightings);
       const angle = this.getRandomItem(angles);
@@ -216,28 +216,28 @@ export class AiService {
     }
 
     // Standard Stability Style Presets
-    const stabilityPresets: Record<string, string> = {
-      '3d-model': '3D model style, professional rendering',
-      'analog-film': 'Analog film style, grainy, nostalgic',
-      anime: 'Anime style, vibrant colors, clean lines',
-      cinematic: 'Cinematic style, dramatic lighting, high contrast',
-      'comic-book': 'Comic book style, bold lines, stylized',
-      'digital-art': 'Digital art style, polished, multifaceted',
-      enhance: 'Enhanced style, sharpened details, vibrant',
-      'fantasy-art': 'Fantasy art style, magical, ethereal',
-      isometric: 'Isometric style, 3D perspective, geometric',
-      'line-art': 'Line art style, minimalist, clean strokes',
-      'low-poly': 'Low poly style, geometric, simplified',
-      'modeling-compound': 'Modeling compound style, clay-like, textured',
-      'neon-punk': 'Neon punk style, glowing colors, futuristic',
-      origami: 'Origami style, folded paper, geometric',
-      photographic: 'Photographic style, realistic, sharp',
-      'pixel-art': 'Pixel art style, retro, blocky',
-      'tile-texture': 'Tile texture style, repeating pattern',
-    };
+    const stabilityPresets = [
+      '3d-model',
+      'analog-film',
+      'anime',
+      'cinematic',
+      'comic-book',
+      'digital-art',
+      'enhance',
+      'fantasy-art',
+      'isometric',
+      'line-art',
+      'low-poly',
+      'modeling-compound',
+      'neon-punk',
+      'origami',
+      'photographic',
+      'pixel-art',
+      'tile-texture',
+    ];
 
-    if (stabilityPresets[styleName]) {
-      return `${stabilityPresets[styleName]} of ${jobStr}.`;
+    if (stabilityPresets.includes(styleName)) {
+      return `Professional representation of ${jobStr}.`;
     }
 
     return `Professional high-quality representation of ${jobStr}. Style: ${styleName}.`;
@@ -274,7 +274,6 @@ export class AiService {
       stylePreset =
         styleName === 'None' || !styleName ? 'photographic' : styleName;
     }
-
 
     let endpoint =
       'https://api.stability.ai/v2beta/stable-image/generate/ultra';
@@ -410,12 +409,13 @@ export class AiService {
       `Function: ${params.function || 'General'}`,
     );
 
-    let imageRes: any = { url: null };
-    if (orchestration.generateImage) {
+    let imageRes: any = { url: '' };
+    // Bias towards generating image if file provided or if orchestration says so
+    if (orchestration.generateImage || !!file) {
       imageRes = await this.generateImage(
         {
           ...params,
-          userQuery: orchestration.imagePrompt,
+          userQuery: orchestration.imagePrompt || params.userQuery,
         },
         params.style || 'Hero Studio',
         userId,
@@ -427,15 +427,15 @@ export class AiService {
     let textRes: any = { content: '' };
     if (orchestration.generateText) {
       textRes = await this.generateText(
-        { prompt: orchestration.captionText },
+        { prompt: orchestration.captionText || params.userQuery },
         'social',
         userId,
       );
     }
 
     return {
-      image: imageRes.url,
-      text: textRes.content,
+      image: imageRes.url || '',
+      text: textRes.content || '',
       orchestration,
       generationId: imageRes.generationId || textRes.generationId,
     };
@@ -452,11 +452,23 @@ export class AiService {
         messages: [
           {
             role: 'system',
-            content: `You are a social media orchestrator. Decide if an image and/or text caption is needed. Respond in JSON.`,
+            content: `
+              You are a social media orchestrator. 
+              Decide if an image and/or text caption is needed for the given query.
+              Most social posts BENEFIT from an image. 
+              
+              Respond STRICTLY in JSON with:
+              {
+                "generateImage": boolean,
+                "generateText": boolean,
+                "imagePrompt": "visual description for image generation (in English)",
+                "captionText": "the actual social media post text (in French by default)"
+              }
+            `.trim(),
           },
           {
             role: 'user',
-            content: `Query: ${query}\nBranding: ${branding}\nContext: ${context}`,
+            content: `User Query: "${query}"\nUser Branding: ${branding}\nContext: ${context}`,
           },
         ],
         response_format: { type: 'json_object' },
