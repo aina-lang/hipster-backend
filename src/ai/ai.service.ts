@@ -39,9 +39,17 @@ export class AiService {
   private async detectSearchReplacePrompts(
     query: string,
     job: string,
+    styleName: string,
   ): Promise<{ search: string; prompt: string }> {
+    const hasStyle = styleName && styleName !== 'None';
+
     if (!query || query.trim().length === 0) {
-      return { search: 'background', prompt: `professional ${job} background` };
+      return {
+        search: 'background',
+        prompt: hasStyle
+          ? `professional ${job} background in ${styleName} style`
+          : `professional ${job} background`,
+      };
     }
 
     try {
@@ -52,16 +60,23 @@ export class AiService {
             role: 'system',
             content: `
               You are an AI image editing assistant. 
-              Based on the user's request, determine:
-              1. "search": What specific part of the image should be IDENTIFIED and REPLACED? (e.g., "background", "clothes", "hair", "accessories"). NEVER search for "face" or "person" if requested to keep the same person.
-              2. "prompt": What should it be replaced with? (in English).
+              The user wants to keep their EXACT face from the original photo but change other parts.
+              
+              Based on the user's request and the selected STYLE (${styleName}), determine:
+              1. "search": What parts should be IDENTIFIED and REPLACED?
+                 - If a STYLE is selected, you SHOULD include "background and environment".
+                 - If the user asks for clothes, add "clothes".
+                 - If the user asks for a hat, add "hair and top of head".
+                 - IMPORTANT: NEVER include "face" or "mouth" or "eyes" to preserve identity.
+              2. "prompt": What should the identified area be replaced with? (in English).
+                 - Describe the new elements and the overall style: ${styleName}.
               
               Respond STRICTLY in JSON: {"search": string, "prompt": string}
             `.trim(),
           },
           {
             role: 'user',
-            content: `Job: ${job}, Request: "${query}"`,
+            content: `Job: ${job}, Style: ${styleName}, User Request: "${query}"`,
           },
         ],
         response_format: { type: 'json_object' },
@@ -435,6 +450,7 @@ export class AiService {
         const sr = await this.detectSearchReplacePrompts(
           intentSource,
           refinedSubject || params.job || '',
+          styleName,
         );
         this.logger.log(
           `[generateImage] Search: "${sr.search}", Prompt: "${sr.prompt}"`,
