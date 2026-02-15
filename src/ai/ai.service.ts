@@ -38,6 +38,7 @@ export class AiService {
   /* --------------------- POSTURE DETECTION --------------------- */
   private async detectPostureChange(query: string): Promise<boolean> {
     if (!query || query.trim().length === 0) return false;
+    this.logger.log(`[detectPostureChange] Checking: "${query}"`);
 
     try {
       const response = await this.openai.chat.completions.create({
@@ -145,8 +146,11 @@ export class AiService {
         temperature: 0.3,
         max_tokens: 15,
       });
-      return resp.choices[0]?.message?.content?.trim() || cleanJob;
+      const refined = resp.choices[0]?.message?.content?.trim() || cleanJob;
+      this.logger.log(`[refineSubject] Result: "${refined}"`);
+      return refined;
     } catch (e) {
+      this.logger.error(`[refineSubject] Error: ${e.message}`);
       return cleanJob;
     }
   }
@@ -258,7 +262,7 @@ export class AiService {
   ) {
     const styleName = style || params.style || 'Hero Studio';
     this.logger.log(
-      `[generateImage] User: ${userId}, Seed: ${seed}, Style: ${styleName}`,
+      `[generateImage] START - User: ${userId}, Seed: ${seed}, Style: ${styleName}, Subject: ${params.job}`,
     );
 
     let subject = params.job || '';
@@ -319,6 +323,10 @@ export class AiService {
 
     if (seed) formData.append('seed', seed);
 
+    this.logger.log(
+      `[generateImage] Final Prompt: ${visualDescription.substring(0, 200)}...`,
+    );
+
     try {
       const response = await axios.post(endpoint, formData, {
         headers: {
@@ -330,7 +338,11 @@ export class AiService {
       });
       const buffer = Buffer.from(response.data);
       const fileName = `gen_${Date.now()}.png`;
-      const uploadDir = path.join(process.cwd(), 'uploads', 'ai-generations');
+      const uploadDir = path.resolve(
+        process.cwd(),
+        'uploads',
+        'ai-generations',
+      );
 
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
@@ -340,6 +352,10 @@ export class AiService {
       fs.writeFileSync(filePath, buffer);
 
       const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+      this.logger.log(
+        `[generateImage] SUCCESS - Saved to: ${filePath}, URL: ${publicUrl}`,
+      );
 
       const saved = await this.saveGeneration(
         userId,
@@ -355,16 +371,28 @@ export class AiService {
         generationId: saved?.id,
         seed: seed || 0,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
-        '[generateImage] Error:',
-        error.response?.data?.toString() || error.message,
+        `[generateImage] FAILED - ${error.response?.data?.toString() || error.message}`,
       );
+      if (error.response?.data) {
+        try {
+          const errData = Buffer.isBuffer(error.response.data)
+            ? error.response.data.toString()
+            : JSON.stringify(error.response.data);
+          this.logger.error(
+            `[generateImage] Stability API Response: ${errData}`,
+          );
+        } catch (e) {}
+      }
       throw error;
     }
   }
 
   async generateText(params: any, type: string, userId: number) {
+    this.logger.log(
+      `[generateText] START - User: ${userId}, Type: ${type}, Params: ${JSON.stringify(params)}`,
+    );
     try {
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -376,13 +404,20 @@ export class AiService {
         ],
       });
       const result = response.choices[0]?.message?.content || '';
-      const saved = await this.saveGeneration(
-        userId,
-        result,
-        '',
-        type as AiGenerationType,
-        params,
-      );
+
+      // Map sub-types (social, blog, ad, etc.) to valid base enum
+      const validBaseTypes = Object.values(AiGenerationType) as string[];
+      let baseType = AiGenerationType.TEXT;
+
+      if (validBaseTypes.includes(type)) {
+        baseType = type as AiGenerationType;
+      }
+
+      const saved = await this.saveGeneration(userId, result, '', baseType, {
+        ...params,
+        subType: type,
+      });
+      this.logger.log(`[generateText] SUCCESS - Generated ${result.length} chars, ID: ${saved?.id}`);
       return { content: result, generationId: saved?.id };
     } catch (error) {
       this.logger.error(`[generateText] Error: ${error.message}`);
@@ -398,7 +433,9 @@ export class AiService {
     seed?: number,
   ) {
     if (typeof params === 'string') params = { userQuery: params };
-    this.logger.log(`[generateSocial] User: ${userId}`);
+    this.logger.log(
+      `[generateSocial] START - User: ${userId}, Query: "${params.userQuery}"`,
+    );
 
     let brandingContext = '';
     if (userId) {
@@ -438,12 +475,17 @@ export class AiService {
       );
     }
 
-    return {
+    const result = {
       image: imageRes.url || '',
       text: textRes.content || '',
       orchestration,
       generationId: imageRes.generationId || textRes.generationId,
     };
+
+    this.logger.log(
+      `[generateSocial] SUCCESS - Image: ${result.image || 'NONE'}, Text: ${result.text.substring(0, 30)}...`,
+    );
+    return result;
   }
 
   private async orchestrateSocial(
@@ -452,6 +494,7 @@ export class AiService {
     context: string,
   ) {
     try {
+      this.logger.log(`[orchestrateSocial] Decision for query: "${query}"`);
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
@@ -478,7 +521,11 @@ export class AiService {
         ],
         response_format: { type: 'json_object' },
       });
-      return JSON.parse(response.choices[0].message.content);
+      const decision = JSON.parse(response.choices[0].message.content);
+      this.logger.log(
+        `[orchestrateSocial] Decision: ${JSON.stringify(decision)}`,
+      );
+      return decision;
     } catch (error) {
       this.logger.error(`[orchestrateSocial] Error: ${error.message}`);
       return {
