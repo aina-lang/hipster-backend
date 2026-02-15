@@ -448,17 +448,19 @@ CRITICAL RULES:
     let visualDescription = '';
 
     const negativePrompt = `
-      text, typography, letters, words, numbers, watermarks, logos, signatures,
-       AI artifacts, CGI, illustration, cartoon, anime, 3d render, plastic,
-       blur, airbrush, smooth skin, doll-like, fake, oversaturated,
-       extra limbs, unrealistic proportions, messy background,
-       cheap decoration, cliché, low quality, hearts, balloons, cute,
-       bad anatomy, bad hands, missing fingers, extra fingers, cropped, 
-       out of frame, worst quality, jpeg artifacts, deformed, disfigured, 
-       gross proportions, malformed limbs, missing arms, missing legs, 
-       extra arms, extra legs, fused fingers, too many fingers, long neck, 
-       plastic skin, smooth skin, neon, overly polished, denoised,
-       grain, noise, blurry, hazy, low resolution, pixelated
+      text, letters, words, typography, numbers, labels, quotes, heading, 
+      advertising text, banner, caption, message, script,
+      watermarks, logos, signatures,
+      AI artifacts, CGI, illustration, cartoon, anime, 3d render, plastic,
+      blur, airbrush, smooth skin, doll-like, fake, oversaturated,
+      extra limbs, unrealistic proportions, messy background,
+      cheap decoration, cliché, low quality, hearts, balloons, cute,
+      bad anatomy, bad hands, missing fingers, extra fingers, cropped, 
+      out of frame, worst quality, jpeg artifacts, deformed, disfigured, 
+      gross proportions, malformed limbs, missing arms, missing legs, 
+      extra arms, extra legs, fused fingers, too many fingers, long neck, 
+      plastic skin, smooth skin, neon, overly polished, denoised,
+      grain, noise, blurry, hazy, low resolution, pixelated
     `.trim();
 
     const commonRealism = `
@@ -957,7 +959,8 @@ CRITICAL RULES:
   }
 
   private constructNegativeFlyerPrompt(): string {
-    return `blurry text, distorted letters, gibberish, misspelled words, broken text, messy layout, 
+    return `text, letters, words, typography, labels, heading, banner, caption, 
+    blurry text, distorted letters, gibberish, misspelled words, broken text, messy layout, 
     random symbols, fake language, poster mockup, watermark, low contrast, over-saturated colors, 
     chaotic design, noise, low resolution`.replace(/\s+/g, ' ');
   }
