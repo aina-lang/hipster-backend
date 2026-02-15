@@ -159,13 +159,17 @@ export class AiService {
     return await this.aiGenRepo.save(generation);
   }
 
-  /* --------------------- CHAT / TEXT --------------------- */
   async chat(
     messages: any[],
     userId?: number,
     conversationId?: string | number,
     isUsageLog: boolean = false,
-  ): Promise<{ content: string; conversationId?: string }> {
+  ): Promise<{
+    content: string;
+    conversationId?: string;
+    type?: string;
+    mediaUrl?: string;
+  }> {
     const start = Date.now();
     try {
       if (userId) {
@@ -177,27 +181,85 @@ export class AiService {
         if (!user) {
           throw new ForbiddenException('User not found');
         }
-
-        // Check limits before proceeding
-        await this.aiPaymentService.decrementCredits(
-          userId,
-          AiGenerationType.TEXT,
-        );
       }
 
-      // Call OpenAI API
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
+      // 1. Orchestrate intent
+      const lastUserMsg = [...messages]
+        .reverse()
+        .find((m) => m.role === 'user');
+      const orchestration = await this.orchestrateChat(
+        lastUserMsg?.content || '',
         messages,
-      });
-      const content = completion.choices[0].message.content || '';
+      );
+
+      this.logger.log(
+        `[orchestrateChat] Intent: ${JSON.stringify(orchestration)}`,
+      );
+
+      let responseContent = '';
+      let mediaUrl = '';
+      let type = 'text';
+
+      // 2. Generate content based on intent
+      if (orchestration.generateImage) {
+        const imgRes = await this.generateImage(
+          { userQuery: orchestration.imagePrompt || lastUserMsg?.content },
+          'photographic',
+          userId,
+        );
+        mediaUrl = imgRes.url;
+        type = 'image';
+      } else if (orchestration.generateVideo) {
+        const vidRes = await this.generateVideo(
+          { userQuery: orchestration.videoPrompt || lastUserMsg?.content },
+          userId,
+        );
+        mediaUrl = vidRes.url;
+        type = 'video';
+      } else if (orchestration.generateAudio) {
+        const audRes = await this.generateAudio(
+          { userQuery: orchestration.audioPrompt || lastUserMsg?.content },
+          userId,
+        );
+        mediaUrl = audRes.url;
+        type = 'audio';
+      }
+
+      // Always generate text if requested or as a description of media
+      if (orchestration.generateText || !mediaUrl) {
+        // Add context for text generation if we have media
+        const textMessages = [...messages];
+        if (mediaUrl) {
+          textMessages.push({
+            role: 'system',
+            content: `Tu viens de générer un(e) ${type}. Explique brièvement ce que tu as fait en rapport avec la demande de l'utilisateur.`,
+          });
+        }
+
+        const completion = await this.openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: textMessages,
+        });
+        responseContent = completion.choices[0].message.content || '';
+      }
 
       let generationId: string | undefined;
 
       if (userId) {
+        // Decrease credits for the main intent
+        const creditType = orchestration.generateImage
+          ? AiGenerationType.IMAGE
+          : orchestration.generateVideo
+            ? AiGenerationType.VIDEO
+            : orchestration.generateAudio
+              ? AiGenerationType.AUDIO
+              : AiGenerationType.TEXT;
+
+        await this.aiPaymentService.decrementCredits(userId, creditType);
+
         let generation: AiGeneration;
 
-        // Normalize conversationId to handle null/undefined/empty string
+        // Normalize conversationId
         const cid =
           conversationId &&
           conversationId !== 'null' &&
@@ -206,70 +268,124 @@ export class AiService {
             : null;
 
         if (cid) {
-          // Update existing conversation
           generation = await this.aiGenRepo.findOne({
             where: { id: cid, user: { id: userId } },
           });
 
           if (generation) {
-            // Update the existing conversation
-            generation.result = content;
-            generation.prompt = JSON.stringify(messages); // Store full conversation history
-            generation.createdAt = new Date(); // Update timestamp to bring to top of history
+            generation.result = responseContent;
+            generation.prompt = JSON.stringify(messages);
+            generation.createdAt = new Date();
             await this.aiGenRepo.save(generation);
-            this.logger.log(`Updated conversation ${cid} for user ${userId}`);
-          } else {
-            this.logger.warn(`Conversation ${cid} not found, creating new one`);
           }
         }
 
         if (!generation) {
-          // Create new conversation
           const firstUserMsg = messages.find((m) => m.role === 'user');
           generation = await this.aiGenRepo.save({
             user: { id: userId } as AiUser,
             type: AiGenerationType.CHAT,
             prompt: JSON.stringify(messages),
-            result: content,
+            result: responseContent,
             attributes: isUsageLog ? { isUsageLog: true } : {},
             title:
               (firstUserMsg?.content?.substring(0, 50) || 'Conversation') +
               '...',
           });
-          this.logger.log(
-            `Created new conversation ${generation.id} for user ${userId} (UsageLog: ${isUsageLog})`,
-          );
         }
 
         generationId = generation.id.toString();
 
-        // Save a separate usage record of type TEXT for EACH turn in the conversation,
-        // but ONLY for Free Mode (where isUsageLog is false).
-        // Guided Mode (where isUsageLog is true) already saves its own TEXT record.
         if (!isUsageLog) {
-          const lastUserMsg = [...messages]
-            .reverse()
-            .find((m) => m.role === 'user');
           await this.aiGenRepo.save({
             user: { id: userId } as AiUser,
             type: AiGenerationType.TEXT,
             prompt: lastUserMsg?.content || 'Chat message',
-            result: content,
+            result: responseContent,
             attributes: {
               isUsageLog: true,
               conversationId: generation.id,
+              mediaUrl,
+              mediaType: type,
             },
           });
         }
       }
 
-      return { content, conversationId: generationId };
+      return {
+        content: responseContent,
+        conversationId: generationId,
+        type: mediaUrl ? type : 'text',
+        mediaUrl,
+      };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
       const msg = error instanceof Error ? error.message : String(error);
       throw new Error(`AI Error: ${msg}`);
+    }
+  }
+
+  private async orchestrateChat(
+    userQuery: string,
+    history: any[],
+  ): Promise<{
+    generateImage: boolean;
+    generateVideo: boolean;
+    generateAudio: boolean;
+    generateText: boolean;
+    imagePrompt?: string;
+    videoPrompt?: string;
+    audioPrompt?: string;
+    explanationNeeded?: boolean;
+  }> {
+    const systemPrompt = `
+    You are the Brain Orchestrator for Hipster IA Free Mode.
+    Analyze the user's latest query and the conversation history to determine their intent.
+
+    Intents:
+    - IMAGE: User wants to generate an image (e.g., "dessine/génère une image de...", "crée un logo...").
+    - VIDEO: User wants to generate a short video (e.g., "fais une vidéo de...", "anime ça...").
+    - AUDIO: User wants to generate audio/speech (e.g., "dis...", "lis ça...", "voix off...").
+    - TEXT: Default assistant chat or request for writing only.
+
+    CRITICAL: 
+    - Respond ONLY with JSON.
+    - imagePrompt should be in ENGLISH, high quality.
+    - Default generateText to true if you need to explain or respond.
+
+    {
+      "generateImage": boolean,
+      "generateVideo": boolean,
+      "generateAudio": boolean,
+      "generateText": boolean,
+      "imagePrompt": string (if image),
+      "videoPrompt": string (if video),
+      "audioPrompt": string (if audio)
+    }
+    `;
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...history.slice(-5), // last few turns for context
+          { role: 'user', content: userQuery },
+        ],
+        response_format: { type: 'json_object' },
+      });
+
+      return JSON.parse(response.choices[0].message.content);
+    } catch (e) {
+      this.logger.error('Orchestration error:', e);
+      return {
+        generateImage: false,
+        generateVideo: false,
+        generateAudio: false,
+        generateText: true,
+      };
     }
   }
 
@@ -418,6 +534,7 @@ CRITICAL RULES:
       reference_image?: string;
       style?: string;
       type?: string;
+      strength?: number;
     },
     style:
       | 'Premium'
@@ -654,12 +771,16 @@ CRITICAL RULES:
 
     let endpoint =
       'https://api.stability.ai/v2beta/stable-image/generate/ultra';
+    // if (file) {
+    //   endpoint =
+    //     'https://api.stability.ai/v2beta/stable-image/generate/image-to-image';
+    // }
     const outputFormat = 'png';
-    let useModelParam = true;
-    let useNegativePrompt = true;
+    let useModelParam = !file; // Ultra doesn't take model, but structure might
+    let useNegativePrompt = !file; // Control APIs usually don't take negative_prompt the same way
 
     this.logger.log(
-      `[generateImage] Using Plan: ${userPlan} -> Endpoint: ${endpoint}`,
+      `[generateImage] Using Plan: ${userPlan} -> Endpoint: ${endpoint} (HasFile: ${!!file})`,
     );
 
     // ------------------------------------------------------------------
@@ -738,6 +859,19 @@ CRITICAL RULES:
     formData.append('aspect_ratio', aspectRatio);
     if (stylePreset && stylePreset !== 'none') {
       formData.append('style_preset', stylePreset);
+    }
+
+    // Finalize multipart if file exists
+    if (file) {
+      formData.append(
+        'image',
+        new Blob([file.buffer as any], { type: file.mimetype }),
+        file.originalname,
+      );
+      // Image-to-image strength (0.0 to 1.0)
+      // 0 = original, 1 = totally new
+      const strengthVal = params.strength !== undefined ? params.strength : 0.5;
+      formData.append('strength', strengthVal.toString());
     }
 
     const controller = new AbortController();
