@@ -375,12 +375,21 @@ export class AiService {
     image: Buffer,
     prompt: string,
     searchPrompt: string,
+    growMask?: number,
+    seed?: number,
+    stylePreset?: string,
   ): Promise<Buffer> {
     const formData = new FormData();
     formData.append('image', image, 'source.png');
     formData.append('prompt', prompt);
     formData.append('search_prompt', searchPrompt);
     formData.append('output_format', 'png');
+
+    if (growMask !== undefined)
+      formData.append('grow_mask', growMask.toString());
+    if (seed) formData.append('seed', seed.toString());
+    if (stylePreset) formData.append('style_preset', stylePreset);
+
     return this.callStabilityApi(
       'stable-image/edit/search-and-replace',
       formData,
@@ -446,25 +455,29 @@ export class AiService {
           this.logger.log(
             '[generateImage] Using Search and Replace for BACKGROUND (max fidelity)',
           );
-          // Search and replace with "background" ensures the person's face/body pixels are preserved
-          const bgPrompt = `${userQuery || 'professional background'}, STYLE: ${baseStylePrompt}, 8k, photographic. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+          const bgPrompt = `${userQuery || 'professional background'}, 8k, photographic. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
           finalDescription = `SEARCH AND REPLACE (BG): ${bgPrompt}`;
           finalBuffer = await this.callSearchAndReplace(
             file.buffer,
             bgPrompt,
             'background',
+            3, // Default grow_mask
+            seed,
+            stylePreset,
           );
         } else if (intent === 'OBJECT_ADD') {
           this.logger.log(
             '[generateImage] Using Search and Replace for OBJECT_ADD',
           );
-          const objPrompt = `${userQuery}, STYLE: ${baseStylePrompt}, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+          const objPrompt = `${userQuery}, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
           finalDescription = `SEARCH AND REPLACE (OBJ): ${objPrompt}`;
-          // We search for "background" or "around the person" to add objects
           finalBuffer = await this.callSearchAndReplace(
             file.buffer,
             objPrompt,
             'background and environment',
+            3,
+            seed,
+            stylePreset,
           );
         } else {
           this.logger.log(
