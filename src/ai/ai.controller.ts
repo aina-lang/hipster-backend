@@ -179,6 +179,7 @@ export class AiController {
         | 'photographic'
         | 'pixel-art'
         | 'tile-texture';
+      seed?: number;
     },
     @Req() req,
     @UploadedFile() file?: Express.Multer.File,
@@ -197,6 +198,7 @@ export class AiController {
         ...body,
         params,
         hasFile: !!file,
+        seed: body.seed,
       });
 
       const aiUser = await this.aiService.getAiUserWithProfile(req.user.sub);
@@ -207,11 +209,13 @@ export class AiController {
         body.style,
         req.user.sub,
         file,
+        body.seed,
       );
       return {
         url: await this.aiService.applyWatermark(result.url, isPremium),
         rawUrl: result.url,
         generationId: result.generationId,
+        seed: result.seed,
       };
     } catch (error: any) {
       this.logger.error('Image generation error:', error);

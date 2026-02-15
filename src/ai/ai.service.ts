@@ -139,6 +139,24 @@ export class AiService {
     if (gens.length > 0) await this.aiGenRepo.remove(gens);
   }
 
+  private async saveGeneration(
+    userId: number,
+    result: string,
+    prompt: string,
+    type: string,
+    attributes: any = {},
+  ) {
+    const generation = this.aiGenRepo.create({
+      user: { id: userId } as AiUser,
+      type: type as AiGenerationType,
+      result,
+      prompt: prompt.substring(0, 1000),
+      title: (prompt || 'Untitled').substring(0, 30) + '...',
+      attributes,
+    });
+    return await this.aiGenRepo.save(generation);
+  }
+
   /* --------------------- CHAT / TEXT --------------------- */
   async chat(
     messages: any[],
@@ -388,9 +406,10 @@ CRITICAL RULES:
       | 'tile-texture',
     userId?: number,
     file?: Express.Multer.File,
+    seed?: number,
   ) {
     this.logger.log(
-      `[generateImage] START - Style: ${style}, UserId: ${userId}`,
+      `[generateImage] START - Style: ${style}, UserId: ${userId}, Seed: ${seed}`,
     );
 
     if (userId) {
@@ -458,7 +477,7 @@ CRITICAL RULES:
         USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
         User's job: ${params.job || 'Not specified'}.
         
-        STYLE: ULTRA HIGH CONTRAST BLACK & WHITE (PREMIUM / NOIR).
+        STYLE: ULTRA HIGH CONTRAST BLACK & WHITE.
         Visual rules:
         1. STRICTLY BLACK AND WHITE. NO COLOR (except minimal ${getRandom(accentColors)} accent).
         2. Chiaroscuro lighting, deep shadows, dramatic silhouettes, rim lighting.
@@ -608,6 +627,11 @@ CRITICAL RULES:
     }
     formData.append('output_format', outputFormat);
 
+    // Pass Seed if provided
+    if (seed) {
+      formData.append('seed', seed.toString());
+    }
+
     // Dynamic Aspect Ratio
     let aspectRatio = '1:1';
 
@@ -673,9 +697,29 @@ CRITICAL RULES:
       const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
       this.logger.log(`[generateImage] SUCCESS - Image saved: ${fileName}`);
 
+      // Capture Seed from Header
+      const stabilitySeed =
+        response.headers.get('seed') ||
+        response.headers.get('stability-seed') ||
+        seed?.toString() ||
+        '0';
+
+      // Save to DB (Restore this logical step)
+      let genId = null;
+      if (userId) {
+        const saved = await this.saveGeneration(
+          userId,
+          publicUrl,
+          params.userQuery || 'Image generated',
+          'image',
+        );
+        genId = saved.id;
+      }
+
       return {
         url: publicUrl,
-        generationId: null,
+        generationId: genId,
+        seed: parseInt(stabilitySeed),
       };
     } catch (error) {
       this.logger.error(`[generateImage] FATAL ERROR:`, error);
