@@ -751,16 +751,26 @@ CRITICAL RULES:
     const selectedStyle = params.style || 'Minimal Studio';
     this.logger.log(`[generateSocial] Selected style: ${selectedStyle}`);
 
-    // Only generate image, no text per user request
+    // Generate image
     const imageRes = await this.generateImage(
-      { ...params, instructions: 'Image for social media' },
+      { ...params, instructions: 'High-end visual for a social media post' },
       selectedStyle as any,
       userId,
       file,
     );
 
+    // Generate real text caption via GPT
+    const textRes = await this.generateText(
+      {
+        ...params,
+        userQuery: params.userQuery || 'Une publication engageante',
+      },
+      'social',
+      userId,
+    );
+
     return {
-      content: '', // No text content
+      content: textRes.content,
       url: imageRes.url,
       generationId: imageRes.generationId,
     };
