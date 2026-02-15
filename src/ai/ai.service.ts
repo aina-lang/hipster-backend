@@ -540,19 +540,10 @@ CRITICAL RULES:
       if (user) userPlan = user.planType || PlanType.CURIEUX;
     }
 
-    let endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/core';
-    let model = 'sd3.5-large';
+    let endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/ultra';
     const outputFormat = 'png';
     let useModelParam = true;
     let useNegativePrompt = true;
-
-    if (userPlan === PlanType.ATELIER) {
-      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/sd3';
-      model = 'sd3.5-large';
-    } else if (userPlan === PlanType.STUDIO || userPlan === PlanType.AGENCE) {
-      endpoint = 'https://api.stability.ai/v2beta/stable-image/generate/ultra';
-      useModelParam = false; // Ultra doesn't take a model param
-    }
 
     this.logger.log(
       `[generateImage] Using Plan: ${userPlan} -> Endpoint: ${endpoint}`,
@@ -610,15 +601,13 @@ CRITICAL RULES:
     if (stylePreset && stylePreset !== 'none') {
       formData.append('style_preset', stylePreset);
     }
-    if (useModelParam) {
-      formData.append('model', model);
-    }
+
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000);
 
     this.logger.log(
-      `[generateImage] Calling Stability AI: ${endpoint} (Model: ${useModelParam ? model : 'N/A'})`,
+      `[generateImage] Calling Stability AI: ${endpoint} (Model: ${useModelParam})`,
     );
 
     try {
