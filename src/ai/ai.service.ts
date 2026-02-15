@@ -41,14 +41,14 @@ export class AiService {
     job: string,
     styleName: string,
   ): Promise<{ search: string; prompt: string }> {
-    const hasStyle = styleName && styleName !== 'None';
+    const isCustomStyle = ['Premium', 'Hero Studio', 'Minimal Studio'].includes(
+      styleName,
+    );
 
     if (!query || query.trim().length === 0) {
       return {
-        search: 'background',
-        prompt: hasStyle
-          ? `professional ${job} background in ${styleName} style`
-          : `professional ${job} background`,
+        search: 'background and environment',
+        prompt: `professional ${job} scene in ${styleName} style`,
       };
     }
 
@@ -60,16 +60,15 @@ export class AiService {
             role: 'system',
             content: `
               You are an AI image editing assistant. 
-              The user wants to keep their EXACT face from the original photo but change other parts.
+              The user wants to keep their EXACT face from the original photo but change everything else.
               
               Based on the user's request and the selected STYLE (${styleName}), determine:
               1. "search": What parts should be IDENTIFIED and REPLACED?
-                 - If a STYLE is selected, you SHOULD include "background and environment".
-                 - If the user asks for clothes, add "clothes".
-                 - If the user asks for a hat, add "hair and top of head".
-                 - IMPORTANT: NEVER include "face" or "mouth" or "eyes" to preserve identity.
-              2. "prompt": What should the identified area be replaced with? (in English).
-                 - Describe the new elements and the overall style: ${styleName}.
+                 - If a STYLE like "${styleName}" is selected, you MUST include "background, environment, and clothes" to make the style visible.
+                 - If the user asks for a specific object (e.g., "glasses"), include it.
+                 - IMPORTANT: NEVER search for "face", "eyes", "nose" or "mouth". Stay away from the face to preserve identity.
+              2. "prompt": A detailed visual description of the replacement area (in English).
+                 - Incorporate the "${styleName}" look into this description.
               
               Respond STRICTLY in JSON: {"search": string, "prompt": string}
             `.trim(),
@@ -84,11 +83,11 @@ export class AiService {
 
       const result = JSON.parse(response.choices[0]?.message?.content || '{}');
       return {
-        search: result.search || 'background',
+        search: result.search || 'background and clothes',
         prompt: result.prompt || query,
       };
     } catch (error) {
-      return { search: 'background', prompt: query };
+      return { search: 'background and environment', prompt: query };
     }
   }
 
@@ -456,7 +455,13 @@ export class AiService {
           `[generateImage] Search: "${sr.search}", Prompt: "${sr.prompt}"`,
         );
 
-        const finalPrompt = `${sr.prompt}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+        // For custom styles, the baseStylePrompt is very important.
+        // We merge it with sr.prompt but ensure baseStylePrompt takes precedence for the "vibe".
+        const isCustomStyle = customStyles.includes(styleName);
+        const finalPrompt = isCustomStyle
+          ? `${baseStylePrompt}. Request addition: ${sr.prompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
+          : `${sr.prompt}, STYLE: ${baseStylePrompt}, ultra-realistic, highly detailed, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+
         finalDescription = `SEARCH_AND_REPLACE | Search: ${sr.search} | ${finalPrompt}`;
 
         finalBuffer = await this.callSearchAndReplace(
