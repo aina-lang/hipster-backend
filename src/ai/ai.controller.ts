@@ -150,7 +150,7 @@ export class AiController {
     body: {
       params: any;
       style:
-        | 'Monochrome'
+        | 'Premium'
         | 'Hero Studio'
         | 'Minimal Studio'
         | 'None'

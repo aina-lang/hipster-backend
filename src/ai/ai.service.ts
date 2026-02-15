@@ -377,7 +377,7 @@ CRITICAL RULES:
       style?: string;
     },
     style:
-      | 'Monochrome'
+      | 'Premium'
       | 'Hero Studio'
       | 'Minimal Studio'
       | 'None'
@@ -459,7 +459,7 @@ CRITICAL RULES:
       no beauty filter, no plastic skin
     `;
 
-    if (style === 'Monochrome') {
+    if (style === 'Premium') {
       visualDescription = `
         USER-PROVIDED DETAILS TO HONOR: ${refinedQuery}
         User's job: ${params.job || 'Not specified'}.
@@ -582,7 +582,7 @@ CRITICAL RULES:
     } else if (
       style === 'Hero Studio' ||
       style === 'Minimal Studio' ||
-      style === 'Monochrome'
+      style === 'Premium'
     ) {
       stylePreset = 'none';
     } else if (style === 'None') {
