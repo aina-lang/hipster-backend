@@ -35,7 +35,59 @@ export class AiService {
     });
   }
 
-  /* --------------------- POSTURE DETECTION --------------------- */
+  /* --------------------- INTENT DETECTION --------------------- */
+  private async detectPipelineIntent(query: string): Promise<string> {
+    if (!query || query.trim().length === 0) return 'GENERIC';
+    this.logger.log(`[detectPipelineIntent] Parsing intent for: "${query}"`);
+
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `
+              You are an AI image pipeline selector.
+              Classify the user's request into one of these categories:
+              
+              1. POSE_CLOTHES: If user wants to change body posture, physical position, or specific pieces of clothing (e.g., "sitting", "walking", "change my shirt to red").
+              2. BACKGROUND: If user wants to change the environment, decor, background, or location (e.g., "put me on a beach", "in a forest", "change background to office").
+              3. OBJECT_ADD: If user wants to add a specific object to the scene (e.g., "add glasses", "with a watch", "holding a coffee").
+              4. STYLE_CHANGE: If user wants purely artistic or aesthetic changes without modifying the content (e.g., "pencil sketch", "oil painting", "futuristic neon style").
+              5. GENERIC: If the request doesn't fit or is vague.
+              
+              Respond ONLY with the category name.
+            `.trim(),
+          },
+          {
+            role: 'user',
+            content: `User Request: "${query}"`,
+          },
+        ],
+        temperature: 0,
+        max_tokens: 15,
+      });
+
+      const result = response.choices[0]?.message?.content
+        ?.trim()
+        .toUpperCase();
+      this.logger.log(`[detectPipelineIntent] Result: ${result}`);
+
+      const valid = [
+        'POSE_CLOTHES',
+        'BACKGROUND',
+        'OBJECT_ADD',
+        'STYLE_CHANGE',
+        'GENERIC',
+      ];
+      return valid.includes(result) ? result : 'GENERIC';
+    } catch (error) {
+      this.logger.error('[detectPipelineIntent] Error:', error);
+      return 'GENERIC';
+    }
+  }
+
+  /* --------------------- POSTURE DETECTION (DEPRECATED) --------------------- */
   private async detectPostureChange(query: string): Promise<boolean> {
     if (!query || query.trim().length === 0) return false;
     this.logger.log(`[detectPostureChange] Checking: "${query}"`);
@@ -245,6 +297,82 @@ export class AiService {
     return `Professional high-quality representation of ${jobStr}. Style: ${styleName}.`;
   }
 
+  /* --------------------- STABILITY API TOOLS --------------------- */
+
+  private async callStabilityApi(
+    endpoint: string,
+    formData: FormData,
+  ): Promise<Buffer> {
+    const apiKey = this.stabilityApiKey;
+    if (!apiKey) throw new Error('Missing STABILITY API KEY');
+
+    const response = await axios.post(
+      `https://api.stability.ai/v2beta/${endpoint}`,
+      formData,
+      {
+        headers: {
+          ...formData.getHeaders(),
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'image/*',
+        },
+        responseType: 'arraybuffer',
+      },
+    );
+    return Buffer.from(response.data);
+  }
+
+  private async callStructure(
+    image: Buffer,
+    prompt: string,
+    strength: number = 0.7,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('prompt', prompt);
+    formData.append('control_strength', strength.toString());
+    formData.append('output_format', 'png');
+    return this.callStabilityApi('stable-image/control/structure', formData);
+  }
+
+  private async callReplaceBackground(
+    image: Buffer,
+    prompt: string,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('background_prompt', prompt);
+    formData.append('output_format', 'png');
+    return this.callStabilityApi(
+      'stable-image/edit/replace-background',
+      formData,
+    );
+  }
+
+  private async callRelight(image: Buffer, prompt: string): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('select_label', 'subject'); // Lighting the subject to match background
+    formData.append('prompt', prompt); // Light description
+    formData.append('output_format', 'png');
+    return this.callStabilityApi('stable-image/edit/relight', formData);
+  }
+
+  private async callSearchAndReplace(
+    image: Buffer,
+    prompt: string,
+    searchPrompt: string,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('prompt', prompt);
+    formData.append('search_prompt', searchPrompt);
+    formData.append('output_format', 'png');
+    return this.callStabilityApi(
+      'stable-image/edit/search-and-replace',
+      formData,
+    );
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -267,9 +395,6 @@ export class AiService {
     const baseStylePrompt = this.getStyleDescription(styleName, refinedSubject);
     const userQuery = (params.userQuery || '').trim();
 
-    const apiKey = this.stabilityApiKey;
-    if (!apiKey) throw new Error('Missing STABILITY API KEY');
-
     // Style Preset handling
     const customStyles = ['Hero Studio', 'Premium', 'Minimal Studio'];
     let stylePreset = '';
@@ -278,88 +403,90 @@ export class AiService {
         styleName === 'None' || !styleName ? 'photographic' : styleName;
     }
 
-    let endpoint =
-      'https://api.stability.ai/v2beta/stable-image/generate/ultra';
-    let isPostureChange = false;
-    let visualDescription = '';
-
-    if (file) {
-      endpoint =
-        'https://api.stability.ai/v2beta/stable-image/control/structure';
-      isPostureChange = await this.detectPostureChange(userQuery);
-
-      // More direct prompt for control/structure to ensure style adherence
-      visualDescription = `
-        ${userQuery || refinedSubject || 'high quality portrait'}
-        STYLE: ${baseStylePrompt}
-        IDENTITY: Keep the person's face and features exactly as in the reference image.
-        QUALITY: professional photography, ultra-realistic, 8k.
-        NEGATIVE: ${this.NEGATIVE_PROMPT}
-      `.trim();
-    } else {
-      // If userQuery is provided, use it as the main visual description
-      // Otherwise, rely on the style prompt based on the job
-      if (userQuery) {
-        visualDescription = `
-          ${userQuery}
-          STYLE: ${baseStylePrompt}
-          QUALITY: highly detailed professional photography, 8k resolution.
-          NEGATIVE: ${this.NEGATIVE_PROMPT}
-        `.trim();
-      } else {
-        visualDescription = `
-          ${baseStylePrompt}
-          QUALITY: highly detailed professional photography, 8k resolution.
-          NEGATIVE: ${this.NEGATIVE_PROMPT}
-        `.trim();
-      }
-    }
-
-    const formData = new FormData();
-    formData.append('prompt', visualDescription);
-    formData.append('output_format', 'png');
-
-    if (file) {
-      formData.append('image', file.buffer, file.originalname);
-      // For control/structure, we use control_strength (0 to 1)
-      // Lower strength = more freedom for the prompt (e.g. for posture change)
-      formData.append('control_strength', isPostureChange ? '0.5' : '0.7');
-    } else if (stylePreset) {
-      formData.append('style_preset', stylePreset);
-    }
-
-    if (seed) formData.append('seed', seed);
-
-    this.logger.log(
-      `[generateImage] Final Prompt: ${visualDescription.substring(0, 200)}...`,
-    );
-
     try {
-      const response = await axios.post(endpoint, formData, {
-        headers: {
-          ...formData.getHeaders(),
-          Authorization: `Bearer ${apiKey}`,
-          Accept: 'image/*',
-        },
-        responseType: 'arraybuffer',
-      });
-      const buffer = Buffer.from(response.data);
+      let finalBuffer: Buffer;
+      let finalDescription = '';
+
+      if (file) {
+        // --- INTELLIGENT PIPELINE FOR IMAGE-GUIDED GENERATION ---
+        const intent = await this.detectPipelineIntent(userQuery);
+        this.logger.log(`[generateImage] Pipeline Intent: ${intent}`);
+
+        // Step 1: Base Structure preservation
+        const structurePrompt = `${userQuery || refinedSubject || 'professional portrait'}, STYLE: ${baseStylePrompt}, ultra-realistic, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+        finalDescription = structurePrompt;
+
+        let currentBuffer = await this.callStructure(
+          file.buffer,
+          structurePrompt,
+          intent === 'POSE_CLOTHES' ? 0.5 : 0.75, // More freedom for pose change
+        );
+
+        // Step 2 & 3: Specialized Processing based on Intent
+        if (intent === 'BACKGROUND') {
+          this.logger.log(
+            '[generateImage] Pipeline: Structure -> ReplaceBackground -> Relight',
+          );
+          // Replace Background
+          currentBuffer = await this.callReplaceBackground(
+            currentBuffer,
+            userQuery,
+          );
+          // Relight to match the new background
+          currentBuffer = await this.callRelight(
+            currentBuffer,
+            `Match lighting to ${userQuery}`,
+          );
+        } else if (intent === 'OBJECT_ADD') {
+          this.logger.log(
+            '[generateImage] Pipeline: Structure -> SearchAndReplace',
+          );
+          // Identify what to replace or where to add.
+          // Search and replace works best when you specify what to find,
+          // but if it's "add glasses", we might need to search for "eyes" or "face".
+          // For simplicity, we use userQuery as prompt and "person face" as search area if adding accessories.
+          const isAccessory = /glasses|watch|hat|jewelry|tie/i.test(userQuery);
+          currentBuffer = await this.callSearchAndReplace(
+            currentBuffer,
+            userQuery,
+            isAccessory ? 'face and body' : 'background',
+          );
+        }
+
+        finalBuffer = currentBuffer;
+      } else {
+        // --- STANDARD TEXT-TO-IMAGE (ULTRA) ---
+        const visualDescription = userQuery
+          ? `${userQuery}, STYLE: ${baseStylePrompt}, QUALITY: highly detailed professional photography, 8k resolution. NEGATIVE: ${this.NEGATIVE_PROMPT}`
+          : `${baseStylePrompt}, QUALITY: highly detailed professional photography, 8k resolution. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+
+        finalDescription = visualDescription;
+        const formData = new FormData();
+        formData.append('prompt', visualDescription);
+        formData.append('output_format', 'png');
+        if (stylePreset) formData.append('style_preset', stylePreset);
+        if (seed) formData.append('seed', seed.toString());
+
+        finalBuffer = await this.callStabilityApi(
+          'stable-image/generate/ultra',
+          formData,
+        );
+      }
+
+      // --- SAVE AND RETURN ---
       const fileName = `gen_${Date.now()}.png`;
       const uploadDir = path.resolve(
         process.cwd(),
         'uploads',
         'ai-generations',
       );
-
-      if (!fs.existsSync(uploadDir)) {
+      if (!fs.existsSync(uploadDir))
         fs.mkdirSync(uploadDir, { recursive: true });
-      }
 
       const filePath = path.join(uploadDir, fileName);
-      fs.writeFileSync(filePath, buffer);
+      fs.writeFileSync(filePath, finalBuffer);
 
       const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-
       this.logger.log(
         `[generateImage] SUCCESS - Saved to: ${filePath}, URL: ${publicUrl}`,
       );
@@ -367,7 +494,7 @@ export class AiService {
       const saved = await this.saveGeneration(
         userId,
         '',
-        visualDescription,
+        finalDescription,
         AiGenerationType.IMAGE,
         params,
         publicUrl,
