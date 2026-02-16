@@ -162,19 +162,22 @@ export class AiService {
     const right = Math.round((box.xmax / 100) * width);
     const bottom = Math.round((box.ymax / 100) * height);
 
-    const rectWidth = right - left;
-    const rectHeight = bottom - top;
+    const cx = (left + right) / 2;
+    const cy = (top + bottom) / 2;
+    const rx = (right - left) / 1.8;
+    const ry = (bottom - top) / 1.6;
 
+    // Dark gray allows the AI to slightly modify expressions while keeping identity.
     const svg = `
       <svg width="${width}" height="${height}">
         <rect x="0" y="0" width="${width}" height="${height}" fill="white" />
-        <rect x="${left}" y="${top}" width="${rectWidth}" height="${rectHeight}" fill="black" />
+        <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#222222" />
       </svg>
     `;
 
     let mask = sharp(Buffer.from(svg));
     if (feather) {
-      mask = mask.blur(10); // Smooth transition
+      mask = mask.blur(30); // High blur for smooth transition
     }
     return await mask.toFormat('png').toBuffer();
   }
@@ -207,22 +210,21 @@ export class AiService {
       .toBuffer();
 
     // 2. Position the face in a new 1024x1024 image
-    // Target: head size ~15% of height, positioned ~10% from top
     const targetFaceHeight = Math.round(height * 0.18);
     const targetFaceWidth = Math.round(
       targetFaceHeight * (faceWidth / faceHeight),
     );
     const targetLeft = Math.round((width - targetFaceWidth) / 2);
-    const targetTop = Math.round(height * 0.1);
+    const targetTop = Math.round(height * 0.12); // Slightly lower for better proportions
 
-    const composedImage = await sharp({
-      create: {
-        width,
-        height,
-        channels: 3,
-        background: { r: 128, g: 128, b: 128 }, // Gray background for AI to fill
-      },
-    })
+    // Create a BLURRED version of the original image as lighting context
+    // This helps the AI match colors and lighting perfectly.
+    const lightingContext = await sharp(originalImage)
+      .resize(width, height, { fit: 'cover' })
+      .blur(40) // Very blurred just for color/light hints
+      .toBuffer();
+
+    const composedImage = await sharp(lightingContext)
       .composite([
         {
           input: await sharp(faceBuffer)
