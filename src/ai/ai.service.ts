@@ -313,13 +313,15 @@ export class AiService {
           {
             role: 'system',
             content: `You are an expert stable diffusion prompt engineer. 
-            Transform the user's short request into a detailed, descriptive scene for an image-to-image generation.
+            Transform the user's short request into a detailed, descriptive scene for an image-to-image or text-to-image generation.
             
-            KEY RULE: If the user request implies a change in posture, position, or environment (e.g., "sitting on a chair", "standing", "holding a glass", "running", "looking at a mirror"), explicitly describe the new pose and setup vividly.
+            COHERENCE RULE: You MUST merge the chosen Style ("${styleName}") and the user's "Job/Subject" into a single, unified aesthetic. The lighting, environment, and artistic mood MUST follow the style definition while the subject follows the user request.
+            
+            POSTURE RULE: If the request implies a change in posture (e.g., "sitting", "walking", "holding a glass"), describe the body position vividly.
             
             OUTPUT FORMAT: Return ONLY a JSON object:
             {
-              "prompt": "expanded English prompt",
+              "prompt": "expanded English prompt integrating style and request",
               "isPostureChange": boolean // true if user wants a different body position than a standard portrait
             }`,
           },
@@ -596,7 +598,9 @@ export class AiService {
 
     let refinedQuery = userQuery;
     let isPostureChange = false;
-    if (userQuery && file) {
+
+    // Enable GPT-powered prompt expansion for ALL modes (with or without image)
+    if (userQuery) {
       const refinedData = await this.refineQuery(
         userQuery,
         refinedSubject,
@@ -611,8 +615,10 @@ export class AiService {
 
       const qualityTags =
         'shot on Canon EOS R5, f/1.8, 85mm lens, highly detailed, professional photography, natural skin texture, subtle film grain, sharp focus, 8k resolution';
+
+      // The refinedQuery now already contains Style elements from GPT refinement
       const finalPrompt = refinedQuery
-        ? `${refinedQuery}. STYLE: ${baseStylePrompt}. QUALITY: ${qualityTags}`
+        ? `${refinedQuery}. QUALITY: ${qualityTags}`
         : `${baseStylePrompt}. QUALITY: ${qualityTags}`;
 
       let finalNegativePrompt = this.NEGATIVE_PROMPT;
@@ -665,7 +671,7 @@ export class AiService {
               finalPrompt,
               {
                 down: 1000, // Space for body and legs
-                left: 500,  // Space for background
+                left: 500, // Space for background
                 right: 500,
                 up: 100,
               },
@@ -767,11 +773,7 @@ export class AiService {
    * Generate an image in FREE MODE from a text prompt
    * No reference image, purely text-to-image generation
    */
-  async generateFreeImage(
-    params: any,
-    userId: number,
-    seed?: number,
-  ) {
+  async generateFreeImage(params: any, userId: number, seed?: number) {
     this.logger.log(
       `[generateFreeImage] START - User: ${userId}, Prompt: ${params.prompt || params.query}`,
     );
@@ -789,9 +791,7 @@ export class AiService {
         seed,
       );
 
-      this.logger.log(
-        `[generateFreeImage] SUCCESS - URL: ${result.url}`,
-      );
+      this.logger.log(`[generateFreeImage] SUCCESS - URL: ${result.url}`);
       return result;
     } catch (error) {
       this.logger.error(`[generateFreeImage] Error: ${error.message}`);
