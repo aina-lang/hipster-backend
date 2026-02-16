@@ -763,6 +763,42 @@ export class AiService {
     }
   }
 
+  /**
+   * Generate an image in FREE MODE from a text prompt
+   * No reference image, purely text-to-image generation
+   */
+  async generateFreeImage(
+    params: any,
+    userId: number,
+    seed?: number,
+  ) {
+    this.logger.log(
+      `[generateFreeImage] START - User: ${userId}, Prompt: ${params.prompt || params.query}`,
+    );
+    try {
+      // Call generateImage without a file (triggers text-to-image path)
+      const result = await this.generateImage(
+        {
+          userQuery: params.prompt || params.query || '',
+          style: params.style || 'photographic',
+          job: params.subject || '', // Optional: for refined subject description
+        },
+        params.style || 'photographic',
+        userId,
+        undefined, // No file for free mode
+        seed,
+      );
+
+      this.logger.log(
+        `[generateFreeImage] SUCCESS - URL: ${result.url}`,
+      );
+      return result;
+    } catch (error) {
+      this.logger.error(`[generateFreeImage] Error: ${error.message}`);
+      throw error;
+    }
+  }
+
   async generateText(params: any, type: string, userId: number) {
     this.logger.log(
       `[generateText] START - User: ${userId}, Type: ${type}, Params: ${JSON.stringify(params)}`,
