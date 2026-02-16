@@ -563,8 +563,20 @@ export class AiService {
           this.logger.log(
             '[generateImage] Executing STRUCTURE scene recreation',
           );
-          // Lower control_strength to respect the prompt details (job + style) more
-          const controlStrength = params.job ? 0.4 : 0.75;
+          // For portraits with a person's head, use high fidelity to preserve the face
+          // Otherwise lower control_strength to respect the prompt details (job + style) more
+          const looksLikePortrait = userQuery?.toLowerCase().includes('portrait') ||
+                                   userQuery?.toLowerCase().includes('head') ||
+                                   userQuery?.toLowerCase().includes('visage') ||
+                                   userQuery?.toLowerCase().includes('face') ||
+                                   !userQuery; // Default to portrait if no query specified
+          
+          const controlStrength = looksLikePortrait ? 0.85 : (params.job ? 0.4 : 0.75);
+          
+          this.logger.log(
+            `[generateImage] Portrait mode: ${looksLikePortrait}, Control strength: ${controlStrength}`,
+          );
+          
           finalBuffer = await this.callStructure(
             file.buffer,
             finalPrompt,
