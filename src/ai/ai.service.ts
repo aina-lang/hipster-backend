@@ -63,7 +63,7 @@ export class AiService {
       return {
         tool: 'STRUCTURE',
         search: '',
-        prompt: `professional ${job} portrait in ${styleName} style`,
+        prompt: `professional ${job} portrait in ${styleName} style. CRITICAL: Keep the person's face and head completely unchanged. Only modify the background, setting, or context if needed.`,
       };
     }
 
@@ -567,19 +567,8 @@ export class AiService {
           this.logger.log(
             '[generateImage] Executing STRUCTURE scene recreation',
           );
-          // For portraits with a person's head, use very high fidelity to preserve the face completely
-          // Otherwise lower control_strength to respect the prompt details (job + style) more
-          const looksLikePortrait = userQuery?.toLowerCase().includes('portrait') ||
-                                   userQuery?.toLowerCase().includes('head') ||
-                                   userQuery?.toLowerCase().includes('visage') ||
-                                   userQuery?.toLowerCase().includes('face') ||
-                                   !userQuery; // Default to portrait if no query specified
-          
-          const controlStrength = looksLikePortrait ? 0.9 : (params.job ? 0.4 : 0.75);
-          
-          this.logger.log(
-            `[generateImage] Portrait mode: ${looksLikePortrait}, Control strength: ${controlStrength}`,
-          );
+          // Use very high fidelity to preserve the face completely
+          const controlStrength = 0.95;
           
           finalBuffer = await this.callStructure(
             file.buffer,
