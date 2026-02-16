@@ -256,6 +256,45 @@ export class AiService {
     return this.callStabilityApi('stable-image/generate/ultra', formData);
   }
 
+  /**
+   * Legacy SDXL 1.0 Image-to-Image for precise strength control.
+   * Engine: stable-diffusion-xl-1024-v1-0
+   */
+  private async callV1ImageToImage(
+    prompt: string,
+    image: Buffer,
+    strength: number = 0.35,
+    seed?: number,
+    negativePrompt?: string,
+    stylePreset?: string,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('init_image', image, 'init.png');
+    formData.append('init_image_mode', 'IMAGE_STRENGTH');
+    formData.append('image_strength', strength.toString());
+    formData.append('text_prompts[0][text]', prompt);
+    formData.append('text_prompts[0][weight]', '1');
+
+    if (negativePrompt) {
+      formData.append('text_prompts[1][text]', negativePrompt);
+      formData.append('text_prompts[1][weight]', '-1');
+    }
+
+    if (seed) formData.append('seed', seed.toString());
+    if (stylePreset && stylePreset !== 'None') {
+      formData.append('style_preset', stylePreset);
+    }
+
+    formData.append('cfg_scale', '7');
+    formData.append('samples', '1');
+    formData.append('steps', '30');
+
+    const engineId = 'stable-diffusion-xl-1024-v1-0';
+    const endpoint = `v1/generation/${engineId}/image-to-image`;
+
+    return this.callStabilityApi(endpoint, formData);
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -288,25 +327,60 @@ export class AiService {
 
       let finalNegativePrompt = this.NEGATIVE_PROMPT;
       if (styleName === 'Premium') {
-        // For Premium, we DO want typography as requested by the user,
-        // but we want to avoid messy lines on the face and keep realism.
         finalNegativePrompt = `
           ${this.NEGATIVE_PROMPT},
           NO COLOR ON FACE, NO GEOMETRIC LINES ON EYES OR MOUTH, NO DISTORTED FACIAL FEATURES.
         `.trim();
       }
 
-      this.logger.log(
-        `[generateImage] Calling Stability Ultra with prompt: ${finalPrompt.substring(0, 100)}...`,
-      );
+      // Mapping for Stability V1 Presets
+      const stabilityPresets = [
+        '3d-model',
+        'analog-film',
+        'anime',
+        'cinematic',
+        'comic-book',
+        'digital-art',
+        'enhance',
+        'fantasy-art',
+        'isometric',
+        'line-art',
+        'low-poly',
+        'modeling-compound',
+        'neon-punk',
+        'origami',
+        'photographic',
+        'pixel-art',
+        'tile-texture',
+      ];
+      const stylePreset = stabilityPresets.includes(styleName)
+        ? styleName
+        : undefined;
 
-      finalBuffer = await this.callUltra(
-        finalPrompt,
-        file?.buffer, // Image-to-image if file provided
-        file ? 0.7 : undefined, // Default strength for image-to-image
-        seed,
-        finalNegativePrompt,
-      );
+      if (file) {
+        this.logger.log(
+          `[generateImage] Using DIRECT V1 Image-to-Image (Strength: 0.35)`,
+        );
+        finalBuffer = await this.callV1ImageToImage(
+          finalPrompt,
+          file.buffer,
+          0.35, // Preserves roughly 35% as per doc
+          seed,
+          finalNegativePrompt,
+          stylePreset,
+        );
+      } else {
+        this.logger.log(
+          `[generateImage] Calling Stability Ultra (Text-to-Image)`,
+        );
+        finalBuffer = await this.callUltra(
+          finalPrompt,
+          undefined,
+          undefined,
+          seed,
+          finalNegativePrompt,
+        );
+      }
 
       const fileName = `gen_${Date.now()}.png`;
       const uploadPath = path.join(process.cwd(), 'uploads', 'ai-generations');
