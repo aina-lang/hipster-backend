@@ -354,6 +354,9 @@ export class AiService {
           {
             role: 'system',
             content: `You are a professional ${type} content writer. 
+            LANGUAGE: Write STRICTLY in French.
+            STYLE: Professional, engaging, and well-formatted with clear line breaks between paragraphs.
+            EMOJIS: Use emojis occasionally and relevantly (not too many).
             CRITICAL FORMATTING RULE: Never use markdown formatting (no **, __, ##, italic, bold, etc.). 
             Write plain text only. 
             For social media posts, include relevant hashtags at the end.`,
