@@ -72,8 +72,9 @@ export class AiService {
   }
 
   private readonly NEGATIVE_PROMPT = `
-    No smooth plastic skin, no neon, no 3d render, no generic AI artifacts, 
-    no distorted faces, no extra fingers, no blurry background unless intentional.
+    smooth plastic skin, artificial skin, airbrushed, over-smoothed, generic AI artifacts, 
+    3d render, cartoon, illustration, low resolution, blurry, out of focus, 
+    distorted faces, extra fingers, messy anatomy.
     CRITICAL: No text, no letters, no typography, no words, no watermarks, no captions, no labels.
     No mustache, no beard, no facial hair, no stubble.
   `.trim();
@@ -279,18 +280,18 @@ export class AiService {
     try {
       let finalBuffer: Buffer;
 
+      const qualityTags =
+        'shot on Canon EOS R5, f/1.8, 85mm lens, highly detailed, professional photography, natural skin texture, subtle film grain, sharp focus, 8k resolution';
       const finalPrompt = userQuery
-        ? `${userQuery}. STYLE: ${baseStylePrompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
-        : `${baseStylePrompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+        ? `${userQuery}. STYLE: ${baseStylePrompt}. QUALITY: ${qualityTags}`
+        : `${baseStylePrompt}. QUALITY: ${qualityTags}`;
 
       let finalNegativePrompt = this.NEGATIVE_PROMPT;
       if (styleName === 'Premium') {
         // For Premium, we DO want typography as requested by the user,
-        // but we want to avoid messy lines on the face.
+        // but we want to avoid messy lines on the face and keep realism.
         finalNegativePrompt = `
-          No smooth plastic skin, no neon, no 3d render, no generic AI artifacts, 
-          no distorted faces, no extra fingers, no blurry background unless intentional.
-          No mustache, no beard, no facial hair, no stubble.
+          ${this.NEGATIVE_PROMPT},
           NO COLOR ON FACE, NO GEOMETRIC LINES ON EYES OR MOUTH, NO DISTORTED FACIAL FEATURES.
         `.trim();
       }
