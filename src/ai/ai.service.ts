@@ -108,6 +108,42 @@ export class AiService {
     }
   }
 
+  private async refineQuery(
+    query: string,
+    job: string,
+    styleName: string,
+  ): Promise<string> {
+    if (!query) return '';
+    try {
+      const resp = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert stable diffusion prompt engineer. 
+            Transform the user's short request into a detailed, descriptive scene for an image-to-image generation.
+            
+            KEY RULE: If the user request implies a change in posture, position, or environment (e.g., "sitting on a chair", "running", "looking at a mirror"), explicitly describe the new pose and setup vividly.
+            
+            CONTEXT:
+            - Job: ${job}
+            - Style: ${styleName}
+            
+            OUTPUT: Provide only the expanded English prompt, no extra text.`,
+          },
+          { role: 'user', content: query },
+        ],
+        max_tokens: 150,
+      });
+      const refined = resp.choices[0]?.message?.content?.trim() || query;
+      this.logger.log(`[refineQuery] Result: "${refined}"`);
+      return refined;
+    } catch (e) {
+      this.logger.error(`[refineQuery] Error: ${e.message}`);
+      return query;
+    }
+  }
+
   private getRandomItem(pool: string[]): string {
     return pool[Math.floor(Math.random() * pool.length)];
   }
@@ -360,13 +396,23 @@ export class AiService {
     const baseStylePrompt = this.getStyleDescription(styleName, refinedSubject);
     const userQuery = (params.userQuery || '').trim();
 
+    let refinedQuery = userQuery;
+    if (userQuery && file) {
+      // For image-to-image, we refine the query to include posture details
+      refinedQuery = await this.refineQuery(
+        userQuery,
+        refinedSubject,
+        styleName,
+      );
+    }
+
     try {
       let finalBuffer: Buffer;
 
       const qualityTags =
         'shot on Canon EOS R5, f/1.8, 85mm lens, highly detailed, professional photography, natural skin texture, subtle film grain, sharp focus, 8k resolution';
-      const finalPrompt = userQuery
-        ? `${userQuery}. STYLE: ${baseStylePrompt}. QUALITY: ${qualityTags}`
+      const finalPrompt = refinedQuery
+        ? `${refinedQuery}. STYLE: ${baseStylePrompt}. QUALITY: ${qualityTags}`
         : `${baseStylePrompt}. QUALITY: ${qualityTags}`;
 
       let finalNegativePrompt = this.NEGATIVE_PROMPT;
@@ -403,22 +449,22 @@ export class AiService {
 
       if (file) {
         this.logger.log(
-          `[generateImage] Using DIRECT V1 Image-to-Image (Strength: 0.45 with Multi-Prompt)`,
+          `[generateImage] Using DIRECT V1 Image-to-Image (Strength: 0.40 with Multi-Prompt)`,
         );
 
         // Weighted prompts to balance Environmental Change vs Identity
         const prompts = [
-          { text: finalPrompt, weight: 1.0 }, // The Scene & Style
+          { text: finalPrompt, weight: 1.0 }, // The Scene, Style & Refined Posture
           {
             text: "highly detailed face, consistent facial features, sharp portrait, preservation of person's identity",
-            weight: 0.8, // The Identity (slightly lower to allow scene change)
+            weight: 0.65, // Identity (Lower weight to allow posture flexibility)
           },
         ];
 
         finalBuffer = await this.callV1ImageToImage(
           prompts,
           file.buffer,
-          0.45, // Sweet spot: enough to change background but keep face
+          0.38, // Lowered for better posture/scene flexibility
           seed,
           finalNegativePrompt,
           stylePreset,
