@@ -158,7 +158,8 @@ export class AiService {
         
         STRICT COLOR RULE: 
         The image is monochrome black and white. 
-         
+        ONE ACCENT COLOR ONLY: ${accent}, used ONLY in small object or thin highlights.
+        
         CRITICAL: The portrait must be ONE cohesive image. DO NOT create a collage. 
         Graphic elements must NOT overlap, cut, or distort the person's facial features. 
         The face must be 100% visible and untouched by overlays.
