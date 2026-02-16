@@ -275,6 +275,31 @@ export class AiService {
     return this.callStabilityApi('stable-image/edit/inpaint', formData);
   }
 
+  private async callOutpaint(
+    image: Buffer,
+    prompt: string,
+    directions: { left?: number; right?: number; up?: number; down?: number },
+    seed?: number,
+    stylePreset?: string,
+    creativity: number = 0.5,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('prompt', prompt);
+
+    if (directions.left) formData.append('left', directions.left.toString());
+    if (directions.right) formData.append('right', directions.right.toString());
+    if (directions.up) formData.append('up', directions.up.toString());
+    if (directions.down) formData.append('down', directions.down.toString());
+
+    if (seed) formData.append('seed', seed.toString());
+    if (stylePreset) formData.append('style_preset', stylePreset);
+    formData.append('creativity', creativity.toString());
+    formData.append('output_format', 'png');
+
+    return this.callStabilityApi('stable-image/edit/outpaint', formData);
+  }
+
   private async refineQuery(
     query: string,
     job: string,
@@ -632,28 +657,31 @@ export class AiService {
         if (faceBox) {
           if (isPostureChange) {
             this.logger.log(
-              `[generateImage] Posture change detected. Using SMART COMPOSITION.`,
+              `[generateImage] Posture change detected. Using OUTPAINT for fluid expansion.`,
             );
-            const { image: composedImage, mask } =
-              await this.prepareComposedImage(normalizedImage, faceBox);
-
-            finalBuffer = await this.callInpaint(
-              composedImage,
+            // Using Outpaint to expand the portrait into a full scene (body + legs)
+            finalBuffer = await this.callOutpaint(
+              normalizedImage,
               finalPrompt,
-              mask,
-              finalNegativePrompt,
+              {
+                down: 1000, // Space for body and legs
+                left: 500,  // Space for background
+                right: 500,
+                up: 100,
+              },
               seed,
               stylePreset,
+              0.6, // Balanced creativity
             );
           } else {
             this.logger.log(
-              `[generateImage] Standard portrait. Using INPAINT with face protection.`,
+              `[generateImage] Standard portrait. Using INPAINT with soft face protection.`,
             );
-            // Normalize for standard inpaint
             const mask = await this.createFaceProtectionMask(
               1024,
               1024,
               faceBox,
+              true,
             );
 
             finalBuffer = await this.callInpaint(
