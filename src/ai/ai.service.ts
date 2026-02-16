@@ -369,7 +369,9 @@ export class AiService {
         headers: {
           ...formData.getHeaders(),
           Authorization: `Bearer ${apiKey}`,
-          Accept: 'image/png',
+          Accept: 'image/*',
+          'Stability-Client-ID': 'Hypster-App',
+          'Stability-Client-Version': '1.0.0',
         },
         responseType: 'arraybuffer',
       });
