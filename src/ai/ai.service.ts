@@ -63,7 +63,7 @@ export class AiService {
       return {
         tool: 'STRUCTURE',
         search: '',
-        prompt: `professional ${job} portrait in ${styleName} style. CRITICAL: Keep the person's face and head completely unchanged. Only modify the background, setting, or context if needed.`,
+        prompt: `A professional portrait. The person's face, head, and identity must remain absolutely unchanged. The style is ${styleName}. The person is a ${job}. Keep all facial features, expressions, and characteristics exactly as they are.`,
       };
     }
 
@@ -567,8 +567,9 @@ export class AiService {
           this.logger.log(
             '[generateImage] Executing STRUCTURE scene recreation',
           );
-          // Use very high fidelity to preserve the face completely
-          const controlStrength = 0.95;
+          // Use MAXIMUM fidelity to preserve the source image (face, features, etc)
+          // Control strength 0.99 means 99% of the source image is preserved - only minimal changes
+          const controlStrength = 0.99;
           
           finalBuffer = await this.callStructure(
             file.buffer,
