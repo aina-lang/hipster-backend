@@ -35,7 +35,6 @@ export class AiService {
     });
   }
 
-
   /* --------------------- PUBLIC HELPERS --------------------- */
   public async getAiUserWithProfile(userId: number) {
     try {
@@ -277,12 +276,14 @@ export class AiService {
 
     try {
       let finalBuffer: Buffer;
-      
+
       const finalPrompt = userQuery
         ? `${userQuery}. STYLE: ${baseStylePrompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
         : `${baseStylePrompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
 
-      this.logger.log(`[generateImage] Calling Stability Ultra with prompt: ${finalPrompt.substring(0, 100)}...`);
+      this.logger.log(
+        `[generateImage] Calling Stability Ultra with prompt: ${finalPrompt.substring(0, 100)}...`,
+      );
 
       finalBuffer = await this.callUltra(
         finalPrompt,
@@ -293,12 +294,7 @@ export class AiService {
       );
 
       const fileName = `gen_${Date.now()}.png`;
-      const uploadPath = path.join(
-        process.cwd(),
-        'dist',
-        'uploads',
-        'ai-generations',
-      );
+      const uploadPath = path.join(process.cwd(), 'uploads', 'ai-generations');
       if (!fs.existsSync(uploadPath)) {
         fs.mkdirSync(uploadPath, { recursive: true });
       }
@@ -378,7 +374,7 @@ export class AiService {
     }
   }
 
-  /* --------------------- SOCIAL POSTS (ORCHESTRATED) --------------------- */
+  /* --------------------- SOCIAL POSTS (DIRECT ULTRA) --------------------- */
   async generateSocial(
     params: any,
     userId: number,
@@ -390,138 +386,28 @@ export class AiService {
       `[generateSocial] START - User: ${userId}, Job: "${params.job}", Query: "${params.userQuery}"`,
     );
 
-    let brandingContext = '';
-    let effectiveJob = params.job; // Use provided job
-
-    if (userId) {
-      const u = await this.getAiUserWithProfile(userId);
-      if (u) {
-        // Build comprehensive branding context with contact info
-        const contactInfo = [];
-        if (u.professionalPhone)
-          contactInfo.push(`Tel: ${u.professionalPhone}`);
-        if (u.email) contactInfo.push(`Email: ${u.email}`);
-        if (u.professionalAddress)
-          contactInfo.push(`Adresse: ${u.professionalAddress}`);
-
-        brandingContext = `Nom: ${u.name}, Job: ${u.job}`;
-        if (contactInfo.length > 0) {
-          brandingContext += `, ${contactInfo.join(', ')}`;
-        }
-
-        // If no job provided in params, use user's profile job
-        if (!effectiveJob) {
-          effectiveJob = u.job;
-        }
-      }
-    }
-
-    // userQuery is independent - it can be empty or filled
-    // effectiveJob is the job to use for content generation
-    const orchestration = await this.orchestrateSocial(
-      params.userQuery || '', // userQuery can be empty
-      effectiveJob || '', // job from params or user profile
-      brandingContext,
-      `Function: ${params.function || 'General'}`,
+    // 1. Generate Image (Direct Ultra)
+    const imageRes = await this.generateImage(
+      params,
+      params.style || 'Hero Studio',
+      userId,
+      file,
+      seed,
     );
 
-    let imageRes: any = { url: '' };
-    // Bias towards generating image if file provided or if orchestration says so
-    if (orchestration.generateImage || !!file) {
-      imageRes = await this.generateImage(
-        {
-          ...params,
-          // CRITICAL: We pass the orchestrator's prompt BUT ALSO Keep the original query for intent detection
-          orchestratorPrompt: orchestration.imagePrompt,
-        },
-        params.style || 'Hero Studio',
-        userId,
-        file,
-        seed,
-      );
-    }
-
-    // Use the orchestrator's captionText directly instead of regenerating it
-    const textContent = orchestration.captionText || '';
+    // 2. Generate Caption (Simple GPT)
+    const textRes = await this.generateText(params, 'social', userId);
 
     const result = {
       image: imageRes.url || '',
-      text: textContent,
-      orchestration,
+      text: textRes.content || '',
       generationId: imageRes.generationId,
     };
 
     this.logger.log(
-      `[generateSocial] SUCCESS - Image: ${result.image || 'NONE'}, Text: ${result.text.substring(0, 30)}...`,
+      `[generateSocial] SUCCESS - Image: ${result.image || 'NONE'}, Text Length: ${result.text.length}`,
     );
     return result;
-  }
-
-  private async orchestrateSocial(
-    query: string,
-    job: string,
-    branding: string,
-    context: string,
-  ) {
-    try {
-      this.logger.log(
-        `[orchestrateSocial] Decision - Job: "${job}", Query: "${query}"`,
-      );
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `
-              You are a social media orchestrator. 
-              Decide if an image and/or text caption is needed for the given query.
-              Most social posts BENEFIT from an image. 
-              
-              CRITICAL RULES:
-              1. The MAIN SUBJECT must be about the Job/Profession provided.
-              2. The imagePrompt should focus on the Job/Profession (e.g., plumber, chef, etc.).
-              3. The captionText should be about the Job/Profession BUT MUST INCLUDE the user's name/branding for contact/credibility.
-              4. CONTACT INFO: If the branding includes contact information (Tel, Email, Adresse), include them in the caption text for easy contact.
-              5. If a specific User Query is provided, incorporate it into the content about the Job/Profession.
-              6. FORMATTING: Never use markdown formatting (no **, __, ##, etc.) in captionText. Use plain text only. DO include relevant hashtags at the end for social media.
-              
-              Example: If Job is "Plombier" and Branding is "Nom: Aina Mercia, Job: Coiffure, Tel: 0123456789, Email: contact@example.com":
-              - imagePrompt: "A professional plumber fixing pipes, tools and equipment"
-              - captionText: "Vous cherchez un plombier qualifié ? Contactez Aina Mercia au 0123456789 ou par email à contact@example.com pour des services de plomberie professionnels ! #Plombier #Services #Professionnel"
-              
-              Respond STRICTLY in JSON with:
-              {
-                "generateImage": boolean,
-                "generateText": boolean,
-                "imagePrompt": "visual description for image generation (in English)",
-                "captionText": "social media post text (in French), plain text with hashtags"
-              }
-            `.trim(),
-          },
-          {
-            role: 'user',
-            content: `PRIMARY SUBJECT - Job/Profession: "${job}"
-Additional Context - User Query: "${query}"
-Branding Info (for tone only): ${branding}
-Function: ${context}`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-      });
-      const decision = JSON.parse(response.choices[0].message.content);
-      this.logger.log(
-        `[orchestrateSocial] Decision: ${JSON.stringify(decision)}`,
-      );
-      return decision;
-    } catch (error) {
-      this.logger.error(`[orchestrateSocial] Error: ${error.message}`);
-      return {
-        generateImage: true,
-        generateText: true,
-        imagePrompt: job || query,
-        captionText: job || query,
-      };
-    }
   }
 
   /* --------------------- OTHER SPECIALIZED METHODS (PLACEHOLDERS) --------------------- */
