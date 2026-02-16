@@ -35,133 +35,6 @@ export class AiService {
     });
   }
 
-  /* --------------------- INTENT DETECTION --------------------- */
-  private async detectEditPrompts(
-    query: string,
-    job: string,
-    styleName: string,
-  ): Promise<{
-    tool: 'REPLACE' | 'RECOLOR' | 'OUTPAINT' | 'STRUCTURE';
-    search: string;
-    prompt: string;
-  }> {
-    const lowerQuery = (query || '').toLowerCase();
-
-    // Explicitly check if user wants a "surgical" edit (Replace or Recolor)
-    const wantsReplace =
-      lowerQuery.includes('replace') ||
-      lowerQuery.includes('fond') ||
-      lowerQuery.includes('background');
-    const wantsRecolor =
-      lowerQuery.includes('recolor') || lowerQuery.includes('couleur');
-    const wantsOutpaint =
-      lowerQuery.includes('expand') ||
-      lowerQuery.includes('dezoom') ||
-      lowerQuery.includes('élargir');
-
-    if (!query || query.trim().length === 0) {
-      return {
-        tool: 'STRUCTURE',
-        search: '',
-        prompt: `A professional portrait. The person's face, head, and identity must remain absolutely unchanged. The style is ${styleName}. The person is a ${job}. Keep all facial features, expressions, and characteristics exactly as they are.`,
-      };
-    }
-
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `
-              You are an AI image editing assistant. 
-              Tool selection rules:
-              1. "tool": 
-                 - "STRUCTURE": DEFAULT. Use for most requests, pose changes, clothing changes, and scene recreation.
-                 - "RECOLOR": ONLY for strict color changes (e.g. "red shirt").
-                 - "OUTPAINT": for "expand", "zoom out", "more space".
-                 - "REPLACE": ONLY if user specifically asks to change the "background" (fond) or "replace" a specific part without touching anything else.
-              2. "search": Only for REPLACE or RECOLOR.
-              3. "prompt": A detailed visual description for the final result (in English).
-              
-              Respond STRICTLY in JSON: {"tool": "REPLACE" | "RECOLOR" | "OUTPAINT" | "STRUCTURE", "search": string, "prompt": string}
-            `.trim(),
-          },
-          {
-            role: 'user',
-            content: `Job: ${job}, Style: ${styleName}, User Request: "${query}"`,
-          },
-        ],
-        response_format: { type: 'json_object' },
-      });
-
-      const result = JSON.parse(response.choices[0]?.message?.content || '{}');
-      const validTools = ['REPLACE', 'RECOLOR', 'OUTPAINT', 'STRUCTURE'];
-      let tool = (
-        validTools.includes(result.tool) ? result.tool : 'STRUCTURE'
-      ) as any;
-
-      if (wantsRecolor) tool = 'RECOLOR';
-      if (wantsOutpaint) tool = 'OUTPAINT';
-      if (wantsReplace) tool = 'REPLACE';
-
-      return {
-        tool,
-        search: result.search || (tool === 'RECOLOR' ? 'clothes' : ''),
-        prompt: result.prompt || query,
-      };
-    } catch (error) {
-      return {
-        tool: 'STRUCTURE',
-        search: '',
-        prompt: query,
-      };
-    }
-  }
-
-  /* --------------------- POSTURE DETECTION (DEPRECATED) --------------------- */
-  private async detectPostureChange(query: string): Promise<boolean> {
-    if (!query || query.trim().length === 0) return false;
-    this.logger.log(`[detectPostureChange] Checking: "${query}"`);
-
-    try {
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `
-              You are a posture change detector for an AI image generation system.
-              The user provides a reference image and a text modification request.
-              Your job is to determine if the text request implies changing the person's body posture, physical position, gesture, or anatomical structure compared to the original photo.
-              
-              Examples of posture changes: "make me sit", "walking in the park", "with arms crossed", "dancing", "leaning against a wall", "standing up".
-              Examples of non-posture changes: "change my clothes", "add glasses", "make the background blue", "improve the light", "make me look younger", "add a watch".
-              
-              Respond ONLY with "YES" if it's a posture/positional change, and "NO" if it's purely about accessories, clothing, background, or lighting.
-            `.trim(),
-          },
-          {
-            role: 'user',
-            content: `User Request: "${query}"`,
-          },
-        ],
-        temperature: 0,
-        max_tokens: 5,
-      });
-
-      const result = response.choices[0]?.message?.content
-        ?.trim()
-        .toUpperCase();
-      this.logger.log(
-        `[detectPostureChange] Query: "${query}" -> Result: ${result}`,
-      );
-      return result === 'YES';
-    } catch (error) {
-      this.logger.error('[detectPostureChange] Error:', error);
-      return false;
-    }
-  }
 
   /* --------------------- PUBLIC HELPERS --------------------- */
   public async getAiUserWithProfile(userId: number) {
@@ -354,129 +227,31 @@ export class AiService {
     return Buffer.from(response.data);
   }
 
-  private async callStructure(
-    image: Buffer,
+  private async callUltra(
     prompt: string,
-    strength: number = 0.85,
+    image?: Buffer,
+    strength?: number,
     seed?: number,
     negativePrompt?: string,
-    stylePreset?: string,
+    aspectRatio?: string,
   ): Promise<Buffer> {
     const formData = new FormData();
-    formData.append('image', image, 'source.png');
     formData.append('prompt', prompt);
-    formData.append('control_strength', strength.toString());
     formData.append('output_format', 'png');
 
-    if (seed) formData.append('seed', seed);
+    if (image) {
+      formData.append('image', image, 'source.png');
+      if (strength !== undefined) {
+        formData.append('strength', strength.toString());
+      }
+    } else if (aspectRatio) {
+      formData.append('aspect_ratio', aspectRatio);
+    }
+
+    if (seed) formData.append('seed', seed.toString());
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (stylePreset) formData.append('style_preset', stylePreset);
 
-    return this.callStabilityApi('stable-image/control/structure', formData);
-  }
-
-  private async callStyle(
-    image: Buffer,
-    prompt: string,
-    fidelity: number = 0.7,
-  ): Promise<Buffer> {
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('prompt', prompt);
-    formData.append('fidelity', fidelity.toString());
-    formData.append('output_format', 'png');
-    return this.callStabilityApi('stable-image/control/style', formData);
-  }
-
-  private async callReplaceBackground(
-    image: Buffer,
-    prompt: string,
-  ): Promise<Buffer> {
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('background_prompt', prompt);
-    formData.append('output_format', 'png');
-    return this.callStabilityApi(
-      'stable-image/edit/replace-background',
-      formData,
-    );
-  }
-
-  private async callRelight(image: Buffer, prompt: string): Promise<Buffer> {
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('select_label', 'subject'); // Lighting the subject to match background
-    formData.append('prompt', prompt); // Light description
-    formData.append('output_format', 'png');
-    return this.callStabilityApi('stable-image/edit/relight', formData);
-  }
-
-  private async callSearchAndReplace(
-    image: Buffer,
-    prompt: string,
-    searchPrompt: string,
-    growMask?: number,
-    seed?: number,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('prompt', prompt);
-    formData.append('search_prompt', searchPrompt);
-    formData.append('output_format', 'png');
-
-    if (growMask !== undefined)
-      formData.append('grow_mask', growMask.toString());
-    if (seed) formData.append('seed', seed);
-    if (stylePreset) formData.append('style_preset', stylePreset);
-
-    return this.callStabilityApi(
-      'stable-image/edit/search-and-replace',
-      formData,
-    );
-  }
-
-  private async callSearchAndRecolor(
-    image: Buffer,
-    prompt: string,
-    selectPrompt: string,
-    seed?: number,
-  ): Promise<Buffer> {
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('prompt', prompt);
-    formData.append('select_prompt', selectPrompt);
-    formData.append('output_format', 'png');
-
-    if (seed) formData.append('seed', seed);
-
-    return this.callStabilityApi(
-      'stable-image/edit/search-and-recolor',
-      formData,
-    );
-  }
-
-  private async callOutpaint(
-    image: Buffer,
-    prompt: string,
-    left: number = 0,
-    right: number = 0,
-    top: number = 0,
-    bottom: number = 0,
-    seed?: number,
-  ): Promise<Buffer> {
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    if (prompt) formData.append('prompt', prompt);
-    if (left > 0) formData.append('left', left.toString());
-    if (right > 0) formData.append('right', right.toString());
-    if (top > 0) formData.append('top', top.toString());
-    if (bottom > 0) formData.append('bottom', bottom.toString());
-    formData.append('output_format', 'png');
-
-    if (seed) formData.append('seed', seed);
-
-    return this.callStabilityApi('stable-image/edit/outpaint', formData);
+    return this.callStabilityApi('stable-image/generate/ultra', formData);
   }
 
   /* --------------------- IMAGE GENERATION --------------------- */
@@ -492,7 +267,6 @@ export class AiService {
       `[generateImage] START - User: ${userId}, Seed: ${seed}, Style: ${styleName}, Job: ${params.job}, Query: ${params.userQuery}`,
     );
 
-    // For subject refinement, use job field if provided
     let refinedSubject = '';
     if (params.job && params.job.length > 0) {
       refinedSubject = await this.refineSubject(params.job);
@@ -501,215 +275,60 @@ export class AiService {
     const baseStylePrompt = this.getStyleDescription(styleName, refinedSubject);
     const userQuery = (params.userQuery || '').trim();
 
-    // Style Preset handling
-    const customStyles = ['Hero Studio', 'Premium', 'Minimal Studio'];
-    let stylePreset = '';
-    if (!customStyles.includes(styleName)) {
-      stylePreset =
-        styleName === 'None' || !styleName
-          ? 'photographic'
-          : styleName.toLowerCase().replace(/\s+/g, '-');
-    }
-    const orchestratorPrompt = (params.orchestratorPrompt || '').trim();
-
     try {
       let finalBuffer: Buffer;
-      let finalDescription = '';
+      
+      const finalPrompt = userQuery
+        ? `${userQuery}. STYLE: ${baseStylePrompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
+        : `${baseStylePrompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
 
-      if (file) {
-        // --- DIRECT SEARCH AND REPLACE (MAX IDENTITY FIDELITY) ---
-        const orchestratorPrompt = (params.orchestratorPrompt || '').trim();
-        const intentSource = userQuery || orchestratorPrompt;
+      this.logger.log(`[generateImage] Calling Stability Ultra with prompt: ${finalPrompt.substring(0, 100)}...`);
 
-        this.logger.log(
-          `[generateImage] Using Direct Edit Tool for maximum fidelity (Source: ${intentSource.substring(0, 30)}...)`,
-        );
+      finalBuffer = await this.callUltra(
+        finalPrompt,
+        file?.buffer, // Image-to-image if file provided
+        file ? 0.7 : undefined, // Default strength for image-to-image
+        seed,
+        this.NEGATIVE_PROMPT,
+      );
 
-        const edit = await this.detectEditPrompts(
-          intentSource,
-          refinedSubject || params.job || '',
-          styleName,
-        );
-        this.logger.log(
-          `[generateImage] Tool: ${edit.tool}, Search: "${edit.search}", Prompt: "${edit.prompt}"`,
-        );
-
-        const isCustomStyle = customStyles.includes(styleName);
-        
-        // Add explicit instruction to preserve the person's face/head when modifying context
-        const preserveFaceInstruction = 'IMPORTANT: Keep the person\'s face, head, facial features, and identity EXACTLY as they are in the reference image. Only change the context, clothes, background, and environment. The face must be completely untouched.';
-        
-        const finalPrompt = isCustomStyle
-          ? `${baseStylePrompt}. Request: ${edit.prompt}. ${preserveFaceInstruction}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
-          : `${edit.prompt}, STYLE: ${baseStylePrompt}, 8k. ${preserveFaceInstruction}. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
-
-        finalDescription = `EDIT_${edit.tool} | Search: ${edit.search} | ${finalPrompt}`;
-        // Create an anchor/stabilization pass to lock the face from the uploaded image.
-        // This produces an intermediate reference (styled but with face preserved)
-        // which we then use as the source for the main edit — this mimics the
-        // behavior observed when regenerating from a previous generation.
-        let sourceBuffer: Buffer = file.buffer;
-        try {
-          const anchorPrompt = isCustomStyle
-            ? `${baseStylePrompt}. Preserve the person's face exactly as in the reference image. No identity changes.`
-            : `Preserve the person's face exactly as in the reference image. ${baseStylePrompt}.`;
-
-          this.logger.log('[generateImage] Creating anchor image to stabilize face');
-          const anchorBuffer = await this.callStructure(
-            file.buffer,
-            anchorPrompt,
-            0.995,
-            seed,
-            this.NEGATIVE_PROMPT,
-            stylePreset,
-          );
-          if (anchorBuffer && anchorBuffer.length > 0) {
-            sourceBuffer = anchorBuffer;
-            this.logger.log('[generateImage] Anchor image created successfully');
-          }
-        } catch (e: any) {
-          this.logger.error('[generateImage] Anchor creation failed: ' + (e?.message || e));
-          sourceBuffer = file.buffer;
-        }
-
-        // If user didn't ask for a posture/pose change, prefer replacing the background
-        // rather than a full STRUCTURE rewrite. This helps absolutely preserve the person.
-        const postureChange = await this.detectPostureChange(intentSource || '');
-
-        if (edit.tool === 'RECOLOR') {
-          finalBuffer = await this.callSearchAndRecolor(
-            sourceBuffer,
-            finalPrompt,
-            edit.search,
-            seed,
-          );
-        } else if (edit.tool === 'OUTPAINT') {
-          this.logger.log('[generateImage] Executing OUTPAINT expansion');
-          finalBuffer = await this.callOutpaint(
-            sourceBuffer,
-            finalPrompt,
-            128,
-            128,
-            0,
-            0,
-            seed,
-          );
-        } else if (edit.tool === 'STRUCTURE') {
-          // If no posture change requested, prefer replace-background to protect the subject
-          if (!postureChange) {
-            try {
-              this.logger.log('[generateImage] Using search-and-replace (background) to protect the subject (no posture change)');
-              // Use search-and-replace targeting the background with a grow mask to avoid touching the person
-              finalBuffer = await this.callSearchAndReplace(
-                sourceBuffer,
-                finalPrompt,
-                'background',
-                15,
-                seed,
-                stylePreset,
-              );
-              this.logger.log('[generateImage] search-and-replace (background) succeeded');
-            } catch (e) {
-              this.logger.error('[generateImage] search-and-replace failed, falling back to structure: ' + (e?.message || e));
-              const controlStrength = 0.99;
-              finalBuffer = await this.callStructure(
-                sourceBuffer,
-                finalPrompt,
-                controlStrength,
-                seed,
-                this.NEGATIVE_PROMPT,
-                stylePreset,
-              );
-            }
-          } else {
-            this.logger.log('[generateImage] Executing STRUCTURE scene recreation (posture change requested)');
-            const controlStrength = 0.99;
-            finalBuffer = await this.callStructure(
-              sourceBuffer,
-              finalPrompt,
-              controlStrength,
-              seed,
-              this.NEGATIVE_PROMPT,
-              stylePreset,
-            );
-          }
-        } else {
-          finalBuffer = await this.callSearchAndReplace(
-            sourceBuffer,
-            finalPrompt,
-            edit.search,
-            5,
-            seed,
-            stylePreset,
-          );
-        }
-      } else {
-        // --- STANDARD TEXT-TO-IMAGE (ULTRA) ---
-        const visualDescription = userQuery
-          ? `${userQuery}, STYLE: ${baseStylePrompt}, QUALITY: highly detailed professional photography, 8k resolution. NEGATIVE: ${this.NEGATIVE_PROMPT}`
-          : `${baseStylePrompt}, QUALITY: highly detailed professional photography, 8k resolution. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
-
-        finalDescription = visualDescription;
-        const formData = new FormData();
-        formData.append('prompt', visualDescription);
-        formData.append('output_format', 'png');
-        if (stylePreset) formData.append('style_preset', stylePreset);
-        if (seed) formData.append('seed', seed);
-
-        finalBuffer = await this.callStabilityApi(
-          'stable-image/generate/ultra',
-          formData,
-        );
-      }
-
-      // --- SAVE AND RETURN ---
       const fileName = `gen_${Date.now()}.png`;
-      const uploadDir = path.resolve(
+      const uploadPath = path.join(
         process.cwd(),
+        'dist',
         'uploads',
         'ai-generations',
       );
-      if (!fs.existsSync(uploadDir))
-        fs.mkdirSync(uploadDir, { recursive: true });
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
 
-      const filePath = path.join(uploadDir, fileName);
+      const filePath = path.join(uploadPath, fileName);
       fs.writeFileSync(filePath, finalBuffer);
 
-      const publicUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-      this.logger.log(
-        `[generateImage] SUCCESS - Saved to: ${filePath}, URL: ${publicUrl}`,
-      );
+      const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
 
-      // Ensure seed is persisted with the generation attributes for reproducibility
-      const attributesWithSeed = { ...(params || {}), seed: seed || 0 };
       const saved = await this.saveGeneration(
         userId,
-        '',
-        finalDescription,
+        file ? 'IMAGE_EDIT_ULTRA' : 'TEXT_TO_IMAGE_ULTRA',
+        finalPrompt,
         AiGenerationType.IMAGE,
-        attributesWithSeed,
-        publicUrl,
+        {
+          style: styleName,
+          seed,
+          hasSourceImage: !!file,
+        },
+        imageUrl,
       );
 
+      this.logger.log(`[generateImage] SUCCESS - URL: ${imageUrl}`);
       return {
-        url: publicUrl,
+        url: imageUrl,
         generationId: saved?.id,
         seed: seed || 0,
       };
-    } catch (error: any) {
-      this.logger.error(
-        `[generateImage] FAILED - ${error.response?.data?.toString() || error.message}`,
-      );
-      if (error.response?.data) {
-        try {
-          const errData = Buffer.isBuffer(error.response.data)
-            ? error.response.data.toString()
-            : JSON.stringify(error.response.data);
-          this.logger.error(
-            `[generateImage] Stability API Response: ${errData}`,
-          );
-        } catch (e) {}
-      }
+    } catch (error) {
+      this.logger.error(`[generateImage] FAILED: ${error.message}`);
       throw error;
     }
   }
@@ -1003,10 +622,14 @@ Function: ${context}`,
     let file: Express.Multer.File | undefined = undefined;
     if (gen.imageUrl) {
       try {
-        const resp = await axios.get(gen.imageUrl, { responseType: 'arraybuffer' });
+        const resp = await axios.get(gen.imageUrl, {
+          responseType: 'arraybuffer',
+        });
         file = { buffer: Buffer.from(resp.data) } as any;
       } catch (e) {
-        this.logger.error(`[regenerateFromGeneration] Failed to download image: ${e.message}`);
+        this.logger.error(
+          `[regenerateFromGeneration] Failed to download image: ${e.message}`,
+        );
       }
     }
 
