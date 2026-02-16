@@ -598,13 +598,19 @@ export class AiService {
           // If no posture change requested, prefer replace-background to protect the subject
           if (!postureChange) {
             try {
-              this.logger.log('[generateImage] Using replace-background to protect the subject (no posture change)');
-              finalBuffer = await this.callReplaceBackground(
+              this.logger.log('[generateImage] Using search-and-replace (background) to protect the subject (no posture change)');
+              // Use search-and-replace targeting the background with a grow mask to avoid touching the person
+              finalBuffer = await this.callSearchAndReplace(
                 sourceBuffer,
                 finalPrompt,
+                'background',
+                15,
+                seed,
+                stylePreset,
               );
+              this.logger.log('[generateImage] search-and-replace (background) succeeded');
             } catch (e) {
-              this.logger.error('[generateImage] replace-background failed, falling back to structure: ' + (e?.message || e));
+              this.logger.error('[generateImage] search-and-replace failed, falling back to structure: ' + (e?.message || e));
               const controlStrength = 0.99;
               finalBuffer = await this.callStructure(
                 sourceBuffer,
