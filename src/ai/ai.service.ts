@@ -218,12 +218,15 @@ export class AiService {
       ? 'https://api.stability.ai'
       : 'https://api.stability.ai/v2beta';
 
+    const fullUrl = `${baseUrl}/${endpoint}`;
+    this.logger.log(`[callStabilityApi] POST ${fullUrl}`);
+
     try {
-      const response = await axios.post(`${baseUrl}/${endpoint}`, formData, {
+      const response = await axios.post(fullUrl, formData, {
         headers: {
           ...formData.getHeaders(),
           Authorization: `Bearer ${apiKey}`,
-          Accept: 'image/*',
+          Accept: 'image/png',
         },
         responseType: 'arraybuffer',
       });
@@ -285,6 +288,11 @@ export class AiService {
     seed?: number,
     negativePrompt?: string,
     stylePreset?: string,
+    cfgScale: number = 7,
+    steps: number = 30,
+    sampler?: string,
+    samples: number = 1,
+    clipGuidancePreset: string = 'NONE',
   ): Promise<Buffer> {
     const formData = new FormData();
     formData.append('init_image', image, 'init.png');
@@ -303,9 +311,12 @@ export class AiService {
       formData.append('style_preset', stylePreset);
     }
 
-    formData.append('cfg_scale', '7');
-    formData.append('samples', '1');
-    formData.append('steps', '30');
+    formData.append('cfg_scale', cfgScale.toString());
+    formData.append('steps', steps.toString());
+    formData.append('samples', samples.toString());
+    if (sampler) {
+      formData.append('sampler', sampler);
+    }
 
     const engineId = 'stable-diffusion-xl-1024-v1-0';
     const endpoint = `v1/generation/${engineId}/image-to-image`;
