@@ -149,18 +149,20 @@ export class AiService {
       const bg = this.getRandomItem(backgrounds);
 
       return `
-        Ultra high contrast black and white portrait of ${jobStr}, editorial poster style. 
+        Ultra high contrast black and white portrait of ${jobStr}, high-end fashion editorial style. 
         ${lighting}, ${angle}, strong cinematic lighting, dramatic shadows, sharp facial details.
         ${bg}.
 
-        Large bold typography integrated into the composition (letters interacting with the subject).
-        Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
+        Graphic design overlay: Minimalist luxury poster layout. 
+        Subtle design elements: thin professional geometric lines, frame corners, and layout guides.
         
         STRICT COLOR RULE: 
         The image is monochrome black and white. 
-        ONE ACCENT COLOR ONLY: ${accent}, used ONLY in small geometric shapes or highlights.
+        ONE ACCENT COLOR ONLY: ${accent}, used ONLY in small geometric shapes or thin highlights.
         
-        NO COLOR ON THE SKIN OR FACE. Geometric elements must NOT overlap or distort the person's facial features.
+        CRITICAL: The portrait must be ONE cohesive image. DO NOT create a collage. 
+        Graphic elements must NOT overlap, cut, or distort the person's facial features. 
+        The face must be 100% visible and untouched by overlays.
         
         High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting.
         No watermark, no random text, no logo.
