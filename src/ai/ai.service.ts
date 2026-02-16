@@ -1027,6 +1027,88 @@ export class AiService {
   }
 
   async chat(messages: any[], userId: number, conversationId?: string) {
-    return { content: 'Chat response' };
+    this.logger.log(
+      `[chat] START - User: ${userId}, Messages: ${messages.length}, ConversationId: ${conversationId}`,
+    );
+    try {
+      // Get the last user message to detect request type
+      const lastUserMessage =
+        messages
+          .slice()
+          .reverse()
+          .find((m) => m.role === 'user')?.content || '';
+
+      this.logger.log(`[chat] Last message: "${lastUserMessage}"`);
+
+      // Detect if user is requesting an image
+      const requestType = await this.detectChatRequestType(lastUserMessage);
+
+      if (requestType === 'image') {
+        this.logger.log('[chat] Image generation detected, generating...');
+        // Generate image from user prompt
+        const imageResult = await this.generateFreeImage(
+          { prompt: lastUserMessage },
+          userId,
+        );
+        return {
+          type: 'image',
+          content: `Voici l'image générée: ${imageResult.url}`,
+          url: imageResult.url,
+          generationId: imageResult.generationId,
+        };
+      }
+
+      // Otherwise, generate text response
+      this.logger.log('[chat] Text response generation...');
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: messages,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      this.logger.log(`[chat] Response generated: ${content.substring(0, 50)}...`);
+
+      return {
+        type: 'text',
+        content: content,
+      };
+    } catch (error) {
+      this.logger.error(`[chat] Error: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private async detectChatRequestType(
+    message: string,
+  ): Promise<'image' | 'text'> {
+    try {
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Analyze the user message and determine if they are asking for:
+            - "image": Any request to generate, create, draw, imagine, show a visual, photo, picture, etc.
+            - "text": General questions, answers, explanations, conversations, etc.
+            
+            Respond with ONLY the word "image" or "text".`,
+          },
+          {
+            role: 'user',
+            content: message,
+          },
+        ],
+        temperature: 0,
+        max_tokens: 10,
+      });
+
+      const result = response.choices[0]?.message?.content
+        ?.trim()
+        .toLowerCase();
+      return result === 'image' ? 'image' : 'text';
+    } catch (error) {
+      this.logger.error(`[detectChatRequestType] Error: ${error.message}`);
+      return 'text'; // Default to text on error
+    }
   }
 }
