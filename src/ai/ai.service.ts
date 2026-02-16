@@ -155,25 +155,16 @@ export class AiService {
     width: number,
     height: number,
     box: { xmin: number; ymin: number; xmax: number; ymax: number },
+    feather: boolean = true,
   ): Promise<Buffer> {
-    // Expand box slightly for safer transition (optional)
-    const padding = 5;
-    const left = Math.max(0, Math.round(((box.xmin - padding) / 100) * width));
-    const top = Math.max(0, Math.round(((box.ymin - padding) / 100) * height));
-    const right = Math.min(
-      width,
-      Math.round(((box.xmax + padding) / 100) * width),
-    );
-    const bottom = Math.min(
-      height,
-      Math.round(((box.ymax + padding) / 100) * height),
-    );
+    const left = Math.round((box.xmin / 100) * width);
+    const top = Math.round((box.ymin / 100) * height);
+    const right = Math.round((box.xmax / 100) * width);
+    const bottom = Math.round((box.ymax / 100) * height);
 
     const rectWidth = right - left;
     const rectHeight = bottom - top;
 
-    // Create a WHITE mask (Inpaint whole image)
-    // with a BLACK rectangle on the face (Preserve face)
     const svg = `
       <svg width="${width}" height="${height}">
         <rect x="0" y="0" width="${width}" height="${height}" fill="white" />
@@ -181,7 +172,85 @@ export class AiService {
       </svg>
     `;
 
-    return await sharp(Buffer.from(svg)).toFormat('png').toBuffer();
+    let mask = sharp(Buffer.from(svg));
+    if (feather) {
+      mask = mask.blur(10); // Smooth transition
+    }
+    return await mask.toFormat('png').toBuffer();
+  }
+
+  private async prepareComposedImage(
+    originalImage: Buffer,
+    box: { xmin: number; ymin: number; xmax: number; ymax: number },
+  ): Promise<{ image: Buffer; mask: Buffer }> {
+    const width = 1024;
+    const height = 1024;
+
+    // 1. Extract the face
+    const originalMetadata = await sharp(originalImage).metadata();
+    const faceLeft = Math.round((box.xmin / 100) * originalMetadata.width);
+    const faceTop = Math.round((box.ymin / 100) * originalMetadata.height);
+    const faceWidth = Math.round(
+      ((box.xmax - box.xmin) / 100) * originalMetadata.width,
+    );
+    const faceHeight = Math.round(
+      ((box.ymax - box.ymin) / 100) * originalMetadata.height,
+    );
+
+    const faceBuffer = await sharp(originalImage)
+      .extract({
+        left: faceLeft,
+        top: faceTop,
+        width: faceWidth,
+        height: faceHeight,
+      })
+      .toBuffer();
+
+    // 2. Position the face in a new 1024x1024 image
+    // Target: head size ~15% of height, positioned ~10% from top
+    const targetFaceHeight = Math.round(height * 0.18);
+    const targetFaceWidth = Math.round(
+      targetFaceHeight * (faceWidth / faceHeight),
+    );
+    const targetLeft = Math.round((width - targetFaceWidth) / 2);
+    const targetTop = Math.round(height * 0.1);
+
+    const composedImage = await sharp({
+      create: {
+        width,
+        height,
+        channels: 3,
+        background: { r: 128, g: 128, b: 128 }, // Gray background for AI to fill
+      },
+    })
+      .composite([
+        {
+          input: await sharp(faceBuffer)
+            .resize(targetFaceWidth, targetFaceHeight)
+            .toBuffer(),
+          top: targetTop,
+          left: targetLeft,
+        },
+      ])
+      .toFormat('png')
+      .toBuffer();
+
+    // 3. Create mask for the newly positioned face
+    const faceBoxInComposed = {
+      xmin: (targetLeft / width) * 100,
+      ymin: (targetTop / height) * 100,
+      xmax: ((targetLeft + targetFaceWidth) / width) * 100,
+      ymax: ((targetTop + targetFaceHeight) / height) * 100,
+    };
+
+    const mask = await this.createFaceProtectionMask(
+      width,
+      height,
+      faceBoxInComposed,
+      true, // Feathered
+    );
+
+    return { image: composedImage, mask };
   }
 
   private async callInpaint(
@@ -208,8 +277,8 @@ export class AiService {
     query: string,
     job: string,
     styleName: string,
-  ): Promise<string> {
-    if (!query) return '';
+  ): Promise<{ prompt: string; isPostureChange: boolean }> {
+    if (!query) return { prompt: '', isPostureChange: false };
     try {
       const resp = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -219,24 +288,27 @@ export class AiService {
             content: `You are an expert stable diffusion prompt engineer. 
             Transform the user's short request into a detailed, descriptive scene for an image-to-image generation.
             
-            KEY RULE: If the user request implies a change in posture, position, or environment (e.g., "sitting on a chair", "running", "looking at a mirror"), explicitly describe the new pose and setup vividly.
+            KEY RULE: If the user request implies a change in posture, position, or environment (e.g., "sitting on a chair", "standing", "holding a glass", "running", "looking at a mirror"), explicitly describe the new pose and setup vividly.
             
-            CONTEXT:
-            - Job: ${job}
-            - Style: ${styleName}
-            
-            OUTPUT: Provide only the expanded English prompt, no extra text.`,
+            OUTPUT FORMAT: Return ONLY a JSON object:
+            {
+              "prompt": "expanded English prompt",
+              "isPostureChange": boolean // true if user wants a different body position than a standard portrait
+            }`,
           },
           { role: 'user', content: query },
         ],
-        max_tokens: 150,
+        response_format: { type: 'json_object' },
       });
-      const refined = resp.choices[0]?.message?.content?.trim() || query;
-      this.logger.log(`[refineQuery] Result: "${refined}"`);
-      return refined;
+      const data = JSON.parse(resp.choices[0]?.message?.content || '{}');
+      this.logger.log(`[refineQuery] Result: ${JSON.stringify(data)}`);
+      return {
+        prompt: data.prompt || query,
+        isPostureChange: !!data.isPostureChange,
+      };
     } catch (e) {
       this.logger.error(`[refineQuery] Error: ${e.message}`);
-      return query;
+      return { prompt: query, isPostureChange: false };
     }
   }
 
@@ -496,13 +568,15 @@ export class AiService {
     const userQuery = (params.userQuery || '').trim();
 
     let refinedQuery = userQuery;
+    let isPostureChange = false;
     if (userQuery && file) {
-      // For image-to-image, we refine the query to include posture details
-      refinedQuery = await this.refineQuery(
+      const refinedData = await this.refineQuery(
         userQuery,
         refinedSubject,
         styleName,
       );
+      refinedQuery = refinedData.prompt;
+      isPostureChange = refinedData.isPostureChange;
     }
 
     try {
@@ -550,23 +624,45 @@ export class AiService {
         // Step 1: Normalize dimension to 1024x1024
         const normalizedImage = await this.resizeImage(file.buffer);
 
-        // Step 2: Try to detect face to use Inpaint (Maximum posture change)
+        // Step 2: Detect face on normalized image for coordinates
         const faceBox = await this.detectFace(normalizedImage);
 
         if (faceBox) {
-          this.logger.log(
-            `[generateImage] Using INPAINT pipeline (Face protected)`,
-          );
-          const mask = await this.createFaceProtectionMask(1024, 1024, faceBox);
+          if (isPostureChange) {
+            this.logger.log(
+              `[generateImage] Posture change detected. Using SMART COMPOSITION.`,
+            );
+            const { image: composedImage, mask } =
+              await this.prepareComposedImage(normalizedImage, faceBox);
 
-          finalBuffer = await this.callInpaint(
-            normalizedImage,
-            finalPrompt,
-            mask,
-            finalNegativePrompt,
-            seed,
-            stylePreset,
-          );
+            finalBuffer = await this.callInpaint(
+              composedImage,
+              finalPrompt,
+              mask,
+              finalNegativePrompt,
+              seed,
+              stylePreset,
+            );
+          } else {
+            this.logger.log(
+              `[generateImage] Standard portrait. Using INPAINT with face protection.`,
+            );
+            // Normalize for standard inpaint
+            const mask = await this.createFaceProtectionMask(
+              1024,
+              1024,
+              faceBox,
+            );
+
+            finalBuffer = await this.callInpaint(
+              normalizedImage,
+              finalPrompt,
+              mask,
+              finalNegativePrompt,
+              seed,
+              stylePreset,
+            );
+          }
         } else {
           this.logger.log(
             `[generateImage] No face detected. Falling back to V1 Image-to-Image`,
