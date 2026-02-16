@@ -7,6 +7,7 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as FormData from 'form-data';
+import * as sharp from 'sharp';
 import { AiUser, PlanType } from './entities/ai-user.entity';
 import {
   AiGeneration,
@@ -294,8 +295,17 @@ export class AiService {
     samples: number = 1,
     clipGuidancePreset: string = 'NONE',
   ): Promise<Buffer> {
+    // SDXL V1 requires specific dimensions (e.g. 1024x1024)
+    const resizedImage = await sharp(image)
+      .resize(1024, 1024, {
+        fit: 'cover',
+        withoutEnlargement: false,
+      })
+      .toFormat('png')
+      .toBuffer();
+
     const formData = new FormData();
-    formData.append('init_image', image, 'init.png');
+    formData.append('init_image', resizedImage, 'init.png');
     formData.append('init_image_mode', 'IMAGE_STRENGTH');
     formData.append('image_strength', strength.toString());
     formData.append('text_prompts[0][text]', prompt);
