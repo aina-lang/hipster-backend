@@ -657,28 +657,31 @@ export class AiService {
         if (faceBox) {
           if (isPostureChange) {
             this.logger.log(
-              `[generateImage] Posture change detected. Using SMART COMPOSITION.`,
+              `[generateImage] Posture change detected. Using OUTPAINT for fluid expansion.`,
             );
-            const { image: composedImage, mask } =
-              await this.prepareComposedImage(normalizedImage, faceBox);
-
-            finalBuffer = await this.callInpaint(
-              composedImage,
+            // Using Outpaint to expand the portrait into a full scene (body + legs)
+            finalBuffer = await this.callOutpaint(
+              normalizedImage,
               finalPrompt,
-              mask,
-              finalNegativePrompt,
+              {
+                down: 1000, // Space for body and legs
+                left: 500,  // Space for background
+                right: 500,
+                up: 100,
+              },
               seed,
               stylePreset,
+              0.6, // Balanced creativity
             );
           } else {
             this.logger.log(
-              `[generateImage] Standard portrait. Using INPAINT with face protection.`,
+              `[generateImage] Standard portrait. Using INPAINT with soft face protection.`,
             );
-            // Normalize for standard inpaint
             const mask = await this.createFaceProtectionMask(
               1024,
               1024,
               faceBox,
+              true,
             );
 
             finalBuffer = await this.callInpaint(
