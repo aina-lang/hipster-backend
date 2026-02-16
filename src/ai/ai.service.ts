@@ -73,11 +73,14 @@ export class AiService {
   }
 
   private readonly NEGATIVE_PROMPT = `
-    smooth plastic skin, artificial skin, airbrushed, over-smoothed, generic AI artifacts, 
-    3d render, cartoon, illustration, low resolution, blurry, out of focus, 
-    distorted faces, extra fingers, messy anatomy.
-    CRITICAL: No text, no letters, no typography, no words, no watermarks, no captions, no labels.
-    No mustache, no beard, no facial hair, no stubble.
+    extra fingers, mutated hands, six fingers, four fingers, 
+    extra limbs, detached limbs, missing limbs, fused fingers, deformed hands, 
+    cloned face, multiple heads, two heads, extra heads, distorted face, 
+    blurry, out of focus, low quality, pixelated, grain, lowres, 
+    text, watermark, logo, signature, letters, words, captions, labels,
+    cgi, 3d, render, cartoon, anime, illustration, drawing, digital art,
+    smooth plastic skin, artificial, airbrushed, unnatural skin,
+    mustache, beard, facial hair, stubble (unless specified).
   `.trim();
 
   private async refineSubject(job: string): Promise<string> {
@@ -614,18 +617,24 @@ export class AiService {
       let finalBuffer: Buffer;
 
       const qualityTags =
-        'shot on Canon EOS R5, f/1.8, 85mm lens, highly detailed, professional photography, natural skin texture, subtle film grain, sharp focus, 8k resolution';
+        'masterpiece, ultra high quality, photorealistic, 8k resolution, highly detailed skin texture, sharp focus, natural lighting, professional photography';
 
-      // The refinedQuery now already contains Style elements from GPT refinement
+      // The refinedQuery already integrates the Style aesthetic via GPT
       const finalPrompt = refinedQuery
         ? `${refinedQuery}. QUALITY: ${qualityTags}`
         : `${baseStylePrompt}. QUALITY: ${qualityTags}`;
 
       let finalNegativePrompt = this.NEGATIVE_PROMPT;
-      if (styleName === 'Premium') {
+
+      // Additional specific filters for high-end styles
+      if (
+        styleName.toLowerCase().includes('premium') ||
+        styleName.toLowerCase().includes('hero')
+      ) {
         finalNegativePrompt = `
           ${this.NEGATIVE_PROMPT},
-          NO COLOR ON FACE, NO GEOMETRIC LINES ON EYES OR MOUTH, NO DISTORTED FACIAL FEATURES.
+          glitch, noise, low contrast, oversaturated, distorted facial proportions, 
+          mismatched eyes, weird gaze.
         `.trim();
       }
 
@@ -1066,7 +1075,9 @@ export class AiService {
       });
 
       const content = response.choices[0]?.message?.content || '';
-      this.logger.log(`[chat] Response generated: ${content.substring(0, 50)}...`);
+      this.logger.log(
+        `[chat] Response generated: ${content.substring(0, 50)}...`,
+      );
 
       return {
         type: 'text',
