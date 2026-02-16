@@ -398,12 +398,15 @@ export class AiService {
 
       if (file) {
         this.logger.log(
-          `[generateImage] Using DIRECT V1 Image-to-Image (Strength: 0.35)`,
+          `[generateImage] Using DIRECT V1 Image-to-Image (Strength: 0.50)`,
         );
+        // Add identity preservation tags for Image-to-Image
+        const identityPrompt = `${finalPrompt}. highly detailed face, consistent facial features, sharp portrait, preservation of person's identity.`;
+
         finalBuffer = await this.callV1ImageToImage(
-          finalPrompt,
+          identityPrompt,
           file.buffer,
-          0.35, // Preserves roughly 35% as per doc
+          0.9, // Increased from 0.35 for better resemblance
           seed,
           finalNegativePrompt,
           stylePreset,
