@@ -218,15 +218,33 @@ export class AiService {
       ? 'https://api.stability.ai'
       : 'https://api.stability.ai/v2beta';
 
-    const response = await axios.post(`${baseUrl}/${endpoint}`, formData, {
-      headers: {
-        ...formData.getHeaders(),
-        Authorization: `Bearer ${apiKey}`,
-        Accept: 'image/*',
-      },
-      responseType: 'arraybuffer',
-    });
-    return Buffer.from(response.data);
+    try {
+      const response = await axios.post(`${baseUrl}/${endpoint}`, formData, {
+        headers: {
+          ...formData.getHeaders(),
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'image/*',
+        },
+        responseType: 'arraybuffer',
+      });
+      return Buffer.from(response.data);
+    } catch (error: any) {
+      if (error.response && error.response.data) {
+        try {
+          const errorData = JSON.parse(
+            Buffer.from(error.response.data).toString(),
+          );
+          this.logger.error(
+            `[callStabilityApi] FAILED: ${JSON.stringify(errorData)}`,
+          );
+        } catch (e) {
+          this.logger.error(
+            `[callStabilityApi] FAILED (raw): ${Buffer.from(error.response.data).toString()}`,
+          );
+        }
+      }
+      throw error;
+    }
   }
 
   private async callUltra(
