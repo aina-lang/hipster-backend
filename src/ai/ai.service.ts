@@ -535,9 +535,13 @@ export class AiService {
         );
 
         const isCustomStyle = customStyles.includes(styleName);
+        
+        // Add explicit instruction to preserve the person's face/head when modifying context
+        const preserveFaceInstruction = 'IMPORTANT: Keep the person\'s face, head, facial features, and identity EXACTLY as they are in the reference image. Only change the context, clothes, background, and environment. The face must be completely untouched.';
+        
         const finalPrompt = isCustomStyle
-          ? `${baseStylePrompt}. Request: ${edit.prompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
-          : `${edit.prompt}, STYLE: ${baseStylePrompt}, 8k. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
+          ? `${baseStylePrompt}. Request: ${edit.prompt}. ${preserveFaceInstruction}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
+          : `${edit.prompt}, STYLE: ${baseStylePrompt}, 8k. ${preserveFaceInstruction}. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
 
         finalDescription = `EDIT_${edit.tool} | Search: ${edit.search} | ${finalPrompt}`;
 
@@ -563,7 +567,7 @@ export class AiService {
           this.logger.log(
             '[generateImage] Executing STRUCTURE scene recreation',
           );
-          // For portraits with a person's head, use high fidelity to preserve the face
+          // For portraits with a person's head, use very high fidelity to preserve the face completely
           // Otherwise lower control_strength to respect the prompt details (job + style) more
           const looksLikePortrait = userQuery?.toLowerCase().includes('portrait') ||
                                    userQuery?.toLowerCase().includes('head') ||
@@ -571,7 +575,7 @@ export class AiService {
                                    userQuery?.toLowerCase().includes('face') ||
                                    !userQuery; // Default to portrait if no query specified
           
-          const controlStrength = looksLikePortrait ? 0.85 : (params.job ? 0.4 : 0.75);
+          const controlStrength = looksLikePortrait ? 0.9 : (params.job ? 0.4 : 0.75);
           
           this.logger.log(
             `[generateImage] Portrait mode: ${looksLikePortrait}, Control strength: ${controlStrength}`,
