@@ -275,6 +275,31 @@ export class AiService {
     return this.callStabilityApi('stable-image/edit/inpaint', formData);
   }
 
+  private async callOutpaint(
+    image: Buffer,
+    prompt: string,
+    directions: { left?: number; right?: number; up?: number; down?: number },
+    seed?: number,
+    stylePreset?: string,
+    creativity: number = 0.5,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('prompt', prompt);
+
+    if (directions.left) formData.append('left', directions.left.toString());
+    if (directions.right) formData.append('right', directions.right.toString());
+    if (directions.up) formData.append('up', directions.up.toString());
+    if (directions.down) formData.append('down', directions.down.toString());
+
+    if (seed) formData.append('seed', seed.toString());
+    if (stylePreset) formData.append('style_preset', stylePreset);
+    formData.append('creativity', creativity.toString());
+    formData.append('output_format', 'png');
+
+    return this.callStabilityApi('stable-image/edit/outpaint', formData);
+  }
+
   private async refineQuery(
     query: string,
     job: string,
