@@ -368,7 +368,7 @@ export class AiService {
     formData.append('control_strength', strength.toString());
     formData.append('output_format', 'png');
 
-    if (seed) formData.append('seed', seed.toString());
+    if (seed) formData.append('seed', seed);
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
     if (stylePreset) formData.append('style_preset', stylePreset);
 
@@ -427,7 +427,7 @@ export class AiService {
 
     if (growMask !== undefined)
       formData.append('grow_mask', growMask.toString());
-    if (seed) formData.append('seed', seed.toString());
+    if (seed) formData.append('seed', seed);
     if (stylePreset) formData.append('style_preset', stylePreset);
 
     return this.callStabilityApi(
@@ -448,7 +448,7 @@ export class AiService {
     formData.append('select_prompt', selectPrompt);
     formData.append('output_format', 'png');
 
-    if (seed) formData.append('seed', seed.toString());
+    if (seed) formData.append('seed', seed);
 
     return this.callStabilityApi(
       'stable-image/edit/search-and-recolor',
@@ -474,7 +474,7 @@ export class AiService {
     if (bottom > 0) formData.append('bottom', bottom.toString());
     formData.append('output_format', 'png');
 
-    if (seed) formData.append('seed', seed.toString());
+    if (seed) formData.append('seed', seed);
 
     return this.callStabilityApi('stable-image/edit/outpaint', formData);
   }
@@ -563,10 +563,12 @@ export class AiService {
           this.logger.log(
             '[generateImage] Executing STRUCTURE scene recreation',
           );
+          // Lower control_strength when job is specified to respect the prompt more
+          const controlStrength = params.job ? 0.6 : 0.85;
           finalBuffer = await this.callStructure(
             file.buffer,
             finalPrompt,
-            0.85,
+            controlStrength,
             seed,
             this.NEGATIVE_PROMPT,
             stylePreset,
@@ -592,7 +594,7 @@ export class AiService {
         formData.append('prompt', visualDescription);
         formData.append('output_format', 'png');
         if (stylePreset) formData.append('style_preset', stylePreset);
-        if (seed) formData.append('seed', seed.toString());
+        if (seed) formData.append('seed', seed);
 
         finalBuffer = await this.callStabilityApi(
           'stable-image/generate/ultra',
