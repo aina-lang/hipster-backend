@@ -283,7 +283,7 @@ export class AiService {
    * Engine: stable-diffusion-xl-1024-v1-0
    */
   private async callV1ImageToImage(
-    prompt: string,
+    prompts: { text: string; weight: number }[],
     image: Buffer,
     strength: number = 0.35,
     seed?: number,
@@ -308,12 +308,17 @@ export class AiService {
     formData.append('init_image', resizedImage, 'init.png');
     formData.append('init_image_mode', 'IMAGE_STRENGTH');
     formData.append('image_strength', strength.toString());
-    formData.append('text_prompts[0][text]', prompt);
-    formData.append('text_prompts[0][weight]', '1');
+
+    // Multi-prompt support for better control
+    prompts.forEach((p, idx) => {
+      formData.append(`text_prompts[${idx}][text]`, p.text);
+      formData.append(`text_prompts[${idx}][weight]`, p.weight.toString());
+    });
 
     if (negativePrompt) {
-      formData.append('text_prompts[1][text]', negativePrompt);
-      formData.append('text_prompts[1][weight]', '-1');
+      const negIdx = prompts.length;
+      formData.append(`text_prompts[${negIdx}][text]`, negativePrompt);
+      formData.append(`text_prompts[${negIdx}][weight]`, '-1');
     }
 
     if (seed) formData.append('seed', seed.toString());
@@ -398,15 +403,22 @@ export class AiService {
 
       if (file) {
         this.logger.log(
-          `[generateImage] Using DIRECT V1 Image-to-Image (Strength: 0.50)`,
+          `[generateImage] Using DIRECT V1 Image-to-Image (Strength: 0.45 with Multi-Prompt)`,
         );
-        // Add identity preservation tags for Image-to-Image
-        const identityPrompt = `${finalPrompt}. highly detailed face, consistent facial features, sharp portrait, preservation of person's identity.`;
+
+        // Weighted prompts to balance Environmental Change vs Identity
+        const prompts = [
+          { text: finalPrompt, weight: 1.0 }, // The Scene & Style
+          {
+            text: "highly detailed face, consistent facial features, sharp portrait, preservation of person's identity",
+            weight: 0.8, // The Identity (slightly lower to allow scene change)
+          },
+        ];
 
         finalBuffer = await this.callV1ImageToImage(
-          identityPrompt,
+          prompts,
           file.buffer,
-          0.9, // Increased from 0.35 for better resemblance
+          0.45, // Sweet spot: enough to change background but keep face
           seed,
           finalNegativePrompt,
           stylePreset,
