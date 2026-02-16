@@ -214,18 +214,18 @@ export class AiService {
     const apiKey = this.stabilityApiKey;
     if (!apiKey) throw new Error('Missing STABILITY API KEY');
 
-    const response = await axios.post(
-      `https://api.stability.ai/v2beta/${endpoint}`,
-      formData,
-      {
-        headers: {
-          ...formData.getHeaders(),
-          Authorization: `Bearer ${apiKey}`,
-          Accept: 'image/*',
-        },
-        responseType: 'arraybuffer',
+    const baseUrl = endpoint.startsWith('v1/')
+      ? 'https://api.stability.ai'
+      : 'https://api.stability.ai/v2beta';
+
+    const response = await axios.post(`${baseUrl}/${endpoint}`, formData, {
+      headers: {
+        ...formData.getHeaders(),
+        Authorization: `Bearer ${apiKey}`,
+        Accept: 'image/*',
       },
-    );
+      responseType: 'arraybuffer',
+    });
     return Buffer.from(response.data);
   }
 
