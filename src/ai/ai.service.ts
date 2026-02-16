@@ -108,6 +108,102 @@ export class AiService {
     }
   }
 
+  private async detectFace(image: Buffer): Promise<{
+    xmin: number;
+    ymin: number;
+    xmax: number;
+    ymax: number;
+  } | null> {
+    try {
+      const base64Image = image.toString('base64');
+      const response = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: "Locate the main person's face in this photo. Return ONLY a JSON object with keys xmin, ymin, xmax, ymax representing the bounding box as percentages (0-100).",
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/png;base64,${base64Image}`,
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 50,
+      });
+
+      const content = response.choices[0].message.content;
+      const match = content.match(/\{.*\}/s);
+      if (match) {
+        const box = JSON.parse(match[0]);
+        this.logger.log(`[detectFace] Found face: ${JSON.stringify(box)}`);
+        return box;
+      }
+    } catch (e) {
+      this.logger.error(`[detectFace] Failed: ${e.message}`);
+    }
+    return null;
+  }
+
+  private async createFaceProtectionMask(
+    width: number,
+    height: number,
+    box: { xmin: number; ymin: number; xmax: number; ymax: number },
+  ): Promise<Buffer> {
+    // Expand box slightly for safer transition (optional)
+    const padding = 5;
+    const left = Math.max(0, Math.round(((box.xmin - padding) / 100) * width));
+    const top = Math.max(0, Math.round(((box.ymin - padding) / 100) * height));
+    const right = Math.min(
+      width,
+      Math.round(((box.xmax + padding) / 100) * width),
+    );
+    const bottom = Math.min(
+      height,
+      Math.round(((box.ymax + padding) / 100) * height),
+    );
+
+    const rectWidth = right - left;
+    const rectHeight = bottom - top;
+
+    // Create a WHITE mask (Inpaint whole image)
+    // with a BLACK rectangle on the face (Preserve face)
+    const svg = `
+      <svg width="${width}" height="${height}">
+        <rect x="0" y="0" width="${width}" height="${height}" fill="white" />
+        <rect x="${left}" y="${top}" width="${rectWidth}" height="${rectHeight}" fill="black" />
+      </svg>
+    `;
+
+    return await sharp(Buffer.from(svg)).toFormat('png').toBuffer();
+  }
+
+  private async callInpaint(
+    image: Buffer,
+    prompt: string,
+    mask: Buffer,
+    negativePrompt?: string,
+    seed?: number,
+    stylePreset?: string,
+  ): Promise<Buffer> {
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('mask', mask, 'mask.png');
+    formData.append('prompt', prompt);
+    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (seed) formData.append('seed', seed.toString());
+    if (stylePreset) formData.append('style_preset', stylePreset);
+    formData.append('output_format', 'png');
+
+    return this.callStabilityApi('stable-image/edit/inpaint', formData);
+  }
+
   private async refineQuery(
     query: string,
     job: string,
@@ -244,6 +340,16 @@ export class AiService {
 
   /* --------------------- STABILITY API TOOLS --------------------- */
 
+  private async resizeImage(image: Buffer): Promise<Buffer> {
+    return await sharp(image)
+      .resize(1024, 1024, {
+        fit: 'cover',
+        withoutEnlargement: false,
+      })
+      .toFormat('png')
+      .toBuffer();
+  }
+
   private async callStabilityApi(
     endpoint: string,
     formData: FormData,
@@ -331,17 +437,8 @@ export class AiService {
     samples: number = 1,
     clipGuidancePreset: string = 'NONE',
   ): Promise<Buffer> {
-    // SDXL V1 requires specific dimensions (e.g. 1024x1024)
-    const resizedImage = await sharp(image)
-      .resize(1024, 1024, {
-        fit: 'cover',
-        withoutEnlargement: false,
-      })
-      .toFormat('png')
-      .toBuffer();
-
     const formData = new FormData();
-    formData.append('init_image', resizedImage, 'init.png');
+    formData.append('init_image', image, 'init.png');
     formData.append('init_image_mode', 'IMAGE_STRENGTH');
     formData.append('image_strength', strength.toString());
 
@@ -448,27 +545,47 @@ export class AiService {
         : undefined;
 
       if (file) {
-        this.logger.log(
-          `[generateImage] Using DIRECT V1 Image-to-Image (Strength: 0.40 with Multi-Prompt)`,
-        );
+        // Step 1: Normalize dimension to 1024x1024
+        const normalizedImage = await this.resizeImage(file.buffer);
 
-        // Weighted prompts to balance Environmental Change vs Identity
-        const prompts = [
-          { text: finalPrompt, weight: 1.0 }, // The Scene, Style & Refined Posture
-          {
-            text: "highly detailed face, consistent facial features, sharp portrait, preservation of person's identity",
-            weight: 0.65, // Identity (Lower weight to allow posture flexibility)
-          },
-        ];
+        // Step 2: Try to detect face to use Inpaint (Maximum posture change)
+        const faceBox = await this.detectFace(normalizedImage);
 
-        finalBuffer = await this.callV1ImageToImage(
-          prompts,
-          file.buffer,
-          0.38, // Lowered for better posture/scene flexibility
-          seed,
-          finalNegativePrompt,
-          stylePreset,
-        );
+        if (faceBox) {
+          this.logger.log(
+            `[generateImage] Using INPAINT pipeline (Face protected)`,
+          );
+          const mask = await this.createFaceProtectionMask(1024, 1024, faceBox);
+
+          finalBuffer = await this.callInpaint(
+            normalizedImage,
+            finalPrompt,
+            mask,
+            finalNegativePrompt,
+            seed,
+            stylePreset,
+          );
+        } else {
+          this.logger.log(
+            `[generateImage] No face detected. Falling back to V1 Image-to-Image`,
+          );
+          const prompts = [
+            { text: finalPrompt, weight: 1.0 },
+            {
+              text: "highly detailed face, consistent facial features, sharp portrait, preservation of person's identity",
+              weight: 0.65,
+            },
+          ];
+
+          finalBuffer = await this.callV1ImageToImage(
+            prompts,
+            normalizedImage,
+            0.38,
+            seed,
+            finalNegativePrompt,
+            stylePreset,
+          );
+        }
       } else {
         this.logger.log(
           `[generateImage] Calling Stability Ultra (Text-to-Image)`,
