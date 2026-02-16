@@ -563,8 +563,8 @@ export class AiService {
           this.logger.log(
             '[generateImage] Executing STRUCTURE scene recreation',
           );
-          // Lower control_strength when job is specified to respect the prompt more
-          const controlStrength = params.job ? 0.6 : 0.85;
+          // Lower control_strength to respect the prompt details (job + style) more
+          const controlStrength = params.job ? 0.4 : 0.75;
           finalBuffer = await this.callStructure(
             file.buffer,
             finalPrompt,
