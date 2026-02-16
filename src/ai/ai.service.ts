@@ -113,21 +113,13 @@ export class AiService {
   private getStyleDescription(styleName: string, job: string): string {
     const jobStr = job || 'professional';
 
-    // Premium Style with randomized pools
+    // Premium Style with randomized pools (New Spec)
     if (styleName === 'Premium') {
       const accentColors = [
         'deep red',
         'burnt orange',
         'electric purple',
         'muted gold',
-        'emerald green',
-        'sapphire blue',
-        'rose gold',
-        'crimson',
-        'teal',
-        'amber',
-        'burgundy',
-        'navy blue',
       ];
       const lightings = [
         'side lighting dramatic',
@@ -151,35 +143,28 @@ export class AiService {
         'soft gradient grey background',
       ];
 
-      const subject = job;
       const accent = this.getRandomItem(accentColors);
       const lighting = this.getRandomItem(lightings);
       const angle = this.getRandomItem(angles);
       const bg = this.getRandomItem(backgrounds);
 
-     return `
-Ultra high-contrast black and white editorial photography of ${subject}. 
-${lighting}, ${angle}. Dramatic shadows, razor-sharp facial details, subject perfectly centered. ${bg}.
+      return `
+        Ultra high contrast black and white portrait of ${jobStr}, editorial poster style. 
+        ${lighting}, ${angle}, strong cinematic lighting, dramatic shadows, sharp facial details.
+        ${bg}.
 
-Modern minimalist poster composition with subtle layout balance and strong negative space.
-
-STRICT COLOR RULE:
-The image must be 99% pure monochrome (black and white only).
-Introduce ${accent} color ONLY on 1–2 very small physical objects within the scene 
-(for example: a small accessory, a tiny object in the hand, a small decorative item, or a minor prop).
-
-The colored object(s) must be subtle, flat-toned, and not glowing.
-No other part of the image may contain color.
-No color spill, no gradient color, no color on skin, clothes, or background.
-The subject remains completely black and white.
-
-Selective micro color-pop aesthetic.
-Luxury fashion magazine campaign style, premium branding, ultra clean, sharp focus.
-
-No watermark. No text. No letters. No typography. No logo.
-Monochrome base with extremely minimal controlled accent color.
-`.trim();
-
+        Large bold typography integrated into the composition (letters interacting with the subject).
+        Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
+        
+        STRICT COLOR RULE: 
+        The image is monochrome black and white. 
+        ONE ACCENT COLOR ONLY: ${accent}, used ONLY in small geometric shapes or highlights.
+        
+        NO COLOR ON THE SKIN OR FACE. Geometric elements must NOT overlap or distort the person's facial features.
+        
+        High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting.
+        No watermark, no random text, no logo.
+      `.trim();
     }
 
     if (styleName === 'Hero Studio') {
@@ -296,6 +281,18 @@ Monochrome base with extremely minimal controlled accent color.
         ? `${userQuery}. STYLE: ${baseStylePrompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`
         : `${baseStylePrompt}. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
 
+      let finalNegativePrompt = this.NEGATIVE_PROMPT;
+      if (styleName === 'Premium') {
+        // For Premium, we DO want typography as requested by the user,
+        // but we want to avoid messy lines on the face.
+        finalNegativePrompt = `
+          No smooth plastic skin, no neon, no 3d render, no generic AI artifacts, 
+          no distorted faces, no extra fingers, no blurry background unless intentional.
+          No mustache, no beard, no facial hair, no stubble.
+          NO COLOR ON FACE, NO GEOMETRIC LINES ON EYES OR MOUTH, NO DISTORTED FACIAL FEATURES.
+        `.trim();
+      }
+
       this.logger.log(
         `[generateImage] Calling Stability Ultra with prompt: ${finalPrompt.substring(0, 100)}...`,
       );
@@ -305,7 +302,7 @@ Monochrome base with extremely minimal controlled accent color.
         file?.buffer, // Image-to-image if file provided
         file ? 0.7 : undefined, // Default strength for image-to-image
         seed,
-        this.NEGATIVE_PROMPT,
+        finalNegativePrompt,
       );
 
       const fileName = `gen_${Date.now()}.png`;
