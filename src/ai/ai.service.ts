@@ -157,14 +157,29 @@ export class AiService {
       const angle = this.getRandomItem(angles);
       const bg = this.getRandomItem(backgrounds);
 
-      return `
-        Ultra high contrast black and white photography of ${subject}, editorial poster style, 
-        ${lighting}, ${angle}, dramatic shadows, sharp facial details, subject centered, ${bg}.
-        Graphic design elements: thin geometric lines, frame corners, layout guides, subtle grid overlay, modern poster composition.
-        Color Instruction: The image is 99% black and white. Add a single, extremely subtle splash of ${accent} ONLY on one or two or more small geometric object .
-        Selective color pop aesthetic. High fashion magazine, luxury campaign, premium branding, sharp focus, ultra clean.
-        No watermark, no text, no letters, no typography, no words, no logo. Monochrome base with tiny colored accent.
-      `.trim();
+     return `
+Ultra high-contrast black and white editorial photography of ${subject}. 
+${lighting}, ${angle}. Dramatic shadows, razor-sharp facial details, subject perfectly centered. ${bg}.
+
+Modern minimalist poster composition with subtle layout balance and strong negative space.
+
+STRICT COLOR RULE:
+The image must be 99% pure monochrome (black and white only).
+Introduce ${accent} color ONLY on 1–2 very small physical objects within the scene 
+(for example: a small accessory, a tiny object in the hand, a small decorative item, or a minor prop).
+
+The colored object(s) must be subtle, flat-toned, and not glowing.
+No other part of the image may contain color.
+No color spill, no gradient color, no color on skin, clothes, or background.
+The subject remains completely black and white.
+
+Selective micro color-pop aesthetic.
+Luxury fashion magazine campaign style, premium branding, ultra clean, sharp focus.
+
+No watermark. No text. No letters. No typography. No logo.
+Monochrome base with extremely minimal controlled accent color.
+`.trim();
+
     }
 
     if (styleName === 'Hero Studio') {
