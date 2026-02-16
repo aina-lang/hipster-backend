@@ -233,6 +233,39 @@ export class AiController {
     }
   }
 
+  @ApiOperation({ summary: 'Régénérer une image basée sur une génération précédente' })
+  @ResponseMessage('Image régénérée avec succès')
+  @Post('regenerate')
+  @Roles(Role.AI_USER)
+  async regenerate(
+    @Body() body: { generationId: number; seed?: number },
+    @Req() req,
+  ) {
+    try {
+      const aiUser = await this.aiService.getAiUserWithProfile(req.user.sub);
+      const isPremium = aiUser?.planType !== PlanType.CURIEUX;
+
+      const result = await this.aiService.regenerateFromGeneration(
+        body.generationId,
+        req.user.sub,
+        body.seed,
+      );
+
+      return {
+        url: await this.aiService.applyWatermark(result.url, isPremium),
+        rawUrl: result.url,
+        generationId: result.generationId,
+        seed: result.seed,
+      };
+    } catch (error: any) {
+      this.logger.error('Regenerate error:', error);
+      throw new HttpException(
+        { message: error?.message || 'Erreur lors de la régénération' },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   @ApiOperation({ summary: 'Générer un document via IA' })
   @ResponseMessage('Document généré avec succès')
   @Post('document')

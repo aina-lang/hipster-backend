@@ -626,12 +626,14 @@ export class AiService {
         `[generateImage] SUCCESS - Saved to: ${filePath}, URL: ${publicUrl}`,
       );
 
+      // Ensure seed is persisted with the generation attributes for reproducibility
+      const attributesWithSeed = { ...(params || {}), seed: seed || 0 };
       const saved = await this.saveGeneration(
         userId,
         '',
         finalDescription,
         AiGenerationType.IMAGE,
-        params,
+        attributesWithSeed,
         publicUrl,
       );
 
@@ -916,6 +918,46 @@ Function: ${context}`,
       this.logger.error(`[getConversation] Error: ${error.message}`);
       return null;
     }
+  }
+
+  /**
+   * Regenerate a previous generation using the saved params and seed.
+   * If a seedOverride is provided it will be used instead of the saved seed.
+   */
+  async regenerateFromGeneration(
+    generationId: number,
+    userId: number,
+    seedOverride?: number,
+  ) {
+    const gen = await this.aiGenRepo.findOne({
+      where: { id: generationId },
+      relations: ['user'],
+    });
+
+    if (!gen) throw new Error('Generation not found');
+    if (!gen.user || gen.user.id !== userId)
+      throw new Error('Unauthorized to regenerate this generation');
+
+    const params = (gen.attributes as any) || {};
+    const savedSeed = params.seed || 0;
+    const seedToUse =
+      typeof seedOverride === 'number' ? seedOverride : savedSeed || 0;
+
+    const style = params.style || 'Hero Studio';
+
+    // If the original generation had an imageUrl, download the image to use as the reference
+    let file: Express.Multer.File | undefined = undefined;
+    if (gen.imageUrl) {
+      try {
+        const resp = await axios.get(gen.imageUrl, { responseType: 'arraybuffer' });
+        file = { buffer: Buffer.from(resp.data) } as any;
+      } catch (e) {
+        this.logger.error(`[regenerateFromGeneration] Failed to download image: ${e.message}`);
+      }
+    }
+
+    // Reuse the original params and call generateImage
+    return await this.generateImage(params, style, userId, file, seedToUse);
   }
 
   async deleteGeneration(id: number, userId: number) {
