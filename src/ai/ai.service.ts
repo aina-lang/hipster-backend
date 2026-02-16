@@ -357,6 +357,7 @@ export class AiService {
             LANGUAGE: Write STRICTLY in French.
             STYLE: Professional, engaging, and well-formatted with clear line breaks between paragraphs.
             EMOJIS: Use emojis occasionally and relevantly (not too many).
+            BRANDING: If branding information (name, contact, address) is provided in the params, include it naturally in the text (e.g., at the end or in a "Contact" section) so the reader knows who to reach out to.
             CRITICAL FORMATTING RULE: Never use markdown formatting (no **, __, ##, italic, bold, etc.). 
             Write plain text only. 
             For social media posts, include relevant hashtags at the end.`,
@@ -403,7 +404,20 @@ export class AiService {
       `[generateSocial] START - User: ${userId}, Job: "${params.job}", Query: "${params.userQuery}"`,
     );
 
-    // 1. Generate Image (Direct Ultra)
+    // 1. Fetch user branding info
+    let brandingInfo = '';
+    const user = await this.getAiUserWithProfile(userId);
+    if (user) {
+      const parts = [];
+      if (user.name) parts.push(`Nom: ${user.name}`);
+      if (user.professionalPhone) parts.push(`Tel: ${user.professionalPhone}`);
+      if (user.professionalAddress)
+        parts.push(`Adresse: ${user.professionalAddress}`);
+      if (user.email) parts.push(`Email: ${user.email}`);
+      brandingInfo = parts.join(', ');
+    }
+
+    // 2. Generate Image (Direct Ultra)
     const imageRes = await this.generateImage(
       params,
       params.style || 'Hero Studio',
@@ -412,8 +426,12 @@ export class AiService {
       seed,
     );
 
-    // 2. Generate Caption (Simple GPT)
-    const textRes = await this.generateText(params, 'social', userId);
+    // 3. Generate Caption (Simple GPT)
+    const textRes = await this.generateText(
+      { ...params, brandingInfo },
+      'social',
+      userId,
+    );
 
     const result = {
       image: imageRes.url || '',
