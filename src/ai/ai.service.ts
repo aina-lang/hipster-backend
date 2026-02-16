@@ -544,10 +544,37 @@ export class AiService {
           : `${edit.prompt}, STYLE: ${baseStylePrompt}, 8k. ${preserveFaceInstruction}. NEGATIVE: ${this.NEGATIVE_PROMPT}`;
 
         finalDescription = `EDIT_${edit.tool} | Search: ${edit.search} | ${finalPrompt}`;
+        // Create an anchor/stabilization pass to lock the face from the uploaded image.
+        // This produces an intermediate reference (styled but with face preserved)
+        // which we then use as the source for the main edit — this mimics the
+        // behavior observed when regenerating from a previous generation.
+        let sourceBuffer: Buffer = file.buffer;
+        try {
+          const anchorPrompt = isCustomStyle
+            ? `${baseStylePrompt}. Preserve the person's face exactly as in the reference image. No identity changes.`
+            : `Preserve the person's face exactly as in the reference image. ${baseStylePrompt}.`;
+
+          this.logger.log('[generateImage] Creating anchor image to stabilize face');
+          const anchorBuffer = await this.callStructure(
+            file.buffer,
+            anchorPrompt,
+            0.995,
+            seed,
+            this.NEGATIVE_PROMPT,
+            stylePreset,
+          );
+          if (anchorBuffer && anchorBuffer.length > 0) {
+            sourceBuffer = anchorBuffer;
+            this.logger.log('[generateImage] Anchor image created successfully');
+          }
+        } catch (e: any) {
+          this.logger.error('[generateImage] Anchor creation failed: ' + (e?.message || e));
+          sourceBuffer = file.buffer;
+        }
 
         if (edit.tool === 'RECOLOR') {
           finalBuffer = await this.callSearchAndRecolor(
-            file.buffer,
+            sourceBuffer,
             finalPrompt,
             edit.search,
             seed,
@@ -555,7 +582,7 @@ export class AiService {
         } else if (edit.tool === 'OUTPAINT') {
           this.logger.log('[generateImage] Executing OUTPAINT expansion');
           finalBuffer = await this.callOutpaint(
-            file.buffer,
+            sourceBuffer,
             finalPrompt,
             128,
             128,
@@ -564,15 +591,10 @@ export class AiService {
             seed,
           );
         } else if (edit.tool === 'STRUCTURE') {
-          this.logger.log(
-            '[generateImage] Executing STRUCTURE scene recreation',
-          );
-          // Use MAXIMUM fidelity to preserve the source image (face, features, etc)
-          // Control strength 0.99 means 99% of the source image is preserved - only minimal changes
+          this.logger.log('[generateImage] Executing STRUCTURE scene recreation');
           const controlStrength = 0.99;
-          
           finalBuffer = await this.callStructure(
-            file.buffer,
+            sourceBuffer,
             finalPrompt,
             controlStrength,
             seed,
@@ -581,7 +603,7 @@ export class AiService {
           );
         } else {
           finalBuffer = await this.callSearchAndReplace(
-            file.buffer,
+            sourceBuffer,
             finalPrompt,
             edit.search,
             5,
