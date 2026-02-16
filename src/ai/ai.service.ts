@@ -572,6 +572,10 @@ export class AiService {
           sourceBuffer = file.buffer;
         }
 
+        // If user didn't ask for a posture/pose change, prefer replacing the background
+        // rather than a full STRUCTURE rewrite. This helps absolutely preserve the person.
+        const postureChange = await this.detectPostureChange(intentSource || '');
+
         if (edit.tool === 'RECOLOR') {
           finalBuffer = await this.callSearchAndRecolor(
             sourceBuffer,
@@ -591,16 +595,38 @@ export class AiService {
             seed,
           );
         } else if (edit.tool === 'STRUCTURE') {
-          this.logger.log('[generateImage] Executing STRUCTURE scene recreation');
-          const controlStrength = 0.99;
-          finalBuffer = await this.callStructure(
-            sourceBuffer,
-            finalPrompt,
-            controlStrength,
-            seed,
-            this.NEGATIVE_PROMPT,
-            stylePreset,
-          );
+          // If no posture change requested, prefer replace-background to protect the subject
+          if (!postureChange) {
+            try {
+              this.logger.log('[generateImage] Using replace-background to protect the subject (no posture change)');
+              finalBuffer = await this.callReplaceBackground(
+                sourceBuffer,
+                finalPrompt,
+              );
+            } catch (e) {
+              this.logger.error('[generateImage] replace-background failed, falling back to structure: ' + (e?.message || e));
+              const controlStrength = 0.99;
+              finalBuffer = await this.callStructure(
+                sourceBuffer,
+                finalPrompt,
+                controlStrength,
+                seed,
+                this.NEGATIVE_PROMPT,
+                stylePreset,
+              );
+            }
+          } else {
+            this.logger.log('[generateImage] Executing STRUCTURE scene recreation (posture change requested)');
+            const controlStrength = 0.99;
+            finalBuffer = await this.callStructure(
+              sourceBuffer,
+              finalPrompt,
+              controlStrength,
+              seed,
+              this.NEGATIVE_PROMPT,
+              stylePreset,
+            );
+          }
         } else {
           finalBuffer = await this.callSearchAndReplace(
             sourceBuffer,
