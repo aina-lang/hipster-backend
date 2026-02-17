@@ -351,7 +351,7 @@ export class AiService {
       const truncatedPrompt = prompt.substring(0, 32000);
 
       const response = await this.openai.images.edit({
-        model: 'gpt-image-1.5',
+        model: 'dall-e-2',
         prompt: truncatedPrompt,
         image: await toFile(image, 'image.png'),
         // @ts-ignore - input_fidelity est supporté par gpt-image-1.5
