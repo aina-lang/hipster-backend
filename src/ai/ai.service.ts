@@ -351,15 +351,15 @@ export class AiService {
     try {
       const truncatedPrompt = prompt.substring(0, 32000);
       const formData = new FormData();
-      formData.append('model', 'dall-e-2');
+      formData.append('model', 'gpt-image-1.5');
       formData.append('prompt', truncatedPrompt);
       // TRÈS IMPORTANT: Spécifier explicitement le contentType pour éviter l'erreur application/octet-stream
       formData.append('image', image, {
         filename: 'image.png',
         contentType: 'image/png',
       });
-      // formData.append('input_fidelity', 'high');
-      // formData.append('quality', 'high');
+      formData.append('input_fidelity', 'high');
+      formData.append('quality', 'high');
       formData.append('size', '1024x1536');
       formData.append('response_format', 'b64_json');
 
