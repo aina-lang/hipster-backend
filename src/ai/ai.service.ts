@@ -498,6 +498,31 @@ export class AiService {
     return this.callStabilityApi('stable-image/control/structure', formData);
   }
 
+  private async callSearchAndReplace(
+    image: Buffer,
+    prompt: string,
+    searchPrompt: string,
+    negativePrompt?: string,
+    seed?: number,
+  ): Promise<Buffer> {
+    this.logger.log(
+      `[callSearchAndReplace] Starting Search and Replace: Search("${searchPrompt}") -> Replace("${prompt}")`,
+    );
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('prompt', prompt);
+    formData.append('search_prompt', searchPrompt);
+    formData.append('output_format', 'png');
+
+    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (seed) formData.append('seed', seed.toString());
+
+    return this.callStabilityApi(
+      'stable-image/edit/search-and-replace',
+      formData,
+    );
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -586,18 +611,36 @@ export class AiService {
         // Step 1: Normalize dimension (Ensure PNG 1024x1024)
         const normalizedImage = await this.resizeImage(file.buffer);
 
-        // Step 2: Structure Preservation Path (Stability AI Structure)
-        // This preserves the face and object geometry while applying the style.
-        this.logger.log(
-          `[generateImage] Using Stability Structure path for face preservation (${styleName})`,
-        );
+        // Step 2: Choose Preservation Strategy
+        // If user specifically wants "Search and Replace" or "Background Swap"
+        if (params.mode === 'background_swap' || params.preserveSubject) {
+          this.logger.log(
+            `[generateImage] Using Stability Search and Replace path (Background Swap)`,
+          );
 
-        finalBuffer = await this.callStructure(
-          normalizedImage,
-          finalPrompt,
-          finalNegativePrompt,
-          seed,
-        );
+          // We search for "background" and replace with the prompt
+          // This keeps the subject PIXEL-PERFECT
+          finalBuffer = await this.callSearchAndReplace(
+            normalizedImage,
+            finalPrompt,
+            'background, surroundings, environment',
+            finalNegativePrompt,
+            seed,
+          );
+        } else {
+          // Default: Structure Preservation Path (Stability AI Structure)
+          // This preserves geometry but allows "stylization" of the person
+          this.logger.log(
+            `[generateImage] Using Stability Structure path for face preservation (${styleName})`,
+          );
+
+          finalBuffer = await this.callStructure(
+            normalizedImage,
+            finalPrompt,
+            finalNegativePrompt,
+            seed,
+          );
+        }
       } else {
         this.logger.log(
           `[generateImage] Calling Stability Ultra (Text-to-Image)`,
