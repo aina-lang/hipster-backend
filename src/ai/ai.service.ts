@@ -675,9 +675,16 @@ export class AiService {
         // Step 1: Normalize dimension (Ensure PNG 1024x1024)
         const normalizedImage = await this.resizeImage(file.buffer);
 
-        // Step 2: Choose Preservation Strategy
-        if (params.mode === 'outpaint') {
-          this.logger.log(`[generateImage] Using Stability Outpaint path`);
+        // Step 2: Adaptive Editing Strategy (Simplified)
+        const isOutpaint =
+          params.mode === 'outpaint' ||
+          params.left ||
+          params.right ||
+          params.up ||
+          params.down;
+
+        if (isOutpaint) {
+          this.logger.log(`[generateImage] Strategy: Outpaint`);
           finalBuffer = await this.callOutpaint(normalizedImage, {
             left: Number(params.left) || 0,
             right: Number(params.right) || 0,
@@ -690,9 +697,7 @@ export class AiService {
             style_preset: stylePreset,
           });
         } else if (params.mode === 'search_recolor') {
-          this.logger.log(
-            `[generateImage] Using Stability Search and Recolor path`,
-          );
+          this.logger.log(`[generateImage] Strategy: Search and Recolor`);
           finalBuffer = await this.callSearchAndRecolor(
             normalizedImage,
             finalPrompt,
@@ -702,10 +707,7 @@ export class AiService {
             stylePreset,
           );
         } else if (params.mode === 'structure') {
-          // Explicit Structure Preservation Path
-          this.logger.log(
-            `[generateImage] Using Stability Structure path for face preservation (${styleName})`,
-          );
+          this.logger.log(`[generateImage] Strategy: Structure Control`);
           finalBuffer = await this.callStructure(
             normalizedImage,
             finalPrompt,
@@ -714,13 +716,10 @@ export class AiService {
             stylePreset,
           );
         } else {
-          // DEFAULT: Pixel-Perfect Background Swap (Search and Replace)
+          // DEFAULT: Pixel-Perfect Background Swap
           this.logger.log(
-            `[generateImage] Using Stability Search and Replace path (Synchronous Default)`,
+            `[generateImage] Strategy: Background Swap (Default)`,
           );
-
-          // We search for "background" and replace with the prompt
-          // This keeps the subject PIXEL-PERFECT and is synchronous
           finalBuffer = await this.callSearchAndReplace(
             normalizedImage,
             finalPrompt,
