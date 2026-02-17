@@ -523,6 +523,31 @@ export class AiService {
     );
   }
 
+  private async callSearchAndRecolor(
+    image: Buffer,
+    prompt: string,
+    searchPrompt: string,
+    negativePrompt?: string,
+    seed?: number,
+  ): Promise<Buffer> {
+    this.logger.log(
+      `[callSearchAndRecolor] Starting Search and Recolor: Search("${searchPrompt}") -> Recolor with prompt("${prompt}")`,
+    );
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('prompt', prompt);
+    formData.append('search_prompt', searchPrompt);
+    formData.append('output_format', 'png');
+
+    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (seed) formData.append('seed', seed.toString());
+
+    return this.callStabilityApi(
+      'stable-image/edit/search-and-recolor',
+      formData,
+    );
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -612,8 +637,21 @@ export class AiService {
         const normalizedImage = await this.resizeImage(file.buffer);
 
         // Step 2: Choose Preservation Strategy
-        // If user specifically wants "Search and Replace" or "Background Swap"
-        if (params.mode === 'background_swap' || params.preserveSubject) {
+        if (params.mode === 'search_recolor') {
+          this.logger.log(
+            `[generateImage] Using Stability Search and Recolor path`,
+          );
+          finalBuffer = await this.callSearchAndRecolor(
+            normalizedImage,
+            finalPrompt,
+            params.searchPrompt || 'clothing', // Default to searching for clothing if not specified
+            finalNegativePrompt,
+            seed,
+          );
+        } else if (
+          params.mode === 'background_swap' ||
+          params.preserveSubject
+        ) {
           this.logger.log(
             `[generateImage] Using Stability Search and Replace path (Background Swap)`,
           );
