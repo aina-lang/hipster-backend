@@ -42,6 +42,11 @@ export class AuthService {
     });
     if (existing) throw new ConflictException('Email déjà utilisé.');
 
+    // Validate required fields
+    if (!dto.firstName || !dto.lastName || !dto.email || !dto.password) {
+      throw new BadRequestException('Tous les champs obligatoires doivent être remplis');
+    }
+
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     // For self-registration via mobile app, we only allow certain roles
@@ -53,39 +58,58 @@ export class AuthService {
       );
     }
 
-    const user = this.userRepo.create({
-      email,
-      password: hashedPassword,
-      firstName: dto.firstName,
-      lastName: dto.lastName || '',
-      roles: [selectedRole],
-      isActive: true,
-      isEmailVerified: false, // Self-registered users MUST verify their email
-    });
-    await this.userRepo.save(user);
+    try {
+      const user = this.userRepo.create({
+        email,
+        password: hashedPassword,
+        firstName: dto.firstName.trim(),
+        lastName: dto.lastName.trim(),
+        roles: [selectedRole],
+        isActive: true,
+        isEmailVerified: false, // Self-registered users MUST verify their email
+      });
+      const savedUser = await this.userRepo.save(user);
+      console.log('[AUTH] User created successfully:', savedUser.id);
 
-    const profile = this.clientProfileRepo.create({
-      companyName: dto.companyName || `${dto.firstName}'s Company`,
-      clientType: dto.clientType || ClientType.INDIVIDUAL,
-      user,
-    });
-    await this.clientProfileRepo.save(profile);
+      const profile = this.clientProfileRepo.create({
+        companyName: dto.companyName?.trim() || `${dto.firstName}'s Company`,
+        clientType: dto.clientType || ClientType.INDIVIDUAL,
+        user: savedUser,
+      });
+      const savedProfile = await this.clientProfileRepo.save(profile);
+      console.log('[AUTH] Client profile created successfully:', savedProfile.id);
 
-    // 🔑 Generate and send OTP for self-registration
-    const otp = await this.otpService.generateOtp(user, OtpType.OTP);
-    await this.mailService.sendEmail({
-      to: user.email,
-      subject: 'Vérification de votre compte Hipster',
-      template: 'otp-email',
-      context: { name: user.firstName ?? user.email, code: otp },
-      userRoles: user.roles,
-    });
+      // 🔑 Generate and send OTP for self-registration
+      const otp = await this.otpService.generateOtp(savedUser, OtpType.OTP);
+      await this.mailService.sendEmail({
+        to: savedUser.email,
+        subject: 'Vérification de votre compte Hipster',
+        template: 'otp-email',
+        context: { name: savedUser.firstName ?? savedUser.email, code: otp },
+        userRoles: savedUser.roles,
+      });
 
-    return {
-      message:
-        'Inscription réussie. Un code OTP a été envoyé à votre adresse email.',
-      email: user.email,
-    };
+      return {
+        message:
+          'Inscription réussie. Un code OTP a été envoyé à votre adresse email.',
+        email: savedUser.email,
+      };
+    } catch (error) {
+      console.error('[AUTH] Registration error:', error);
+      
+      // Check for specific database constraint violations
+      if (error?.message?.includes('UNIQUE constraint')) {
+        throw new ConflictException('Cet email est déjà utilisé.');
+      }
+      if (error?.message?.includes('NOT NULL')) {
+        throw new BadRequestException(`Champ obligatoire manquant: ${error.message}`);
+      }
+      
+      // Re-throw as BadRequest with details
+      throw new BadRequestException(
+        error?.message || 'Erreur lors de l\'inscription'
+      );
+    }
   }
 
   async login(dto: LoginAuthDto) {
