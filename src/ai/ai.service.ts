@@ -80,7 +80,11 @@ export class AiService {
     text, watermark, logo, signature, letters, words, captions, labels,
     cgi, 3d, render, cartoon, anime, illustration, drawing, digital art,
     smooth plastic skin, artificial, airbrushed, unnatural skin,
-    mustache, beard, facial hair, stubble (unless specified).
+    mustache, beard, facial hair, stubble (unless specified),
+    plastic, wax, doll, fake, unreal engine, octane render, oversaturated, 
+    high contrast, artificial lighting, porcelain, rubber, skin blemishes, 
+    distorted eyes, asymmetrical face, hyper-saturated, glowing edges,
+    vibrant neon colors (unless specified), bad anatomy, bad proportions.
   `.trim();
 
   private async refineSubject(job: string): Promise<string> {
@@ -244,7 +248,7 @@ export class AiService {
     ];
 
     if (stabilityPresets.includes(styleName)) {
-      return `Professional representation of ${jobStr}.`;
+      return `Professional representation of ${jobStr} carefully integrated into the ${styleName} aesthetic. High quality, detailed environment and atmosphere matching the ${styleName} style perfectly.`;
     }
 
     return `Professional high-quality representation of ${jobStr}. Style: ${styleName}.`;
@@ -487,12 +491,10 @@ export class AiService {
       let finalBuffer: Buffer;
 
       const qualityTags =
-        'masterpiece, ultra high quality, photorealistic, 8k resolution, highly detailed skin texture, sharp focus, natural lighting, professional photography';
+        'masterpiece, ultra high quality, photorealistic, 8k resolution, highly detailed natural skin texture, sharp focus, soft natural lighting, professional photography, cinematic composition, realistic hair, clear eyes';
 
-      // The refinedQuery already integrates the Style aesthetic via GPT
-      const finalPrompt = refinedQuery
-        ? `${refinedQuery}. QUALITY: ${qualityTags}`
-        : `${baseStylePrompt}. QUALITY: ${qualityTags}`;
+      // Build the final prompt by prefixing the style to ensure it is prioritized.
+      const finalPrompt = `STYLE: ${styleName}. ${refinedQuery || baseStylePrompt}. QUALITY: ${qualityTags}`;
 
       let finalNegativePrompt = this.NEGATIVE_PROMPT;
 
@@ -535,7 +537,7 @@ export class AiService {
       if (file) {
         // EXCLUSIVE ULTRA IMAGE-TO-IMAGE
         const strength =
-          params.strength !== undefined ? Number(params.strength) : 0.35;
+          params.strength !== undefined ? Number(params.strength) : 0.25;
 
         this.logger.log(
           `[generateImage] Strategy: Ultra Image-to-Image (Strength: ${strength})`,
