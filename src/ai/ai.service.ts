@@ -370,7 +370,7 @@ export class AiService {
       // On utilise @ pour uploader l'image
       const curlCommand = [
         'curl -s -X POST https://api.openai.com/v1/images/edits',
-        `-H "Authorization: Bearer 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`,
+        `-H "Authorization: Bearer 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"`,
         '-F "model=gpt-image-1.5"',
         `-F "image=@${inputPath}"`,
         '-F "input_fidelity=high"',
