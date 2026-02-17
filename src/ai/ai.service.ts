@@ -647,7 +647,7 @@ export class AiService {
         finalBuffer = await this.callUltra(
           finalPrompt,
           file.buffer,
-          0.8, // Strength basse pour préserver visage/objet
+          params.strength ?? 0.3, // Strength basse pour préserver visage/objet
           seed,
           finalNegativePrompt,
         );
