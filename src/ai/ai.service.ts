@@ -7,6 +7,7 @@ import { toFile } from 'openai/uploads';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
+import { spawn } from 'child_process';
 import * as NodeFormData from 'form-data';
 import * as sharp from 'sharp';
 import { AiUser, PlanType } from './entities/ai-user.entity';
@@ -338,46 +339,136 @@ export class AiService {
    * Appelle l'API OpenAI Images Edit pour modifier une image
    * @param image Buffer de l'image d'entrée
    * @param prompt Prompt décrivant l'édition
-   * @returns Buffer de l'image générée (en b64_json converti en Buffer)
+   * @returns Buffer de l'image générée
    */
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting edit with official SDK (dall-e-2)`,
+      `[callOpenAiImageEdit] Starting high-fidelity edit via Curl (gpt-image-1.5)`,
     );
 
+    const tempDir = '/tmp';
+    const inputPath = path.join(tempDir, `openai_input_${Date.now()}.png`);
+    const outputPath = path.join(tempDir, `openai_output_${Date.now()}.png`);
+
     try {
-      const truncatedPrompt = prompt.substring(0, 32000);
+      // Écriture du buffer source en PNG
+      fs.writeFileSync(inputPath, image);
 
-      const response = await this.openai.images.edit({
-        model: 'dall-e-2',
-        prompt: truncatedPrompt,
-        image: await toFile(image, 'image.png'),
-        size: '1024x1536',
-        response_format: 'b64_json',
-      });
+      // Appel de la méthode CURL
+      await this.callOpenAiImageEditCurl(inputPath, outputPath, prompt);
 
-      const b64 = response.data?.[0]?.b64_json;
-      if (!b64) {
-        this.logger.error(
-          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response)}`,
-        );
-        throw new Error('No image data returned from OpenAI');
-      }
+      // Lecture du résultat
+      const resultBuffer = fs.readFileSync(outputPath);
 
-      this.logger.log(`[callOpenAiImageEdit] Image successfully generated.`);
-      return Buffer.from(b64, 'base64');
+      // Nettoyage
+      if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+      if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+
+      return resultBuffer;
     } catch (e: any) {
       this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
-      if (e.status) {
-        this.logger.error(
-          `[callOpenAiImageEdit] Status: ${e.status}, Error Details: ${JSON.stringify(e.error)}`,
-        );
-      }
+      // Tentative de nettoyage même en cas d'erreur
+      try {
+        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+      } catch (err) {}
       throw e;
     }
+  }
+
+  /**
+   * Méthode interne utilisant CURL pour bypasser les limitations du SDK
+   */
+  private async callOpenAiImageEditCurl(
+    inputPath: string,
+    outputPath: string,
+    prompt: string,
+  ): Promise<void> {
+    this.logger.log(`[callOpenAiImageEditCurl] Starting curl call...`);
+
+    return new Promise((resolve, reject) => {
+      const curlArgs = [
+        '-X',
+        'POST',
+        'https://api.openai.com/v1/images/edits',
+        '-H',
+        `Authorization: Bearer ${this.openAiKey}`,
+        '-F',
+        `model=gpt-image-1.5`,
+        '-F',
+        `image=@${inputPath}`,
+        '-F',
+        `input_fidelity=high`,
+        '-F',
+        `quality=high`,
+        '-F',
+        `prompt=${prompt}`,
+        '-F',
+        `size=1024x1536`,
+        '-F',
+        `response_format=b64_json`,
+      ];
+
+      const curl = spawn('curl', curlArgs);
+
+      let stdout = '';
+      let stderr = '';
+
+      curl.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      curl.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      curl.on('close', (code) => {
+        if (code !== 0) {
+          this.logger.error(
+            `[callOpenAiImageEditCurl] curl exited with code ${code}`,
+          );
+          this.logger.error(stderr);
+          return reject(new Error(`Curl exited with code ${code}`));
+        }
+
+        try {
+          const json = JSON.parse(stdout);
+
+          // Si l'API retourne une erreur JSON
+          if (json.error) {
+            this.logger.error(
+              `[callOpenAiImageEditCurl] API Error: ${JSON.stringify(json.error)}`,
+            );
+            return reject(new Error(json.error.message || 'OpenAI API error'));
+          }
+
+          const b64 = json.data?.[0]?.b64_json;
+          if (!b64) {
+            this.logger.error(
+              `[callOpenAiImageEditCurl] Full response: ${stdout}`,
+            );
+            throw new Error('No image returned from OpenAI');
+          }
+
+          fs.writeFileSync(outputPath, Buffer.from(b64, 'base64'));
+          this.logger.log(
+            `[callOpenAiImageEditCurl] Image saved to ${outputPath}`,
+          );
+          resolve();
+        } catch (err) {
+          this.logger.error(
+            `[callOpenAiImageEditCurl] Failed to parse response: ${err}`,
+          );
+          this.logger.error(
+            `[callOpenAiImageEditCurl] Raw stdout was: ${stdout}`,
+          );
+          reject(err);
+        }
+      });
+    });
   }
 
   private async callUltra(
