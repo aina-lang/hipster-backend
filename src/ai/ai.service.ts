@@ -468,22 +468,6 @@ export class AiService {
           normalizedImage,
           finalPrompt,
         );
-
-        const saved = await this.saveGeneration(
-          userId,
-          'Image generated via OpenAI GPT Image Edit',
-          finalPrompt,
-          AiGenerationType.IMAGE,
-          { style: styleName, model: 'dall-e-2' },
-          '', // URL will be set later if needed
-        );
-
-        return {
-          url: `/uploads/ai-generations/gen_${Date.now()}.png`, // Placeholder, will be overwritten by full URL logic below if not returned here
-          buffer: finalBuffer,
-          generationId: saved?.id,
-          seed: seed || 0,
-        };
       } else {
         this.logger.log(
           `[generateImage] Calling Stability Ultra (Text-to-Image)`,
