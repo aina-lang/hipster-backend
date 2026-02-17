@@ -422,8 +422,8 @@ export class AiService {
     );
     try {
       const editParams: any = {
-        model: 'gpt-image-1.5',
-        image: [await OpenAI.toFile(image, 'source.png')],
+        model: 'dall-e-2',
+        image: await OpenAI.toFile(image, 'source.png'),
         prompt: prompt,
         response_format: 'b64_json',
       };
