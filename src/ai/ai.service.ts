@@ -400,7 +400,7 @@ export class AiService {
         `model=gpt-image-1.5`,
         '-F',
         `image=@${inputPath}`,
-        '-F',
+        // '-F',
         // `input_fidelity=high`,
         // '-F',
         // `quality=high`,
