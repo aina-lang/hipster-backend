@@ -512,6 +512,49 @@ export class AiService {
     return this.callStabilityApi('stable-image/control/structure', formData);
   }
 
+  /**
+   * Appelle l'API Stability Outpaint pour étendre une image
+   */
+  private async callOutpaint(
+    image: Buffer,
+    prompt?: string,
+    directions: {
+      left?: number;
+      right?: number;
+      up?: number;
+      down?: number;
+    } = {},
+    creativity = 0.5,
+    seed?: number,
+    stylePreset?: string,
+  ): Promise<Buffer> {
+    const formData = new NodeFormData();
+    formData.append('image', image, {
+      filename: 'source.png',
+      contentType: 'image/png',
+    });
+
+    if (prompt) formData.append('prompt', prompt);
+
+    // API requires at least one direction > 0
+    const { left = 0, right = 0, up = 0, down = 0 } = directions;
+    const finalDown =
+      left === 0 && right === 0 && up === 0 && down === 0 ? 1 : down;
+
+    if (left > 0) formData.append('left', left.toString());
+    if (right > 0) formData.append('right', right.toString());
+    if (up > 0) formData.append('up', up.toString());
+    if (finalDown > 0) formData.append('down', finalDown.toString());
+
+    formData.append('creativity', creativity.toString());
+    formData.append('output_format', 'png');
+
+    if (seed) formData.append('seed', seed.toString());
+    if (stylePreset) formData.append('style_preset', stylePreset);
+
+    return this.callStabilityApi('stable-image/edit/outpaint', formData);
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -600,13 +643,22 @@ export class AiService {
         : undefined;
 
       if (file) {
-        this.logger.log(`[generateImage] Strategy: Stability Structure`);
-        finalBuffer = await this.callStructure(
-          finalPrompt,
+        this.logger.log(`[generateImage] Strategy: Stability Outpaint`);
+        // On outpaint vers le bas par défaut de 100px si rien n'est spécifié
+        const directions = {
+          left: params.left || 0,
+          right: params.right || 0,
+          up: params.up || 0,
+          down:
+            params.down || (params.left || params.right || params.up ? 0 : 100),
+        };
+
+        finalBuffer = await this.callOutpaint(
           file.buffer,
-          0.7, // control_strength par défaut
+          finalPrompt,
+          directions,
+          params.creativity ?? 0.5,
           seed,
-          finalNegativePrompt,
           stylePreset,
         );
       } else {
@@ -634,7 +686,7 @@ export class AiService {
 
       const saved = await this.saveGeneration(
         userId,
-        file ? 'IMAGE_EDIT_ULTRA' : 'TEXT_TO_IMAGE_ULTRA',
+        file ? 'IMAGE_EDIT_OUTPAINT' : 'TEXT_TO_IMAGE_ULTRA',
         finalPrompt,
         AiGenerationType.IMAGE,
         {
