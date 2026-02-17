@@ -352,7 +352,7 @@ export class AiService {
       const truncatedPrompt = prompt.substring(0, 32000);
 
       const response = await this.openai.images.edit({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: truncatedPrompt,
         image: await toFile(image, 'image.png'),
         size: '1024x1536',
