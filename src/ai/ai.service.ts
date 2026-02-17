@@ -480,33 +480,6 @@ export class AiService {
     return this.callStabilityApi('stable-image/generate/ultra', formData);
   }
 
-  private async callSearchAndReplace(
-    image: Buffer,
-    prompt: string,
-    searchPrompt: string,
-    negativePrompt?: string,
-    seed?: number,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    this.logger.log(
-      `[callSearchAndReplace] Starting Search and Replace: Search("${searchPrompt}") -> Replace("${prompt}")`,
-    );
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('prompt', prompt);
-    formData.append('search_prompt', searchPrompt);
-    formData.append('output_format', 'png');
-
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (seed) formData.append('seed', seed.toString());
-    if (stylePreset) formData.append('style_preset', stylePreset);
-
-    return this.callStabilityApi(
-      'stable-image/edit/search-and-replace',
-      formData,
-    );
-  }
-
   private async callOutpaint(
     image: Buffer,
     params: {
@@ -628,44 +601,35 @@ export class AiService {
         // Step 1: Normalize dimension (Ensure PNG 1024x1024)
         const normalizedImage = await this.resizeImage(file.buffer);
 
-        // SMART IMAGE EDITING STRATEGY
-        const left = Number(params.left) || 0;
-        const right = Number(params.right) || 0;
-        const up = Number(params.up) || 0;
-        const down = Number(params.down) || 0;
+        // DIRECT & EXCLUSIVE OUTPAINT FLOW
+        // Focuses solely on Outpaint as requested by the user.
+        this.logger.log(`[generateImage] Strategy: Forced Outpaint`);
 
-        const hasExpansion = left > 0 || right > 0 || up > 0 || down > 0;
+        let left = Number(params.left) || 0;
+        let right = Number(params.right) || 0;
+        let up = Number(params.up) || 0;
+        let down = Number(params.down) || 0;
 
-        if (hasExpansion) {
-          // Path: CANVAS EXPANSION (Outpaint)
-          this.logger.log(`[generateImage] Strategy: Outpaint (Expansion)`);
-          finalBuffer = await this.callOutpaint(normalizedImage, {
-            left,
-            right,
-            up,
-            down,
-            creativity:
-              params.creativity !== undefined ? Number(params.creativity) : 0.5,
-            prompt: finalPrompt,
-            seed: seed,
-            style_preset: stylePreset,
-          });
-        } else {
-          // Path: BACKGROUND SWAP (Search and Replace)
-          // Default fallback when no expansion is requested.
-          // Keeps the subject pixel-perfect on original canvas.
+        // API SAFETY: Outpaint requires at least 1 pixel of movement.
+        // If all are 0, we add a tiny 1px expansion at the bottom (virtually invisible).
+        if (left === 0 && right === 0 && up === 0 && down === 0) {
           this.logger.log(
-            `[generateImage] Strategy: Search and Replace (Sync Fallback)`,
+            `[generateImage] No directions provided, adding 1px bottom safety expansion`,
           );
-          finalBuffer = await this.callSearchAndReplace(
-            normalizedImage,
-            finalPrompt,
-            'background, surroundings, environment',
-            finalNegativePrompt,
-            seed,
-            stylePreset,
-          );
+          down = 1;
         }
+
+        finalBuffer = await this.callOutpaint(normalizedImage, {
+          left,
+          right,
+          up,
+          down,
+          creativity:
+            params.creativity !== undefined ? Number(params.creativity) : 0.5,
+          prompt: finalPrompt,
+          seed: seed,
+          style_preset: stylePreset,
+        });
       } else {
         this.logger.log(
           `[generateImage] Calling Stability Ultra (Text-to-Image)`,
