@@ -410,6 +410,8 @@ export class AiService {
       }
       throw error;
     }
+  }
+
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
@@ -622,16 +624,20 @@ export class AiService {
               normalizedImage,
               finalPrompt,
             );
-            return await this.saveGeneration(
+            const saved = await this.saveGeneration(
               userId,
               'Image generated via OpenAI GPT Image Edit',
               finalPrompt,
               AiGenerationType.IMAGE,
               { style: styleName, model: 'gpt-image-1.5' },
               '', // URL will be set later if needed
-            ).then((gen) => {
-              return { url: `/uploads/${gen.id}.png`, buffer: finalBuffer };
-            });
+            );
+            return {
+              url: `/uploads/${saved?.id}.png`,
+              buffer: finalBuffer,
+              generationId: saved?.id,
+              seed: seed || 0,
+            };
           } catch (e) {
             this.logger.warn(
               `[generateImage] OpenAI path failed, falling back to Stability: ${e.message}`,
