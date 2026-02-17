@@ -7,7 +7,6 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as FormData from 'form-data';
-import * as sharp from 'sharp';
 import { AiUser, PlanType } from './entities/ai-user.entity';
 import {
   AiGeneration,
@@ -254,15 +253,10 @@ export class AiService {
 
   private async resizeImage(image: Buffer): Promise<Buffer> {
     try {
-      this.logger.log(`[resizeImage] Processing image to PNG 1024x1024`);
-      return await sharp(image)
-        .ensureAlpha()
-        .resize(1024, 1024, {
-          fit: 'contain',
-          background: { r: 255, g: 255, b: 255, alpha: 0 },
-        })
-        .png()
-        .toBuffer();
+      this.logger.log(`[resizeImage] Image is ready for API`);
+      // Note: Sharp dependency removed. Image processing is now handled by the API itself.
+      // The buffer is returned as-is for API consumption.
+      return image;
     } catch (e) {
       this.logger.error(`[resizeImage] FAILED: ${e.message}`);
       return image;
