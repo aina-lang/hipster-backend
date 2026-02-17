@@ -15,8 +15,6 @@ curl -s -X POST https://api.openai.com/v1/images/edits \
   -F "model=gpt-image-1.5" \
   -F "image=@${INPUT_FILE}" \
   -F "prompt=${PROMPT}" \
-  -F "input_fidelity=high" \
-  -F "quality=high" \
   -F "size=1024x1536" \
   -F "response_format=b64_json" > "$RESPONSE_FILE"
 
