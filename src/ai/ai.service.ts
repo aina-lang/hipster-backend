@@ -254,10 +254,30 @@ export class AiService {
 
   private async resizeImage(image: Buffer): Promise<Buffer> {
     try {
-      this.logger.log(`[resizeImage] Image is ready for API`);
-      // Note: Sharp dependency removed. Image processing is now handled by the API itself.
-      // The buffer is returned as-is for API consumption.
-      return image;
+      this.logger.log(`[resizeImage] Normalizing image to PNG 1024x1024`);
+
+      // Use sharp to convert to PNG and resize to 1024x1024
+      const normalized = await sharp(image)
+        .resize(1024, 1024, {
+          fit: 'cover',
+          position: 'center',
+        })
+        .png()
+        .toBuffer();
+
+      this.logger.log(
+        `[resizeImage] SUCCESS - Normalized size: ${(normalized.length / 1024 / 1024).toFixed(2)} MB`,
+      );
+
+      // Check if size is over 4MB (unlikely for 1024x1024 PNG but safety first)
+      if (normalized.length > 4 * 1024 * 1024) {
+        this.logger.warn(`[resizeImage] Image still over 4MB, compressing...`);
+        return await sharp(normalized)
+          .png({ compressionLevel: 9, quality: 80 })
+          .toBuffer();
+      }
+
+      return normalized;
     } catch (e) {
       this.logger.error(`[resizeImage] FAILED: ${e.message}`);
       return image;
