@@ -411,8 +411,8 @@ export class AiService {
       });
       formData.append('image', imageBlob, 'image.png');
 
-      formData.append('input_fidelity', 'high');
-      formData.append('quality', 'high');
+      // formData.append('input_fidelity', 'high');
+      // formData.append('quality', 'high');
       formData.append('size', '1024x1536');
       formData.append('response_format', 'b64_json');
 
