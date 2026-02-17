@@ -344,7 +344,7 @@ export class AiService {
     mask?: Buffer,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting upload flow for gpt-image-1.5 (edits)`,
+      `[callOpenAiImageEdit] Starting upload flow for dall-e-2 (edits)`,
     );
 
     try {
@@ -356,20 +356,23 @@ export class AiService {
         `[callOpenAiImageEdit] Prompt length after truncation: ${truncatedPrompt.length}`,
       );
 
-      // 1. Upload Source Image
-      this.logger.log(`[callOpenAiImageEdit] Uploading source image...`);
-      const fileId = await this.uploadToOpenAiFiles(image);
+      // Prepare FormData for multipart/form-data request
+      const formData = new FormData();
+      formData.append('model', 'dall-e-2');
+      formData.append('prompt', truncatedPrompt);
+      formData.append('n', '1');
+      formData.append('size', '1024x1024');
+      formData.append('response_format', 'b64_json');
 
-      // 2. Prepare Payload
-      const payload: any = {
-        model: 'gpt-image-1.5',
-        prompt: truncatedPrompt,
-        image: fileId, // Note: 'image' not 'images' for edits endpoint usually, but check schema
-        response_format: 'b64_json',
-      };
+      // Append binary image
+      formData.append('image', image, {
+        filename: 'image.png',
+        contentType: 'image/png',
+      });
 
       // 3. Optional Mask (Noise Mask or Provided Mask)
-      if (!mask) {
+      let finalMask = mask;
+      if (!finalMask) {
         // Generate a 50% transparency noise mask to force edit
         this.logger.log(`[callOpenAiImageEdit] Generating noise mask...`);
         const noiseBuffer = Buffer.alloc(1024 * 1024 * 4);
@@ -381,33 +384,35 @@ export class AiService {
           noiseBuffer[i + 3] = Math.random() > 0.5 ? 0 : 255;
         }
 
-        mask = await sharp(noiseBuffer, {
+        finalMask = await sharp(noiseBuffer, {
           raw: { width: 1024, height: 1024, channels: 4 },
         })
           .png()
           .toBuffer();
       }
 
-      if (mask) {
-        this.logger.log(`[callOpenAiImageEdit] Uploading mask image...`);
-        const maskFileId = await this.uploadToOpenAiFiles(mask);
-        payload.mask = maskFileId;
+      if (finalMask) {
+        this.logger.log(
+          `[callOpenAiImageEdit] Appending mask image to form...`,
+        );
+        formData.append('mask', finalMask, {
+          filename: 'mask.png',
+          contentType: 'image/png',
+        });
       }
 
       this.logger.log(
-        `[callOpenAiImageEdit] Sending edit request to v1/images/edits with Payload: ${JSON.stringify(
-          payload,
-        )}`,
+        `[callOpenAiImageEdit] Sending edit request to v1/images/edits`,
       );
 
       // 4. Send Request to v1/images/edits
       const response = await axios.post(
         'https://api.openai.com/v1/images/edits',
-        payload,
+        formData,
         {
           headers: {
+            ...formData.getHeaders(),
             Authorization: `Bearer ${this.openAiKey}`,
-            'Content-Type': 'application/json',
           },
         },
       );
