@@ -7,6 +7,7 @@ import { toFile } from 'openai/uploads';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
+import { spawn } from 'child_process';
 import * as NodeFormData from 'form-data';
 import * as sharp from 'sharp';
 import { AiUser, PlanType } from './entities/ai-user.entity';
@@ -390,14 +391,18 @@ export class AiService {
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting high-fidelity edit (gpt-image-1.5)`,
+      `[callOpenAiImageEdit] Starting high-fidelity shell script edit (gpt-image-1.5)`,
     );
 
+    const tempDir = '/tmp';
+    const inputPath = path.join(tempDir, `openai_input_${Date.now()}.png`);
+    const outputPath = path.join(tempDir, `openai_output_${Date.now()}.png`);
+
     try {
-      // 1. Force conversion to PNG with Sharp + Resize to 1024x1024 (DALL-E 2 requirement)
-      // Also ensures the file is well under the 4MB limit.
+      // 1. Force conversion to PNG with Sharp + Resize to 1024x1536 (GPT-1.5 requirement)
+      // OpenAI requires an alpha channel for image edits.
       const pngBuffer = await sharp(image)
-        .resize(1024, 1024, {
+        .resize(1024, 1536, {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 },
         })
@@ -405,62 +410,55 @@ export class AiService {
         .png()
         .toBuffer();
 
+      // Write input to temp file
+      fs.writeFileSync(inputPath, pngBuffer);
       this.logger.log(
-        `[callOpenAiImageEdit] Image processed. Size: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
+        `[callOpenAiImageEdit] Input saved to ${inputPath}. Size: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
       );
 
-      // 2. Prepare multipart form data using native fetch API (global.FormData)
-      const formData = new (global as any).FormData();
-      formData.append('model', 'dall-e-2');
-
-      // Use the new refinement logic to stay under 1000 chars
+      // Refine prompt to stay under 1000 chars
       const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
-      formData.append('prompt', refinedPrompt);
 
-      // Explicitly set the blob with image/png mimetype to solve 400 error
-      const imageBlob = new (global as any).Blob([pngBuffer], {
-        type: 'image/png',
-      });
-      formData.append('image', imageBlob, 'image.png');
+      // 2. Execute the shell script
+      const scriptPath = path.join(process.cwd(), 'scripts', 'dalle_edit.sh');
+      this.logger.log(`[callOpenAiImageEdit] Running script: ${scriptPath}`);
 
-      // formData.append('input_fidelity', 'high');
-      // formData.append('quality', 'high');
-      formData.append('size', '1024x1024');
-      formData.append('response_format', 'b64_json');
+      await new Promise<void>((resolve, reject) => {
+        const proc = spawn(scriptPath, [inputPath, outputPath, refinedPrompt], {
+          env: { ...process.env, OPENAI_API_KEY: this.openAiKey },
+        });
 
-      this.logger.log(
-        `[callOpenAiImageEdit] Sending request via native fetch...`,
-      );
+        let stderr = '';
+        proc.stderr.on('data', (data) => (stderr += data.toString()));
 
-      const response = await fetch('https://api.openai.com/v1/images/edits', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.openAiKey}`,
-        },
-        body: formData,
+        proc.on('close', (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            this.logger.error(`[callOpenAiImageEdit] Script FAILED: ${stderr}`);
+            reject(new Error(`Shell script exited with code ${code}`));
+          }
+        });
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        this.logger.error(
-          `[callOpenAiImageEdit] API FAILED: ${JSON.stringify(errorData)}`,
-        );
-        throw new Error(`OpenAI API failed with status ${response.status}`);
-      }
-
-      const result = await response.json();
-      const b64 = result.data?.[0]?.b64_json;
-      if (!b64) {
-        this.logger.error(
-          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(result)}`,
-        );
-        throw new Error('No image data returned from OpenAI');
-      }
-
+      // 3. Read result and cleanup
+      const resultBuffer = fs.readFileSync(outputPath);
       this.logger.log(`[callOpenAiImageEdit] SUCCESS.`);
-      return Buffer.from(b64, 'base64');
+
+      // Cleanup
+      try {
+        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+      } catch (err) {}
+
+      return resultBuffer;
     } catch (e: any) {
       this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
+      // Tentative de nettoyage même en cas d'erreur
+      try {
+        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
+      } catch (err) {}
       throw e;
     }
   }
