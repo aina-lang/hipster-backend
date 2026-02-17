@@ -394,8 +394,19 @@ export class AiService {
     );
 
     try {
-      // 1. Force conversion to PNG with Sharp to ensure valid format for OpenAI
-      const pngBuffer = await sharp(image).png().toBuffer();
+      // 1. Force conversion to PNG with Sharp + Resize to 1024x1024 (DALL-E 2 requirement)
+      // Also ensures the file is well under the 4MB limit.
+      const pngBuffer = await sharp(image)
+        .resize(1024, 1024, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
+        .png()
+        .toBuffer();
+
+      this.logger.log(
+        `[callOpenAiImageEdit] Image processed. Size: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
+      );
 
       // 2. Prepare multipart form data using native fetch API (global.FormData)
       const formData = new (global as any).FormData();
