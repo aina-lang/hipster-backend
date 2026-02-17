@@ -577,7 +577,7 @@ export class AiService {
         finalBuffer = await this.callUltra(
           finalPrompt,
           file.buffer,
-          0.7, // Strength for I2I
+          0.1, // Strength for I2I
           seed,
           finalNegativePrompt,
         );
