@@ -756,7 +756,7 @@ export class AiService {
 
       const saved = await this.saveGeneration(
         userId,
-        file ? 'IMAGE_EDIT_OUTPAINT' : 'TEXT_TO_IMAGE_ULTRA',
+        file ? 'IMAGE_EDIT_SEARCH_AND_REPLACE' : 'TEXT_TO_IMAGE_ULTRA',
         finalPrompt,
         AiGenerationType.IMAGE,
         {
