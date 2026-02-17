@@ -9,14 +9,17 @@ import {
   IsEmail,
   IsBoolean,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { SubscriptionStatus, PlanType } from 'src/ai/entities/ai-user.entity';
 
 export class CreateIaClientProfileDto {
   @IsOptional()
+  @Type(() => String)
   @IsEnum(SubscriptionStatus)
   subscriptionStatus?: SubscriptionStatus;
 
   @IsOptional()
+  @Type(() => String)
   @IsEnum(PlanType)
   planType?: PlanType;
 
@@ -36,7 +39,6 @@ export class CreateIaClientProfileDto {
   @IsString()
   job?: string;
 
-  @IsOptional()
   @IsOptional()
   @IsBoolean()
   isSetupComplete?: boolean;
