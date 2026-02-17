@@ -349,34 +349,41 @@ export class AiService {
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting high-fidelity edit with Direct CURL Wrapper`,
+      `[callOpenAiImageEdit] Starting high-fidelity edit with Direct CURL Mirror (gpt-image-1.5)`,
     );
 
     const tmpDir = path.join(process.cwd(), 'uploads', 'tmp');
     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
     const inputPath = path.join(tmpDir, `input_${Date.now()}.png`);
-    fs.writeFileSync(inputPath, image);
+    const promptPath = path.join(tmpDir, `prompt_${Date.now()}.txt`);
 
     try {
-      const truncatedPrompt = prompt.replace(/'/g, "'\\''"); // Escape single quotes for shell
+      // 1. S'assurer que l'image est un PNG (requis par OpenAI Edits)
+      this.logger.log(`[callOpenAiImageEdit] Converting image to PNG...`);
+      const pngBuffer = await sharp(image).png().toBuffer();
+      fs.writeFileSync(inputPath, pngBuffer);
+      fs.writeFileSync(promptPath, prompt);
 
-      const curlCommand = `
-        curl -s -X POST https://api.openai.com/v1/images/edits \\
-             -H "Authorization: Bearer ${this.openAiKey}" \\
-             -F "model=gpt-image-1.5" \\
-             -F "image=@${inputPath}" \\
-             -F "input_fidelity=high" \\
-             -F "quality=high" \\
-             -F "prompt=${truncatedPrompt}" \\
-             -F "size=1024x1536" \\
-             -F "response_format=b64_json"
-      `.trim();
+      // 2. Construire la commande CURL exacte
+      // On utilise < pour lire le prompt depuis un fichier (évite les problèmes d'escape shell)
+      // On utilise @ pour uploader l'image
+      const curlCommand = [
+        'curl -s -X POST https://api.openai.com/v1/images/edits',
+        `-H "Authorization: Bearer ${this.openAiKey}"`,
+        '-F "model=gpt-image-1.5"',
+        `-F "image=@${inputPath}"`,
+        '-F "input_fidelity=high"',
+        '-F "quality=high"',
+        `-F "prompt=<${promptPath}"`,
+        '-F "size=1024x1536"',
+        '-F "response_format=b64_json"',
+      ].join(' ');
 
-      this.logger.log(`[callOpenAiImageEdit] Executing CURL...`);
+      this.logger.log(`[callOpenAiImageEdit] Executing shell command...`);
       const { stdout, stderr } = await exec(curlCommand, {
-        maxBuffer: 1024 * 1024 * 10,
-      }); // 10MB limit
+        maxBuffer: 1024 * 1024 * 20, // 20MB pour le JSON b64
+      });
 
       if (stderr) {
         this.logger.warn(`[callOpenAiImageEdit] CURL Stderr: ${stderr}`);
@@ -387,9 +394,11 @@ export class AiService {
 
       if (!b64) {
         this.logger.error(
-          `[callOpenAiImageEdit] CURL failed or returned no data: ${stdout}`,
+          `[callOpenAiImageEdit] CURL failed: ${JSON.stringify(response)}`,
         );
-        throw new Error('No image data returned from OpenAI CURL wrapper');
+        throw new Error(
+          response.error?.message || 'No image data returned from OpenAI',
+        );
       }
 
       this.logger.log(`[callOpenAiImageEdit] SUCCESS.`);
@@ -398,15 +407,14 @@ export class AiService {
       this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
       throw e;
     } finally {
-      if (fs.existsSync(inputPath)) {
-        try {
-          fs.unlinkSync(inputPath);
-        } catch (err) {
-          this.logger.warn(
-            `[callOpenAiImageEdit] Failed to delete tmp file: ${inputPath}`,
-          );
+      // Nettoyage
+      [inputPath, promptPath].forEach((p) => {
+        if (fs.existsSync(p)) {
+          try {
+            fs.unlinkSync(p);
+          } catch (err) {}
         }
-      }
+      });
     }
   }
 
