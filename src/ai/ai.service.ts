@@ -7,6 +7,7 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as FormData from 'form-data';
+import * as sharp from 'sharp';
 import { AiUser, PlanType } from './entities/ai-user.entity';
 import {
   AiGeneration,
@@ -108,116 +109,6 @@ export class AiService {
       this.logger.error(`[refineSubject] Error: ${e.message}`);
       return job;
     }
-  }
-
-  private async detectFace(image: Buffer): Promise<{
-    xmin: number;
-    ymin: number;
-    xmax: number;
-    ymax: number;
-  } | null> {
-    try {
-      const base64Image = image.toString('base64');
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: "Locate the main person's face in this photo. Return ONLY a JSON object with keys xmin, ymin, xmax, ymax representing the bounding box as percentages (0-100).",
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/png;base64,${base64Image}`,
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: 50,
-      });
-
-      const content = response.choices[0].message.content;
-      const match = content.match(/\{.*\}/s);
-      if (match) {
-        const box = JSON.parse(match[0]);
-        this.logger.log(`[detectFace] Found face: ${JSON.stringify(box)}`);
-        return box;
-      }
-    } catch (e) {
-      this.logger.error(`[detectFace] Failed: ${e.message}`);
-    }
-    return null;
-  }
-
-  private async createFaceProtectionMask(
-    width: number,
-    height: number,
-    box: { xmin: number; ymin: number; xmax: number; ymax: number },
-    feather: boolean = true,
-  ): Promise<Buffer> {
-    // Simplified: Return white buffer as mask placeholder
-    // SVG rendering disabled due to sharp dependency removal
-    const pixelCount = width * height * 4; // RGBA
-    return Buffer.alloc(pixelCount, 0xff); // All white
-  }
-
-  private async prepareComposedImage(
-    originalImage: Buffer,
-    box: { xmin: number; ymin: number; xmax: number; ymax: number },
-  ): Promise<{ image: Buffer; mask: Buffer }> {
-    // Simplified: Return original image without complex transformations
-    // Image composition disabled due to sharp dependency removal
-    const mask = Buffer.alloc(1024 * 1024 * 4, 0xff); // White mask
-    return { image: originalImage, mask };
-  }
-
-  private async callInpaint(
-    image: Buffer,
-    prompt: string,
-    mask: Buffer,
-    negativePrompt?: string,
-    seed?: number,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('mask', mask, 'mask.png');
-    formData.append('prompt', prompt);
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (seed) formData.append('seed', seed.toString());
-    if (stylePreset) formData.append('style_preset', stylePreset);
-    formData.append('output_format', 'png');
-
-    return this.callStabilityApi('stable-image/edit/inpaint', formData);
-  }
-
-  private async callOutpaint(
-    image: Buffer,
-    prompt: string,
-    directions: { left?: number; right?: number; up?: number; down?: number },
-    seed?: number,
-    stylePreset?: string,
-    creativity: number = 0.5,
-  ): Promise<Buffer> {
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('prompt', prompt);
-
-    if (directions.left) formData.append('left', directions.left.toString());
-    if (directions.right) formData.append('right', directions.right.toString());
-    if (directions.up) formData.append('up', directions.up.toString());
-    if (directions.down) formData.append('down', directions.down.toString());
-
-    if (seed) formData.append('seed', seed.toString());
-    if (stylePreset) formData.append('style_preset', stylePreset);
-    formData.append('creativity', creativity.toString());
-    formData.append('output_format', 'png');
-
-    return this.callStabilityApi('stable-image/edit/outpaint', formData);
   }
 
   private async refineQuery(
@@ -362,9 +253,19 @@ export class AiService {
   /* --------------------- STABILITY API TOOLS --------------------- */
 
   private async resizeImage(image: Buffer): Promise<Buffer> {
-    // Simplified: Return image as-is without resizing
-    // Image resizing disabled due to sharp dependency removal
-    return image;
+    try {
+      this.logger.log(`[resizeImage] Processing image to PNG 1024x1024`);
+      return await sharp(image)
+        .resize(1024, 1024, {
+          fit: 'contain',
+          background: { r: 255, g: 255, b: 255, alpha: 1 },
+        })
+        .png()
+        .toBuffer();
+    } catch (e) {
+      this.logger.error(`[resizeImage] FAILED: ${e.message}`);
+      return image;
+    }
   }
 
   private async callStabilityApi(
@@ -470,58 +371,6 @@ export class AiService {
     return this.callStabilityApi('stable-image/generate/ultra', formData);
   }
 
-  /**
-   * Legacy SDXL 1.0 Image-to-Image for precise strength control.
-   * Engine: stable-diffusion-xl-1024-v1-0
-   */
-  private async callV1ImageToImage(
-    prompts: { text: string; weight: number }[],
-    image: Buffer,
-    strength: number = 0.35,
-    seed?: number,
-    negativePrompt?: string,
-    stylePreset?: string,
-    cfgScale: number = 7,
-    steps: number = 30,
-    sampler?: string,
-    samples: number = 1,
-    clipGuidancePreset: string = 'NONE',
-  ): Promise<Buffer> {
-    const formData = new FormData();
-    formData.append('init_image', image, 'init.png');
-    formData.append('init_image_mode', 'IMAGE_STRENGTH');
-    formData.append('image_strength', strength.toString());
-
-    // Multi-prompt support for better control
-    prompts.forEach((p, idx) => {
-      formData.append(`text_prompts[${idx}][text]`, p.text);
-      formData.append(`text_prompts[${idx}][weight]`, p.weight.toString());
-    });
-
-    if (negativePrompt) {
-      const negIdx = prompts.length;
-      formData.append(`text_prompts[${negIdx}][text]`, negativePrompt);
-      formData.append(`text_prompts[${negIdx}][weight]`, '-1');
-    }
-
-    if (seed) formData.append('seed', seed.toString());
-    if (stylePreset && stylePreset !== 'None') {
-      formData.append('style_preset', stylePreset);
-    }
-
-    formData.append('cfg_scale', cfgScale.toString());
-    formData.append('steps', steps.toString());
-    formData.append('samples', samples.toString());
-    if (sampler) {
-      formData.append('sampler', sampler);
-    }
-
-    const engineId = 'stable-diffusion-xl-1024-v1-0';
-    const endpoint = `v1/generation/${engineId}/image-to-image`;
-
-    return this.callStabilityApi(endpoint, formData);
-  }
-
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -607,108 +456,34 @@ export class AiService {
         : undefined;
 
       if (file) {
-        // Step 1: Normalize dimension
+        // Step 1: Normalize dimension (Ensure PNG 1024x1024 for OpenAI)
         const normalizedImage = await this.resizeImage(file.buffer);
 
         // Step 2: High-Fidelity Stylization Path (OpenAI GPT Image)
-        // We use this for "Premium" or "Hero Studio" to get better fluidity and coherence
-        if (
-          styleName.toLowerCase().includes('premium') ||
-          styleName.toLowerCase().includes('hero')
-        ) {
-          this.logger.log(
-            `[generateImage] Using OpenAI GPT Image Edit path for ${styleName}`,
-          );
-          try {
-            finalBuffer = await this.callOpenAiImageEdit(
-              normalizedImage,
-              finalPrompt,
-            );
-            const saved = await this.saveGeneration(
-              userId,
-              'Image generated via OpenAI GPT Image Edit',
-              finalPrompt,
-              AiGenerationType.IMAGE,
-              { style: styleName, model: 'gpt-image-1.5' },
-              '', // URL will be set later if needed
-            );
-            return {
-              url: `/uploads/${saved?.id}.png`,
-              buffer: finalBuffer,
-              generationId: saved?.id,
-              seed: seed || 0,
-            };
-          } catch (e) {
-            this.logger.warn(
-              `[generateImage] OpenAI path failed, falling back to Stability: ${e.message}`,
-            );
-          }
-        }
+        this.logger.log(
+          `[generateImage] Using OpenAI GPT Image Edit path for ${styleName}`,
+        );
 
-        // Step 3: Standard Stability Path (Outpaint/Inpaint)
-        // Detect face for coordinates
-        const faceBox = await this.detectFace(normalizedImage);
+        finalBuffer = await this.callOpenAiImageEdit(
+          normalizedImage,
+          finalPrompt,
+        );
 
-        if (faceBox) {
-          if (isPostureChange) {
-            this.logger.log(
-              `[generateImage] Posture change detected. Using OUTPAINT for fluid expansion.`,
-            );
-            // Using Outpaint to expand the portrait into a full scene (body + legs)
-            finalBuffer = await this.callOutpaint(
-              normalizedImage,
-              finalPrompt,
-              {
-                down: 1000, // Space for body and legs
-                left: 500, // Space for background
-                right: 500,
-                up: 100,
-              },
-              seed,
-              stylePreset,
-              0.6, // Balanced creativity
-            );
-          } else {
-            this.logger.log(
-              `[generateImage] Standard portrait. Using INPAINT with soft face protection.`,
-            );
-            const mask = await this.createFaceProtectionMask(
-              1024,
-              1024,
-              faceBox,
-              true,
-            );
+        const saved = await this.saveGeneration(
+          userId,
+          'Image generated via OpenAI GPT Image Edit',
+          finalPrompt,
+          AiGenerationType.IMAGE,
+          { style: styleName, model: 'dall-e-2' },
+          '', // URL will be set later if needed
+        );
 
-            finalBuffer = await this.callInpaint(
-              normalizedImage,
-              finalPrompt,
-              mask,
-              finalNegativePrompt,
-              seed,
-              stylePreset,
-            );
-          }
-        } else {
-          this.logger.log(
-            `[generateImage] No face detected. Falling back to V1 Image-to-Image`,
-          );
-          const prompts = [
-            { text: finalPrompt, weight: 1.0 },
-            {
-              text: "highly detailed face, consistent facial features, sharp portrait, preservation of person's identity",
-              weight: 0.65,
-            },
-          ];
-
-          finalBuffer = await this.callV1ImageToImage(
-            prompts,
-            normalizedImage,
-            0.38,
-            seed,
-            finalNegativePrompt,
-            stylePreset,
-          );
-        }
+        return {
+          url: `/uploads/ai-generations/gen_${Date.now()}.png`, // Placeholder, will be overwritten by full URL logic below if not returned here
+          buffer: finalBuffer,
+          generationId: saved?.id,
+          seed: seed || 0,
+        };
       } else {
         this.logger.log(
           `[generateImage] Calling Stability Ultra (Text-to-Image)`,
