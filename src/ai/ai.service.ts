@@ -333,16 +333,19 @@ export class AiService {
     }
   }
 
-  private async callOpenAiImageEdit(
-    image: Buffer,
-    prompt: string,
-  ): Promise<Buffer> {
-    this.logger.log(
-      `[callOpenAiImageEdit] Starting high-fidelity edit with gpt-image-1.5`,
-    );
+ /**
+   * Appelle l'API OpenAI Images Edit pour modifier une image
+   * @param image Buffer de l'image d'entrée
+   * @param prompt Prompt décrivant l'édition
+   * @returns Buffer de l'image générée
+   */
+  private async callOpenAiImageEdit(image: Buffer, prompt: string): Promise<Buffer> {
+    this.logger.log(`[callOpenAiImageEdit] Starting high-fidelity edit with gpt-image-1.5`);
 
     try {
-      const truncatedPrompt = prompt.substring(0, 2000);
+      // Limite le prompt si nécessaire
+      const truncatedPrompt = prompt.substring(0, 32000);
+
       const formData = new FormData();
       formData.append('model', 'gpt-image-1.5');
       formData.append('prompt', truncatedPrompt);
@@ -350,14 +353,12 @@ export class AiService {
         filename: 'image.png',
         contentType: 'image/png',
       });
-      formData.append('input_fidelity', 'high');
-      formData.append('quality', 'high');
+      formData.append('input_fidelity', 'high'); // ⚡ string obligatoire
+      formData.append('quality', 'high');        // ⚡ string obligatoire
       formData.append('size', '1024x1536');
       formData.append('response_format', 'b64_json');
 
-      this.logger.log(
-        `[callOpenAiImageEdit] Sending request to OpenAI gpt-image-1.5`,
-      );
+      this.logger.log(`[callOpenAiImageEdit] Sending request to OpenAI...`);
 
       const response = await axios.post(
         'https://api.openai.com/v1/images/edits',
@@ -367,22 +368,24 @@ export class AiService {
             ...formData.getHeaders(),
             Authorization: `Bearer ${this.openAiKey}`,
           },
-        },
+        }
       );
 
       const b64 = response.data.data?.[0]?.b64_json;
       if (!b64) {
         this.logger.error(
-          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response.data)}`,
+          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response.data)}`
         );
         throw new Error('No image data returned from OpenAI');
       }
 
+      this.logger.log(`[callOpenAiImageEdit] Image successfully generated.`);
       return Buffer.from(b64, 'base64');
-    } catch (e) {
+
+    } catch (e: any) {
       if (e.response) {
         this.logger.error(
-          `[callOpenAiImageEdit] API FAILED: ${JSON.stringify(e.response.data)}`,
+          `[callOpenAiImageEdit] API FAILED: ${JSON.stringify(e.response.data)}`
         );
       } else {
         this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
