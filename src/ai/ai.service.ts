@@ -410,6 +410,35 @@ export class AiService {
       }
       throw error;
     }
+  private async callOpenAiImageEdit(
+    image: Buffer,
+    prompt: string,
+    mask?: Buffer,
+  ): Promise<Buffer> {
+    this.logger.log(
+      `[callOpenAiImageEdit] Using gpt-image-1.5 for high-fidelity edit`,
+    );
+    try {
+      const editParams: any = {
+        model: 'gpt-image-1.5',
+        image: [await OpenAI.toFile(image, 'source.png')],
+        prompt: prompt,
+        response_format: 'b64_json',
+      };
+
+      if (mask) {
+        editParams.mask = await OpenAI.toFile(mask, 'mask.png');
+      }
+
+      const response = await this.openai.images.edit(editParams);
+      const b64 = response.data[0].b64_json;
+      if (!b64) throw new Error('No image data returned from OpenAI');
+
+      return Buffer.from(b64, 'base64');
+    } catch (e) {
+      this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
+      throw e;
+    }
   }
 
   private async callUltra(
@@ -576,10 +605,42 @@ export class AiService {
         : undefined;
 
       if (file) {
-        // Step 1: Normalize dimension to 1024x1024
+        // Step 1: Normalize dimension
         const normalizedImage = await this.resizeImage(file.buffer);
 
-        // Step 2: Detect face on normalized image for coordinates
+        // Step 2: High-Fidelity Stylization Path (OpenAI GPT Image)
+        // We use this for "Premium" or "Hero Studio" to get better fluidity and coherence
+        if (
+          styleName.toLowerCase().includes('premium') ||
+          styleName.toLowerCase().includes('hero')
+        ) {
+          this.logger.log(
+            `[generateImage] Using OpenAI GPT Image Edit path for ${styleName}`,
+          );
+          try {
+            finalBuffer = await this.callOpenAiImageEdit(
+              normalizedImage,
+              finalPrompt,
+            );
+            return await this.saveGeneration(
+              userId,
+              'Image generated via OpenAI GPT Image Edit',
+              finalPrompt,
+              AiGenerationType.IMAGE,
+              { style: styleName, model: 'gpt-image-1.5' },
+              '', // URL will be set later if needed
+            ).then((gen) => {
+              return { url: `/uploads/${gen.id}.png`, buffer: finalBuffer };
+            });
+          } catch (e) {
+            this.logger.warn(
+              `[generateImage] OpenAI path failed, falling back to Stability: ${e.message}`,
+            );
+          }
+        }
+
+        // Step 3: Standard Stability Path (Outpaint/Inpaint)
+        // Detect face for coordinates
         const faceBox = await this.detectFace(normalizedImage);
 
         if (faceBox) {
