@@ -84,7 +84,10 @@ export class AiService {
     plastic, wax, doll, fake, unreal engine, octane render, oversaturated, 
     high contrast, artificial lighting, porcelain, rubber, skin blemishes, 
     distorted eyes, asymmetrical face, hyper-saturated, glowing edges,
-    vibrant neon colors (unless specified), bad anatomy, bad proportions.
+    vibrant neon colors (unless specified), bad anatomy, bad proportions,
+    amateur, draft, distorted facial features, plastic textures, oversmoothed skin,
+    uncanny valley, oversaturated colors, multiple people, low resolution, 
+    photo-collage, heavy makeup, fake eyelashes, distorted gaze.
   `.trim();
 
   private async refineSubject(job: string): Promise<string> {
@@ -248,7 +251,7 @@ export class AiService {
     ];
 
     if (stabilityPresets.includes(styleName)) {
-      return `Professional representation of ${jobStr} carefully integrated into the ${styleName} aesthetic. High quality, detailed environment and atmosphere matching the ${styleName} style perfectly.`;
+      return `Professional high-end photographic representation of ${jobStr} perfectly integrated into a detailed ${styleName} environment. Authentic textures, natural atmospheric lighting, and meticulous attention to ${styleName} aesthetic details.`;
     }
 
     return `Professional high-quality representation of ${jobStr}. Style: ${styleName}.`;
@@ -333,71 +336,29 @@ export class AiService {
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
-    mask?: Buffer,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting upload flow for dall-e-2 (edits)`,
+      `[callOpenAiImageEdit] Starting high-fidelity edit with gpt-image-1.5`,
     );
 
     try {
-      this.logger.log(
-        `[callOpenAiImageEdit] Prompt length before truncation: ${prompt.length}`,
-      );
-      const truncatedPrompt = prompt.substring(0, 990); // Safety margin
-      this.logger.log(
-        `[callOpenAiImageEdit] Prompt length after truncation: ${truncatedPrompt.length}`,
-      );
-
-      // Prepare FormData for multipart/form-data request
+      const truncatedPrompt = prompt.substring(0, 2000);
       const formData = new FormData();
-      formData.append('model', 'dall-e-2');
+      formData.append('model', 'gpt-image-1.5');
       formData.append('prompt', truncatedPrompt);
-      formData.append('n', '1');
-      formData.append('size', '1024x1024');
-      formData.append('response_format', 'b64_json');
-
-      // Append binary image
       formData.append('image', image, {
         filename: 'image.png',
         contentType: 'image/png',
       });
-
-      // 3. Optional Mask (Noise Mask or Provided Mask)
-      let finalMask = mask;
-      if (!finalMask) {
-        // Generate a 50% transparency noise mask to force edit
-        this.logger.log(`[callOpenAiImageEdit] Generating noise mask...`);
-        const noiseBuffer = Buffer.alloc(1024 * 1024 * 4);
-        for (let i = 0; i < noiseBuffer.length; i += 4) {
-          noiseBuffer[i] = 0; // R
-          noiseBuffer[i + 1] = 0; // G
-          noiseBuffer[i + 2] = 0; // B
-          // 50% chance to edit pixel
-          noiseBuffer[i + 3] = Math.random() > 0.5 ? 0 : 255;
-        }
-
-        finalMask = await sharp(noiseBuffer, {
-          raw: { width: 1024, height: 1024, channels: 4 },
-        })
-          .png()
-          .toBuffer();
-      }
-
-      if (finalMask) {
-        this.logger.log(
-          `[callOpenAiImageEdit] Appending mask image to form...`,
-        );
-        formData.append('mask', finalMask, {
-          filename: 'mask.png',
-          contentType: 'image/png',
-        });
-      }
+      formData.append('input_fidelity', 'high');
+      formData.append('quality', 'high');
+      formData.append('size', '1024x1536');
+      formData.append('response_format', 'b64_json');
 
       this.logger.log(
-        `[callOpenAiImageEdit] Sending edit request to v1/images/edits`,
+        `[callOpenAiImageEdit] Sending request to OpenAI gpt-image-1.5`,
       );
 
-      // 4. Send Request to v1/images/edits
       const response = await axios.post(
         'https://api.openai.com/v1/images/edits',
         formData,
@@ -409,8 +370,13 @@ export class AiService {
         },
       );
 
-      const b64 = response.data.data[0].b64_json;
-      if (!b64) throw new Error('No image data returned from OpenAI');
+      const b64 = response.data.data?.[0]?.b64_json;
+      if (!b64) {
+        this.logger.error(
+          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response.data)}`,
+        );
+        throw new Error('No image data returned from OpenAI');
+      }
 
       return Buffer.from(b64, 'base64');
     } catch (e) {
@@ -493,8 +459,13 @@ export class AiService {
       const qualityTags =
         'masterpiece, ultra high quality, photorealistic, 8k resolution, highly detailed natural skin texture, sharp focus, soft natural lighting, professional photography, cinematic composition, realistic hair, clear eyes';
 
-      // Build the final prompt by prefixing the style to ensure it is prioritized.
-      const finalPrompt = `STYLE: ${styleName}. ${refinedQuery || baseStylePrompt}. QUALITY: ${qualityTags}`;
+      // Build the final prompt by combining the base style guide with the refined query.
+      // We keep the baseStylePrompt even if refinedQuery exists to anchor the style.
+      const promptBody = refinedQuery
+        ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
+        : baseStylePrompt;
+
+      const finalPrompt = `STYLE: ${styleName}. ${promptBody} QUALITY: ${qualityTags}`;
 
       let finalNegativePrompt = this.NEGATIVE_PROMPT;
 
@@ -535,20 +506,10 @@ export class AiService {
         : undefined;
 
       if (file) {
-        // EXCLUSIVE ULTRA IMAGE-TO-IMAGE
-        const strength =
-          params.strength !== undefined ? Number(params.strength) : 0.25;
-
-        this.logger.log(
-          `[generateImage] Strategy: Ultra Image-to-Image (Strength: ${strength})`,
-        );
-
-        finalBuffer = await this.callUltra(
-          finalPrompt,
+        this.logger.log(`[generateImage] Strategy: OpenAI GPT-Image 1.5`);
+        finalBuffer = await this.callOpenAiImageEdit(
           file.buffer,
-          strength,
-          seed,
-          finalNegativePrompt,
+          finalPrompt,
         );
       } else {
         // EXCLUSIVE ULTRA TEXT-TO-IMAGE
