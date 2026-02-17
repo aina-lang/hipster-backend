@@ -322,10 +322,18 @@ export class AiService {
       `[callOpenAiImageEdit] Using dall-e-2 for high-fidelity edit`,
     );
     try {
+      this.logger.log(
+        `[callOpenAiImageEdit] Prompt length before truncation: ${prompt.length}`,
+      );
+      const truncatedPrompt = prompt.substring(0, 900);
+      this.logger.log(
+        `[callOpenAiImageEdit] Prompt length after truncation: ${truncatedPrompt.length}`,
+      );
+
       const editParams: any = {
         model: 'dall-e-2',
         image: await OpenAI.toFile(image, 'source.png', { type: 'image/png' }),
-        prompt: prompt.substring(0, 1000),
+        prompt: truncatedPrompt,
         response_format: 'b64_json',
       };
 
