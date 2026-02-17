@@ -340,42 +340,73 @@ export class AiService {
    * @param prompt Prompt décrivant l'édition
    * @returns Buffer de l'image générée (en b64_json converti en Buffer)
    */
+  /**
+   * Appelle l'API OpenAI Images Edit pour modifier une image
+   * @param image Buffer de l'image d'entrée
+   * @param prompt Prompt décrivant l'édition
+   * @returns Buffer de l'image générée
+   */
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting edit with official SDK (dall-e-2)`,
+      `[callOpenAiImageEdit] Starting high-fidelity edit (gpt-image-1.5)`,
     );
 
     try {
-      const truncatedPrompt = prompt.substring(0, 32000);
+      // 1. Force conversion to PNG with Sharp to ensure valid format for OpenAI
+      const pngBuffer = await sharp(image).png().toBuffer();
 
-      const response = await this.openai.images.edit({
-        model: 'dall-e-2',
-        prompt: truncatedPrompt,
-        image: await toFile(image, 'image.png'),
-        size: '1024x1536',
-        response_format: 'b64_json',
+      // 2. Prepare multipart form data using native fetch API (global.FormData)
+      const formData = new (global as any).FormData();
+      formData.append('model', 'gpt-image-1.5');
+      formData.append('prompt', prompt.substring(0, 32000));
+
+      // Explicitly set the blob with image/png mimetype to solve 400 error
+      const imageBlob = new (global as any).Blob([pngBuffer], {
+        type: 'image/png',
+      });
+      formData.append('image', imageBlob, 'image.png');
+
+      formData.append('input_fidelity', 'high');
+      formData.append('quality', 'high');
+      formData.append('size', '1024x1536');
+      formData.append('response_format', 'b64_json');
+
+      this.logger.log(
+        `[callOpenAiImageEdit] Sending request via native fetch...`,
+      );
+
+      const response = await fetch('https://api.openai.com/v1/images/edits', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.openAiKey}`,
+        },
+        body: formData,
       });
 
-      const b64 = response.data?.[0]?.b64_json;
+      if (!response.ok) {
+        const errorData = await response.json();
+        this.logger.error(
+          `[callOpenAiImageEdit] API FAILED: ${JSON.stringify(errorData)}`,
+        );
+        throw new Error(`OpenAI API failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      const b64 = result.data?.[0]?.b64_json;
       if (!b64) {
         this.logger.error(
-          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response)}`,
+          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(result)}`,
         );
         throw new Error('No image data returned from OpenAI');
       }
 
-      this.logger.log(`[callOpenAiImageEdit] Image successfully generated.`);
+      this.logger.log(`[callOpenAiImageEdit] SUCCESS.`);
       return Buffer.from(b64, 'base64');
     } catch (e: any) {
       this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
-      if (e.status) {
-        this.logger.error(
-          `[callOpenAiImageEdit] Status: ${e.status}, Error Details: ${JSON.stringify(e.error)}`,
-        );
-      }
       throw e;
     }
   }
