@@ -480,6 +480,24 @@ export class AiService {
     return this.callStabilityApi('stable-image/generate/ultra', formData);
   }
 
+  private async callStructure(
+    image: Buffer,
+    prompt: string,
+    negativePrompt?: string,
+    seed?: number,
+  ): Promise<Buffer> {
+    this.logger.log(`[callStructure] Starting Stability Structure flow`);
+    const formData = new FormData();
+    formData.append('image', image, 'source.png');
+    formData.append('prompt', prompt);
+    formData.append('output_format', 'png');
+
+    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (seed) formData.append('seed', seed.toString());
+
+    return this.callStabilityApi('stable-image/control/structure', formData);
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -568,14 +586,17 @@ export class AiService {
         // Step 1: Normalize dimension (Ensure PNG 1024x1024)
         const normalizedImage = await this.resizeImage(file.buffer);
 
-        // Step 2: High-Fidelity Stylization Path (OpenAI GPT Image)
+        // Step 2: Structure Preservation Path (Stability AI Structure)
+        // This preserves the face and object geometry while applying the style.
         this.logger.log(
-          `[generateImage] Using OpenAI GPT Image Edit path for ${styleName}`,
+          `[generateImage] Using Stability Structure path for face preservation (${styleName})`,
         );
 
-        finalBuffer = await this.callOpenAiImageEdit(
+        finalBuffer = await this.callStructure(
           normalizedImage,
           finalPrompt,
+          finalNegativePrompt,
+          seed,
         );
       } else {
         this.logger.log(
