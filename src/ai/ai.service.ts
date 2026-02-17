@@ -319,18 +319,20 @@ export class AiService {
     mask?: Buffer,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Using gpt-image-1.5 for high-fidelity edit`,
+      `[callOpenAiImageEdit] Using dall-e-2 for high-fidelity edit`,
     );
     try {
       const editParams: any = {
         model: 'dall-e-2',
-        image: await OpenAI.toFile(image, 'source.png'),
+        image: await OpenAI.toFile(image, 'source.png', { type: 'image/png' }),
         prompt: prompt,
         response_format: 'b64_json',
       };
 
       if (mask) {
-        editParams.mask = await OpenAI.toFile(mask, 'mask.png');
+        editParams.mask = await OpenAI.toFile(mask, 'mask.png', {
+          type: 'image/png',
+        });
       }
 
       const response = await this.openai.images.edit(editParams);
