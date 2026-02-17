@@ -7,7 +7,6 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as FormData from 'form-data';
-import * as sharp from 'sharp';
 import { AiUser, PlanType } from './entities/ai-user.entity';
 import {
   AiGeneration,
