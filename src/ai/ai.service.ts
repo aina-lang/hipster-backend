@@ -314,40 +314,74 @@ export class AiService {
     }
   }
 
+  private async uploadToOpenAiFiles(image: Buffer): Promise<string> {
+    try {
+      const formData = new FormData();
+      formData.append('file', image, {
+        filename: 'image.png',
+        contentType: 'image/png',
+      });
+      formData.append('purpose', 'vision');
+
+      const response = await axios.post(
+        'https://api.openai.com/v1/files',
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${this.openAiKey}`,
+          },
+        },
+      );
+      this.logger.log(
+        `[uploadToOpenAiFiles] SUCCESS - File ID: ${response.data.id}`,
+      );
+      return response.data.id;
+    } catch (error) {
+      this.logger.error(`[uploadToOpenAiFiles] Error: ${error.message}`);
+      throw error;
+    }
+  }
+
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
     mask?: Buffer,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Using dall-e-2 for high-fidelity edit`,
+      `[callOpenAiImageEdit] Starting upload flow for gpt-image-1.5 (edits)`,
     );
+
     try {
       this.logger.log(
         `[callOpenAiImageEdit] Prompt length before truncation: ${prompt.length}`,
       );
-      const truncatedPrompt = prompt.substring(0, 900);
+      const truncatedPrompt = prompt.substring(0, 990); // Safety margin
       this.logger.log(
         `[callOpenAiImageEdit] Prompt length after truncation: ${truncatedPrompt.length}`,
       );
 
-      const editParams: any = {
+      // 1. Upload Source Image
+      this.logger.log(`[callOpenAiImageEdit] Uploading source image...`);
+      const fileId = await this.uploadToOpenAiFiles(image);
+
+      // 2. Prepare Payload
+      const payload: any = {
         model: 'gpt-image-1.5',
-        image: await OpenAI.toFile(image, 'source.png', { type: 'image/png' }),
         prompt: truncatedPrompt,
+        image: fileId, // Note: 'image' not 'images' for edits endpoint usually, but check schema
         response_format: 'b64_json',
       };
 
+      // 3. Optional Mask (Noise Mask or Provided Mask)
       if (!mask) {
-        // Generate a 50% transparency noise mask to force DALL-E 2 to edit the image
-        // (Simulate img2img behavior by forcing regeneration of random pixels)
+        // Generate a 50% transparency noise mask to force edit
         this.logger.log(`[callOpenAiImageEdit] Generating noise mask...`);
         const noiseBuffer = Buffer.alloc(1024 * 1024 * 4);
         for (let i = 0; i < noiseBuffer.length; i += 4) {
           noiseBuffer[i] = 0; // R
           noiseBuffer[i + 1] = 0; // G
           noiseBuffer[i + 2] = 0; // B
-          // Alpha: 0 (Transparent = Edit) or 255 (Opaque = Keep)
           // 50% chance to edit pixel
           noiseBuffer[i + 3] = Math.random() > 0.5 ? 0 : 255;
         }
@@ -360,18 +394,41 @@ export class AiService {
       }
 
       if (mask) {
-        editParams.mask = await OpenAI.toFile(mask, 'mask.png', {
-          type: 'image/png',
-        });
+        this.logger.log(`[callOpenAiImageEdit] Uploading mask image...`);
+        const maskFileId = await this.uploadToOpenAiFiles(mask);
+        payload.mask = maskFileId;
       }
 
-      const response = await this.openai.images.edit(editParams);
-      const b64 = response.data[0].b64_json;
+      this.logger.log(
+        `[callOpenAiImageEdit] Sending edit request to v1/images/edits with Payload: ${JSON.stringify(
+          payload,
+        )}`,
+      );
+
+      // 4. Send Request to v1/images/edits
+      const response = await axios.post(
+        'https://api.openai.com/v1/images/edits',
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${this.openAiKey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const b64 = response.data.data[0].b64_json;
       if (!b64) throw new Error('No image data returned from OpenAI');
 
       return Buffer.from(b64, 'base64');
     } catch (e) {
-      this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
+      if (e.response) {
+        this.logger.error(
+          `[callOpenAiImageEdit] API FAILED: ${JSON.stringify(e.response.data)}`,
+        );
+      } else {
+        this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
+      }
       throw e;
     }
   }
