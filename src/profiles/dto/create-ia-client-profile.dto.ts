@@ -37,6 +37,7 @@ export class CreateIaClientProfileDto {
   job?: string;
 
   @IsOptional()
+  @IsOptional()
   @IsBoolean()
   isSetupComplete?: boolean;
 
