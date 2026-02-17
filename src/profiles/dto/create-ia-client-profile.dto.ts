@@ -96,6 +96,7 @@ export class CreateIaClientProfileDto {
   @IsString()
   stripeCustomerId?: string;
 
-  @IsNotEmpty()
-  userId: number; // Relation OneToOne avec User
+  @IsOptional()
+  @IsNumber()
+  userId?: number; // Relation OneToOne avec User - Optional car passé dans l'URL
 }
