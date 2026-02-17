@@ -7,7 +7,6 @@ import { toFile } from 'openai/uploads';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
-import { spawn } from 'child_process';
 import * as NodeFormData from 'form-data';
 import * as sharp from 'sharp';
 import { AiUser, PlanType } from './entities/ai-user.entity';
@@ -391,12 +390,8 @@ export class AiService {
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting high-fidelity shell script edit (gpt-image-1.5)`,
+      `[callOpenAiImageEdit] Starting Axios-based edit (gpt-image-1.5)`,
     );
-
-    const tempDir = '/tmp';
-    const inputPath = path.join(tempDir, `openai_input_${Date.now()}.png`);
-    const outputPath = path.join(tempDir, `openai_output_${Date.now()}.png`);
 
     try {
       // 1. Force conversion to PNG with Sharp + Resize to 1024x1536 (GPT-1.5 requirement)
@@ -410,74 +405,52 @@ export class AiService {
         .png()
         .toBuffer();
 
-      // Write input to temp file
-      fs.writeFileSync(inputPath, pngBuffer);
       this.logger.log(
-        `[callOpenAiImageEdit] Input saved to ${inputPath}. Size: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
+        `[callOpenAiImageEdit] Image optimized. Size: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
       );
 
       // Refine prompt to stay under 1000 chars
       const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
 
-      // 2. Execute the shell script
-      let scriptPath = path.join(process.cwd(), 'scripts', 'dalle_edit.sh');
-      if (!fs.existsSync(scriptPath)) {
-        // En prod, si cwd est /home/ubuntu/hipster-backend/dist, le script est dans /home/ubuntu/hipster-backend/scripts
-        scriptPath = path.join(process.cwd(), '..', 'scripts', 'dalle_edit.sh');
-      }
-      this.logger.log(
-        `[callOpenAiImageEdit] Resolved script path: ${scriptPath}`,
+      // 2. Prepare multipart form data using 'form-data' library (axios compatible)
+      const formData = new NodeFormData();
+      formData.append('model', 'gpt-image-1.5');
+      formData.append('prompt', refinedPrompt);
+      formData.append('image', pngBuffer, {
+        filename: 'image.png',
+        contentType: 'image/png',
+      });
+      formData.append('size', '1024x1536');
+      formData.append('response_format', 'b64_json');
+
+      const response = await axios.post(
+        'https://api.openai.com/v1/images/edits',
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${this.openAiKey}`,
+          },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+        },
       );
 
-      if (!fs.existsSync(scriptPath)) {
-        throw new Error(`Shell script not found at ${scriptPath}`);
+      const b64 = response.data?.data?.[0]?.b64_json;
+      if (!b64) {
+        this.logger.error(
+          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response.data)}`,
+        );
+        throw new Error('No image data returned from OpenAI');
       }
 
-      await new Promise<void>((resolve, reject) => {
-        const proc = spawn(scriptPath, [inputPath, outputPath, refinedPrompt], {
-          env: { ...process.env, OPENAI_API_KEY: this.openAiKey },
-        });
-
-        let stdout = '';
-        let stderr = '';
-        proc.stdout.on('data', (data) => (stdout += data.toString()));
-        proc.stderr.on('data', (data) => (stderr += data.toString()));
-
-        proc.on('close', (code) => {
-          if (stdout)
-            this.logger.log(`[callOpenAiImageEdit] Script STDOUT: ${stdout}`);
-          if (stderr)
-            this.logger.error(`[callOpenAiImageEdit] Script STDERR: ${stderr}`);
-
-          if (code === 0) {
-            resolve();
-          } else {
-            this.logger.error(
-              `[callOpenAiImageEdit] Script FAILED with code ${code}`,
-            );
-            reject(new Error(`Shell script failed. Check logs for details.`));
-          }
-        });
-      });
-
-      // 3. Read result and cleanup
-      const resultBuffer = fs.readFileSync(outputPath);
       this.logger.log(`[callOpenAiImageEdit] SUCCESS.`);
-
-      // Cleanup
-      try {
-        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-      } catch (err) {}
-
-      return resultBuffer;
+      return Buffer.from(b64, 'base64');
     } catch (e: any) {
-      this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
-      // Tentative de nettoyage même en cas d'erreur
-      try {
-        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-      } catch (err) {}
+      const errorMsg = e.response?.data
+        ? JSON.stringify(e.response.data)
+        : e.message;
+      this.logger.error(`[callOpenAiImageEdit] FAILED: ${errorMsg}`);
       throw e;
     }
   }
