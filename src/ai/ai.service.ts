@@ -548,6 +548,94 @@ export class AiService {
     );
   }
 
+  private async callReplaceBackgroundAndRelight(
+    image: Buffer,
+    prompt: string,
+    negativePrompt?: string,
+    seed?: number,
+  ): Promise<string> {
+    this.logger.log(`[callReplaceBackgroundAndRelight] Starting Async Request`);
+    const formData = new FormData();
+    formData.append('subject_image', image, 'source.png');
+    formData.append('background_prompt', prompt);
+    formData.append('output_format', 'png');
+
+    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (seed) formData.append('seed', seed.toString());
+
+    const apiKey = this.stabilityApiKey;
+    const url =
+      'https://api.stability.ai/v2beta/stable-image/edit/replace-background-and-relight';
+
+    try {
+      const response = await axios.post(url, formData, {
+        headers: {
+          ...formData.getHeaders(),
+          Authorization: `Bearer ${apiKey}`,
+          Accept: 'application/json',
+        },
+      });
+      this.logger.log(
+        `[callReplaceBackgroundAndRelight] Job ID: ${response.data.id}`,
+      );
+      return response.data.id;
+    } catch (error) {
+      if (error.response?.data) {
+        this.logger.error(
+          `[callReplaceBackgroundAndRelight] API FAILED: ${JSON.stringify(error.response.data)}`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  private async pollStabilityResult(id: string): Promise<Buffer> {
+    const apiKey = this.stabilityApiKey;
+    const url = `https://api.stability.ai/v2beta/stable-image/control/result/${id}`;
+
+    let attempts = 0;
+    const maxAttempts = 20; // 20 * 2s = 40s timeout
+    const delay = 3000;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      this.logger.log(
+        `[pollStabilityResult] Polling attempt ${attempts}/${maxAttempts} for ID: ${id}`,
+      );
+
+      try {
+        const response = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            Accept: 'image/*',
+          },
+          responseType: 'arraybuffer',
+          validateStatus: (status) => status === 200 || status === 202,
+        });
+
+        if (response.status === 200) {
+          this.logger.log(`[pollStabilityResult] SUCCESS for ID: ${id}`);
+          return Buffer.from(response.data);
+        }
+
+        // Status 202 means still processing
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } catch (error) {
+        if (error.response?.status === 404) {
+          this.logger.error(
+            `[pollStabilityResult] Job not found or expired: ${id}`,
+          );
+        } else if (error.response?.data) {
+          const errStr = Buffer.from(error.response.data).toString();
+          this.logger.error(`[pollStabilityResult] FAILED: ${errStr}`);
+        }
+        throw error;
+      }
+    }
+
+    throw new Error(`[pollStabilityResult] Polling TIMEOUT for ID: ${id}`);
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -653,18 +741,18 @@ export class AiService {
           params.preserveSubject
         ) {
           this.logger.log(
-            `[generateImage] Using Stability Search and Replace path (Background Swap)`,
+            `[generateImage] Using Stability Replace Background and Relight path (Async)`,
           );
 
-          // We search for "background" and replace with the prompt
-          // This keeps the subject PIXEL-PERFECT
-          finalBuffer = await this.callSearchAndReplace(
+          // This is the superior flow that preserves the face AND adjusts lighting
+          const jobId = await this.callReplaceBackgroundAndRelight(
             normalizedImage,
             finalPrompt,
-            'background, surroundings, environment',
             finalNegativePrompt,
             seed,
           );
+
+          finalBuffer = await this.pollStabilityResult(jobId);
         } else {
           // Default: Structure Preservation Path (Stability AI Structure)
           // This preserves geometry but allows "stylization" of the person
