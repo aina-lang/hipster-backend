@@ -643,23 +643,13 @@ export class AiService {
         : undefined;
 
       if (file) {
-        this.logger.log(`[generateImage] Strategy: Stability Outpaint`);
-        // On outpaint vers le bas par défaut de 100px si rien n'est spécifié
-        const directions = {
-          left: params.left || 0,
-          right: params.right || 0,
-          up: params.up || 0,
-          down:
-            params.down || (params.left || params.right || params.up ? 0 : 100),
-        };
-
-        finalBuffer = await this.callOutpaint(
-          file.buffer,
+        this.logger.log(`[generateImage] Strategy: Ultra Image-to-Image`);
+        finalBuffer = await this.callUltra(
           finalPrompt,
-          directions,
-          params.creativity ?? 0.8,
+          file.buffer,
+          params.strength ?? 0.3, // Strength basse pour préserver visage/objet
           seed,
-          stylePreset,
+          finalNegativePrompt,
         );
       } else {
         // EXCLUSIVE ULTRA TEXT-TO-IMAGE
