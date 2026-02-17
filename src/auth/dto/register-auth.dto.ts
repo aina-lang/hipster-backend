@@ -5,7 +5,9 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  IsArray,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ClientType } from 'src/common/enums/client.enum';
 import { Role } from 'src/common/enums/role.enum';
 
@@ -30,19 +32,20 @@ export class RegisterAuthDto {
   password: string;
 
   @IsEnum(Role, {
-    message: 'Le rôle doit être client_marketing',
+    message: `Le rôle doit être: ${Object.values(Role).join(', ')}`,
   })
   @IsNotEmpty({ message: 'Le profil est obligatoire' })
   selectedProfile: Role;
 
   @IsOptional()
-  @IsString({ each: true, message: 'Chaque téléphone doit être une chaîne de caractères' })
+  @IsArray({ message: 'Les téléphones doivent être un tableau' })
   phones?: string[];
 
   @IsEnum(ClientType, {
-    message: 'Le type de client doit être individual ou company',
+    message: `Le type de client doit être: ${Object.values(ClientType).join(', ')}`,
   })
   @IsOptional()
+  @Type(() => String)
   clientType?: ClientType;
 
   @IsOptional()

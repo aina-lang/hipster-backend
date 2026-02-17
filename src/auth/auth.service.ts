@@ -36,29 +36,31 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   async register(dto: RegisterAuthDto) {
-    const email = dto.email.trim().toLowerCase();
-    const existing = await this.userRepo.findOne({
-      where: { email },
-    });
-    if (existing) throw new ConflictException('Email déjà utilisé.');
-
-    // Validate required fields
-    if (!dto.firstName || !dto.lastName || !dto.email || !dto.password) {
-      throw new BadRequestException('Tous les champs obligatoires doivent être remplis');
-    }
-
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    // For self-registration via mobile app, we only allow certain roles
-    const selectedRole = dto.selectedProfile || Role.CLIENT_MARKETING;
-
-    if (selectedRole === Role.ADMIN || selectedRole === Role.EMPLOYEE) {
-      throw new BadRequestException(
-        'Ce type de profil ne peut pas être créé via inscription directe.',
-      );
-    }
-
     try {
+      console.log('[AUTH SERVICE] Register called with DTO:', JSON.stringify(dto, null, 2));
+      
+      const email = dto.email.trim().toLowerCase();
+      const existing = await this.userRepo.findOne({
+        where: { email },
+      });
+      if (existing) throw new ConflictException('Email déjà utilisé.');
+
+      // Validate required fields
+      if (!dto.firstName || !dto.lastName || !dto.email || !dto.password) {
+        throw new BadRequestException('Tous les champs obligatoires doivent être remplis');
+      }
+
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+      // For self-registration via mobile app, we only allow certain roles
+      const selectedRole = dto.selectedProfile || Role.CLIENT_MARKETING;
+
+      if (selectedRole === Role.ADMIN || selectedRole === Role.EMPLOYEE) {
+        throw new BadRequestException(
+          'Ce type de profil ne peut pas être créé via inscription directe.',
+        );
+      }
+
       const user = this.userRepo.create({
         email,
         password: hashedPassword,
@@ -69,7 +71,7 @@ export class AuthService {
         isEmailVerified: false, // Self-registered users MUST verify their email
       });
       const savedUser = await this.userRepo.save(user);
-      console.log('[AUTH] User created successfully:', savedUser.id);
+      console.log('[AUTH SERVICE] User created successfully:', savedUser.id, savedUser.email);
 
       const profile = this.clientProfileRepo.create({
         companyName: dto.companyName?.trim() || `${dto.firstName}'s Company`,
@@ -77,7 +79,7 @@ export class AuthService {
         user: savedUser,
       });
       const savedProfile = await this.clientProfileRepo.save(profile);
-      console.log('[AUTH] Client profile created successfully:', savedProfile.id);
+      console.log('[AUTH SERVICE] Client profile created successfully:', savedProfile.id);
 
       // 🔑 Generate and send OTP for self-registration
       const otp = await this.otpService.generateOtp(savedUser, OtpType.OTP);
@@ -89,23 +91,32 @@ export class AuthService {
         userRoles: savedUser.roles,
       });
 
+      console.log('[AUTH SERVICE] Registration completed successfully');
       return {
         message:
           'Inscription réussie. Un code OTP a été envoyé à votre adresse email.',
         email: savedUser.email,
       };
     } catch (error) {
-      console.error('[AUTH] Registration error:', error);
+      console.error('[AUTH SERVICE] Registration error caught:', error);
       
       // Check for specific database constraint violations
       if (error?.message?.includes('UNIQUE constraint')) {
+        this.logger.error('UNIQUE constraint violation:', error.message);
         throw new ConflictException('Cet email est déjà utilisé.');
       }
       if (error?.message?.includes('NOT NULL')) {
+        this.logger.error('NOT NULL constraint violation:', error.message);
         throw new BadRequestException(`Champ obligatoire manquant: ${error.message}`);
       }
       
+      // If it's already an HTTP exception, re-throw it
+      if (error?.getStatus) {
+        throw error;
+      }
+      
       // Re-throw as BadRequest with details
+      this.logger.error('Unexpected registration error:', error);
       throw new BadRequestException(
         error?.message || 'Erreur lors de l\'inscription'
       );
