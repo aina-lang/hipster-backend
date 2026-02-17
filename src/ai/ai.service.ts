@@ -438,15 +438,24 @@ export class AiService {
           env: { ...process.env, OPENAI_API_KEY: this.openAiKey },
         });
 
+        let stdout = '';
         let stderr = '';
+        proc.stdout.on('data', (data) => (stdout += data.toString()));
         proc.stderr.on('data', (data) => (stderr += data.toString()));
 
         proc.on('close', (code) => {
+          if (stdout)
+            this.logger.log(`[callOpenAiImageEdit] Script STDOUT: ${stdout}`);
+          if (stderr)
+            this.logger.error(`[callOpenAiImageEdit] Script STDERR: ${stderr}`);
+
           if (code === 0) {
             resolve();
           } else {
-            this.logger.error(`[callOpenAiImageEdit] Script FAILED: ${stderr}`);
-            reject(new Error(`Shell script exited with code ${code}`));
+            this.logger.error(
+              `[callOpenAiImageEdit] Script FAILED with code ${code}`,
+            );
+            reject(new Error(`Shell script failed. Check logs for details.`));
           }
         });
       });
