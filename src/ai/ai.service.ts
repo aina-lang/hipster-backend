@@ -420,8 +420,18 @@ export class AiService {
       const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
 
       // 2. Execute the shell script
-      const scriptPath = path.join(process.cwd(), 'scripts', 'dalle_edit.sh');
-      this.logger.log(`[callOpenAiImageEdit] Running script: ${scriptPath}`);
+      let scriptPath = path.join(process.cwd(), 'scripts', 'dalle_edit.sh');
+      if (!fs.existsSync(scriptPath)) {
+        // En prod, si cwd est /home/ubuntu/hipster-backend/dist, le script est dans /home/ubuntu/hipster-backend/scripts
+        scriptPath = path.join(process.cwd(), '..', 'scripts', 'dalle_edit.sh');
+      }
+      this.logger.log(
+        `[callOpenAiImageEdit] Resolved script path: ${scriptPath}`,
+      );
+
+      if (!fs.existsSync(scriptPath)) {
+        throw new Error(`Shell script not found at ${scriptPath}`);
+      }
 
       await new Promise<void>((resolve, reject) => {
         const proc = spawn(scriptPath, [inputPath, outputPath, refinedPrompt], {
