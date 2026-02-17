@@ -160,6 +160,45 @@ export class AiService {
     }
   }
 
+  /**
+   * Shortens a prompt for OpenAI Image Edit API (max 1000 chars)
+   * uses ChatGPT as requested to maintain context.
+   */
+  private async refinePromptForOpenAiEdit(prompt: string): Promise<string> {
+    if (prompt.length <= 1000) return prompt;
+
+    this.logger.log(
+      `[refinePromptForOpenAiEdit] Prompt too long (${prompt.length}). Summarizing...`,
+    );
+
+    try {
+      const resp = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert prompt engineer. Shorten the following image generation prompt to be under 1000 characters.
+            Keep all essential visual elements, subject details, .
+            Optimize for quality and detail within the limit. 
+            Respond with ONLY the condensed prompt text.`,
+          },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 400,
+      });
+
+      const compressed = resp.choices[0]?.message?.content?.trim() || prompt;
+      this.logger.log(
+        `[refinePromptForOpenAiEdit] Compressed length: ${compressed.length}`,
+      );
+      return compressed.substring(0, 1000);
+    } catch (e) {
+      this.logger.error(`[refinePromptForOpenAiEdit] FAILED: ${e.message}`);
+      return prompt.substring(0, 1000);
+    }
+  }
+
   private getRandomItem(pool: string[]): string {
     return pool[Math.floor(Math.random() * pool.length)];
   }
@@ -360,8 +399,11 @@ export class AiService {
 
       // 2. Prepare multipart form data using native fetch API (global.FormData)
       const formData = new (global as any).FormData();
-      formData.append('model', 'dall-e-2');
-      formData.append('prompt', prompt.substring(0, 32000));
+      formData.append('model', 'gpt-image-1.5');
+
+      // Use the new refinement logic to stay under 1000 chars
+      const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
+      formData.append('prompt', refinedPrompt);
 
       // Explicitly set the blob with image/png mimetype to solve 400 error
       const imageBlob = new (global as any).Blob([pngBuffer], {
@@ -369,8 +411,8 @@ export class AiService {
       });
       formData.append('image', imageBlob, 'image.png');
 
-      // formData.append('input_fidelity', 'high');
-      // formData.append('quality', 'high');
+      formData.append('input_fidelity', 'high');
+      formData.append('quality', 'high');
       formData.append('size', '1024x1536');
       formData.append('response_format', 'b64_json');
 
