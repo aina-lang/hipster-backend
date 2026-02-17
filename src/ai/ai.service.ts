@@ -485,6 +485,33 @@ export class AiService {
     return this.callStabilityApi('stable-image/generate/ultra', formData);
   }
 
+  /**
+   * Appelle l'API Stability Structure pour le contrôle par la structure
+   */
+  private async callStructure(
+    prompt: string,
+    image: Buffer,
+    controlStrength = 0.7,
+    seed?: number,
+    negativePrompt?: string,
+    stylePreset?: string,
+  ): Promise<Buffer> {
+    const formData = new NodeFormData();
+    formData.append('prompt', prompt);
+    formData.append('image', image, {
+      filename: 'source.png',
+      contentType: 'image/png',
+    });
+    formData.append('control_strength', controlStrength.toString());
+    formData.append('output_format', 'png');
+
+    if (seed) formData.append('seed', seed.toString());
+    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (stylePreset) formData.append('style_preset', stylePreset);
+
+    return this.callStabilityApi('stable-image/control/structure', formData);
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -573,13 +600,14 @@ export class AiService {
         : undefined;
 
       if (file) {
-        this.logger.log(`[generateImage] Strategy: Ultra Image-to-Image`);
-        finalBuffer = await this.callUltra(
+        this.logger.log(`[generateImage] Strategy: Stability Structure`);
+        finalBuffer = await this.callStructure(
           finalPrompt,
           file.buffer,
-          0.1, // Strength for I2I
+          0.7, // control_strength par défaut
           seed,
           finalNegativePrompt,
+          stylePreset,
         );
       } else {
         // EXCLUSIVE ULTRA TEXT-TO-IMAGE
