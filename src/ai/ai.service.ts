@@ -8,6 +8,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as FormData from 'form-data';
 import * as sharp from 'sharp';
+import * as cp from 'child_process';
+import * as util from 'util';
+
+const exec = util.promisify(cp.exec);
 import { AiUser, PlanType } from './entities/ai-user.entity';
 import {
   AiGeneration,
@@ -335,7 +339,7 @@ export class AiService {
 
   /**
    * Appelle l'API OpenAI Images Edit pour modifier une image
-   * (Utilise axios brut pour une compatibilité totale avec les paramètres gpt-image-1.5)
+   * (Utilise un wrapper CURL direct pour garantir une parité absolue avec la commande vérifiée)
    * @param image Buffer de l'image d'entrée
    * @param prompt Prompt décrivant l'édition
    * @returns Buffer de l'image générée
@@ -345,55 +349,64 @@ export class AiService {
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting high-fidelity edit with GPT-1.5 (Axios/Curl Mirror)`,
+      `[callOpenAiImageEdit] Starting high-fidelity edit with Direct CURL Wrapper`,
     );
 
+    const tmpDir = path.join(process.cwd(), 'uploads', 'tmp');
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+
+    const inputPath = path.join(tmpDir, `input_${Date.now()}.png`);
+    fs.writeFileSync(inputPath, image);
+
     try {
-      const truncatedPrompt = prompt.substring(0, 32000);
-      const formData = new FormData();
-      formData.append('model', 'gpt-image-1.5');
-      formData.append('prompt', truncatedPrompt);
-      formData.append('image', image, {
-        filename: 'image.png',
-        contentType: 'image/png',
-      });
-      formData.append('input_fidelity', 'high');
-      formData.append('quality', 'high');
-      formData.append('size', '1024x1536');
-      formData.append('response_format', 'b64_json');
+      const truncatedPrompt = prompt.replace(/'/g, "'\\''"); // Escape single quotes for shell
 
-      this.logger.log(`[callOpenAiImageEdit] Sending multipart request...`);
+      const curlCommand = `
+        curl -s -X POST https://api.openai.com/v1/images/edits \\
+             -H "Authorization: Bearer ${this.openAiKey}" \\
+             -F "model=gpt-image-1.5" \\
+             -F "image=@${inputPath}" \\
+             -F "input_fidelity=high" \\
+             -F "quality=high" \\
+             -F "prompt=${truncatedPrompt}" \\
+             -F "size=1024x1536" \\
+             -F "response_format=b64_json"
+      `.trim();
 
-      const response = await axios.post(
-        'https://api.openai.com/v1/images/edits',
-        formData,
-        {
-          headers: {
-            ...formData.getHeaders(),
-            Authorization: `Bearer ${this.openAiKey}`,
-          },
-        },
-      );
+      this.logger.log(`[callOpenAiImageEdit] Executing CURL...`);
+      const { stdout, stderr } = await exec(curlCommand, {
+        maxBuffer: 1024 * 1024 * 10,
+      }); // 10MB limit
 
-      const b64 = response.data.data?.[0]?.b64_json;
+      if (stderr) {
+        this.logger.warn(`[callOpenAiImageEdit] CURL Stderr: ${stderr}`);
+      }
+
+      const response = JSON.parse(stdout);
+      const b64 = response.data?.[0]?.b64_json;
+
       if (!b64) {
         this.logger.error(
-          `[callOpenAiImageEdit] Missing b64_json: ${JSON.stringify(response.data)}`,
+          `[callOpenAiImageEdit] CURL failed or returned no data: ${stdout}`,
         );
-        throw new Error('No image data returned from OpenAI');
+        throw new Error('No image data returned from OpenAI CURL wrapper');
       }
 
       this.logger.log(`[callOpenAiImageEdit] SUCCESS.`);
       return Buffer.from(b64, 'base64');
     } catch (e: any) {
-      if (e.response) {
-        this.logger.error(
-          `[callOpenAiImageEdit] API FAILED: ${JSON.stringify(e.response.data)}`,
-        );
-      } else {
-        this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
-      }
+      this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
       throw e;
+    } finally {
+      if (fs.existsSync(inputPath)) {
+        try {
+          fs.unlinkSync(inputPath);
+        } catch (err) {
+          this.logger.warn(
+            `[callOpenAiImageEdit] Failed to delete tmp file: ${inputPath}`,
+          );
+        }
+      }
     }
   }
 
