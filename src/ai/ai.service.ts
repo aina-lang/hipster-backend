@@ -2,16 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as FormData from 'form-data';
 import * as sharp from 'sharp';
-import * as cp from 'child_process';
-import * as util from 'util';
-
-const exec = util.promisify(cp.exec);
 import { AiUser, PlanType } from './entities/ai-user.entity';
 import {
   AiGeneration,
@@ -339,82 +335,51 @@ export class AiService {
 
   /**
    * Appelle l'API OpenAI Images Edit pour modifier une image
-   * (Utilise un wrapper CURL direct pour garantir une parité absolue avec la commande vérifiée)
    * @param image Buffer de l'image d'entrée
    * @param prompt Prompt décrivant l'édition
-   * @returns Buffer de l'image générée
+   * @returns Buffer de l'image générée (en b64_json converti en Buffer)
    */
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting high-fidelity edit with Direct CURL Mirror (gpt-image-1.5)`,
+      `[callOpenAiImageEdit] Starting high-fidelity edit with official SDK (gpt-image-1.5)`,
     );
 
-    const tmpDir = path.join(process.cwd(), 'uploads', 'tmp');
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-
-    const inputPath = path.join(tmpDir, `input_${Date.now()}.png`);
-    const promptPath = path.join(tmpDir, `prompt_${Date.now()}.txt`);
-
     try {
-      // 1. S'assurer que l'image est un PNG (requis par OpenAI Edits)
-      this.logger.log(`[callOpenAiImageEdit] Converting image to PNG...`);
-      const pngBuffer = await sharp(image).png().toBuffer();
-      fs.writeFileSync(inputPath, pngBuffer);
-      fs.writeFileSync(promptPath, prompt);
+      const truncatedPrompt = prompt.substring(0, 32000);
 
-      // 2. Construire la commande CURL exacte
-      // On utilise < pour lire le prompt depuis un fichier (évite les problèmes d'escape shell)
-      // On utilise @ pour uploader l'image
-      const curlCommand = [
-        'curl -s -X POST https://api.openai.com/v1/images/edits',
-        `-H "Authorization: Bearer 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"`,
-        '-F "model=gpt-image-1.5"',
-        `-F "image=@${inputPath}"`,
-        '-F "input_fidelity=high"',
-        '-F "quality=high"',
-        `-F "prompt=<${promptPath}"`,
-        '-F "size=1024x1536"',
-        '-F "response_format=b64_json"',
-      ].join(' ');
-
-      this.logger.log(`[callOpenAiImageEdit] Executing shell command...`);
-      const { stdout, stderr } = await exec(curlCommand, {
-        maxBuffer: 1024 * 1024 * 20, // 20MB pour le JSON b64
+      const response = await this.openai.images.edit({
+        model: 'gpt-image-1.5',
+        prompt: truncatedPrompt,
+        image: await toFile(image, 'image.png'),
+        // @ts-ignore - input_fidelity est supporté par gpt-image-1.5
+        // input_fidelity: 'high',
+        // @ts-ignore - quality est supporté par gpt-image-1.5
+        // quality: 'high',
+        size: '1024x1536',
+        response_format: 'b64_json',
       });
 
-      if (stderr) {
-        this.logger.warn(`[callOpenAiImageEdit] CURL Stderr: ${stderr}`);
-      }
-
-      const response = JSON.parse(stdout);
       const b64 = response.data?.[0]?.b64_json;
-
       if (!b64) {
         this.logger.error(
-          `[callOpenAiImageEdit] CURL failed: ${JSON.stringify(response)}`,
+          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response)}`,
         );
-        throw new Error(
-          response.error?.message || 'No image data returned from OpenAI',
-        );
+        throw new Error('No image data returned from OpenAI');
       }
 
-      this.logger.log(`[callOpenAiImageEdit] SUCCESS.`);
+      this.logger.log(`[callOpenAiImageEdit] Image successfully generated.`);
       return Buffer.from(b64, 'base64');
     } catch (e: any) {
       this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
+      if (e.status) {
+        this.logger.error(
+          `[callOpenAiImageEdit] Status: ${e.status}, Error Details: ${JSON.stringify(e.error)}`,
+        );
+      }
       throw e;
-    } finally {
-      // Nettoyage
-      [inputPath, promptPath].forEach((p) => {
-        if (fs.existsSync(p)) {
-          try {
-            fs.unlinkSync(p);
-          } catch (err) {}
-        }
-      });
     }
   }
 
