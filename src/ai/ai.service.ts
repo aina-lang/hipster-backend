@@ -604,11 +604,14 @@ export class AiService {
             1. The specific object to be FOUND and REPLACED (search_prompt). Use simple, clear English.
             2. The detailed description of what it should be REPLACED WITH (refined_prompt). Integrate the style "${styleName}".
 
+            CRITICAL: Both "search_prompt" and "refined_prompt" MUST be in English, regardless of the input language.
+
             OUTPUT FORMAT: Return ONLY a JSON object:
             {
-              "search_prompt": "object to find",
-              "refined_prompt": "detailed replacement description"
-            }`,
+              "search_prompt": "object to find (in English)",
+              "refined_prompt": "detailed replacement description (in English)"
+            }
+`,
           },
           { role: 'user', content: query },
         ],
