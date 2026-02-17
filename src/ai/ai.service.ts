@@ -353,8 +353,8 @@ export class AiService {
         filename: 'image.png',
         contentType: 'image/png',
       });
-      formData.append('input_fidelity', 'high'); // ⚡ string obligatoire
-      formData.append('quality', 'high');        // ⚡ string obligatoire
+      formData.append("nput_fidelity", 'high'); // ⚡ string obligatoire
+      formData.append("quality", 'high');        // ⚡ string obligatoire
       formData.append('size', '1024x1536');
       formData.append('response_format', 'b64_json');
 
