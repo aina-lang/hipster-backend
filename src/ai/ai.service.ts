@@ -480,80 +480,6 @@ export class AiService {
     return this.callStabilityApi('stable-image/generate/ultra', formData);
   }
 
-  private async callStructure(
-    image: Buffer,
-    prompt: string,
-    negativePrompt?: string,
-    seed?: number,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    this.logger.log(`[callStructure] Starting Stability Structure flow`);
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('prompt', prompt);
-    formData.append('output_format', 'png');
-
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (seed) formData.append('seed', seed.toString());
-    if (stylePreset) formData.append('style_preset', stylePreset);
-
-    return this.callStabilityApi('stable-image/control/structure', formData);
-  }
-
-  private async callSearchAndReplace(
-    image: Buffer,
-    prompt: string,
-    searchPrompt: string,
-    negativePrompt?: string,
-    seed?: number,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    this.logger.log(
-      `[callSearchAndReplace] Starting Search and Replace: Search("${searchPrompt}") -> Replace("${prompt}")`,
-    );
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('prompt', prompt);
-    formData.append('search_prompt', searchPrompt);
-    formData.append('output_format', 'png');
-
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (seed) formData.append('seed', seed.toString());
-    if (stylePreset) formData.append('style_preset', stylePreset);
-
-    return this.callStabilityApi(
-      'stable-image/edit/search-and-replace',
-      formData,
-    );
-  }
-
-  private async callSearchAndRecolor(
-    image: Buffer,
-    prompt: string,
-    searchPrompt: string,
-    negativePrompt?: string,
-    seed?: number,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    this.logger.log(
-      `[callSearchAndRecolor] Starting Search and Recolor: Search("${searchPrompt}") -> Recolor with prompt("${prompt}")`,
-    );
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-    formData.append('prompt', prompt);
-    formData.append('search_prompt', searchPrompt);
-    formData.append('output_format', 'png');
-
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (seed) formData.append('seed', seed.toString());
-    if (stylePreset) formData.append('style_preset', stylePreset);
-
-    return this.callStabilityApi(
-      'stable-image/edit/search-and-recolor',
-      formData,
-    );
-  }
-
   private async callOutpaint(
     image: Buffer,
     params: {
@@ -675,60 +601,20 @@ export class AiService {
         // Step 1: Normalize dimension (Ensure PNG 1024x1024)
         const normalizedImage = await this.resizeImage(file.buffer);
 
-        // Step 2: Adaptive Editing Strategy (Simplified)
-        const isOutpaint =
-          params.mode === 'outpaint' ||
-          params.left ||
-          params.right ||
-          params.up ||
-          params.down;
-
-        if (isOutpaint) {
-          this.logger.log(`[generateImage] Strategy: Outpaint`);
-          finalBuffer = await this.callOutpaint(normalizedImage, {
-            left: Number(params.left) || 0,
-            right: Number(params.right) || 0,
-            up: Number(params.up) || 0,
-            down: Number(params.down) || 0,
-            creativity:
-              params.creativity !== undefined ? Number(params.creativity) : 0.5,
-            prompt: finalPrompt,
-            seed: seed,
-            style_preset: stylePreset,
-          });
-        } else if (params.mode === 'search_recolor') {
-          this.logger.log(`[generateImage] Strategy: Search and Recolor`);
-          finalBuffer = await this.callSearchAndRecolor(
-            normalizedImage,
-            finalPrompt,
-            params.searchPrompt || 'clothing',
-            finalNegativePrompt,
-            seed,
-            stylePreset,
-          );
-        } else if (params.mode === 'structure') {
-          this.logger.log(`[generateImage] Strategy: Structure Control`);
-          finalBuffer = await this.callStructure(
-            normalizedImage,
-            finalPrompt,
-            finalNegativePrompt,
-            seed,
-            stylePreset,
-          );
-        } else {
-          // DEFAULT: Pixel-Perfect Background Swap
-          this.logger.log(
-            `[generateImage] Strategy: Background Swap (Default)`,
-          );
-          finalBuffer = await this.callSearchAndReplace(
-            normalizedImage,
-            finalPrompt,
-            'background, surroundings, environment',
-            finalNegativePrompt,
-            seed,
-            stylePreset,
-          );
-        }
+        // DIRECT OUTPAINT FLOW
+        // This is the direct, unified path for all image-to-image requests
+        this.logger.log(`[generateImage] Strategy: Direct Outpaint`);
+        finalBuffer = await this.callOutpaint(normalizedImage, {
+          left: Number(params.left) || 0,
+          right: Number(params.right) || 0,
+          up: Number(params.up) || 0,
+          down: Number(params.down) || 0,
+          creativity:
+            params.creativity !== undefined ? Number(params.creativity) : 0.5,
+          prompt: finalPrompt,
+          seed: seed,
+          style_preset: stylePreset,
+        });
       } else {
         this.logger.log(
           `[generateImage] Calling Stability Ultra (Text-to-Image)`,
