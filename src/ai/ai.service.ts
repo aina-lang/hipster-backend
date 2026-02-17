@@ -256,9 +256,10 @@ export class AiService {
     try {
       this.logger.log(`[resizeImage] Processing image to PNG 1024x1024`);
       return await sharp(image)
+        .ensureAlpha()
         .resize(1024, 1024, {
           fit: 'contain',
-          background: { r: 255, g: 255, b: 255, alpha: 1 },
+          background: { r: 255, g: 255, b: 255, alpha: 0 },
         })
         .png()
         .toBuffer();
