@@ -448,39 +448,6 @@ export class AiService {
     return this.callStabilityApi('stable-image/generate/ultra', formData);
   }
 
-  private async callOutpaint(
-    image: Buffer,
-    params: {
-      left?: number;
-      right?: number;
-      up?: number;
-      down?: number;
-      creativity?: number;
-      prompt?: string;
-      style_preset?: string;
-      seed?: number;
-    },
-  ): Promise<Buffer> {
-    this.logger.log(`[callOutpaint] Starting Outpaint flow`);
-    const formData = new FormData();
-    formData.append('image', image, 'source.png');
-
-    if (params.left) formData.append('left', params.left.toString());
-    if (params.right) formData.append('right', params.right.toString());
-    if (params.up) formData.append('up', params.up.toString());
-    if (params.down) formData.append('down', params.down.toString());
-    if (params.creativity !== undefined)
-      formData.append('creativity', params.creativity.toString());
-    if (params.prompt) formData.append('prompt', params.prompt);
-    if (params.style_preset)
-      formData.append('style_preset', params.style_preset);
-    if (params.seed) formData.append('seed', params.seed.toString());
-
-    formData.append('output_format', 'png');
-
-    return this.callStabilityApi('stable-image/edit/outpaint', formData);
-  }
-
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -566,39 +533,24 @@ export class AiService {
         : undefined;
 
       if (file) {
-        // DIRECT & EXCLUSIVE OUTPAINT FLOW
-        // Focuses solely on Outpaint as requested by the user.
-        this.logger.log(`[generateImage] Strategy: Forced Outpaint`);
+        // EXCLUSIVE ULTRA IMAGE-TO-IMAGE
+        const strength =
+          params.strength !== undefined ? Number(params.strength) : 0.35;
 
-        let left = Number(params.left) || 0;
-        let right = Number(params.right) || 0;
-        let up = Number(params.up) || 0;
-        let down = Number(params.down) || 0;
-
-        // API SAFETY: Outpaint requires at least 1 pixel of movement.
-        // If all are 0, we add a tiny 1px expansion at the bottom (virtually invisible).
-        if (left === 0 && right === 0 && up === 0 && down === 0) {
-          this.logger.log(
-            `[generateImage] No directions provided, adding 1px bottom safety expansion`,
-          );
-          down = 1;
-        }
-
-        finalBuffer = await this.callOutpaint(file.buffer, {
-          left,
-          right,
-          up,
-          down,
-          creativity:
-            params.creativity !== undefined ? Number(params.creativity) : 0.5,
-          prompt: finalPrompt,
-          seed: seed,
-          style_preset: stylePreset,
-        });
-      } else {
         this.logger.log(
-          `[generateImage] Calling Stability Ultra (Text-to-Image)`,
+          `[generateImage] Strategy: Ultra Image-to-Image (Strength: ${strength})`,
         );
+
+        finalBuffer = await this.callUltra(
+          finalPrompt,
+          file.buffer,
+          strength,
+          seed,
+          finalNegativePrompt,
+        );
+      } else {
+        // EXCLUSIVE ULTRA TEXT-TO-IMAGE
+        this.logger.log(`[generateImage] Strategy: Ultra Text-to-Image`);
         finalBuffer = await this.callUltra(
           finalPrompt,
           undefined,
