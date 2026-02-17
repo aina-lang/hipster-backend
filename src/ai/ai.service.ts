@@ -732,19 +732,27 @@ export class AiService {
           finalBuffer = await this.callSearchAndRecolor(
             normalizedImage,
             finalPrompt,
-            params.searchPrompt || 'clothing', // Default to searching for clothing if not specified
+            params.searchPrompt || 'clothing',
             finalNegativePrompt,
             seed,
           );
-        } else if (
-          params.mode === 'background_swap' ||
-          params.preserveSubject
-        ) {
+        } else if (params.mode === 'structure') {
+          // Explicit Structure Preservation Path
           this.logger.log(
-            `[generateImage] Using Stability Replace Background and Relight path (Async)`,
+            `[generateImage] Using Stability Structure path for face preservation (${styleName})`,
+          );
+          finalBuffer = await this.callStructure(
+            normalizedImage,
+            finalPrompt,
+            finalNegativePrompt,
+            seed,
+          );
+        } else {
+          // DEFAULT: Superior Relighting Flow
+          this.logger.log(
+            `[generateImage] Using Stability Replace Background and Relight path (Async Default)`,
           );
 
-          // This is the superior flow that preserves the face AND adjusts lighting
           const jobId = await this.callReplaceBackgroundAndRelight(
             normalizedImage,
             finalPrompt,
@@ -753,19 +761,6 @@ export class AiService {
           );
 
           finalBuffer = await this.pollStabilityResult(jobId);
-        } else {
-          // Default: Structure Preservation Path (Stability AI Structure)
-          // This preserves geometry but allows "stylization" of the person
-          this.logger.log(
-            `[generateImage] Using Stability Structure path for face preservation (${styleName})`,
-          );
-
-          finalBuffer = await this.callStructure(
-            normalizedImage,
-            finalPrompt,
-            finalNegativePrompt,
-            seed,
-          );
         }
       } else {
         this.logger.log(
