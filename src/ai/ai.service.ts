@@ -1059,10 +1059,26 @@ export class AiService {
           { prompt: lastUserMessage },
           userId,
         );
+
+        // Download the image and convert it to base64
+        let imageData = '';
+        try {
+          const resp = await axios.get(imageResult.url, {
+            responseType: 'arraybuffer',
+          });
+          imageData = Buffer.from(resp.data).toString('base64');
+          this.logger.log('[chat] Image downloaded and converted to base64');
+        } catch (e) {
+          this.logger.error(
+            `[chat] Failed to download image: ${e.message}, falling back to URL`,
+          );
+          imageData = imageResult.url;
+        }
+
         return {
           type: 'image',
-          content: `Voici l'image générée: ${imageResult.url}`,
-          url: imageResult.url,
+          content: `Voici l'image générée`,
+          imageBase64: imageData,
           generationId: imageResult.generationId,
         };
       }
