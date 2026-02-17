@@ -3,10 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import OpenAI from 'openai';
+import { toFile } from 'openai/uploads';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as FormData from 'form-data';
+import * as NodeFormData from 'form-data';
+import * as sharp from 'sharp';
 import { AiUser, PlanType } from './entities/ai-user.entity';
 import {
   AiGeneration,
@@ -334,66 +336,46 @@ export class AiService {
 
   /**
    * Appelle l'API OpenAI Images Edit pour modifier une image
-   * (Utilise fetch natif pour un contrôle total sur multipart/form-data)
    * @param image Buffer de l'image d'entrée
    * @param prompt Prompt décrivant l'édition
-   * @returns Buffer de l'image générée
+   * @returns Buffer de l'image générée (en b64_json converti en Buffer)
    */
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting high-fidelity edit with GPT-1.5 (Fetch)`,
+      `[callOpenAiImageEdit] Starting edit with official SDK (dall-e-2)`,
     );
 
     try {
       const truncatedPrompt = prompt.substring(0, 32000);
-      const formData = new (global as any).FormData();
-      formData.append('model', 'gpt-image-1.5');
-      formData.append('prompt', truncatedPrompt);
 
-      // Conversion Buffer vers Blob pour fetch
-      const imageBlob = new (global as any).Blob([image], {
-        type: 'image/png',
-      });
-      formData.append('image', imageBlob, 'image.png');
-      formData.append('size', '1024x1536');
-      formData.append('response_format', 'b64_json');
-
-      this.logger.log(
-        `[callOpenAiImageEdit] Sending request via native fetch...`,
-      );
-
-      const response = await fetch('https://api.openai.com/v1/images/edits', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.openAiKey}`,
-        },
-        body: formData,
+      const response = await this.openai.images.edit({
+        model: 'gpt-image-1.5',
+        prompt: truncatedPrompt,
+        image: await toFile(image, 'image.png'),
+        size: '1024x1536',
+        response_format: 'b64_json',
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        this.logger.error(
-          `[callOpenAiImageEdit] API FAILED: ${JSON.stringify(errorData)}`,
-        );
-        throw new Error(`OpenAI API failed with status ${response.status}`);
-      }
-
-      const result = await response.json();
-      const b64 = result.data?.[0]?.b64_json;
+      const b64 = response.data?.[0]?.b64_json;
       if (!b64) {
         this.logger.error(
-          `[callOpenAiImageEdit] Missing b64_json: ${JSON.stringify(result)}`,
+          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response)}`,
         );
         throw new Error('No image data returned from OpenAI');
       }
 
-      this.logger.log(`[callOpenAiImageEdit] SUCCESS.`);
+      this.logger.log(`[callOpenAiImageEdit] Image successfully generated.`);
       return Buffer.from(b64, 'base64');
     } catch (e: any) {
       this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
+      if (e.status) {
+        this.logger.error(
+          `[callOpenAiImageEdit] Status: ${e.status}, Error Details: ${JSON.stringify(e.error)}`,
+        );
+      }
       throw e;
     }
   }
