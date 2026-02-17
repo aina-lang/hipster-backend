@@ -619,8 +619,8 @@ export class AiService {
       });
       const data = JSON.parse(resp.choices[0]?.message?.content || '{}');
       return {
-        searchPrompt: data.search_prompt || '',
-        refinedPrompt: data.refined_prompt || query,
+        searchPrompt: (data.search_prompt || '').trim(),
+        refinedPrompt: (data.refined_prompt || query).trim(),
       };
     } catch (e) {
       return { searchPrompt: '', refinedPrompt: query };
@@ -715,25 +715,54 @@ export class AiService {
         : undefined;
 
       if (file) {
-        this.logger.log(
-          `[generateImage] Strategy: Stability Search and Replace`,
-        );
-
+        let strategy = 'Stability Ultra (Edit)';
         const { searchPrompt, refinedPrompt } =
           await this.refineSearchAndReplace(userQuery, styleName);
 
-        this.logger.log(
-          `[generateImage] Search: "${searchPrompt}", Replace With: "${refinedPrompt}"`,
-        );
+        // Si on a un searchPrompt clair, on tente Search and Replace
+        if (searchPrompt && searchPrompt.length > 0) {
+          this.logger.log(
+            `[generateImage] Strategy: Stability Search and Replace`,
+          );
+          this.logger.log(
+            `[generateImage] Search: "${searchPrompt}", Replace With: "${refinedPrompt}"`,
+          );
 
-        finalBuffer = await this.callSearchAndReplace(
-          file.buffer,
-          refinedPrompt,
-          searchPrompt,
-          finalNegativePrompt,
-          seed,
-          stylePreset,
-        );
+          try {
+            finalBuffer = await this.callSearchAndReplace(
+              file.buffer,
+              refinedPrompt,
+              searchPrompt,
+              finalNegativePrompt,
+              seed,
+              stylePreset,
+            );
+          } catch (e) {
+            this.logger.warn(
+              `[generateImage] Search/Replace FAILED, falling back to Ultra: ${e.message}`,
+            );
+            strategy = 'Ultra Fallback';
+            finalBuffer = await this.callUltra(
+              finalPrompt,
+              file.buffer,
+              params.strength ?? 0.3,
+              seed,
+              finalNegativePrompt,
+            );
+          }
+        } else {
+          // Sinon, on fait une édition classique via Ultra (I2I)
+          this.logger.log(
+            `[generateImage] Strategy: Stability Ultra (General Stylization)`,
+          );
+          finalBuffer = await this.callUltra(
+            finalPrompt,
+            file.buffer,
+            params.strength ?? 0.3,
+            seed,
+            finalNegativePrompt,
+          );
+        }
       } else {
         // EXCLUSIVE ULTRA TEXT-TO-IMAGE
         this.logger.log(`[generateImage] Strategy: Ultra Text-to-Image`);
