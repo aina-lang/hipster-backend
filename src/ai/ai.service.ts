@@ -589,18 +589,25 @@ export class AiService {
     }
   }
 
-  private async pollStabilityResult(id: string): Promise<Buffer> {
+  private async pollStabilityResult(
+    id: string,
+    toolPath: string = 'results',
+  ): Promise<Buffer> {
     const apiKey = this.stabilityApiKey;
-    const url = `https://api.stability.ai/v2beta/stable-image/control/result/${id}`;
+    // Construct the correct URL based on the tool used
+    const url =
+      toolPath === 'results'
+        ? `https://api.stability.ai/v2beta/results/${id}`
+        : `https://api.stability.ai/v2beta/${toolPath}/result/${id}`;
 
     let attempts = 0;
-    const maxAttempts = 20; // 20 * 2s = 40s timeout
+    const maxAttempts = 20; // 20 * 3s = 60s timeout
     const delay = 3000;
 
     while (attempts < maxAttempts) {
       attempts++;
       this.logger.log(
-        `[pollStabilityResult] Polling attempt ${attempts}/${maxAttempts} for ID: ${id}`,
+        `[pollStabilityResult] Polling attempt ${attempts}/${maxAttempts} for ID: ${id} at ${url}`,
       );
 
       try {
@@ -610,7 +617,8 @@ export class AiService {
             Accept: 'image/*',
           },
           responseType: 'arraybuffer',
-          validateStatus: (status) => status === 200 || status === 202,
+          validateStatus: (status) =>
+            status === 200 || status === 202 || status === 404,
         });
 
         if (response.status === 200) {
@@ -618,17 +626,22 @@ export class AiService {
           return Buffer.from(response.data);
         }
 
-        // Status 202 means still processing
+        if (response.status === 404) {
+          // Retry on 404 for the first few attempts to handle race conditions
+          if (attempts > 5) {
+            throw new Error(`Job ${id} not found after ${attempts} attempts`);
+          }
+          this.logger.warn(
+            `[pollStabilityResult] Job ${id} not found yet (404), retrying...`,
+          );
+        } else {
+          this.logger.log(`[pollStabilityResult] Status 202 (Processing)...`);
+        }
+
+        // Status 202 or early 404: wait and retry
         await new Promise((resolve) => setTimeout(resolve, delay));
       } catch (error) {
-        if (error.response?.status === 404) {
-          this.logger.error(
-            `[pollStabilityResult] Job not found or expired: ${id}`,
-          );
-        } else if (error.response?.data) {
-          const errStr = Buffer.from(error.response.data).toString();
-          this.logger.error(`[pollStabilityResult] FAILED: ${errStr}`);
-        }
+        this.logger.error(`[pollStabilityResult] ${error.message}`);
         throw error;
       }
     }
@@ -760,7 +773,10 @@ export class AiService {
             seed,
           );
 
-          finalBuffer = await this.pollStabilityResult(jobId);
+          finalBuffer = await this.pollStabilityResult(
+            jobId,
+            'stable-image/edit/replace-background-and-relight',
+          );
         }
       } else {
         this.logger.log(
