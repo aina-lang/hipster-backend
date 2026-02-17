@@ -332,11 +332,32 @@ export class AiService {
       );
 
       const editParams: any = {
-        model: 'dall-e-2',
+        model: 'dall-e-3',
         image: await OpenAI.toFile(image, 'source.png', { type: 'image/png' }),
         prompt: truncatedPrompt,
         response_format: 'b64_json',
       };
+
+      if (!mask) {
+        // Generate a 50% transparency noise mask to force DALL-E 2 to edit the image
+        // (Simulate img2img behavior by forcing regeneration of random pixels)
+        this.logger.log(`[callOpenAiImageEdit] Generating noise mask...`);
+        const noiseBuffer = Buffer.alloc(1024 * 1024 * 4);
+        for (let i = 0; i < noiseBuffer.length; i += 4) {
+          noiseBuffer[i] = 0; // R
+          noiseBuffer[i + 1] = 0; // G
+          noiseBuffer[i + 2] = 0; // B
+          // Alpha: 0 (Transparent = Edit) or 255 (Opaque = Keep)
+          // 50% chance to edit pixel
+          noiseBuffer[i + 3] = Math.random() > 0.5 ? 0 : 255;
+        }
+
+        mask = await sharp(noiseBuffer, {
+          raw: { width: 1024, height: 1024, channels: 4 },
+        })
+          .png()
+          .toBuffer();
+      }
 
       if (mask) {
         editParams.mask = await OpenAI.toFile(mask, 'mask.png', {
@@ -467,7 +488,7 @@ export class AiService {
         : undefined;
 
       if (file) {
-        // Step 1: Normalize dimension (Ensure PNG 1024x1024 for OpenAI)
+        // Step 1: Normalize dimension (Ensure PNG 1024x1024)
         const normalizedImage = await this.resizeImage(file.buffer);
 
         // Step 2: High-Fidelity Stylization Path (OpenAI GPT Image)
