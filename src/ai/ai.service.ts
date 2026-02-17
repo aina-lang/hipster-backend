@@ -657,7 +657,7 @@ export class AiService {
           file.buffer,
           finalPrompt,
           directions,
-          params.creativity ?? 0.5,
+          params.creativity ?? 0.8,
           seed,
           stylePreset,
         );
