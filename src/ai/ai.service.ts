@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import OpenAI, { toFile } from 'openai';
+import OpenAI from 'openai';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -335,49 +335,64 @@ export class AiService {
 
   /**
    * Appelle l'API OpenAI Images Edit pour modifier une image
+   * (Utilise axios pour un contrôle total sur le mimetype et permettre gpt-image-1.5)
    * @param image Buffer de l'image d'entrée
    * @param prompt Prompt décrivant l'édition
-   * @returns Buffer de l'image générée (en b64_json converti en Buffer)
+   * @returns Buffer de l'image générée
    */
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting high-fidelity edit with official SDK (gpt-image-1.5)`,
+      `[callOpenAiImageEdit] Starting high-fidelity edit with GPT-1.5 (Axios)`,
     );
 
     try {
       const truncatedPrompt = prompt.substring(0, 32000);
-
-      const response = await this.openai.images.edit({
-        model: 'dall-e-2',
-        prompt: truncatedPrompt,
-        image: await toFile(image, 'image.png'),
-        // @ts-ignore - input_fidelity est supporté par gpt-image-1.5
-        // input_fidelity: 'high',
-        // @ts-ignore - quality est supporté par gpt-image-1.5
-        // quality: 'high',
-        size: '1024x1536',
-        response_format: 'b64_json',
+      const formData = new FormData();
+      formData.append('model', 'dall-e-2');
+      formData.append('prompt', truncatedPrompt);
+      // TRÈS IMPORTANT: Spécifier explicitement le contentType pour éviter l'erreur application/octet-stream
+      formData.append('image', image, {
+        filename: 'image.png',
+        contentType: 'image/png',
       });
+      formData.append('input_fidelity', 'high');
+      formData.append('quality', 'high');
+      formData.append('size', '1024x1536');
+      formData.append('response_format', 'b64_json');
 
-      const b64 = response.data?.[0]?.b64_json;
+      this.logger.log(`[callOpenAiImageEdit] Sending request to OpenAI...`);
+
+      const response = await axios.post(
+        'https://api.openai.com/v1/images/edits',
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+            Authorization: `Bearer ${this.openAiKey}`,
+          },
+        },
+      );
+
+      const b64 = response.data.data?.[0]?.b64_json;
       if (!b64) {
         this.logger.error(
-          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response)}`,
+          `[callOpenAiImageEdit] Missing b64_json: ${JSON.stringify(response.data)}`,
         );
         throw new Error('No image data returned from OpenAI');
       }
 
-      this.logger.log(`[callOpenAiImageEdit] Image successfully generated.`);
+      this.logger.log(`[callOpenAiImageEdit] SUCCESS.`);
       return Buffer.from(b64, 'base64');
     } catch (e: any) {
-      this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
-      if (e.status) {
+      if (e.response) {
         this.logger.error(
-          `[callOpenAiImageEdit] Status: ${e.status}, Error Details: ${JSON.stringify(e.error)}`,
+          `[callOpenAiImageEdit] API FAILED: ${JSON.stringify(e.response.data)}`,
         );
+      } else {
+        this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
       }
       throw e;
     }
