@@ -399,7 +399,7 @@ export class AiService {
 
       // 2. Prepare multipart form data using native fetch API (global.FormData)
       const formData = new (global as any).FormData();
-      formData.append('model', 'gpt-image-1.5');
+      formData.append('model', 'dall-e-2');
 
       // Use the new refinement logic to stay under 1000 chars
       const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
