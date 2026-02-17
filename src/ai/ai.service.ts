@@ -485,6 +485,7 @@ export class AiService {
     prompt: string,
     negativePrompt?: string,
     seed?: number,
+    stylePreset?: string,
   ): Promise<Buffer> {
     this.logger.log(`[callStructure] Starting Stability Structure flow`);
     const formData = new FormData();
@@ -494,6 +495,7 @@ export class AiService {
 
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
     if (seed) formData.append('seed', seed.toString());
+    if (stylePreset) formData.append('style_preset', stylePreset);
 
     return this.callStabilityApi('stable-image/control/structure', formData);
   }
@@ -504,6 +506,7 @@ export class AiService {
     searchPrompt: string,
     negativePrompt?: string,
     seed?: number,
+    stylePreset?: string,
   ): Promise<Buffer> {
     this.logger.log(
       `[callSearchAndReplace] Starting Search and Replace: Search("${searchPrompt}") -> Replace("${prompt}")`,
@@ -516,6 +519,7 @@ export class AiService {
 
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
     if (seed) formData.append('seed', seed.toString());
+    if (stylePreset) formData.append('style_preset', stylePreset);
 
     return this.callStabilityApi(
       'stable-image/edit/search-and-replace',
@@ -529,6 +533,7 @@ export class AiService {
     searchPrompt: string,
     negativePrompt?: string,
     seed?: number,
+    stylePreset?: string,
   ): Promise<Buffer> {
     this.logger.log(
       `[callSearchAndRecolor] Starting Search and Recolor: Search("${searchPrompt}") -> Recolor with prompt("${prompt}")`,
@@ -541,6 +546,7 @@ export class AiService {
 
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
     if (seed) formData.append('seed', seed.toString());
+    if (stylePreset) formData.append('style_preset', stylePreset);
 
     return this.callStabilityApi(
       'stable-image/edit/search-and-recolor',
@@ -693,6 +699,7 @@ export class AiService {
             params.searchPrompt || 'clothing',
             finalNegativePrompt,
             seed,
+            stylePreset,
           );
         } else if (params.mode === 'structure') {
           // Explicit Structure Preservation Path
@@ -704,6 +711,7 @@ export class AiService {
             finalPrompt,
             finalNegativePrompt,
             seed,
+            stylePreset,
           );
         } else {
           // DEFAULT: Pixel-Perfect Background Swap (Search and Replace)
@@ -719,6 +727,7 @@ export class AiService {
             'background, surroundings, environment',
             finalNegativePrompt,
             seed,
+            stylePreset,
           );
         }
       } else {
