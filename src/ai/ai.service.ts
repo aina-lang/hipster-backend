@@ -548,105 +548,37 @@ export class AiService {
     );
   }
 
-  private async callReplaceBackgroundAndRelight(
+  private async callOutpaint(
     image: Buffer,
-    prompt: string,
-    negativePrompt?: string,
-    seed?: number,
-  ): Promise<string> {
-    this.logger.log(`[callReplaceBackgroundAndRelight] Starting Async Request`);
+    params: {
+      left?: number;
+      right?: number;
+      up?: number;
+      down?: number;
+      creativity?: number;
+      prompt?: string;
+      style_preset?: string;
+      seed?: number;
+    },
+  ): Promise<Buffer> {
+    this.logger.log(`[callOutpaint] Starting Outpaint flow`);
     const formData = new FormData();
-    formData.append('subject_image', image, 'source.png');
-    formData.append('background_prompt', prompt);
+    formData.append('image', image, 'source.png');
+
+    if (params.left) formData.append('left', params.left.toString());
+    if (params.right) formData.append('right', params.right.toString());
+    if (params.up) formData.append('up', params.up.toString());
+    if (params.down) formData.append('down', params.down.toString());
+    if (params.creativity !== undefined)
+      formData.append('creativity', params.creativity.toString());
+    if (params.prompt) formData.append('prompt', params.prompt);
+    if (params.style_preset)
+      formData.append('style_preset', params.style_preset);
+    if (params.seed) formData.append('seed', params.seed.toString());
+
     formData.append('output_format', 'png');
 
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (seed) formData.append('seed', seed.toString());
-
-    const apiKey = this.stabilityApiKey;
-    const url =
-      'https://api.stability.ai/v2beta/stable-image/edit/replace-background-and-relight';
-
-    try {
-      const response = await axios.post(url, formData, {
-        headers: {
-          ...formData.getHeaders(),
-          Authorization: `Bearer ${apiKey}`,
-          Accept: 'application/json',
-        },
-      });
-      this.logger.log(
-        `[callReplaceBackgroundAndRelight] Job ID: ${response.data.id}`,
-      );
-      return response.data.id;
-    } catch (error) {
-      if (error.response?.data) {
-        this.logger.error(
-          `[callReplaceBackgroundAndRelight] API FAILED: ${JSON.stringify(error.response.data)}`,
-        );
-      }
-      throw error;
-    }
-  }
-
-  private async pollStabilityResult(
-    id: string,
-    toolPath: string = 'results',
-  ): Promise<Buffer> {
-    const apiKey = this.stabilityApiKey;
-    // Construct the correct URL based on the tool used
-    const url =
-      toolPath === 'results'
-        ? `https://api.stability.ai/v2beta/results/${id}`
-        : `https://api.stability.ai/v2beta/${toolPath}/result/${id}`;
-
-    let attempts = 0;
-    const maxAttempts = 20; // 20 * 3s = 60s timeout
-    const delay = 3000;
-
-    while (attempts < maxAttempts) {
-      attempts++;
-      this.logger.log(
-        `[pollStabilityResult] Polling attempt ${attempts}/${maxAttempts} for ID: ${id} at ${url}`,
-      );
-
-      try {
-        const response = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            Accept: 'image/*',
-          },
-          responseType: 'arraybuffer',
-          validateStatus: (status) =>
-            status === 200 || status === 202 || status === 404,
-        });
-
-        if (response.status === 200) {
-          this.logger.log(`[pollStabilityResult] SUCCESS for ID: ${id}`);
-          return Buffer.from(response.data);
-        }
-
-        if (response.status === 404) {
-          // Retry on 404 for the first few attempts to handle race conditions
-          if (attempts > 5) {
-            throw new Error(`Job ${id} not found after ${attempts} attempts`);
-          }
-          this.logger.warn(
-            `[pollStabilityResult] Job ${id} not found yet (404), retrying...`,
-          );
-        } else {
-          this.logger.log(`[pollStabilityResult] Status 202 (Processing)...`);
-        }
-
-        // Status 202 or early 404: wait and retry
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      } catch (error) {
-        this.logger.error(`[pollStabilityResult] ${error.message}`);
-        throw error;
-      }
-    }
-
-    throw new Error(`[pollStabilityResult] Polling TIMEOUT for ID: ${id}`);
+    return this.callStabilityApi('stable-image/edit/outpaint', formData);
   }
 
   /* --------------------- IMAGE GENERATION --------------------- */
@@ -738,7 +670,20 @@ export class AiService {
         const normalizedImage = await this.resizeImage(file.buffer);
 
         // Step 2: Choose Preservation Strategy
-        if (params.mode === 'search_recolor') {
+        if (params.mode === 'outpaint') {
+          this.logger.log(`[generateImage] Using Stability Outpaint path`);
+          finalBuffer = await this.callOutpaint(normalizedImage, {
+            left: Number(params.left) || 0,
+            right: Number(params.right) || 0,
+            up: Number(params.up) || 0,
+            down: Number(params.down) || 0,
+            creativity:
+              params.creativity !== undefined ? Number(params.creativity) : 0.5,
+            prompt: finalPrompt,
+            seed: seed,
+            style_preset: stylePreset,
+          });
+        } else if (params.mode === 'search_recolor') {
           this.logger.log(
             `[generateImage] Using Stability Search and Recolor path`,
           );
@@ -761,21 +706,19 @@ export class AiService {
             seed,
           );
         } else {
-          // DEFAULT: Superior Relighting Flow
+          // DEFAULT: Pixel-Perfect Background Swap (Search and Replace)
           this.logger.log(
-            `[generateImage] Using Stability Replace Background and Relight path (Async Default)`,
+            `[generateImage] Using Stability Search and Replace path (Synchronous Default)`,
           );
 
-          const jobId = await this.callReplaceBackgroundAndRelight(
+          // We search for "background" and replace with the prompt
+          // This keeps the subject PIXEL-PERFECT and is synchronous
+          finalBuffer = await this.callSearchAndReplace(
             normalizedImage,
             finalPrompt,
+            'background, surroundings, environment',
             finalNegativePrompt,
             seed,
-          );
-
-          finalBuffer = await this.pollStabilityResult(
-            jobId,
-            'stable-image/edit/replace-background-and-relight',
           );
         }
       } else {
