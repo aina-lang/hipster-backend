@@ -6,8 +6,7 @@ import OpenAI from 'openai';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as NodeFormData from 'form-data';
-import * as sharp from 'sharp';
+import * as FormData from 'form-data';
 import { AiUser, PlanType } from './entities/ai-user.entity';
 import {
   AiGeneration,

@@ -157,128 +157,141 @@ export class AiPaymentService {
   }
 
   async createPaymentSheet(userId: number, priceId?: string, planId?: string) {
-    this.logger.log(
-      `Creating payment sheet for user ${userId}, price ${priceId}, plan ${planId}`,
-    );
-    const plans = await this.getPlans();
-    let selectedPlan;
-
-    if (planId === 'curieux') {
-      selectedPlan = plans.find((p) => p.id === 'curieux');
-    } else {
-      selectedPlan = planId
-        ? plans.find((p) => p.id === planId)
-        : plans.find((p) => p.stripePriceId === priceId);
-    }
-
-    if (!selectedPlan) {
-      this.logger.warn(
-        `Invalid price or plan: priceId=${priceId}, planId=${planId}`,
-      );
-      throw new BadRequestException('Prix invalide');
-    }
-
-    const user = await this.aiUserRepo.findOneBy({ id: userId });
-    if (!user) throw new BadRequestException('AiUser not found');
-
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await this.stripe.customers.create({
-        email: user.email,
-        metadata: { userId: user.id.toString() },
-      });
-      customerId = customer.id;
-      user.stripeCustomerId = customerId;
-      await this.aiUserRepo.save(user);
-    }
-
-    // Prepare variables for retry logic
-    let ephemeralKey;
-    let subscription;
-
     try {
-      ephemeralKey = await this.stripe.ephemeralKeys.create(
-        { customer: customerId },
-        { apiVersion: '2024-06-20' as any },
+      this.logger.log(
+        `Creating payment sheet for user ${userId}, price ${priceId}, plan ${planId}`,
       );
-    } catch (error: any) {
-      // Auto-healing: If customer doesn't exist in Stripe (e.g. env changed), create a new one
-      if (error.code === 'resource_missing' && error.param === 'customer') {
-        this.logger.warn(
-          `Customer ${customerId} not found in Stripe. Creating new customer for user ${userId}.`,
-        );
+      const plans = await this.getPlans();
+      let selectedPlan;
 
-        const newCustomer = await this.stripe.customers.create({
+      if (planId === 'curieux') {
+        selectedPlan = plans.find((p) => p.id === 'curieux');
+      } else {
+        selectedPlan = planId
+          ? plans.find((p) => p.id === planId)
+          : plans.find((p) => p.stripePriceId === priceId);
+      }
+
+      if (!selectedPlan) {
+        this.logger.warn(
+          `Invalid price or plan: priceId=${priceId}, planId=${planId}`,
+        );
+        throw new BadRequestException('Prix invalide');
+      }
+
+      const user = await this.aiUserRepo.findOneBy({ id: userId });
+      if (!user) throw new BadRequestException('AiUser not found');
+
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await this.stripe.customers.create({
           email: user.email,
           metadata: { userId: user.id.toString() },
         });
-
-        customerId = newCustomer.id;
+        customerId = customer.id;
         user.stripeCustomerId = customerId;
         await this.aiUserRepo.save(user);
+      }
 
-        // Retry with new customer ID
+      // Prepare variables for retry logic
+      let ephemeralKey;
+      let subscription;
+
+      try {
         ephemeralKey = await this.stripe.ephemeralKeys.create(
           { customer: customerId },
           { apiVersion: '2024-06-20' as any },
         );
-      } else {
-        throw error;
+      } catch (error: any) {
+        // Auto-healing: If customer doesn't exist in Stripe (e.g. env changed), create a new one
+        if (error.code === 'resource_missing' && error.param === 'customer') {
+          this.logger.warn(
+            `Customer ${customerId} not found in Stripe. Creating new customer for user ${userId}.`,
+          );
+
+          const newCustomer = await this.stripe.customers.create({
+            email: user.email,
+            metadata: { userId: user.id.toString() },
+          });
+
+          customerId = newCustomer.id;
+          user.stripeCustomerId = customerId;
+          await this.aiUserRepo.save(user);
+
+          // Retry with new customer ID
+          ephemeralKey = await this.stripe.ephemeralKeys.create(
+            { customer: customerId },
+            { apiVersion: '2024-06-20' as any },
+          );
+        } else {
+          this.logger.error(`[Stripe EphemeralKey Error] ${error.message}`, error.stack);
+          throw error;
+        }
       }
-    }
 
-    if (selectedPlan.id === 'curieux') {
-      if (user.hasUsedTrial && user.planType !== PlanType.CURIEUX) {
-        this.logger.warn(
-          `User ${userId} already used trial and is not on curieux plan`,
-        );
-        throw new BadRequestException('Essai gratuit déjà utilisé');
+      if (selectedPlan.id === 'curieux') {
+        if (user.hasUsedTrial && user.planType !== PlanType.CURIEUX) {
+          this.logger.warn(
+            `User ${userId} already used trial and is not on curieux plan`,
+          );
+          throw new BadRequestException('Essai gratuit déjà utilisé');
+        }
+
+        // Transitions to ATELIER after trial
+        const atelierPriceId =
+          plans.find((p) => p.id === 'atelier')?.stripePriceId ||
+          'price_1SzcrqFhrfQ5vRxFsG1jQfGE';
+
+        subscription = await this.stripe.subscriptions.create({
+          customer: customerId,
+          items: [{ price: atelierPriceId }],
+          trial_period_days: 7,
+          payment_behavior: 'default_incomplete',
+          payment_settings: { save_default_payment_method: 'on_subscription' },
+          expand: ['pending_setup_intent'],
+          metadata: { userId: userId.toString(), planId: 'curieux' },
+        });
+
+        const result = {
+          setupIntentClientSecret: (
+            subscription.pending_setup_intent as Stripe.SetupIntent
+          )?.client_secret,
+          subscriptionId: subscription.id,
+          ephemeralKey: ephemeralKey.secret,
+          customerId: customerId,
+        };
+        this.logger.log(`[Curieux Trial] Payment sheet created successfully: ${subscription.id}`);
+        return result;
       }
 
-      // Transitions to ATELIER after trial
-      const atelierPriceId =
-        plans.find((p) => p.id === 'atelier')?.stripePriceId ||
-        'price_1SzcrqFhrfQ5vRxFsG1jQfGE';
-
+      // For paid plans (Atelier, Studio, Agence)
       subscription = await this.stripe.subscriptions.create({
         customer: customerId,
-        items: [{ price: atelierPriceId }],
-        trial_period_days: 7,
+        items: [{ price: selectedPlan.stripePriceId }],
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
-        expand: ['pending_setup_intent'],
-        metadata: { userId: userId.toString(), planId: 'curieux' },
+        expand: ['latest_invoice.payment_intent'],
+        metadata: { userId: userId.toString(), planId: selectedPlan.id },
       });
 
-      return {
-        setupIntentClientSecret: (
-          subscription.pending_setup_intent as Stripe.SetupIntent
-        )?.client_secret,
+      const invoice = subscription.latest_invoice as any;
+      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+
+      const result = {
+        paymentIntentClientSecret: paymentIntent.client_secret,
         subscriptionId: subscription.id,
         ephemeralKey: ephemeralKey.secret,
         customerId: customerId,
       };
+      this.logger.log(`[${selectedPlan.id}] Payment sheet created successfully: ${subscription.id}`);
+      return result;
+    } catch (error: any) {
+      this.logger.error(
+        `[createPaymentSheet Error] userId=${userId}, priceId=${priceId}, planId=${planId}, message=${error.message}`,
+        error.stack,
+      );
+      throw error;
     }
-
-    // For paid plans (Atelier, Studio, Agence)
-    subscription = await this.stripe.subscriptions.create({
-      customer: customerId,
-      items: [{ price: selectedPlan.stripePriceId }],
-      payment_behavior: 'default_incomplete',
-      payment_settings: { save_default_payment_method: 'on_subscription' },
-      expand: ['latest_invoice.payment_intent'],
-      metadata: { userId: userId.toString(), planId: selectedPlan.id },
-    });
-
-    const invoice = subscription.latest_invoice as any;
-    const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-
-    return {
-      paymentIntentClientSecret: paymentIntent.client_secret,
-      subscriptionId: subscription.id,
-      ephemeralKey: ephemeralKey.secret,
-      customerId: customerId,
-    };
   }
 
   async confirmPlan(userId: number, planId: string, subscriptionId?: string) {
