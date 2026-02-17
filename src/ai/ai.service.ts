@@ -360,7 +360,7 @@ export class AiService {
 
       // 2. Prepare multipart form data using native fetch API (global.FormData)
       const formData = new (global as any).FormData();
-      formData.append('model', 'gpt-image-1.5');
+      formData.append('model', 'dall-e-2');
       formData.append('prompt', prompt.substring(0, 32000));
 
       // Explicitly set the blob with image/png mimetype to solve 400 error
