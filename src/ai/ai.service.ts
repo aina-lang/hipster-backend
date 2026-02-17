@@ -555,6 +555,75 @@ export class AiService {
     return this.callStabilityApi('stable-image/edit/outpaint', formData);
   }
 
+  /**
+   * Appelle l'API Stability Search and Replace
+   */
+  private async callSearchAndReplace(
+    image: Buffer,
+    prompt: string,
+    searchPrompt: string,
+    negativePrompt?: string,
+    seed?: number,
+    stylePreset?: string,
+  ): Promise<Buffer> {
+    const formData = new NodeFormData();
+    formData.append('image', image, {
+      filename: 'source.png',
+      contentType: 'image/png',
+    });
+    formData.append('prompt', prompt);
+    formData.append('search_prompt', searchPrompt);
+    formData.append('output_format', 'png');
+
+    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (seed) formData.append('seed', seed.toString());
+    if (stylePreset) formData.append('style_preset', stylePreset);
+
+    return this.callStabilityApi(
+      'stable-image/edit/search-and-replace',
+      formData,
+    );
+  }
+
+  /**
+   * Extrait le search_prompt et le refined_prompt pour Search & Replace
+   */
+  private async refineSearchAndReplace(
+    query: string,
+    styleName: string,
+  ): Promise<{ searchPrompt: string; refinedPrompt: string }> {
+    try {
+      const resp = await this.openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert image editor. 
+            Analyze the user request for an object replacement command.
+            Identify:
+            1. The specific object to be FOUND and REPLACED (search_prompt). Use simple, clear English.
+            2. The detailed description of what it should be REPLACED WITH (refined_prompt). Integrate the style "${styleName}".
+
+            OUTPUT FORMAT: Return ONLY a JSON object:
+            {
+              "search_prompt": "object to find",
+              "refined_prompt": "detailed replacement description"
+            }`,
+          },
+          { role: 'user', content: query },
+        ],
+        response_format: { type: 'json_object' },
+      });
+      const data = JSON.parse(resp.choices[0]?.message?.content || '{}');
+      return {
+        searchPrompt: data.search_prompt || '',
+        refinedPrompt: data.refined_prompt || query,
+      };
+    } catch (e) {
+      return { searchPrompt: '', refinedPrompt: query };
+    }
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -643,13 +712,24 @@ export class AiService {
         : undefined;
 
       if (file) {
-        this.logger.log(`[generateImage] Strategy: Ultra Image-to-Image`);
-        finalBuffer = await this.callUltra(
-          finalPrompt,
+        this.logger.log(
+          `[generateImage] Strategy: Stability Search and Replace`,
+        );
+
+        const { searchPrompt, refinedPrompt } =
+          await this.refineSearchAndReplace(userQuery, styleName);
+
+        this.logger.log(
+          `[generateImage] Search: "${searchPrompt}", Replace With: "${refinedPrompt}"`,
+        );
+
+        finalBuffer = await this.callSearchAndReplace(
           file.buffer,
-          params.strength ?? 0.3, // Strength basse pour préserver visage/objet
-          seed,
+          refinedPrompt,
+          searchPrompt,
           finalNegativePrompt,
+          seed,
+          stylePreset,
         );
       } else {
         // EXCLUSIVE ULTRA TEXT-TO-IMAGE
