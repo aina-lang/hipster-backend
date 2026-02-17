@@ -573,8 +573,14 @@ export class AiService {
         : undefined;
 
       if (file) {
-        this.logger.log(`[generateImage] Strategy: OpenAI GPT-Image 1.5`);
-        finalBuffer = await this.callOpenAiImageEdit(file.buffer, finalPrompt);
+        this.logger.log(`[generateImage] Strategy: Ultra Image-to-Image`);
+        finalBuffer = await this.callUltra(
+          finalPrompt,
+          file.buffer,
+          0.7, // Strength for I2I
+          seed,
+          finalNegativePrompt,
+        );
       } else {
         // EXCLUSIVE ULTRA TEXT-TO-IMAGE
         this.logger.log(`[generateImage] Strategy: Ultra Text-to-Image`);
