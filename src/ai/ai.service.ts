@@ -314,90 +314,43 @@ export class AiService {
     }
   }
 
-  private async uploadToOpenAiFiles(image: Buffer): Promise<string> {
-    try {
-      const formData = new FormData();
-      formData.append('file', image, {
-        filename: 'image.png',
-        contentType: 'image/png',
-      });
-      formData.append('purpose', 'vision');
-
-      const response = await axios.post(
-        'https://api.openai.com/v1/files',
-        formData,
-        {
-          headers: {
-            ...formData.getHeaders(),
-            Authorization: `Bearer ${this.openAiKey}`,
-          },
-        },
-      );
-      this.logger.log(
-        `[uploadToOpenAiFiles] SUCCESS - File ID: ${response.data.id}`,
-      );
-      return response.data.id;
-    } catch (error) {
-      this.logger.error(`[uploadToOpenAiFiles] Error: ${error.message}`);
-      throw error;
-    }
-  }
-
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
     mask?: Buffer,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting upload flow for gpt-image-1.5`,
+      `[callOpenAiImageEdit] Using dall-e-2 for high-fidelity edit`,
     );
-
     try {
-      this.logger.log(`[callOpenAiImageEdit] Uploading source image...`);
-      const fileId = await this.uploadToOpenAiFiles(image);
+      this.logger.log(
+        `[callOpenAiImageEdit] Prompt length before truncation: ${prompt.length}`,
+      );
+      const truncatedPrompt = prompt.substring(0, 900);
+      this.logger.log(
+        `[callOpenAiImageEdit] Prompt length after truncation: ${truncatedPrompt.length}`,
+      );
 
-      const payload: any = {
-        model: 'gpt-image-1.5',
-        prompt: prompt.substring(0, 1000),
-        images: [{ file_id: fileId }],
+      const editParams: any = {
+        model: 'dall-e-2',
+        image: await OpenAI.toFile(image, 'source.png', { type: 'image/png' }),
+        prompt: truncatedPrompt,
         response_format: 'b64_json',
       };
 
       if (mask) {
-        this.logger.log(`[callOpenAiImageEdit] Uploading mask image...`);
-        const maskFileId = await this.uploadToOpenAiFiles(mask);
-        payload.mask = { file_id: maskFileId };
+        editParams.mask = await OpenAI.toFile(mask, 'mask.png', {
+          type: 'image/png',
+        });
       }
 
-      this.logger.log(
-        `[callOpenAiImageEdit] Sending generation request with Payload: ${JSON.stringify(
-          payload,
-        )}`,
-      );
-
-      const response = await axios.post(
-        'https://api.openai.com/v1/images/generations',
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${this.openAiKey}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      const b64 = response.data.data[0].b64_json;
+      const response = await this.openai.images.edit(editParams);
+      const b64 = response.data[0].b64_json;
       if (!b64) throw new Error('No image data returned from OpenAI');
 
       return Buffer.from(b64, 'base64');
     } catch (e) {
-      if (e.response) {
-        this.logger.error(
-          `[callOpenAiImageEdit] API FAILED: ${JSON.stringify(e.response.data)}`,
-        );
-      } else {
-        this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
-      }
+      this.logger.error(`[callOpenAiImageEdit] FAILED: ${e.message}`);
       throw e;
     }
   }
