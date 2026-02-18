@@ -248,22 +248,22 @@ export class AiService {
       const bg = this.getRandomItem(backgrounds);
 
       return `
-        Ultra high contrast black and white portrait of ${jobStr}, high-end fashion editorial style. 
-        ${lighting}, ${angle}, strong cinematic lighting, dramatic shadows, sharp facial details.
+        Ultra high contrast black and white professional photographic portrait of ${jobStr}. 
+        High-end fashion editorial style, sharp focus, cinematic composition.
+        ${lighting}, ${angle}, strong dramatic shadows, meticulous facial details and skin texture.
         ${bg}.
 
-        Graphic design overlay: Minimalist luxury poster layout. 
-        Subtle design elements: thin professional geometric lines, frame corners, and layout guides.
+        STRICT VISUAL RULES:
+        1. NO geometric shapes, NO lines, NO rectangles, NO squares, NO triangles.
+        2. NO graphic design overlays, NO frames, NO borders, NO layout guides.
+        3. PURE PHOTOGRAPHY: The image must look like a single, authentic professional photo.
         
         STRICT COLOR RULE: 
         The image is monochrome black and white. 
-        ONE ACCENT COLOR ONLY: ${accent}, used ONLY in small object or thin highlights.
+        ONE ACCENT COLOR ONLY: ${accent}, used subtly ONLY on a realistic object (e.g., a tie, a piece of clothing, or a small environmental detail).
         
-        CRITICAL: The portrait must be ONE cohesive image. DO NOT create a collage. 
-        Graphic elements must NOT overlap, cut, or distort the person's facial features. 
-        The face must be 100% visible and untouched by overlays.
-        
-        High fashion magazine aesthetic, luxury campaign, premium branding, sharp focus, ultra clean, professional studio lighting.
+        CRITICAL: The face must be 100% visible, expressive, and realistically detailed. 
+        High fashion magazine campaign, luxury branding, ultra clean studio execution.
         No watermark, no random text, no logo.
       `.trim();
     }
