@@ -79,6 +79,7 @@ export class AiService {
     cloned face, multiple heads, two heads, extra heads, distorted face, 
     blurry, out of focus, low quality, pixelated, grain, lowres, 
     text, watermark, logo, signature, letters, words, captions, labels,
+    numbers, characters, symbols, typography, typesetting, advertisement text, 
     cgi, 3d, render, cartoon, anime, illustration, drawing, digital art,
     smooth plastic skin, artificial, airbrushed, unnatural skin,
     mustache, beard, facial hair, stubble (unless specified),
@@ -684,9 +685,17 @@ export class AiService {
         styleName.toLowerCase().includes('hero')
       ) {
         finalNegativePrompt = `
-          ${this.NEGATIVE_PROMPT},
+          ${finalNegativePrompt},
           glitch, noise, low contrast, oversaturated, distorted facial proportions, 
           mismatched eyes, weird gaze.
+        `.trim();
+      }
+
+      if (styleName.toLowerCase().includes('monochrome')) {
+        finalNegativePrompt = `
+          ${finalNegativePrompt},
+          geometric shapes, lines, rectangles, squares, triangles, abstract frames, 
+          grids, artificial borders.
         `.trim();
       }
 
