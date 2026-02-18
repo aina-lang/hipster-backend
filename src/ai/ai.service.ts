@@ -463,6 +463,7 @@ export class AiService {
     seed?: number,
     negativePrompt?: string,
     aspectRatio?: string,
+    stylePreset?: string,
   ): Promise<Buffer> {
     const formData = new NodeFormData();
     formData.append('prompt', prompt);
@@ -482,6 +483,7 @@ export class AiService {
 
     if (seed) formData.append('seed', seed.toString());
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (stylePreset) formData.append('style_preset', stylePreset);
 
     return this.callStabilityApi('stable-image/generate/ultra', formData);
   }
@@ -636,7 +638,12 @@ export class AiService {
     file?: Express.Multer.File,
     seed?: number,
   ) {
-    const styleName = style || params.style || 'Hero Studio';
+    // Unified default style selection
+    // If we have an image but no style, 'Enhance' is the best creative fallback for refinement.
+    // Otherwise, 'Hero Studio' is our premium brand default.
+    const defaultStyle = file ? 'Enhance' : 'Hero Studio';
+    const styleName = style || params.style || defaultStyle;
+
     this.logger.log(
       `[generateImage] START - User: ${userId}, Seed: ${seed}, Style: ${styleName}, Job: ${params.job}, Query: ${params.userQuery}`,
     );
@@ -699,29 +706,14 @@ export class AiService {
         `.trim();
       }
 
-      // Mapping for Stability V1 Presets
-      const stabilityPresets = [
-        '3d-model',
-        'analog-film',
-        'anime',
-        'cinematic',
-        'comic-book',
-        'digital-art',
-        'enhance',
-        'fantasy-art',
-        'isometric',
-        'line-art',
-        'low-poly',
-        'modeling-compound',
-        'neon-punk',
-        'origami',
-        'photographic',
-        'pixel-art',
-        'tile-texture',
-      ];
-      const stylePreset = stabilityPresets.includes(styleName)
-        ? styleName
-        : undefined;
+      // Custom styles specific to our app that shouldn't be passed as "style_preset" to Stability
+      const customStyles = ['Premium', 'Hero Studio', 'Minimal Studio'];
+      const isCustomStyle = customStyles.includes(styleName);
+
+      // Stability expects presets in kebab-case (e.g., '3D Model' -> '3d-model', 'Cinematic' -> 'cinematic')
+      const stylePreset = isCustomStyle
+        ? undefined
+        : styleName.toLowerCase().replace(/\s+/g, '-');
 
       if (file) {
         let strategy = 'Stability Ultra (Edit)';
@@ -754,9 +746,11 @@ export class AiService {
             finalBuffer = await this.callUltra(
               finalPrompt,
               file.buffer,
-              params.strength ?? 0.3,
+              params.strength ?? 0.35, // Slightly higher default strength for stylized edits
               seed,
               finalNegativePrompt,
+              undefined,
+              stylePreset,
             );
           }
         } else {
@@ -767,9 +761,11 @@ export class AiService {
           finalBuffer = await this.callUltra(
             finalPrompt,
             file.buffer,
-            params.strength ?? 0.3,
+            params.strength ?? 0.35,
             seed,
             finalNegativePrompt,
+            undefined,
+            stylePreset,
           );
         }
       } else {
@@ -781,6 +777,8 @@ export class AiService {
           undefined,
           seed,
           finalNegativePrompt,
+          undefined,
+          stylePreset,
         );
       }
 
