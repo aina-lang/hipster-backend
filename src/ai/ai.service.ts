@@ -932,8 +932,10 @@ export class AiService {
     );
 
     // 3. Generate Caption (Simple GPT)
+    // We strip 'style' from params to ensure the text generation is ONLY based on job and prompt.
+    const { style: _, ...textParams } = params;
     const textRes = await this.generateText(
-      { ...params, brandingInfo },
+      { ...textParams, brandingInfo },
       'social',
       userId,
     );
