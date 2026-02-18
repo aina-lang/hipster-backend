@@ -195,6 +195,7 @@ export class ProfilesController {
   @ResponseMessage('Profil IA mis à jour avec succès')
   @Patch('ai/:id')
   updateAi(@Param('id') id: string, @Body() dto: UpdateAiProfileDto) {
+    console.log('[ProfilesController] updateAi called with id:', id, 'DTO:', JSON.stringify(dto, null, 2));
     return this.profilesService.updateAiProfile(+id, dto);
   }
 

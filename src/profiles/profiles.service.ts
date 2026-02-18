@@ -377,7 +377,10 @@ export class ProfilesService {
   }
 
   async updateAiProfile(id: number, dto: UpdateAiProfileDto): Promise<AiUser> {
-    this.logger.log(`Updating AI Data for User #${id}: ${JSON.stringify(dto)}`);
+    this.logger.log(`[updateAiProfile] Updating AI Data for User #${id}`);
+    this.logger.log(`[updateAiProfile] DTO keys: ${Object.keys(dto).join(', ')}`);
+    this.logger.log(`[updateAiProfile] DTO values: ${JSON.stringify(dto)}`);
+    
     const user = await this.findAiProfileById(id);
 
     if (dto.logoUrl && user.logoUrl && dto.logoUrl !== user.logoUrl) {
@@ -386,7 +389,7 @@ export class ProfilesService {
 
     Object.assign(user, dto);
     const saved = await this.aiUserRepo.save(user);
-    this.logger.log(`AI User #${id} updated successfully`);
+    this.logger.log(`[updateAiProfile] AI User #${id} updated successfully`);
     return saved;
   }
 

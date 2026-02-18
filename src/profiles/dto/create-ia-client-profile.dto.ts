@@ -9,18 +9,48 @@ import {
   IsEmail,
   IsBoolean,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { SubscriptionStatus, PlanType } from 'src/ai/entities/ai-user.entity';
 
 export class CreateIaClientProfileDto {
   @IsOptional()
-  @Type(() => String)
-  @IsEnum(SubscriptionStatus)
+  @Transform(({ value }) => {
+    // If no value, return as-is (undefined/null)
+    if (value === undefined || value === null) return value;
+    // If already a valid enum value (lowercase), return as-is
+    if (Object.values(SubscriptionStatus).includes(value)) return value;
+    // If uppercase key (like 'ACTIVE'), convert to enum value
+    try {
+      const enumValue = SubscriptionStatus[value as keyof typeof SubscriptionStatus];
+      if (enumValue) return enumValue;
+    } catch (e) {
+      // Ignore and return original value for validator to reject
+    }
+    return value;
+  })
+  @IsEnum(SubscriptionStatus, {
+    message: `subscriptionStatus must be one of: ${Object.values(SubscriptionStatus).join(', ')}`
+  })
   subscriptionStatus?: SubscriptionStatus;
 
   @IsOptional()
-  @Type(() => String)
-  @IsEnum(PlanType)
+  @Transform(({ value }) => {
+    // If no value, return as-is (undefined/null)
+    if (value === undefined || value === null) return value;
+    // If already a valid enum value (lowercase), return as-is
+    if (Object.values(PlanType).includes(value)) return value;
+    // If uppercase key (like 'CURIEUX'), convert to enum value
+    try {
+      const enumValue = PlanType[value as keyof typeof PlanType];
+      if (enumValue) return enumValue;
+    } catch (e) {
+      // Ignore and return original value for validator to reject
+    }
+    return value;
+  })
+  @IsEnum(PlanType, {
+    message: `planType must be one of: ${Object.values(PlanType).join(', ')}`
+  })
   planType?: PlanType;
 
   @IsOptional()

@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  Req,
+  BadRequestException,
+} from '@nestjs/common';
 import { AiPaymentService } from './ai-payment.service';
 import { AuthGuard } from '../common/guards/auth.guard';
 import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -41,17 +49,38 @@ export class AiPaymentController {
   }
 
   @ApiOperation({ summary: 'Créer une feuille de paiement Stripe pour IA' })
+  @Public()
   @Post('create-payment-sheet')
   async createPaymentSheet(
-    @Req() req,
-    @Body() body: { priceId: string; userId?: number; planId?: string },
+    @Req() req: any,
+    @Body() body: { priceId?: string; userId?: number; planId?: string },
   ) {
-    const userId = body.userId || req.user.sub;
-    return this.aiPaymentService.createPaymentSheet(
-      userId,
-      body.priceId,
-      body.planId,
-    );
+    try {
+      console.log('[AiPaymentController] createPaymentSheet called');
+      console.log('[AiPaymentController] Body:', JSON.stringify(body, null, 2));
+      console.log('[AiPaymentController] req.user:', req.user);
+
+      const userId = body.userId || req.user?.sub;
+
+      if (!userId) {
+        console.error('[AiPaymentController] No userId found - body.userId:', body.userId, 'req.user.sub:', req.user?.sub);
+        throw new BadRequestException('userId is required in body or as authenticated user');
+      }
+
+      console.log('[AiPaymentController] Using userId:', userId, ', priceId:', body.priceId, ', planId:', body.planId);
+
+      const result = await this.aiPaymentService.createPaymentSheet(
+        userId,
+        body.priceId,
+        body.planId,
+      );
+
+      console.log('[AiPaymentController] Payment sheet created successfully');
+      return result;
+    } catch (error: any) {
+      console.error('[AiPaymentController] Error creating payment sheet:', error.message);
+      throw error;
+    }
   }
 
   @ApiOperation({ summary: 'Annuler mon abonnement' })
@@ -73,15 +102,26 @@ export class AiPaymentController {
   })
   @Post('confirm-plan')
   async confirmPlan(
-    @Req() req,
+    @Req() req: any,
     @Body() body: { planId: string; subscriptionId?: string },
   ) {
-    const userId = req.user.sub;
-    return this.aiPaymentService.confirmPlan(
-      userId,
-      body.planId,
-      body.subscriptionId,
-    );
+    try {
+      const userId = req.user?.sub;
+      if (!userId) {
+        console.error('[AiPaymentController] confirm-plan: No userId found in token');
+        throw new BadRequestException('User not authenticated');
+      }
+      
+      console.log('[AiPaymentController] confirm-plan: userId:', userId, 'planId:', body.planId);
+      return this.aiPaymentService.confirmPlan(
+        userId,
+        body.planId,
+        body.subscriptionId,
+      );
+    } catch (error: any) {
+      console.error('[AiPaymentController] confirm-plan error:', error.message);
+      throw error;
+    }
   }
 
   @ApiOperation({ summary: "Récupérer les limites d'utilisation actuelles" })
