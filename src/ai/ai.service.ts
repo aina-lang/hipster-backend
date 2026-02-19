@@ -845,11 +845,12 @@ REALISM INSTRUCTIONS:
     const result = {
       image: imageRes.url || '',
       text: textRes.content || '',
-      generationId: imageRes.generationId,
+      generationId: imageRes.id || imageRes.generationId,
+      isAsync: !!imageRes.isAsync,
     };
 
     this.logger.log(
-      `[generateSocial] SUCCESS - Image: ${result.image || 'NONE'}, Text Length: ${result.text.length}`,
+      `[generateSocial] SUCCESS - Image: ${result.image || 'NONE'}, Text Length: ${result.text.length}, Async: ${result.isAsync}`,
     );
     return result;
   }
@@ -863,7 +864,7 @@ REALISM INSTRUCTIONS:
   ) {
     const style = params.style || 'Minimal Studio';
     const result = await this.generateImage(params, style, userId, file, seed);
-    return { ...result, url: result.url };
+    return { ...result, url: result.url, isAsync: !!result.isAsync };
   }
 
   async transcribeAudio(file: Express.Multer.File) {
