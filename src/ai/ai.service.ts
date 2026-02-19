@@ -578,7 +578,7 @@ REALISM INSTRUCTIONS:
   }
 
   /**
-   * Background processor for slow OpenAI Tool generations
+   * Background processor for slow OpenAI Tool generations with Streaming support
    */
   private async processOpenAiToolImageBackground(
     generationId: number,
@@ -587,43 +587,152 @@ REALISM INSTRUCTIONS:
     styleName: string,
   ) {
     this.logger.log(
-      `[processOpenAiToolImageBackground] Started for Gen: ${generationId}`,
+      `[processOpenAiToolImageBackground] Started for Gen: ${generationId} (STREAMING gpt-image-1.5)`,
     );
+
+    let partialImageCount = 0;
+    const partialImageUrls: string[] = [];
+
     try {
-      const buffer = await this.callOpenAiToolImage(prompt);
-      const fileName = `gen_openai_async_${Date.now()}.png`;
-      const uploadPath = path.join(process.cwd(), 'uploads', 'ai-generations');
-
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true });
-      }
-
-      const filePath = path.join(uploadPath, fileName);
-      fs.writeFileSync(filePath, buffer);
-
-      const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-
-      // Update the record with the final image and result text
-      await this.aiGenRepo.update(generationId, {
-        imageUrl,
-        result: 'OPENAI_TOOL_TEXT_TO_IMAGE',
-        attributes: {
-          engine: 'openai-tool',
-          model: 'gpt-5',
-          style: styleName,
-          async: true,
-          completedAt: new Date().toISOString(),
+      const response = await axios.post(
+        'https://api.openai.com/v1/images/generations',
+        {
+          model: 'gpt-image-1.5',
+          prompt: prompt,
+          n: 1,
+          size: '1024x1024',
+          background: 'opaque',
+          quality: 'high',
+          output_format: 'png',
+          stream: true,
+          partial_images: 3,
         },
-      } as any);
-
-      this.logger.log(
-        `[processOpenAiToolImageBackground] SUCCESS - Gen: ${generationId}, URL: ${imageUrl}`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.openAiKey}`,
+            'Content-Type': 'application/json',
+          },
+          responseType: 'stream',
+          timeout: 400000,
+        },
       );
+
+      return new Promise<void>((resolve, reject) => {
+        let buffer = '';
+
+        response.data.on('data', async (chunk: Buffer) => {
+          buffer += chunk.toString();
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const cleanLine = line.trim();
+            if (!cleanLine || !cleanLine.startsWith('data: ')) continue;
+
+            const dataStr = cleanLine.slice(6);
+            if (dataStr === '[DONE]') continue;
+
+            try {
+              const event = JSON.parse(dataStr);
+
+              // 1. Partial Image Handling
+              if (
+                event.type === 'response.image_generation_call.partial_image'
+              ) {
+                const idx = event.partial_image_index;
+                const b64 = event.partial_image_b64;
+                if (!b64) continue;
+
+                const imgBuffer = Buffer.from(b64, 'base64');
+                const fileName = `gen_partial_${generationId}_${idx}_${Date.now()}.png`;
+                const uploadPath = path.join(
+                  process.cwd(),
+                  'uploads',
+                  'ai-generations',
+                );
+
+                if (!fs.existsSync(uploadPath))
+                  fs.mkdirSync(uploadPath, { recursive: true });
+                fs.writeFileSync(path.join(uploadPath, fileName), imgBuffer);
+
+                const partialUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+                partialImageUrls.push(partialUrl);
+                partialImageCount++;
+
+                await this.aiGenRepo.update(generationId, {
+                  imageUrl: partialUrl,
+                  attributes: {
+                    engine: 'openai-tool',
+                    model: 'gpt-image-1.5',
+                    style: styleName,
+                    async: true,
+                    partialCount: partialImageCount,
+                    partialHistory: partialImageUrls,
+                  },
+                } as any);
+
+                this.logger.log(
+                  `[STREAM] Partial image ${idx} received for Gen: ${generationId}`,
+                );
+              }
+
+              // 2. Final Image Handling
+              if (
+                event.type === 'response.done' ||
+                event.type === 'response.image_generation_call.done'
+              ) {
+                const data = event.response?.data || event.data || [];
+                const b64 = data[0]?.b64_json || data[0]?.image_b64;
+
+                if (!b64) {
+                  if (event.type === 'response.done') resolve();
+                  continue;
+                }
+
+                const imgBuffer = Buffer.from(b64, 'base64');
+                const fileName = `gen_final_${generationId}_${Date.now()}.png`;
+                const uploadPath = path.join(
+                  process.cwd(),
+                  'uploads',
+                  'ai-generations',
+                );
+
+                if (!fs.existsSync(uploadPath))
+                  fs.mkdirSync(uploadPath, { recursive: true });
+                fs.writeFileSync(path.join(uploadPath, fileName), imgBuffer);
+
+                const finalUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+                await this.aiGenRepo.update(generationId, {
+                  imageUrl: finalUrl,
+                  result: 'OPENAI_TOOL_TEXT_TO_IMAGE',
+                  attributes: {
+                    engine: 'openai-tool',
+                    model: 'gpt-image-1.5',
+                    style: styleName,
+                    async: true,
+                    completedAt: new Date().toISOString(),
+                    partials: partialImageUrls,
+                  },
+                } as any);
+
+                this.logger.log(
+                  `[STREAM] SUCCESS - Final image for Gen: ${generationId}`,
+                );
+              }
+            } catch (e) {
+              // Partial chunks or non-JSON lines are ignored
+            }
+          }
+        });
+
+        response.data.on('end', () => resolve());
+        response.data.on('error', (err) => reject(err));
+      });
     } catch (error) {
       this.logger.error(
-        `[processOpenAiToolImageBackground] FAILED for Gen: ${generationId} - ${error.message}`,
+        `[processOpenAiToolImageBackground] STREAM FAILED for Gen: ${generationId} - ${error.message}`,
       );
-      // Update record to indicate error
       await this.aiGenRepo.update(generationId, {
         result: `ERROR: ${error.message}`,
       } as any);
