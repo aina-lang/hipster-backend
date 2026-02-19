@@ -467,12 +467,26 @@ export class AiService {
    */
   private async callOpenAiToolImage(prompt: string): Promise<Buffer> {
     this.logger.log(`[callOpenAiToolImage] Generating with OpenAI Tool API...`);
+    const startTime = Date.now();
+
+    // Inject "Grain of Reality" and realism constraints directly into the prompt
+    // This overrides the model's tendency for "smooth/plastic" AI perfection.
+    const realismEnhancedPrompt = `
+      ${prompt}
+      
+      REALISM INSTRUCTIONS:
+      - Add subtle natural film grain and organic textures.
+      - AVOID: smooth plastic skin, artificial perfection, digital over-sharpening.
+      - FOCUS ON: raw photographic quality, natural skin pores, realistic lighting falloff.
+      - GRAIN OF REALITY: Include tiny environmental imperfections to make the photo look authentic and unretouched.
+    `.trim();
+
     try {
       const response = await axios.post(
         'https://api.openai.com/v1/responses',
         {
           model: 'gpt-5',
-          input: prompt,
+          input: realismEnhancedPrompt,
           tools: [
             {
               type: 'image_generation',
@@ -486,7 +500,12 @@ export class AiService {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${this.openAiKey}`,
           },
+          timeout: 300000, // 5 minutes (OpenAI GPT-5 is slow)
         },
+      );
+
+      this.logger.log(
+        `[callOpenAiToolImage] RECEIVED RESPONSE after ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
       );
 
       const outputs = response.data?.output || [];
