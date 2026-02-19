@@ -123,35 +123,84 @@ export class AiService {
     query: string,
     job: string,
     styleName: string,
-  ): Promise<{ prompt: string; isPostureChange: boolean }> {
-    if (!query) return { prompt: '', isPostureChange: false };
+  ): Promise<{
+    prompt: string;
+    isPostureChange: boolean;
+    accentColor?: string;
+    lighting?: string;
+    angle?: string;
+    background?: string;
+    primaryObject?: string;
+  }> {
     try {
+      const accentColors = [
+        'deep red',
+        'burnt orange',
+        'electric purple',
+        'muted gold',
+        'royal blue',
+        'emerald green',
+      ];
+      const lightings = [
+        'side lighting dramatic',
+        'top light cinematic',
+        'rim light silhouette',
+        'split lighting high contrast',
+        'soft diffused studio light',
+      ];
+      const angles = [
+        'slight low angle',
+        'slight high angle',
+        'profile view',
+        'three quarter view',
+        'front view centered',
+      ];
+      const backgrounds = [
+        'textured dark concrete background',
+        'minimal white seamless studio',
+        'grainy film texture',
+        'matte charcoal backdrop',
+        'soft gradient grey background',
+      ];
+
       const resp = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `You are an expert image prompt engineer. 
-            Transform the user's request into a detailed, descriptive scene for an image generation.
+            content: `You are an expert image prompt engineer for a luxury professional branding tool.
+            Your goal is to choose the most contextually relevant visual style and professional objects for a given job and user request.
             
-            SUBJECT FLEXIBILITY: 
-            - If the user provides a specific prompt (e.g., "a stethoscope on a table", "a sunset over a city"), follow it EXCLUSIVELY. Do NOT add a person unless requested.
-            - If the user provides NO prompt (empty or generic), invent a professional visual scene related to the job: "${job}". 
-            - This scene can be a workspace, professional tools, a relevant object, or an environment.
-            - Only include a person if it's the most logical way to demonstrate the job's activity or if requested.
+            CONTEXT:
+            - Job: "${job}"
+            - Style: "${styleName}"
             
-            STYLE RULE: You MUST apply the artistic characteristics of "${styleName}"—lighting, mood, background—to the scene. 
-            CRITICAL: NEVER mention the style name ("${styleName}") in the output. Describe the VISUALS of the style.
-            
-            POSTURE RULE: If a person is involved and the request implies action, describe the body position vividly.
+            ASSIGNMENT:
+            1. PRIMARY OBJECT: Identify a single, iconic professional object relevant to "${job}" (e.g., "vintage espresso machine" for a barista, "stethoscope" for a doctor, "luxury sports car" for a chauffeur).
+            2. ACCENT COLOR: Pick one from: ${accentColors.join(', ')}.
+            3. LIGHTING: Pick one from: ${lightings.join(', ')}.
+            4. ANGLE: Pick one from: ${angles.join(', ')}.
+            5. BACKGROUND: Pick one from: ${backgrounds.join(', ')}.
+            6. PROMPT EXPANSION & STRICT ADHERENCE:
+               - If the user provides a specific prompt, follow it EXCLUSIVELY. Enhance the visual detail but DO NOT ADD ANY PEOPLE, HANDS, OR HUMAN FIGURES unless specifically mentioned in their text.
+               - If the user provides NO prompt, invent a descriptive, cinematic professional scene featuring the PRIMARY OBJECT or a typical workspace for "${job}". This scene can include a professional if it's the most natural way to represent the job, but focus on the environment.
+               - Apply the characteristics of "${styleName}" (lighting, mood) without mentioning its name.
             
             OUTPUT FORMAT: Return ONLY a JSON object:
             {
               "prompt": "expanded English prompt focusing on the visual scene",
-              "isPostureChange": boolean
+              "isPostureChange": boolean,
+              "accentColor": "selected color",
+              "lighting": "selected lighting",
+              "angle": "selected angle",
+              "background": "selected background",
+              "primaryObject": "short description of the professional object identified"
             }`,
           },
-          { role: 'user', content: query },
+          {
+            role: 'user',
+            content: query || `Describe a professional scene for a ${job}`,
+          },
         ],
         response_format: { type: 'json_object' },
       });
@@ -160,11 +209,20 @@ export class AiService {
       return {
         prompt: data.prompt || query,
         isPostureChange: !!data.isPostureChange,
+        accentColor: data.accentColor,
+        lighting: data.lighting,
+        angle: data.angle,
+        background: data.background,
+        primaryObject: data.primaryObject,
       };
     } catch (e) {
       this.logger.error(`[refineQuery] Error: ${e.message}`);
       return { prompt: query, isPostureChange: false };
     }
+  }
+
+  private getRandomItem(pool: string[]): string {
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   /**
@@ -206,53 +264,53 @@ export class AiService {
     }
   }
 
-  private getRandomItem(pool: string[]): string {
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
-
-  private getStyleDescription(styleName: string, job: string): string {
+  private getStyleDescription(
+    styleName: string,
+    job: string,
+    options?: {
+      accentColor?: string;
+      lighting?: string;
+      angle?: string;
+      background?: string;
+      primaryObject?: string;
+    },
+  ): string {
     const jobStr = job || 'professional';
 
     // Premium Style with randomized pools (New Spec)
     if (styleName === 'Premium') {
-      const accentColors = [
-        'deep red',
-        'burnt orange',
-        'electric purple',
-        'muted gold',
-      ];
-      const lightings = [
-        'side lighting dramatic',
-        'top light cinematic',
-        'rim light silhouette',
-        'split lighting high contrast',
-        'soft diffused studio light',
-      ];
-      const angles = [
-        'slight low angle',
-        'slight high angle',
-        'profile view',
-        'three quarter view',
-        'front view centered',
-      ];
-      const backgrounds = [
-        'textured dark concrete background',
-        'minimal white seamless studio',
-        'grainy film texture',
-        'matte charcoal backdrop',
-        'soft gradient grey background',
-      ];
+      const accent =
+        options?.accentColor ||
+        this.getRandomItem([
+          'deep red',
+          'burnt orange',
+          'electric purple',
+          'muted gold',
+        ]);
+      const lighting =
+        options?.lighting ||
+        this.getRandomItem(['side lighting dramatic', 'top light cinematic']);
+      const angle =
+        options?.angle ||
+        this.getRandomItem(['slight low angle', 'three quarter view']);
+      const bg =
+        options?.background ||
+        this.getRandomItem([
+          'textured dark concrete background',
+          'matte charcoal backdrop',
+        ]);
 
-      const accent = this.getRandomItem(accentColors);
-      const lighting = this.getRandomItem(lightings);
-      const angle = this.getRandomItem(angles);
-      const bg = this.getRandomItem(backgrounds);
+      let professionalContext = '';
+      if (options?.primaryObject) {
+        professionalContext = `The scene prominently features a ${options.primaryObject} that belongs to the ${jobStr} world.`;
+      }
 
       return `
         Ultra high contrast black and white professional photographic representation. 
         High-end luxury editorial style, sharp focus, cinematic composition.
         ${lighting}, ${angle}, strong dramatic shadows, meticulous textures and high-fidelity details.
         ${bg}.
+        ${professionalContext}
 
         STRICT VISUAL RULES:
         1. NO geometric shapes, NO lines, NO rectangles, NO squares, NO triangles.
@@ -261,7 +319,7 @@ export class AiService {
         
         STRICT COLOR RULE: 
         The image is monochrome black and white. 
-        ONE ACCENT COLOR ONLY: ${accent}, used subtly on a key element of the scene.
+        ONE ACCENT COLOR ONLY: ${accent}, used subtly on a key element of the scene (like the ${options?.primaryObject || 'subject'}).
         
         CRITICAL: High-end campaign execution, luxury branding, ultra clean studio atmosphere.
         No watermark, no random text, no logo.
@@ -579,22 +637,34 @@ REALISM INSTRUCTIONS:
       refinedSubject = await this.refineSubject(params.job);
     }
 
-    const baseStylePrompt = this.getStyleDescription(styleName, refinedSubject);
     const userQuery = (params.userQuery || '').trim();
 
     let refinedQuery = userQuery;
     let isPostureChange = false;
+    let styleOptions: any = {};
 
     // Enable GPT-powered prompt expansion for ALL modes (with or without image)
-    if (userQuery) {
-      const refinedData = await this.refineQuery(
-        userQuery,
-        refinedSubject,
-        styleName,
-      );
-      refinedQuery = refinedData.prompt;
-      isPostureChange = refinedData.isPostureChange;
-    }
+    // Now always refinement to get contextually aware style options (color, object, etc.)
+    const refinedData = await this.refineQuery(
+      userQuery,
+      refinedSubject,
+      styleName,
+    );
+    refinedQuery = refinedData.prompt;
+    isPostureChange = refinedData.isPostureChange;
+    styleOptions = {
+      accentColor: refinedData.accentColor,
+      lighting: refinedData.lighting,
+      angle: refinedData.angle,
+      background: refinedData.background,
+      primaryObject: refinedData.primaryObject,
+    };
+
+    const baseStylePrompt = this.getStyleDescription(
+      styleName,
+      refinedSubject,
+      styleOptions,
+    );
 
     try {
       let finalBuffer: Buffer;
