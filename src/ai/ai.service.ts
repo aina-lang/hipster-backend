@@ -949,40 +949,17 @@ REALISM INSTRUCTIONS:
           );
         }
       } else {
-        // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE
-        this.logger.log(`[generateImage] Strategy: OpenAI GPT-5 (ASYNC)`);
-
-        // 1. Create a PENDING record immediately
-        const pendingGen = await this.saveGeneration(
-          userId,
-          'PENDING',
+        // STABILITY ULTRA TEXT-TO-IMAGE
+        this.logger.log(`[generateImage] Strategy: Stability Ultra (T2I)`);
+        finalBuffer = await this.callUltra(
           finalPrompt,
-          AiGenerationType.IMAGE,
-          {
-            engine: 'openai-tool',
-            model: 'gpt-5',
-            async: true,
-            style: styleName,
-          },
           undefined,
+          undefined,
+          seed,
+          finalNegativePrompt,
+          params.aspectRatio || '1:1',
+          stylePreset,
         );
-
-        // 2. Process in background without awaiting
-        this.processOpenAiToolImageBackground(
-          pendingGen.id,
-          finalPrompt,
-          userId,
-          styleName,
-        );
-
-        // 3. Return immediately with isAsync flag
-        return {
-          id: pendingGen.id,
-          generationId: pendingGen.id,
-          url: null,
-          isAsync: true,
-          status: 'PENDING',
-        };
       }
 
       const fileName = `gen_${Date.now()}.png`;
