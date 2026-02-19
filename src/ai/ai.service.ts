@@ -89,7 +89,9 @@ export class AiService {
     vibrant neon colors (unless specified), bad anatomy, bad proportions,
     amateur, draft, distorted facial features, plastic textures, oversmoothed skin,
     uncanny valley, oversaturated colors, multiple people, low resolution, 
-    photo-collage, heavy makeup, fake eyelashes, distorted gaze.
+    photo-collage, heavy makeup, fake eyelashes, distorted gaze,
+    airbrushed skin, digital over-sharpening, smooth plastic skin texture,
+    perfectly symmetrical face, artificial CGI glow.
   `.trim();
 
   private async refineSubject(job: string): Promise<string> {
@@ -462,15 +464,13 @@ export class AiService {
   }
 
   /**
-   * Experimental: Call OpenAI /v1/responses with image_generation tool
-   * This is based on the GPT-5 tool-calling specification provided.
+   * Call OpenAI /v1/images/generations with gpt-image-1.5
    */
   private async callOpenAiToolImage(prompt: string): Promise<Buffer> {
-    this.logger.log(`[callOpenAiToolImage] Generating with OpenAI Tool API...`);
+    this.logger.log(`[callOpenAiToolImage] Generating with gpt-image-1.5...`);
     const startTime = Date.now();
 
     // Inject "Grain of Reality" and realism constraints directly into the prompt
-    // This overrides the model's tendency for "smooth/plastic" AI perfection.
     const realismEnhancedPrompt = `
 ${prompt}
 
@@ -478,55 +478,49 @@ REALISM INSTRUCTIONS:
 - Hyper-realistic photographic style.
 - Natural skin texture with visible pores and subtle imperfections.
 - Avoid plastic/smooth digital skin or overly perfect symmetry.
-- Correct anatomical details: realistic fingers, hands, body proportions, and facial features.
-- No duplicated limbs, fingers, or facial distortions.
-- Lighting: natural, soft falloff, avoid harsh artificial shadows.
-- Background: realistic, in context of scene; no random floating objects.
-- No text, logos, watermarks, or captions in the image.
-- Add subtle environmental imperfections (dust, small texture variations) to enhance authenticity.
-- Grain of Reality: Include tiny variations in lighting, shadows, and reflections to make it look photographed.
+- Correct anatomical details: realistic fingers, hands, body proportions.
+- Grain of Reality: Include tiny variations in lighting and shadows.
 `.trim();
 
     try {
       const response = await axios.post(
-        'https://api.openai.com/v1/responses',
+        'https://api.openai.com/v1/images/generations',
         {
-          model: 'gpt-5',
-          input: realismEnhancedPrompt,
-          tools: [
-            {
-              type: 'image_generation',
-              background: 'opaque',
-              quality: 'high',
-            },
-          ],
+          model: 'gpt-image-1.5',
+          prompt: realismEnhancedPrompt,
+          n: 1,
+          size: '1024x1024',
+          background: 'opaque',
+          quality: 'high',
+          output_format: 'png',
         },
         {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${this.openAiKey}`,
           },
-          timeout: 300000,
+          timeout: 400000,
         },
       );
 
       this.logger.log(
-        `[callOpenAiToolImage] RECEIVED RESPONSE after ${((Date.now() - startTime) / 1000).toFixed(1)}s`,
+        `[callOpenAiToolImage] RECEIVED RESPONSE after ${(
+          (Date.now() - startTime) /
+          1000
+        ).toFixed(1)}s`,
       );
 
-      const outputs = response.data?.output || [];
-      const imageCall = outputs.find(
-        (o: any) => o.type === 'image_generation_call',
-      );
-
-      if (!imageCall || !imageCall.result) {
+      const b64 = response.data?.data?.[0]?.b64_json;
+      if (!b64) {
         this.logger.error(
-          `[callOpenAiToolImage] No image_generation_call found in output: ${JSON.stringify(response.data)}`,
+          `[callOpenAiToolImage] No b64_json found: ${JSON.stringify(
+            response.data,
+          )}`,
         );
-        throw new Error('No image result from OpenAI Tool API');
+        throw new Error('No image result from OpenAI gpt-image-1.5');
       }
 
-      const buffer = Buffer.from(imageCall.result, 'base64');
+      const buffer = Buffer.from(b64, 'base64');
       this.logger.log(
         `[callOpenAiToolImage] SUCCESS - Received ${buffer.length} bytes`,
       );
@@ -857,12 +851,19 @@ REALISM INSTRUCTIONS:
         'masterpiece, ultra high quality, photorealistic, 8k resolution, highly detailed natural skin texture, sharp focus, soft natural lighting, professional photography, cinematic composition, realistic hair, clear eyes';
 
       // Build the final prompt by combining the base style guide with the refined query.
-      // We keep the baseStylePrompt even if refinedQuery exists to anchor the style.
       const promptBody = refinedQuery
         ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
         : baseStylePrompt;
 
-      const finalPrompt = `STYLE: ${styleName}. ${promptBody} QUALITY: ${qualityTags}`;
+      // REALISM BOOST: Inject hyper-realistic photography triggers
+      const realismTriggers = `
+        photorealistic, 8k, highly detailed human skin texture, visible pores, 
+        natural skin imperfections, subtle film grain, soft natural organic lighting, 
+        candid photography style, sharp focus on eyes, 35mm lens, f/1.8. 
+        NO plastic skin, NO artificial perfection.
+      `.trim();
+
+      const finalPrompt = `STYLE: ${styleName}. ${promptBody} QUALITY: ${realismTriggers} ${qualityTags}`;
 
       let finalNegativePrompt = this.NEGATIVE_PROMPT;
 
@@ -949,17 +950,42 @@ REALISM INSTRUCTIONS:
           );
         }
       } else {
-        // STABILITY ULTRA TEXT-TO-IMAGE
-        this.logger.log(`[generateImage] Strategy: Stability Ultra (T2I)`);
-        finalBuffer = await this.callUltra(
-          finalPrompt,
-          undefined,
-          undefined,
-          seed,
-          finalNegativePrompt,
-          params.aspectRatio || '1:1',
-          stylePreset,
+        // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE (RESTORED ASYNC)
+        this.logger.log(
+          `[generateImage] Strategy: OpenAI GPT-5 (ASYNC REALISM)`,
         );
+
+        // 1. Create a PENDING record immediately
+        const pendingGen = await this.saveGeneration(
+          userId,
+          'PENDING',
+          finalPrompt,
+          AiGenerationType.IMAGE,
+          {
+            engine: 'openai-tool',
+            model: 'gpt-5',
+            async: true,
+            style: styleName,
+          },
+          undefined,
+        );
+
+        // 2. Process in background without awaiting (Realism focus in process helper)
+        this.processOpenAiToolImageBackground(
+          pendingGen.id,
+          finalPrompt,
+          userId,
+          styleName,
+        );
+
+        // 3. Return immediately with isAsync flag
+        return {
+          id: pendingGen.id,
+          generationId: pendingGen.id,
+          url: null,
+          isAsync: true,
+          status: 'PENDING',
+        };
       }
 
       const fileName = `gen_${Date.now()}.png`;
