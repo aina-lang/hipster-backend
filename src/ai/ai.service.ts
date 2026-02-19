@@ -461,6 +461,103 @@ export class AiService {
     }
   }
 
+  /**
+   * Experimental: Call OpenAI /v1/responses with image_generation tool
+   * This is based on the GPT-5 tool-calling specification provided.
+   */
+  private async callOpenAiToolImage(prompt: string): Promise<Buffer> {
+    this.logger.log(`[callOpenAiToolImage] Generating with OpenAI Tool API...`);
+    try {
+      const response = await axios.post(
+        'https://api.openai.com/v1/responses',
+        {
+          model: 'gpt-5',
+          input: prompt,
+          tools: [
+            {
+              type: 'image_generation',
+              background: 'opaque',
+              quality: 'high',
+            },
+          ],
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.openAiKey}`,
+          },
+        },
+      );
+
+      const outputs = response.data?.output || [];
+      const imageCall = outputs.find(
+        (o: any) => o.type === 'image_generation_call',
+      );
+
+      if (!imageCall || !imageCall.result) {
+        this.logger.error(
+          `[callOpenAiToolImage] No image_generation_call found in output: ${JSON.stringify(response.data)}`,
+        );
+        throw new Error('No image result from OpenAI Tool API');
+      }
+
+      const buffer = Buffer.from(imageCall.result, 'base64');
+      this.logger.log(
+        `[callOpenAiToolImage] SUCCESS - Received ${buffer.length} bytes`,
+      );
+      return buffer;
+    } catch (error: any) {
+      const errorMsg = error.response?.data
+        ? JSON.stringify(error.response.data)
+        : error.message;
+      this.logger.error(`[callOpenAiToolImage] FAILED: ${errorMsg}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Public test method for the OpenAI Tool image generation
+   */
+  async generateOpenAiTestImage(prompt: string, userId: number) {
+    this.logger.log(
+      `[generateOpenAiTestImage] START - User: ${userId}, Prompt: ${prompt}`,
+    );
+
+    try {
+      const buffer = await this.callOpenAiToolImage(prompt);
+      const fileName = `gen_openai_${Date.now()}.png`;
+      const filePath = path.join(
+        __dirname,
+        '../../../../uploads/ai-generations',
+        fileName,
+      );
+
+      if (!fs.existsSync(path.dirname(filePath))) {
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      }
+      fs.writeFileSync(filePath, buffer);
+
+      const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+      const saved = await this.saveGeneration(
+        userId,
+        'OPENAI_TOOL_GENERATION',
+        prompt,
+        AiGenerationType.IMAGE,
+        { engine: 'openai-tool', model: 'gpt-5' },
+        imageUrl,
+      );
+
+      return {
+        url: imageUrl,
+        generationId: saved?.id,
+      };
+    } catch (error) {
+      this.logger.error(`[generateOpenAiTestImage] FAILED: ${error.message}`);
+      throw error;
+    }
+  }
+
   private async callUltra(
     prompt: string,
     image?: Buffer,
@@ -774,8 +871,9 @@ export class AiService {
           );
         }
       } else {
-        // EXCLUSIVE ULTRA TEXT-TO-IMAGE
-        this.logger.log(`[generateImage] Strategy: Ultra Text-to-Image`);
+        // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE
+        this.logger.log(`[generateImage] Strategy: OpenAI GPT-5 Tool`);
+        /*
         finalBuffer = await this.callUltra(
           finalPrompt,
           undefined,
@@ -785,6 +883,8 @@ export class AiService {
           undefined,
           stylePreset,
         );
+        */
+        finalBuffer = await this.callOpenAiToolImage(finalPrompt);
       }
 
       const fileName = `gen_${Date.now()}.png`;
@@ -800,7 +900,7 @@ export class AiService {
 
       const saved = await this.saveGeneration(
         userId,
-        file ? 'IMAGE_EDIT_SEARCH_AND_REPLACE' : 'TEXT_TO_IMAGE_ULTRA',
+        file ? 'IMAGE_EDIT_SEARCH_AND_REPLACE' : 'OPENAI_TOOL_TEXT_TO_IMAGE',
         finalPrompt,
         AiGenerationType.IMAGE,
         {
