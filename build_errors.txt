@@ -1,0 +1,5 @@
+src/ai/ai.service.ts(610,11): error TS2322: Type 'string' is not assignable to type '(() => string) | _QueryDeepPartialEntity<unknown>[] | readonly _QueryDeepPartialEntity<unknown>[] | _QueryDeepPartialEntity<any>'.
+src/ai/ai.service.ts(611,11): error TS2322: Type 'string' is not assignable to type '(() => string) | _QueryDeepPartialEntity<unknown>[] | readonly _QueryDeepPartialEntity<unknown>[] | _QueryDeepPartialEntity<any>'.
+src/ai/ai.service.ts(612,11): error TS2322: Type 'string' is not assignable to type '(() => string) | _QueryDeepPartialEntity<unknown>[] | readonly _QueryDeepPartialEntity<unknown>[] | _QueryDeepPartialEntity<any>'.
+src/ai/ai.service.ts(613,11): error TS2322: Type 'boolean' is not assignable to type '(() => string) | _QueryDeepPartialEntity<unknown>[] | readonly _QueryDeepPartialEntity<unknown>[] | _QueryDeepPartialEntity<any>'.
+src/ai/ai.service.ts(614,11): error TS2322: Type 'string' is not assignable to type '(() => string) | _QueryDeepPartialEntity<unknown>[] | readonly _QueryDeepPartialEntity<unknown>[] | _QueryDeepPartialEntity<any>'.

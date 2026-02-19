@@ -473,7 +473,6 @@ export class AiService {
     // This overrides the model's tendency for "smooth/plastic" AI perfection.
     const realismEnhancedPrompt = `
       ${prompt}
-      
       REALISM INSTRUCTIONS:
       - Add subtle natural film grain and organic textures.
       - AVOID: smooth plastic skin, artificial perfection, digital over-sharpening.
@@ -574,6 +573,59 @@ export class AiService {
     } catch (error) {
       this.logger.error(`[generateOpenAiTestImage] FAILED: ${error.message}`);
       throw error;
+    }
+  }
+
+  /**
+   * Background processor for slow OpenAI Tool generations
+   */
+  private async processOpenAiToolImageBackground(
+    generationId: number,
+    prompt: string,
+    userId: number,
+    styleName: string,
+  ) {
+    this.logger.log(
+      `[processOpenAiToolImageBackground] Started for Gen: ${generationId}`,
+    );
+    try {
+      const buffer = await this.callOpenAiToolImage(prompt);
+      const fileName = `gen_openai_async_${Date.now()}.png`;
+      const uploadPath = path.join(process.cwd(), 'uploads', 'ai-generations');
+
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+
+      const filePath = path.join(uploadPath, fileName);
+      fs.writeFileSync(filePath, buffer);
+
+      const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+      // Update the record with the final image and result text
+      await this.aiGenRepo.update(generationId, {
+        imageUrl,
+        result: 'OPENAI_TOOL_TEXT_TO_IMAGE',
+        attributes: {
+          engine: 'openai-tool',
+          model: 'gpt-5',
+          style: styleName,
+          async: true,
+          completedAt: new Date().toISOString(),
+        },
+      } as any);
+
+      this.logger.log(
+        `[processOpenAiToolImageBackground] SUCCESS - Gen: ${generationId}, URL: ${imageUrl}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `[processOpenAiToolImageBackground] FAILED for Gen: ${generationId} - ${error.message}`,
+      );
+      // Update record to indicate error
+      await this.aiGenRepo.update(generationId, {
+        result: `ERROR: ${error.message}`,
+      } as any);
     }
   }
 
@@ -891,19 +943,39 @@ export class AiService {
         }
       } else {
         // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE
-        this.logger.log(`[generateImage] Strategy: OpenAI GPT-5 Tool`);
-        /*
-        finalBuffer = await this.callUltra(
+        this.logger.log(`[generateImage] Strategy: OpenAI GPT-5 (ASYNC)`);
+
+        // 1. Create a PENDING record immediately
+        const pendingGen = await this.saveGeneration(
+          userId,
+          'PENDING',
           finalPrompt,
+          AiGenerationType.IMAGE,
+          {
+            engine: 'openai-tool',
+            model: 'gpt-5',
+            async: true,
+            style: styleName,
+          },
           undefined,
-          undefined,
-          seed,
-          finalNegativePrompt,
-          undefined,
-          stylePreset,
         );
-        */
-        finalBuffer = await this.callOpenAiToolImage(finalPrompt);
+
+        // 2. Process in background without awaiting
+        this.processOpenAiToolImageBackground(
+          pendingGen.id,
+          finalPrompt,
+          userId,
+          styleName,
+        );
+
+        // 3. Return immediately with isAsync flag
+        return {
+          id: pendingGen.id,
+          generationId: pendingGen.id,
+          url: null,
+          isAsync: true,
+          status: 'PENDING',
+        };
       }
 
       const fileName = `gen_${Date.now()}.png`;
