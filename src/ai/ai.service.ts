@@ -871,8 +871,9 @@ export class AiService {
           );
         }
       } else {
-        // EXCLUSIVE ULTRA TEXT-TO-IMAGE
-        this.logger.log(`[generateImage] Strategy: Ultra Text-to-Image`);
+        // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE
+        this.logger.log(`[generateImage] Strategy: OpenAI GPT-5 Tool`);
+        /*
         finalBuffer = await this.callUltra(
           finalPrompt,
           undefined,
@@ -882,6 +883,8 @@ export class AiService {
           undefined,
           stylePreset,
         );
+        */
+        finalBuffer = await this.callOpenAiToolImage(finalPrompt);
       }
 
       const fileName = `gen_${Date.now()}.png`;
@@ -897,7 +900,7 @@ export class AiService {
 
       const saved = await this.saveGeneration(
         userId,
-        file ? 'IMAGE_EDIT_SEARCH_AND_REPLACE' : 'TEXT_TO_IMAGE_ULTRA',
+        file ? 'IMAGE_EDIT_SEARCH_AND_REPLACE' : 'OPENAI_TOOL_TEXT_TO_IMAGE',
         finalPrompt,
         AiGenerationType.IMAGE,
         {
