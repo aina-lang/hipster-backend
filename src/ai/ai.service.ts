@@ -19,7 +19,6 @@ import {
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private openai: OpenAI;
-  private readonly stabilityApiKey: string;
   private readonly openAiKey: string;
 
   constructor(
@@ -30,8 +29,6 @@ export class AiService {
     private aiGenRepo: Repository<AiGeneration>,
   ) {
     this.openAiKey = this.configService.get<string>('OPENAI_API_KEY');
-    this.stabilityApiKey = this.configService.get<string>('STABLE_API_KEY');
-
     this.openai = new OpenAI({
       apiKey: this.openAiKey,
     });
@@ -134,22 +131,24 @@ export class AiService {
         messages: [
           {
             role: 'system',
-            content: `You are an expert stable diffusion prompt engineer. 
-            Transform the user's short request into a detailed, descriptive scene for an image-to-image or text-to-image generation.
+            content: `You are an expert image prompt engineer. 
+            Transform the user's request into a detailed, descriptive scene for an image generation.
             
-            SUBJECT RULE: The main figure in the image MUST be a professional representation of the user's job: "${job}". 
-            Never use generic terms like "hero", "adventurer", or "figure" if the job is specific. 
-            If the job is "Dentist", the scene must feature a dentist.
+            SUBJECT FLEXIBILITY: 
+            - If the user provides a specific prompt (e.g., "a stethoscope on a table", "a sunset over a city"), follow it EXCLUSIVELY. Do NOT add a person unless requested.
+            - If the user provides NO prompt (empty or generic), invent a professional visual scene related to the job: "${job}". 
+            - This scene can be a workspace, professional tools, a relevant object, or an environment.
+            - Only include a person if it's the most logical way to demonstrate the job's activity or if requested.
             
-            STYLE RULE: You MUST apply the artistic characteristics of the chosen Style ("${styleName}")—such as lighting, mood, background, and textures—to the scene. 
-            CRITICAL: Do NEVER mention the style name ("${styleName}") in the output prompt. The prompt should describe the VISUALS of the style, not the label.
+            STYLE RULE: You MUST apply the artistic characteristics of "${styleName}"—lighting, mood, background—to the scene. 
+            CRITICAL: NEVER mention the style name ("${styleName}") in the output. Describe the VISUALS of the style.
             
-            POSTURE RULE: If the request implies a change in posture (e.g., "sitting", "walking", "holding a glass"), describe the body position vividly.
+            POSTURE RULE: If a person is involved and the request implies action, describe the body position vividly.
             
             OUTPUT FORMAT: Return ONLY a JSON object:
             {
-              "prompt": "expanded English prompt focusing strictly on ${job} and visual characteristics",
-              "isPostureChange": boolean // true if user wants a different body position than a standard portrait
+              "prompt": "expanded English prompt focusing on the visual scene",
+              "isPostureChange": boolean
             }`,
           },
           { role: 'user', content: query },
@@ -234,7 +233,7 @@ export class AiService {
         'slight high angle',
         'profile view',
         'three quarter view',
-        'centered frontal portrait',
+        'front view centered',
       ];
       const backgrounds = [
         'textured dark concrete background',
@@ -250,9 +249,9 @@ export class AiService {
       const bg = this.getRandomItem(backgrounds);
 
       return `
-        Ultra high contrast black and white professional photographic portrait of ${jobStr}. 
-        High-end fashion editorial style, sharp focus, cinematic composition.
-        ${lighting}, ${angle}, strong dramatic shadows, meticulous facial details and skin texture.
+        Ultra high contrast black and white professional photographic representation. 
+        High-end luxury editorial style, sharp focus, cinematic composition.
+        ${lighting}, ${angle}, strong dramatic shadows, meticulous textures and high-fidelity details.
         ${bg}.
 
         STRICT VISUAL RULES:
@@ -262,94 +261,21 @@ export class AiService {
         
         STRICT COLOR RULE: 
         The image is monochrome black and white. 
-        ONE ACCENT COLOR ONLY: ${accent}, used subtly ONLY on a realistic object (e.g., a tie, a piece of clothing, or a small environmental detail).
+        ONE ACCENT COLOR ONLY: ${accent}, used subtly on a key element of the scene.
         
-        CRITICAL: The face must be 100% visible, expressive, and realistically detailed. 
-        High fashion magazine campaign, luxury branding, ultra clean studio execution.
+        CRITICAL: High-end campaign execution, luxury branding, ultra clean studio atmosphere.
         No watermark, no random text, no logo.
       `.trim();
     }
 
     if (styleName === 'Hero Studio') {
-      return `Heroic cinematic studio shot centered on ${jobStr}. Dark premium background, dramatic lighting.`;
+      return `Heroic cinematic studio shot centered on the subject. Dark premium background, dramatic lighting, sharp focus.`;
     }
     if (styleName === 'Minimal Studio') {
-      return `Minimal clean studio shot centered on ${jobStr}. Soft natural light, clean white/neutral background.`;
-    }
-
-    // Standard Stability Style Presets
-    const stabilityPresets = [
-      '3d-model',
-      'analog-film',
-      'anime',
-      'cinematic',
-      'comic-book',
-      'digital-art',
-      'enhance',
-      'fantasy-art',
-      'isometric',
-      'line-art',
-      'low-poly',
-      'modeling-compound',
-      'neon-punk',
-      'origami',
-      'photographic',
-      'pixel-art',
-      'tile-texture',
-    ];
-
-    if (stabilityPresets.includes(styleName)) {
-      return `Professional high-end photographic representation of ${jobStr} perfectly integrated into a detailed ${styleName} environment. Authentic textures, natural atmospheric lighting, and meticulous attention to ${styleName} aesthetic details.`;
+      return `Minimal clean studio shot centered on the subject. Soft natural light, clean white/neutral background, elegant composition.`;
     }
 
     return `Professional high-quality representation of ${jobStr}. Style: ${styleName}.`;
-  }
-
-  /* --------------------- STABILITY API TOOLS --------------------- */
-
-  private async callStabilityApi(
-    endpoint: string,
-    formData: NodeFormData,
-  ): Promise<Buffer> {
-    const apiKey = this.stabilityApiKey;
-    if (!apiKey) throw new Error('Missing STABILITY API KEY');
-
-    const baseUrl = endpoint.startsWith('v1/')
-      ? 'https://api.stability.ai'
-      : 'https://api.stability.ai/v2beta';
-
-    const fullUrl = `${baseUrl}/${endpoint}`;
-    this.logger.log(`[callStabilityApi] POST ${fullUrl}`);
-
-    try {
-      const response = await axios.post(fullUrl, formData, {
-        headers: {
-          ...formData.getHeaders(),
-          Authorization: `Bearer ${apiKey}`,
-          Accept: 'image/*',
-          'Stability-Client-ID': 'Hypster-App',
-          'Stability-Client-Version': '1.0.0',
-        },
-        responseType: 'arraybuffer',
-      });
-      return Buffer.from(response.data);
-    } catch (error: any) {
-      if (error.response && error.response.data) {
-        try {
-          const errorData = JSON.parse(
-            Buffer.from(error.response.data).toString(),
-          );
-          this.logger.error(
-            `[callStabilityApi] FAILED: ${JSON.stringify(errorData)}`,
-          );
-        } catch (e) {
-          this.logger.error(
-            `[callStabilityApi] FAILED (raw): ${Buffer.from(error.response.data).toString()}`,
-          );
-        }
-      }
-      throw error;
-    }
   }
 
   private async uploadToOpenAiFiles(image: Buffer): Promise<string> {
@@ -630,180 +556,6 @@ REALISM INSTRUCTIONS:
     }
   }
 
-  private async callUltra(
-    prompt: string,
-    image?: Buffer,
-    strength?: number,
-    seed?: number,
-    negativePrompt?: string,
-    aspectRatio?: string,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    const formData = new NodeFormData();
-    formData.append('prompt', prompt);
-    formData.append('output_format', 'png');
-
-    if (image) {
-      formData.append('image', image, {
-        filename: 'source.png',
-        contentType: 'image/png',
-      });
-      if (strength !== undefined) {
-        formData.append('strength', strength.toString());
-      }
-    } else if (aspectRatio) {
-      formData.append('aspect_ratio', aspectRatio);
-    }
-
-    if (seed) formData.append('seed', seed.toString());
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (stylePreset) formData.append('style_preset', stylePreset);
-
-    return this.callStabilityApi('stable-image/generate/ultra', formData);
-  }
-
-  /**
-   * Appelle l'API Stability Structure pour le contrôle par la structure
-   */
-  private async callStructure(
-    prompt: string,
-    image: Buffer,
-    controlStrength = 0.7,
-    seed?: number,
-    negativePrompt?: string,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    const formData = new NodeFormData();
-    formData.append('prompt', prompt);
-    formData.append('image', image, {
-      filename: 'source.png',
-      contentType: 'image/png',
-    });
-    formData.append('control_strength', controlStrength.toString());
-    formData.append('output_format', 'png');
-
-    if (seed) formData.append('seed', seed.toString());
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (stylePreset) formData.append('style_preset', stylePreset);
-
-    return this.callStabilityApi('stable-image/control/structure', formData);
-  }
-
-  /**
-   * Appelle l'API Stability Outpaint pour étendre une image
-   */
-  private async callOutpaint(
-    image: Buffer,
-    prompt?: string,
-    directions: {
-      left?: number;
-      right?: number;
-      up?: number;
-      down?: number;
-    } = {},
-    creativity = 0.5,
-    seed?: number,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    const formData = new NodeFormData();
-    formData.append('image', image, {
-      filename: 'source.png',
-      contentType: 'image/png',
-    });
-
-    if (prompt) formData.append('prompt', prompt);
-
-    // API requires at least one direction > 0
-    const { left = 0, right = 0, up = 0, down = 0 } = directions;
-    const finalDown =
-      left === 0 && right === 0 && up === 0 && down === 0 ? 1 : down;
-
-    if (left > 0) formData.append('left', left.toString());
-    if (right > 0) formData.append('right', right.toString());
-    if (up > 0) formData.append('up', up.toString());
-    if (finalDown > 0) formData.append('down', finalDown.toString());
-
-    formData.append('creativity', creativity.toString());
-    formData.append('output_format', 'png');
-
-    if (seed) formData.append('seed', seed.toString());
-    if (stylePreset) formData.append('style_preset', stylePreset);
-
-    return this.callStabilityApi('stable-image/edit/outpaint', formData);
-  }
-
-  /**
-   * Appelle l'API Stability Search and Replace
-   */
-  private async callSearchAndReplace(
-    image: Buffer,
-    prompt: string,
-    searchPrompt: string,
-    negativePrompt?: string,
-    seed?: number,
-    stylePreset?: string,
-  ): Promise<Buffer> {
-    const formData = new NodeFormData();
-    formData.append('image', image, {
-      filename: 'source.png',
-      contentType: 'image/png',
-    });
-    formData.append('prompt', prompt);
-    formData.append('search_prompt', searchPrompt);
-    formData.append('output_format', 'png');
-
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
-    if (seed) formData.append('seed', seed.toString());
-    if (stylePreset) formData.append('style_preset', stylePreset);
-
-    return this.callStabilityApi(
-      'stable-image/edit/search-and-replace',
-      formData,
-    );
-  }
-
-  /**
-   * Extrait le search_prompt et le refined_prompt pour Search & Replace
-   */
-  private async refineSearchAndReplace(
-    query: string,
-    styleName: string,
-  ): Promise<{ searchPrompt: string; refinedPrompt: string }> {
-    try {
-      const resp = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are an expert image editor. 
-            Analyze the user request for an object replacement command.
-            Identify:
-            1. The specific object to be FOUND and REPLACED (search_prompt). Use simple, clear English.
-            2. The detailed description of what it should be REPLACED WITH (refined_prompt). Integrate the style "${styleName}".
-
-            CRITICAL: Both "search_prompt" and "refined_prompt" MUST be in English, regardless of the input language.
-
-            OUTPUT FORMAT: Return ONLY a JSON object:
-            {
-              "search_prompt": "object to find (in English)",
-              "refined_prompt": "detailed replacement description (in English)"
-            }
-`,
-          },
-          { role: 'user', content: query },
-        ],
-        response_format: { type: 'json_object' },
-      });
-      const data = JSON.parse(resp.choices[0]?.message?.content || '{}');
-      return {
-        searchPrompt: (data.search_prompt || '').trim(),
-        refinedPrompt: (data.refined_prompt || query).trim(),
-      };
-    } catch (e) {
-      return { searchPrompt: '', refinedPrompt: query };
-    }
-  }
-
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -887,68 +639,12 @@ REALISM INSTRUCTIONS:
         `.trim();
       }
 
-      // Custom styles specific to our app that shouldn't be passed as "style_preset" to Stability
-      const customStyles = ['Premium', 'Hero Studio', 'Minimal Studio'];
-      const isCustomStyle = customStyles.includes(styleName);
-
-      // Stability expects presets in kebab-case (e.g., '3D Model' -> '3d-model', 'Cinematic' -> 'cinematic')
-      const stylePreset = isCustomStyle
-        ? undefined
-        : styleName.toLowerCase().replace(/\s+/g, '-');
-
       if (file) {
-        let strategy = 'Stability Ultra (Edit)';
-        const { searchPrompt, refinedPrompt } =
-          await this.refineSearchAndReplace(userQuery, styleName);
-
-        // Si on a un searchPrompt clair, on tente Search and Replace
-        if (searchPrompt && searchPrompt.length > 0) {
-          this.logger.log(
-            `[generateImage] Strategy: Stability Search and Replace`,
-          );
-          this.logger.log(
-            `[generateImage] Search: "${searchPrompt}", Replace With: "${refinedPrompt}"`,
-          );
-
-          try {
-            finalBuffer = await this.callSearchAndReplace(
-              file.buffer,
-              refinedPrompt,
-              searchPrompt,
-              finalNegativePrompt,
-              seed,
-              stylePreset,
-            );
-          } catch (e) {
-            this.logger.warn(
-              `[generateImage] Search/Replace FAILED, falling back to Ultra: ${e.message}`,
-            );
-            strategy = 'Ultra Fallback';
-            finalBuffer = await this.callUltra(
-              finalPrompt,
-              file.buffer,
-              params.strength ?? 0.35, // Slightly higher default strength for stylized edits
-              seed,
-              finalNegativePrompt,
-              undefined,
-              stylePreset,
-            );
-          }
-        } else {
-          // Sinon, on fait une édition classique via Ultra (I2I)
-          this.logger.log(
-            `[generateImage] Strategy: Stability Ultra (General Stylization)`,
-          );
-          finalBuffer = await this.callUltra(
-            finalPrompt,
-            file.buffer,
-            params.strength ?? 0.35,
-            seed,
-            finalNegativePrompt,
-            undefined,
-            stylePreset,
-          );
-        }
+        // OPENAI IMAGE EDIT (I2I)
+        this.logger.log(
+          `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5)`,
+        );
+        finalBuffer = await this.callOpenAiImageEdit(file.buffer, finalPrompt);
       } else {
         // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE (RESTORED ASYNC)
         this.logger.log(
@@ -1001,7 +697,7 @@ REALISM INSTRUCTIONS:
 
       const saved = await this.saveGeneration(
         userId,
-        file ? 'IMAGE_EDIT_SEARCH_AND_REPLACE' : 'OPENAI_TOOL_TEXT_TO_IMAGE',
+        file ? 'OPENAI_IMAGE_EDIT' : 'OPENAI_TOOL_TEXT_TO_IMAGE',
         finalPrompt,
         AiGenerationType.IMAGE,
         {
