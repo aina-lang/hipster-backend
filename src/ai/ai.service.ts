@@ -678,10 +678,20 @@ REALISM INSTRUCTIONS:
                 );
               }
 
-              // 2. Final Image
-              if (event.type === 'response.image_generation_call.done') {
-                const b64 = event.response?.output?.[0]?.image_b64;
-                if (!b64) continue;
+              // 2. Final Image (Generic Done or Specific Image Call Done)
+              if (
+                event.type === 'response.done' ||
+                event.type === 'response.image_generation_call.done'
+              ) {
+                const output = event.response?.output || event.output || [];
+                const b64 =
+                  output[0]?.image_b64 || output[0]?.partial_image_b64;
+                if (!b64) {
+                  // If it's generic response.done, the image might be in a different field
+                  // or we might already have the final partial.
+                  if (event.type === 'response.done') resolve();
+                  continue;
+                }
 
                 const imgBuffer = Buffer.from(b64, 'base64');
                 const fileName = `gen_final_${generationId}_${Date.now()}.png`;
