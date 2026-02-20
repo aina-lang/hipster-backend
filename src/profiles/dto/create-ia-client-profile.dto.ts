@@ -83,7 +83,8 @@ export class CreateIaClientProfileDto {
   brandingColor?: string;
 
   @IsOptional()
-  @IsEmail()
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  @IsEmail({}, { message: "Format d'email invalide" })
   professionalEmail?: string;
 
   @IsOptional()
@@ -127,6 +128,7 @@ export class CreateIaClientProfileDto {
   websiteUrl?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsString()
   logoUrl?: string;
 
