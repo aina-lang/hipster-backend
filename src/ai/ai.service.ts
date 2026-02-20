@@ -1075,7 +1075,19 @@ REALISM INSTRUCTIONS:
           userId,
         );
 
-        // Download the image and convert it to base64
+        // Check if generation is async (url is null but has generationId)
+        if (imageResult.isAsync) {
+          this.logger.log('[chat] Async image generation detected, returning immediately with generationId');
+          return {
+            type: 'image',
+            content: `Image en cours de génération...`,
+            url: null,
+            generationId: imageResult.generationId,
+            isAsync: true,
+          };
+        }
+
+        // Download the image and convert it to base64 (sync response only)
         let imageData = '';
         try {
           const resp = await axios.get(imageResult.url, {
