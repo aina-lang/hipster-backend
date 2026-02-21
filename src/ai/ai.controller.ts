@@ -160,28 +160,7 @@ export class AiController {
     @Body()
     body: {
       params: any;
-      style:
-        | 'Premium'
-        | 'Hero Studio'
-        | 'Minimal Studio'
-        | 'None'
-        | '3d-model'
-        | 'analog-film'
-        | 'anime'
-        | 'cinematic'
-        | 'comic-book'
-        | 'digital-art'
-        | 'enhance'
-        | 'fantasy-art'
-        | 'isometric'
-        | 'line-art'
-        | 'low-poly'
-        | 'modeling-compound'
-        | 'neon-punk'
-        | 'origami'
-        | 'photographic'
-        | 'pixel-art'
-        | 'tile-texture';
+      style: 'Premium' | 'Hero Studio' | 'Minimal Studio' | 'None';
       seed?: number;
     },
     @Req() req,
@@ -233,7 +212,9 @@ export class AiController {
     }
   }
 
-  @ApiOperation({ summary: 'Régénérer une image basée sur une génération précédente' })
+  @ApiOperation({
+    summary: 'Régénérer une image basée sur une génération précédente',
+  })
   @ResponseMessage('Image régénérée avec succès')
   @Post('regenerate')
   @Roles(Role.AI_USER)
