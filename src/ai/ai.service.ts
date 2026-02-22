@@ -112,8 +112,33 @@ export class AiService {
       return 'Sans titre';
     }
 
+    let textToProcess = prompt;
+
+    // Detect if prompt is a JSON representation of chat messages
+    if (prompt.trim().startsWith('[') || prompt.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(prompt);
+        if (Array.isArray(parsed)) {
+          // Find the first user message
+          const firstUserMessage = parsed.find((m) => m.role === 'user');
+          if (firstUserMessage && firstUserMessage.content) {
+            textToProcess = firstUserMessage.content;
+          } else if (parsed.length > 0 && parsed[0].content) {
+            textToProcess = parsed[0].content;
+          }
+        } else if (parsed.prompt) {
+          textToProcess = parsed.prompt;
+        }
+      } catch (e) {
+        // Not valid JSON, continue with original prompt
+      }
+    }
+
     // Clean the prompt text
-    const cleaned = prompt.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+    const cleaned = textToProcess
+      .replace(/\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     const maxLength = 60;
 
     // For different types, potentially customize behavior
@@ -126,17 +151,7 @@ export class AiService {
     if (type === AiGenerationType.IMAGE) {
       // For images, prepend the style if available
       let title = cleaned.substring(0, maxLength);
-      if (attributes?.style) {
-        // Don't prepend style here, just use the prompt naturally
-        // Style is in attributes anyway
-      }
       return title.length < cleaned.length ? title + '...' : title;
-    }
-
-    if (type === AiGenerationType.TEXT) {
-      // Use the query/prompt directly
-      const substring = cleaned.substring(0, maxLength);
-      return substring.length < cleaned.length ? substring + '...' : substring;
     }
 
     // Default: just use first part of prompt
@@ -1285,11 +1300,16 @@ REALISM INSTRUCTIONS:
           savedMessages.push({
             role: 'assistant',
             content: "Voici l'image générée",
+            type: 'image',
+            url: imageResult.url,
           });
         } else if (imageResult.isAsync) {
           savedMessages.push({
             role: 'assistant',
             content: 'Image en cours de génération...',
+            type: 'image',
+            isAsync: true,
+            generationId: imageResult.generationId,
           });
         }
 
