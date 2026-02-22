@@ -53,17 +53,45 @@ export class AiService {
     type: AiGenerationType,
     attributes: any = {},
     imageUrl?: string,
+    existingId?: number,
   ) {
     try {
-      const gen = this.aiGenRepo.create({
-        user: { id: userId } as any,
-        result,
-        prompt,
-        type,
-        attributes,
-        imageUrl,
-        title: this.generateSmartTitle(prompt, type, attributes),
-      });
+      let gen: AiGeneration;
+      if (existingId) {
+        gen = await this.aiGenRepo.findOne({ where: { id: existingId } });
+        if (gen) {
+          gen.result = result;
+          gen.prompt = prompt;
+          gen.imageUrl = imageUrl || gen.imageUrl;
+          gen.attributes = attributes;
+        } else {
+          gen = this.aiGenRepo.create({
+            user: { id: userId } as any,
+            result,
+            prompt,
+            type:
+              type === AiGenerationType.TEXT || type === AiGenerationType.IMAGE
+                ? AiGenerationType.CHAT
+                : type,
+            attributes,
+            imageUrl,
+            title: this.generateSmartTitle(prompt, type, attributes),
+          });
+        }
+      } else {
+        gen = this.aiGenRepo.create({
+          user: { id: userId } as any,
+          result,
+          prompt,
+          type:
+            type === AiGenerationType.TEXT || type === AiGenerationType.IMAGE
+              ? AiGenerationType.CHAT
+              : type,
+          attributes,
+          imageUrl,
+          title: this.generateSmartTitle(prompt, type, attributes),
+        });
+      }
       return await this.aiGenRepo.save(gen);
     } catch (error) {
       this.logger.error(`[saveGeneration] Error: ${error.message}`);
@@ -667,6 +695,7 @@ REALISM INSTRUCTIONS:
     userId: number,
     file?: Express.Multer.File,
     seed?: number,
+    existingConversationId?: number,
   ) {
     const defaultStyle = 'Hero Studio';
     const styleName = style || params.style || defaultStyle;
@@ -769,7 +798,7 @@ REALISM INSTRUCTIONS:
           userId,
           'PENDING',
           finalPrompt,
-          AiGenerationType.IMAGE,
+          AiGenerationType.CHAT,
           {
             engine: 'openai-tool',
             model: 'gpt-5',
@@ -777,6 +806,7 @@ REALISM INSTRUCTIONS:
             style: styleName,
           },
           undefined,
+          existingConversationId,
         );
 
         // 2. Process in background without awaiting (Realism focus in process helper)
@@ -811,20 +841,25 @@ REALISM INSTRUCTIONS:
       const saved = await this.saveGeneration(
         userId,
         file ? 'OPENAI_IMAGE_EDIT' : 'OPENAI_TOOL_TEXT_TO_IMAGE',
-        finalPrompt,
-        AiGenerationType.IMAGE,
+        JSON.stringify([
+          { role: 'user', content: finalPrompt },
+          { role: 'assistant', content: "Voici l'image générée" },
+        ]),
+        AiGenerationType.CHAT,
         {
           style: styleName,
           seed,
           hasSourceImage: !!file,
         },
         imageUrl,
+        existingConversationId,
       );
 
       this.logger.log(`[generateImage] SUCCESS - URL: ${imageUrl}`);
       return {
         url: imageUrl,
         generationId: saved?.id,
+        conversationId: saved?.id.toString(),
         seed: seed || 0,
       };
     } catch (error) {
@@ -833,11 +868,12 @@ REALISM INSTRUCTIONS:
     }
   }
 
-  /**
-   * Generate an image in FREE MODE from a text prompt
-   * No reference image, purely text-to-image generation
-   */
-  async generateFreeImage(params: any, userId: number, seed?: number) {
+  async generateFreeImage(
+    params: any,
+    userId: number,
+    seed?: number,
+    existingConversationId?: number,
+  ) {
     this.logger.log(
       `[generateFreeImage] START - User: ${userId}, Prompt: ${params.prompt || params.query}`,
     );
@@ -853,6 +889,7 @@ REALISM INSTRUCTIONS:
         userId,
         undefined, // No file for free mode
         seed,
+        existingConversationId,
       );
 
       this.logger.log(`[generateFreeImage] SUCCESS - URL: ${result.url}`);
@@ -863,7 +900,12 @@ REALISM INSTRUCTIONS:
     }
   }
 
-  async generateText(params: any, type: string, userId: number) {
+  async generateText(
+    params: any,
+    type: string,
+    userId: number,
+    existingConversationId?: number,
+  ) {
     this.logger.log(
       `[generateText] START - User: ${userId}, Type: ${type}, Params: ${JSON.stringify(params)}`,
     );
@@ -898,14 +940,36 @@ REALISM INSTRUCTIONS:
         baseType = type as AiGenerationType;
       }
 
-      const saved = await this.saveGeneration(userId, result, '', baseType, {
-        ...params,
-        subType: type,
-      });
+      const saved = await this.saveGeneration(
+        userId,
+        result,
+        JSON.stringify([
+          {
+            role: 'user',
+            content:
+              params.job ||
+              params.topic ||
+              params.userQuery ||
+              'Génération de texte',
+          },
+          { role: 'assistant', content: result },
+        ]),
+        AiGenerationType.CHAT,
+        {
+          ...params,
+          subType: type,
+        },
+        undefined,
+        existingConversationId,
+      );
       this.logger.log(
         `[generateText] SUCCESS - Generated ${result.length} chars, ID: ${saved?.id}`,
       );
-      return { content: result, generationId: saved?.id };
+      return {
+        content: result,
+        generationId: saved?.id,
+        conversationId: saved?.id.toString(),
+      };
     } catch (error) {
       this.logger.error(`[generateText] Error: ${error.message}`);
       throw error;
@@ -1171,6 +1235,14 @@ REALISM INSTRUCTIONS:
       `[chat] START - User: ${userId}, Messages: ${messages.length}, ConversationId: ${conversationId}`,
     );
     try {
+      // 1. Load or initialize the conversation record
+      let conversation: AiGeneration | null = null;
+      if (conversationId) {
+        conversation = await this.aiGenRepo.findOne({
+          where: { id: parseInt(conversationId), user: { id: userId } },
+        });
+      }
+
       // Get the last user message to detect request type
       const lastUserMessage =
         messages
@@ -1189,18 +1261,36 @@ REALISM INSTRUCTIONS:
         const imageResult = await this.generateFreeImage(
           { prompt: lastUserMessage },
           userId,
+          undefined,
+          conversation?.id, // Use existing ID if available
         );
 
-        // Check if generation is async (url is null but has generationId)
+        // Update conversation if it exists, or create a new one (CHAT type)
+        // If imageResult already created/updated a record, we just need to return it
+        const conversationIdToReturn =
+          imageResult.conversationId || imageResult.generationId.toString();
+
+        const savedMessages = [...messages];
+        if (imageResult.url) {
+          savedMessages.push({
+            role: 'assistant',
+            content: "Voici l'image générée",
+          });
+        } else if (imageResult.isAsync) {
+          savedMessages.push({
+            role: 'assistant',
+            content: 'Image en cours de génération...',
+          });
+        }
+
+        // Check if generation is async
         if (imageResult.isAsync) {
-          this.logger.log(
-            '[chat] Async image generation detected, returning immediately with generationId',
-          );
           return {
             type: 'image',
             content: `Image en cours de génération...`,
             url: null,
             generationId: imageResult.generationId,
+            conversationId: conversationIdToReturn,
             isAsync: true,
           };
         }
@@ -1212,11 +1302,8 @@ REALISM INSTRUCTIONS:
             responseType: 'arraybuffer',
           });
           imageData = Buffer.from(resp.data).toString('base64');
-          this.logger.log('[chat] Image downloaded and converted to base64');
         } catch (e) {
-          this.logger.error(
-            `[chat] Failed to download image: ${e.message}, falling back to URL`,
-          );
+          this.logger.error(`[chat] Failed to download image: ${e.message}`);
           imageData = imageResult.url;
         }
 
@@ -1225,10 +1312,11 @@ REALISM INSTRUCTIONS:
           content: `Voici l'image générée`,
           imageBase64: imageData,
           generationId: imageResult.generationId,
+          conversationId: conversationIdToReturn,
         };
       }
 
-      // Otherwise, generate text response
+      // 2. Otherwise, generate text response
       this.logger.log('[chat] Text response generation...');
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -1236,13 +1324,33 @@ REALISM INSTRUCTIONS:
       });
 
       const content = response.choices[0]?.message?.content || '';
-      this.logger.log(
-        `[chat] Response generated: ${content.substring(0, 50)}...`,
-      );
+
+      // 3. Persist the updated conversation
+      const finalMessages = [...messages, { role: 'assistant', content }];
+
+      if (conversation) {
+        conversation.prompt = JSON.stringify(finalMessages);
+        conversation.result = content;
+        await this.aiGenRepo.save(conversation);
+      } else {
+        const title = this.generateSmartTitle(
+          lastUserMessage,
+          AiGenerationType.CHAT,
+        );
+        conversation = this.aiGenRepo.create({
+          user: { id: userId } as any,
+          type: AiGenerationType.CHAT,
+          prompt: JSON.stringify(finalMessages),
+          result: content,
+          title,
+        });
+        conversation = await this.aiGenRepo.save(conversation);
+      }
 
       return {
         type: 'text',
         content: content,
+        conversationId: conversation.id.toString(),
       };
     } catch (error) {
       this.logger.error(`[chat] Error: ${error.message}`);
