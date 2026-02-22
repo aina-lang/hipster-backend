@@ -409,6 +409,9 @@ export class AiPaymentService {
       videosUsed: usage[2] || 0,
       audioUsed: usage[3] || 0,
       planType: plan.toLowerCase(),
+      subscriptionStatus: user.subscriptionStatus,
+      stripeCustomerId: user.stripeCustomerId,
+      stripeSubscriptionId: user.stripeSubscriptionId,
       subscriptionStartDate: user.subscriptionStartDate,
       subscriptionEndDate: user.subscriptionEndDate,
     };
