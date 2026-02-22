@@ -62,12 +62,54 @@ export class AiService {
         type,
         attributes,
         imageUrl,
+        title: this.generateSmartTitle(prompt, type, attributes),
       });
       return await this.aiGenRepo.save(gen);
     } catch (error) {
       this.logger.error(`[saveGeneration] Error: ${error.message}`);
       return null;
     }
+  }
+
+  /**
+   * Generate intelligent, meaningful titles for history items
+   * Respects language and creates ChatGPT-like titles
+   */
+  private generateSmartTitle(prompt: string, type: AiGenerationType, attributes?: any): string {
+    if (!prompt || prompt.trim().length === 0) {
+      return 'Sans titre';
+    }
+
+    // Clean the prompt text
+    const cleaned = prompt.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+    const maxLength = 60;
+
+    // For different types, potentially customize behavior
+    if (type === AiGenerationType.CHAT) {
+      // Use first part of the message
+      const substring = cleaned.substring(0, maxLength);
+      return substring.length < cleaned.length ? substring + '...' : substring;
+    }
+
+    if (type === AiGenerationType.IMAGE) {
+      // For images, prepend the style if available
+      let title = cleaned.substring(0, maxLength);
+      if (attributes?.style) {
+        // Don't prepend style here, just use the prompt naturally
+        // Style is in attributes anyway
+      }
+      return title.length < cleaned.length ? title + '...' : title;
+    }
+
+    if (type === AiGenerationType.TEXT) {
+      // Use the query/prompt directly
+      const substring = cleaned.substring(0, maxLength);
+      return substring.length < cleaned.length ? substring + '...' : substring;
+    }
+
+    // Default: just use first part of prompt
+    const substring = cleaned.substring(0, maxLength);
+    return substring.length < cleaned.length ? substring + '...' : substring;
   }
 
   private readonly NEGATIVE_PROMPT = `
