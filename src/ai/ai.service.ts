@@ -664,10 +664,7 @@ REALISM INSTRUCTIONS:
     file?: Express.Multer.File,
     seed?: number,
   ) {
-    // Unified default style selection
-    // If we have an image but no style, 'Enhance' is the best creative fallback for refinement.
-    // Otherwise, 'Hero Studio' is our premium brand default.
-    const defaultStyle = file ? 'Enhance' : 'Hero Studio';
+    const defaultStyle = 'Hero Studio';
     const styleName = style || params.style || defaultStyle;
 
     this.logger.log(
@@ -1119,7 +1116,9 @@ REALISM INSTRUCTIONS:
 
         // Check if generation is async (url is null but has generationId)
         if (imageResult.isAsync) {
-          this.logger.log('[chat] Async image generation detected, returning immediately with generationId');
+          this.logger.log(
+            '[chat] Async image generation detected, returning immediately with generationId',
+          );
           return {
             type: 'image',
             content: `Image en cours de génération...`,

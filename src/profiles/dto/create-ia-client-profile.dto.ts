@@ -14,6 +14,10 @@ import { SubscriptionStatus, PlanType } from 'src/ai/entities/ai-user.entity';
 
 export class CreateIaClientProfileDto {
   @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
   @Transform(({ value }) => {
     // If no value, return as-is (undefined/null)
     if (value === undefined || value === null) return value;
@@ -21,7 +25,8 @@ export class CreateIaClientProfileDto {
     if (Object.values(SubscriptionStatus).includes(value)) return value;
     // If uppercase key (like 'ACTIVE'), convert to enum value
     try {
-      const enumValue = SubscriptionStatus[value as keyof typeof SubscriptionStatus];
+      const enumValue =
+        SubscriptionStatus[value as keyof typeof SubscriptionStatus];
       if (enumValue) return enumValue;
     } catch (e) {
       // Ignore and return original value for validator to reject
@@ -29,7 +34,7 @@ export class CreateIaClientProfileDto {
     return value;
   })
   @IsEnum(SubscriptionStatus, {
-    message: `subscriptionStatus must be one of: ${Object.values(SubscriptionStatus).join(', ')}`
+    message: `subscriptionStatus must be one of: ${Object.values(SubscriptionStatus).join(', ')}`,
   })
   subscriptionStatus?: SubscriptionStatus;
 
@@ -49,7 +54,7 @@ export class CreateIaClientProfileDto {
     return value;
   })
   @IsEnum(PlanType, {
-    message: `planType must be one of: ${Object.values(PlanType).join(', ')}`
+    message: `planType must be one of: ${Object.values(PlanType).join(', ')}`,
   })
   planType?: PlanType;
 
@@ -78,7 +83,8 @@ export class CreateIaClientProfileDto {
   brandingColor?: string;
 
   @IsOptional()
-  @IsEmail()
+  @Transform(({ value }) => (value === '' ? undefined : value))
+  @IsEmail({}, { message: "Format d'email invalide" })
   professionalEmail?: string;
 
   @IsOptional()
@@ -122,6 +128,7 @@ export class CreateIaClientProfileDto {
   websiteUrl?: string;
 
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsString()
   logoUrl?: string;
 

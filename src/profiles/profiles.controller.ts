@@ -195,7 +195,12 @@ export class ProfilesController {
   @ResponseMessage('Profil IA mis à jour avec succès')
   @Patch('ai/:id')
   updateAi(@Param('id') id: string, @Body() dto: UpdateAiProfileDto) {
-    console.log('[ProfilesController] updateAi called with id:', id, 'DTO:', JSON.stringify(dto, null, 2));
+    console.log(
+      '[ProfilesController] updateAi called with id:',
+      id,
+      'DTO:',
+      JSON.stringify(dto, null, 2),
+    );
     return this.profilesService.updateAiProfile(+id, dto);
   }
 
@@ -213,7 +218,9 @@ export class ProfilesController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: join(process.cwd(), 'uploads'),
+        destination: (req, file, cb) => {
+          cb(null, process.env.UPLOAD_PATH || join(process.cwd(), 'uploads'));
+        },
         filename: (req, file, cb) => {
           const randomName = Array(32)
             .fill(null)
