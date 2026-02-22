@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -18,7 +18,7 @@ import {
 import { deleteFile } from '../common/utils/file.utils';
 
 @Injectable()
-export class AiService {
+export class AiService implements OnModuleInit {
   private readonly logger = new Logger(AiService.name);
   private openai: OpenAI;
   private readonly openAiKey: string;
@@ -34,6 +34,45 @@ export class AiService {
     this.openai = new OpenAI({
       apiKey: this.openAiKey,
     });
+  }
+
+  async onModuleInit() {
+    // Ensure conversationId column exists and update old records
+    try {
+      const queryRunner = this.aiGenRepo.manager.connection.createQueryRunner();
+      
+      // Check if conversationId column exists
+      const hasColumn = await queryRunner.hasColumn('ai_generations', 'conversationId');
+      
+      if (!hasColumn) {
+        this.logger.log('[AiService] Adding conversationId column to ai_generations...');
+        await queryRunner.query(
+          `ALTER TABLE ai_generations ADD COLUMN conversationId VARCHAR(255) NULL`,
+        );
+        await queryRunner.query(
+          `CREATE INDEX idx_ai_generations_conversationId ON ai_generations(conversationId)`,
+        );
+        this.logger.log('[AiService] conversationId column added successfully');
+      }
+      
+      // Update existing NULL records with UUID
+      const nullRecords = await this.aiGenRepo.find({
+        where: { conversationId: null as any },
+      });
+      
+      if (nullRecords.length > 0) {
+        this.logger.log(`[AiService] Updating ${nullRecords.length} NULL conversationIds...`);
+        for (const record of nullRecords) {
+          record.conversationId = uuidv4();
+          await this.aiGenRepo.save(record);
+        }
+        this.logger.log('[AiService] Conversion IDs updated successfully');
+      }
+      
+      await queryRunner.release();
+    } catch (error) {
+      this.logger.error(`[AiService] Error initializing conversationId: ${error.message}`);
+    }
   }
 
   /* --------------------- PUBLIC HELPERS --------------------- */
