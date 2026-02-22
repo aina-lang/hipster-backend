@@ -728,7 +728,7 @@ REALISM INSTRUCTIONS:
     userId: number,
     file?: Express.Multer.File,
     seed?: number,
-    existingConversationId?: number,
+    existingConversationId?: string,
   ) {
     const defaultStyle = 'Hero Studio';
     const styleName = style || params.style || defaultStyle;
@@ -905,7 +905,7 @@ REALISM INSTRUCTIONS:
     params: any,
     userId: number,
     seed?: number,
-    existingConversationId?: number,
+    existingConversationId?: string,
     file?: Express.Multer.File,
   ) {
     this.logger.log(
@@ -938,7 +938,7 @@ REALISM INSTRUCTIONS:
     params: any,
     type: string,
     userId: number,
-    existingConversationId?: number,
+    existingConversationId?: string,
   ) {
     this.logger.log(
       `[generateText] START - User: ${userId}, Type: ${type}, Params: ${JSON.stringify(params)}`,
@@ -1316,13 +1316,17 @@ REALISM INSTRUCTIONS:
     conversationId?: string,
     file?: Express.Multer.File,
   ) {
+    // Generate a unique conversationId if this is a new conversation
+    const finalConversationId = conversationId || uuidv4();
+    
     this.logger.log(
-      `[chat] START - User: ${userId}, Messages: ${messages.length}, ConversationId: ${conversationId}, HasFile: ${!!file}`,
+      `[chat] START - User: ${userId}, Messages: ${messages.length}, ConversationId: ${finalConversationId}, HasFile: ${!!file}`,
     );
     try {
       // 1. Load or initialize the conversation record
       let conversation: AiGeneration | null = null;
-      if (conversationId) {
+      if (conversationId && !conversationId.includes('-')) {
+        // If conversationId is numeric (legacy), try to find by ID
         conversation = await this.aiGenRepo.findOne({
           where: { id: parseInt(conversationId), user: { id: userId } },
         });
@@ -1351,7 +1355,7 @@ REALISM INSTRUCTIONS:
           { prompt: lastUserMessage },
           userId,
           undefined,
-          conversation?.id, // Use existing ID if available
+          finalConversationId, // Pass the conversation ID
           file, // Pass the uploaded file
         );
 
@@ -1379,9 +1383,10 @@ REALISM INSTRUCTIONS:
 
         // Final update to ensure prompt history is complete in the record
         if (conversationIdToReturn) {
-          await this.aiGenRepo.update(parseInt(conversationIdToReturn), {
-            prompt: JSON.stringify(savedMessages),
-          });
+          await this.aiGenRepo.update(
+            { conversationId: conversationIdToReturn, user: { id: userId } },
+            { prompt: JSON.stringify(savedMessages) }
+          );
         }
 
         // Check if generation is async
@@ -1432,6 +1437,7 @@ REALISM INSTRUCTIONS:
       if (conversation) {
         conversation.prompt = JSON.stringify(finalMessages);
         conversation.result = content;
+        conversation.conversationId = finalConversationId;
         await this.aiGenRepo.save(conversation);
       } else {
         const title = this.generateSmartTitle(
@@ -1444,6 +1450,7 @@ REALISM INSTRUCTIONS:
           prompt: JSON.stringify(finalMessages),
           result: content,
           title,
+          conversationId: finalConversationId,
         });
         conversation = await this.aiGenRepo.save(conversation);
       }
@@ -1451,7 +1458,7 @@ REALISM INSTRUCTIONS:
       return {
         type: 'text',
         content: content,
-        conversationId: conversation.id.toString(),
+        conversationId: finalConversationId,
       };
     } catch (error) {
       this.logger.error(`[chat] Error: ${error.message}`);
