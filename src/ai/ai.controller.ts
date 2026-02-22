@@ -57,7 +57,11 @@ export class AiController {
   async getHistory(@Req() req) {
     console.log('[AiController] GET /history called by user:', req.user.sub);
     const history = await this.aiService.getHistory(req.user.sub);
-    console.log('[AiController] Returning history with', history?.length, 'items');
+    console.log(
+      '[AiController] Returning history with',
+      history?.length,
+      'items',
+    );
     return history;
   }
 
@@ -87,14 +91,26 @@ export class AiController {
   @ApiOperation({ summary: "Chat avec l'IA (GPT-5)" })
   @Post('chat')
   @Roles(Role.AI_USER)
+  @UseInterceptors(FileInterceptor('file')) // Match frontend field name
   async chat(
-    @Body() body: { messages: any[]; conversationId?: string },
+    @Body() body: { messages: any; conversationId?: string },
     @Req() req,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
+    let messages = body.messages;
+    if (typeof messages === 'string') {
+      try {
+        messages = JSON.parse(messages);
+      } catch (e) {
+        throw new BadRequestException('Invalid messages JSON');
+      }
+    }
+
     const result = await this.aiService.chat(
-      body.messages,
+      messages,
       req.user.sub,
       body.conversationId,
+      file,
     );
     return { data: result };
   }

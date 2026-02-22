@@ -873,12 +873,13 @@ REALISM INSTRUCTIONS:
     userId: number,
     seed?: number,
     existingConversationId?: number,
+    file?: Express.Multer.File,
   ) {
     this.logger.log(
       `[generateFreeImage] START - User: ${userId}, Prompt: ${params.prompt || params.query}`,
     );
     try {
-      // Call generateImage without a file (triggers text-to-image path)
+      // Call generateImage with the optional file
       const result = await this.generateImage(
         {
           userQuery: params.prompt || params.query || '',
@@ -887,7 +888,7 @@ REALISM INSTRUCTIONS:
         },
         params.style || 'photographic',
         userId,
-        undefined, // No file for free mode
+        file, // Pass the file through
         seed,
         existingConversationId,
       );
@@ -1230,9 +1231,14 @@ REALISM INSTRUCTIONS:
     return { content: text };
   }
 
-  async chat(messages: any[], userId: number, conversationId?: string) {
+  async chat(
+    messages: any[],
+    userId: number,
+    conversationId?: string,
+    file?: Express.Multer.File,
+  ) {
     this.logger.log(
-      `[chat] START - User: ${userId}, Messages: ${messages.length}, ConversationId: ${conversationId}`,
+      `[chat] START - User: ${userId}, Messages: ${messages.length}, ConversationId: ${conversationId}, HasFile: ${!!file}`,
     );
     try {
       // 1. Load or initialize the conversation record
@@ -1252,8 +1258,12 @@ REALISM INSTRUCTIONS:
 
       this.logger.log(`[chat] Last message: "${lastUserMessage}"`);
 
-      // Detect if user is requesting an image
-      const requestType = await this.detectChatRequestType(lastUserMessage);
+      // Detect if user is requesting an image (or if they provided a file)
+      let requestType = await this.detectChatRequestType(lastUserMessage);
+      if (file && requestType !== 'image') {
+        this.logger.log('[chat] File provided, forcing requestType to image');
+        requestType = 'image';
+      }
 
       if (requestType === 'image') {
         this.logger.log('[chat] Image generation detected, generating...');
@@ -1263,9 +1273,9 @@ REALISM INSTRUCTIONS:
           userId,
           undefined,
           conversation?.id, // Use existing ID if available
+          file, // Pass the uploaded file
         );
 
-        // Update conversation if it exists, or create a new one (CHAT type)
         // If imageResult already created/updated a record, we just need to return it
         const conversationIdToReturn =
           imageResult.conversationId || imageResult.generationId.toString();
@@ -1280,6 +1290,13 @@ REALISM INSTRUCTIONS:
           savedMessages.push({
             role: 'assistant',
             content: 'Image en cours de génération...',
+          });
+        }
+
+        // Final update to ensure prompt history is complete in the record
+        if (conversationIdToReturn) {
+          await this.aiGenRepo.update(parseInt(conversationIdToReturn), {
+            prompt: JSON.stringify(savedMessages),
           });
         }
 
