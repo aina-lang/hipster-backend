@@ -1011,11 +1011,13 @@ REALISM INSTRUCTIONS:
 
   async getHistory(userId: number) {
     try {
-      return await this.aiGenRepo.find({
+      const result = await this.aiGenRepo.find({
         where: { user: { id: userId } },
         order: { createdAt: 'DESC' },
         take: 50,
       });
+      this.logger.log(`[getHistory] Retrieved ${result.length} items for user ${userId}`);
+      return result;
     } catch (error) {
       this.logger.error(`[getHistory] Error: ${error.message}`);
       return [];
