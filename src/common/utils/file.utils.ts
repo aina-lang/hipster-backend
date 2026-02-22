@@ -14,7 +14,13 @@ export const deleteFile = (fileUrl: string | undefined | null): void => {
   // Resolve the path. Assuming storage is in the 'uploads' folder relative to process.cwd()
   // and fileUrl starts with /uploads/
   const relativePath = fileUrl.startsWith('/') ? fileUrl.substring(1) : fileUrl;
-  const filePath = join(process.cwd(), relativePath);
+  // Use hardcoded path for production on Ubuntu VPS
+  const baseUploadPath = '/home/ubuntu/uploads';
+  // Extract filename from /uploads/filename.ext or just filename.ext
+  const filename = relativePath.startsWith('uploads/')
+    ? relativePath.substring(8)
+    : relativePath;
+  const filePath = join(baseUploadPath, filename);
 
   try {
     if (existsSync(filePath)) {

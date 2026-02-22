@@ -53,7 +53,12 @@ export class AiAuthService {
         isActive: false, // Inactive until OTP verified
         isEmailVerified: false,
         brandingColor: dto.brandingColor || '#8B5CF6',
-        logoUrl: dto.logoUrl || null,
+        logoUrl:
+          dto.logoUrl &&
+          !dto.logoUrl.startsWith('file://') &&
+          !dto.logoUrl.includes('/cache/')
+            ? dto.logoUrl
+            : null,
         job: dto.job || null,
         isSetupComplete: false,
       });

@@ -37,7 +37,7 @@ import { AiPaymentModule } from './ai-payment/ai-payment.module';
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(), 'uploads'),
+      rootPath: '/home/ubuntu/uploads',
       serveRoot: '/uploads',
     }),
     ScheduleModule.forRoot(),

@@ -219,7 +219,7 @@ export class ProfilesController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          cb(null, process.env.UPLOAD_PATH || join(process.cwd(), 'uploads'));
+          cb(null, '/home/ubuntu/uploads');
         },
         filename: (req, file, cb) => {
           const randomName = Array(32)
