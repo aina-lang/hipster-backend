@@ -54,45 +54,19 @@ export class AiService {
     type: AiGenerationType,
     attributes: any = {},
     imageUrl?: string,
-    existingId?: number,
+    conversationId?: string,
   ) {
     try {
-      let gen: AiGeneration;
-      if (existingId) {
-        gen = await this.aiGenRepo.findOne({ where: { id: existingId } });
-        if (gen) {
-          gen.result = result;
-          gen.prompt = prompt;
-          gen.imageUrl = imageUrl || gen.imageUrl;
-          gen.attributes = attributes;
-        } else {
-          gen = this.aiGenRepo.create({
-            user: { id: userId } as any,
-            result,
-            prompt,
-            type:
-              type === AiGenerationType.TEXT || type === AiGenerationType.IMAGE
-                ? AiGenerationType.CHAT
-                : type,
-            attributes,
-            imageUrl,
-            title: this.generateSmartTitle(prompt, type, attributes),
-          });
-        }
-      } else {
-        gen = this.aiGenRepo.create({
-          user: { id: userId } as any,
-          result,
-          prompt,
-          type:
-            type === AiGenerationType.TEXT || type === AiGenerationType.IMAGE
-              ? AiGenerationType.CHAT
-              : type,
-          attributes,
-          imageUrl,
-          title: this.generateSmartTitle(prompt, type, attributes),
-        });
-      }
+      const gen = this.aiGenRepo.create({
+        user: { id: userId } as any,
+        result,
+        prompt,
+        type,
+        attributes,
+        imageUrl,
+        conversationId,
+        title: this.generateSmartTitle(prompt, type, attributes),
+      });
       return await this.aiGenRepo.save(gen);
     } catch (error) {
       this.logger.error(`[saveGeneration] Error: ${error.message}`);
@@ -1107,6 +1081,59 @@ REALISM INSTRUCTIONS:
       return result;
     } catch (error) {
       this.logger.error(`[getHistory] Error: ${error.message}`);
+      return [];
+    }
+  }
+
+  async getGroupedConversations(userId: number) {
+    try {
+      // Get all chats ordered by creation date desc
+      const allItems = await this.aiGenRepo.find({
+        where: { user: { id: userId }, type: AiGenerationType.CHAT },
+        order: { createdAt: 'DESC' },
+        take: 100,
+      });
+
+      // Group by conversationId or create groups for items without one
+      const conversationMap = new Map<string, any>();
+      
+      allItems.forEach((item) => {
+        // Each item is its own conversation, or group by conversationId if present
+        const key = item.conversationId || `standalone_${item.id}`;
+        
+        if (!conversationMap.has(key)) {
+          conversationMap.set(key, {
+            id: item.conversationId || `standalone_${item.id}`,
+            title: item.title,
+            date: item.createdAt,
+            count: 0,
+            items: [],
+          });
+        }
+        
+        const conversation = conversationMap.get(key);
+        conversation.count += 1;
+        conversation.items.push({
+          id: item.id,
+          type: item.type,
+          title: item.title,
+          date: item.createdAt,
+          imageUrl: item.imageUrl,
+        });
+      });
+
+      // Convert to array and sort by latest date
+      const conversations = Array.from(conversationMap.values()).sort((a, b) => {
+        return new Date(b.items[0]?.date || b.date).getTime() - 
+               new Date(a.items[0]?.date || a.date).getTime();
+      });
+
+      this.logger.log(
+        `[getGroupedConversations] Retrieved ${conversations.length} conversations for user ${userId}`,
+      );
+      return conversations;
+    } catch (error) {
+      this.logger.error(`[getGroupedConversations] Error: ${error.message}`);
       return [];
     }
   }
