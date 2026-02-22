@@ -75,7 +75,11 @@ export class AiService {
    * Generate intelligent, meaningful titles for history items
    * Respects language and creates ChatGPT-like titles
    */
-  private generateSmartTitle(prompt: string, type: AiGenerationType, attributes?: any): string {
+  private generateSmartTitle(
+    prompt: string,
+    type: AiGenerationType,
+    attributes?: any,
+  ): string {
     if (!prompt || prompt.trim().length === 0) {
       return 'Sans titre';
     }
@@ -1016,7 +1020,9 @@ REALISM INSTRUCTIONS:
         order: { createdAt: 'DESC' },
         take: 50,
       });
-      this.logger.log(`[getHistory] Retrieved ${result.length} items for user ${userId}`);
+      this.logger.log(
+        `[getHistory] Retrieved ${result.length} items for user ${userId}`,
+      );
       return result;
     } catch (error) {
       this.logger.error(`[getHistory] Error: ${error.message}`);
@@ -1080,11 +1086,80 @@ REALISM INSTRUCTIONS:
   }
 
   async deleteGeneration(id: number, userId: number) {
-    return { success: true };
+    const gen = await this.aiGenRepo.findOne({
+      where: { id, user: { id: userId } },
+    });
+
+    if (!gen) return { success: false, message: 'Génération non trouvée' };
+
+    try {
+      // Delete associated files
+      if (gen.imageUrl) this.deleteLocalFile(gen.imageUrl);
+      if (gen.fileUrl) this.deleteLocalFile(gen.fileUrl);
+
+      await this.aiGenRepo.remove(gen);
+      this.logger.log(
+        `[deleteGeneration] Deleted item ${id} for user ${userId}`,
+      );
+      return { success: true };
+    } catch (error) {
+      this.logger.error(`[deleteGeneration] Error: ${error.message}`);
+      throw error;
+    }
   }
 
   async clearHistory(userId: number) {
-    return { success: true };
+    try {
+      const generations = await this.aiGenRepo.find({
+        where: { user: { id: userId } },
+      });
+
+      // Delete all associated files
+      for (const gen of generations) {
+        if (gen.imageUrl) this.deleteLocalFile(gen.imageUrl);
+        if (gen.fileUrl) this.deleteLocalFile(gen.fileUrl);
+      }
+
+      await this.aiGenRepo.remove(generations);
+      this.logger.log(`[clearHistory] Cleared all items for user ${userId}`);
+      return { success: true };
+    } catch (error) {
+      this.logger.error(`[clearHistory] Error: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Helper to delete files that are stored locally on the server.
+   */
+  private deleteLocalFile(fileUrl: string) {
+    if (!fileUrl) return;
+
+    // Check if it's a relative path or a local domain URL
+    let relativePath = '';
+    if (fileUrl.startsWith('https://hipster-api.fr/uploads/')) {
+      relativePath = fileUrl.replace('https://hipster-api.fr/uploads/', '');
+    } else if (fileUrl.startsWith('/uploads/')) {
+      relativePath = fileUrl.replace('/uploads/', '');
+    } else if (!fileUrl.startsWith('http')) {
+      relativePath = fileUrl;
+    }
+
+    if (relativePath) {
+      const uploadPath = path.join(process.cwd(), 'uploads');
+      const filePath = path.join(uploadPath, relativePath);
+
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          this.logger.log(`[AiService] Deleted local file: ${filePath}`);
+        }
+      } catch (e) {
+        this.logger.error(
+          `[AiService] Failed to delete file ${filePath}: ${e.message}`,
+        );
+      }
+    }
   }
 
   async refineText(text: string) {
