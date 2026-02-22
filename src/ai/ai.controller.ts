@@ -56,7 +56,9 @@ export class AiController {
   @Roles(Role.AI_USER)
   async getHistory(@Req() req) {
     console.log('[AiController] GET /history called by user:', req.user.sub);
-    return this.aiService.getHistory(req.user.sub);
+    const history = await this.aiService.getHistory(req.user.sub);
+    console.log('[AiController] Returning history with', history?.length, 'items');
+    return history;
   }
 
   @ApiOperation({ summary: 'Récupérer une conversation spécifique' })
