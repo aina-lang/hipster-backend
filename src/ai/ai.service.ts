@@ -14,6 +14,7 @@ import {
   AiGeneration,
   AiGenerationType,
 } from './entities/ai-generation.entity';
+import { deleteFile } from '../common/utils/file.utils';
 
 @Injectable()
 export class AiService {
@@ -1166,79 +1167,72 @@ REALISM INSTRUCTIONS:
   }
 
   async deleteGeneration(id: number, userId: number) {
-    const gen = await this.aiGenRepo.findOne({
-      where: { id, user: { id: userId } },
-    });
-
-    if (!gen) return { success: false, message: 'Génération non trouvée' };
-
+    this.logger.log(`[deleteGeneration] START - ID: ${id}, UserID: ${userId}`);
     try {
-      // Delete associated files
-      if (gen.imageUrl) this.deleteLocalFile(gen.imageUrl);
-      if (gen.fileUrl) this.deleteLocalFile(gen.fileUrl);
+      const gen = await this.aiGenRepo.findOne({
+        where: { id, user: { id: userId } },
+        relations: ['user'],
+      });
+
+      if (!gen) {
+        this.logger.warn(
+          `[deleteGeneration] Not found or unauthorized. ID: ${id}, User: ${userId}`,
+        );
+        return { success: false, message: 'Génération non trouvée' };
+      }
+
+      this.logger.log(
+        `[deleteGeneration] Found item: "${gen.title}" (Type: ${gen.type})`,
+      );
+
+      // Delete associated files using utility
+      if (gen.imageUrl) {
+        this.logger.log(
+          `[deleteGeneration] Deleting imageUrl: ${gen.imageUrl}`,
+        );
+        deleteFile(gen.imageUrl);
+      }
+      if (gen.fileUrl) {
+        this.logger.log(`[deleteGeneration] Deleting fileUrl: ${gen.fileUrl}`);
+        deleteFile(gen.fileUrl);
+      }
 
       await this.aiGenRepo.remove(gen);
       this.logger.log(
-        `[deleteGeneration] Deleted item ${id} for user ${userId}`,
+        `[deleteGeneration] SUCCESS - Deleted item ${id} for user ${userId}`,
       );
       return { success: true };
     } catch (error) {
-      this.logger.error(`[deleteGeneration] Error: ${error.message}`);
+      this.logger.error(`[deleteGeneration] FATAL ERROR: ${error.message}`);
       throw error;
     }
   }
 
   async clearHistory(userId: number) {
+    this.logger.log(`[clearHistory] START - UserID: ${userId}`);
     try {
       const generations = await this.aiGenRepo.find({
         where: { user: { id: userId } },
       });
 
+      this.logger.log(
+        `[clearHistory] Found ${generations.length} items to delete`,
+      );
+
       // Delete all associated files
       for (const gen of generations) {
-        if (gen.imageUrl) this.deleteLocalFile(gen.imageUrl);
-        if (gen.fileUrl) this.deleteLocalFile(gen.fileUrl);
+        if (gen.imageUrl) deleteFile(gen.imageUrl);
+        if (gen.fileUrl) deleteFile(gen.fileUrl);
       }
 
       await this.aiGenRepo.remove(generations);
-      this.logger.log(`[clearHistory] Cleared all items for user ${userId}`);
+      this.logger.log(
+        `[clearHistory] SUCCESS - Cleared all items for user ${userId}`,
+      );
       return { success: true };
     } catch (error) {
-      this.logger.error(`[clearHistory] Error: ${error.message}`);
+      this.logger.error(`[clearHistory] FATAL ERROR: ${error.message}`);
       throw error;
-    }
-  }
-
-  /**
-   * Helper to delete files that are stored locally on the server.
-   */
-  private deleteLocalFile(fileUrl: string) {
-    if (!fileUrl) return;
-
-    // Check if it's a relative path or a local domain URL
-    let relativePath = '';
-    if (fileUrl.startsWith('https://hipster-api.fr/uploads/')) {
-      relativePath = fileUrl.replace('https://hipster-api.fr/uploads/', '');
-    } else if (fileUrl.startsWith('/uploads/')) {
-      relativePath = fileUrl.replace('/uploads/', '');
-    } else if (!fileUrl.startsWith('http')) {
-      relativePath = fileUrl;
-    }
-
-    if (relativePath) {
-      const uploadPath = path.join(process.cwd(), 'uploads');
-      const filePath = path.join(uploadPath, relativePath);
-
-      try {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-          this.logger.log(`[AiService] Deleted local file: ${filePath}`);
-        }
-      } catch (e) {
-        this.logger.error(
-          `[AiService] Failed to delete file ${filePath}: ${e.message}`,
-        );
-      }
     }
   }
 
