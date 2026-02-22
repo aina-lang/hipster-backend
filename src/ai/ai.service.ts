@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import OpenAI from 'openai';
 import { toFile } from 'openai/uploads';
 import axios from 'axios';
@@ -57,6 +58,9 @@ export class AiService {
     conversationId?: string,
   ) {
     try {
+      // Generate conversationId if not provided
+      const finalConversationId = conversationId || uuidv4();
+      
       const gen = this.aiGenRepo.create({
         user: { id: userId } as any,
         result,
@@ -64,7 +68,7 @@ export class AiService {
         type,
         attributes,
         imageUrl,
-        conversationId,
+        conversationId: finalConversationId,
         title: this.generateSmartTitle(prompt, type, attributes),
       });
       return await this.aiGenRepo.save(gen);
