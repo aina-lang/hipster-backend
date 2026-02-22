@@ -62,12 +62,7 @@ export class AiPaymentService {
         audioLimit: 0,
         threeDLimit: 0,
         description: '7 jours gratuits',
-        features: [
-          '2 textes / jour',
-          '1 image / jour',
-          'Pas d’export',
-          "Accompagnement de l'agence",
-        ],
+        features: ['2 textes / jour', '1 image / jour', 'Pas d’export'],
       },
       {
         id: 'atelier',
@@ -224,7 +219,10 @@ export class AiPaymentService {
             { apiVersion: '2024-06-20' as any },
           );
         } else {
-          this.logger.error(`[Stripe EphemeralKey Error] ${error.message}`, error.stack);
+          this.logger.error(
+            `[Stripe EphemeralKey Error] ${error.message}`,
+            error.stack,
+          );
           throw error;
         }
       }
@@ -260,7 +258,9 @@ export class AiPaymentService {
           ephemeralKey: ephemeralKey.secret,
           customerId: customerId,
         };
-        this.logger.log(`[Curieux Trial] Payment sheet created successfully: ${subscription.id}`);
+        this.logger.log(
+          `[Curieux Trial] Payment sheet created successfully: ${subscription.id}`,
+        );
         return result;
       }
 
@@ -283,7 +283,9 @@ export class AiPaymentService {
         ephemeralKey: ephemeralKey.secret,
         customerId: customerId,
       };
-      this.logger.log(`[${selectedPlan.id}] Payment sheet created successfully: ${subscription.id}`);
+      this.logger.log(
+        `[${selectedPlan.id}] Payment sheet created successfully: ${subscription.id}`,
+      );
       return result;
     } catch (error: any) {
       this.logger.error(
