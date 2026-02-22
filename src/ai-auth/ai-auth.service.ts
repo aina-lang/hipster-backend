@@ -52,6 +52,10 @@ export class AiAuthService {
         name: dto.name || '',
         isActive: false, // Inactive until OTP verified
         isEmailVerified: false,
+        brandingColor: dto.brandingColor || '#8B5CF6',
+        logoUrl: dto.logoUrl || null,
+        job: dto.job || null,
+        isSetupComplete: false,
       });
     }
 
@@ -180,6 +184,10 @@ export class AiAuthService {
         audioLimit: user.audioLimit,
         threeDLimit: user.threeDLimit,
         subscriptionEndDate: user.subscriptionEndDate,
+        isSetupComplete: user.isSetupComplete,
+        brandingColor: user.brandingColor,
+        logoUrl: user.logoUrl,
+        job: user.job,
         type: 'ai',
       },
     };
@@ -252,6 +260,10 @@ export class AiAuthService {
         isEmailVerified: user.isEmailVerified,
         planType: user.planType,
         subscriptionStatus: user.subscriptionStatus,
+        isSetupComplete: user.isSetupComplete,
+        brandingColor: user.brandingColor,
+        logoUrl: user.logoUrl,
+        job: user.job,
         type: 'ai',
       },
     };
