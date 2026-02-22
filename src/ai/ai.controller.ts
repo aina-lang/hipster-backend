@@ -65,6 +65,20 @@ export class AiController {
     return history;
   }
 
+  @ApiOperation({ summary: 'Récupérer mon historique groupé par conversation' })
+  @Get('conversations')
+  @Roles(Role.AI_USER)
+  async getGroupedConversations(@Req() req) {
+    console.log('[AiController] GET /conversations called by user:', req.user.sub);
+    const conversations = await this.aiService.getGroupedConversations(req.user.sub);
+    console.log(
+      '[AiController] Returning',
+      conversations?.length,
+      'conversations',
+    );
+    return conversations;
+  }
+
   @ApiOperation({ summary: 'Récupérer une conversation spécifique' })
   @Get('history/:id')
   @Roles(Role.AI_USER)
