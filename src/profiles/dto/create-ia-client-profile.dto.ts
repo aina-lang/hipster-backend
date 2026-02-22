@@ -137,6 +137,42 @@ export class CreateIaClientProfileDto {
   stripeCustomerId?: string;
 
   @IsOptional()
+  @IsString()
+  stripeSubscriptionId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  promptsLimit?: number;
+
+  @IsOptional()
+  @IsNumber()
+  imagesLimit?: number;
+
+  @IsOptional()
+  @IsNumber()
+  videosLimit?: number;
+
+  @IsOptional()
+  @IsNumber()
+  audioLimit?: number;
+
+  @IsOptional()
+  @IsNumber()
+  threeDLimit?: number;
+
+  @IsOptional()
+  @IsDateString()
+  subscriptionStartDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  subscriptionEndDate?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  hasUsedTrial?: boolean;
+
+  @IsOptional()
   @IsNumber()
   userId?: number; // Relation OneToOne avec User - Optional car passé dans l'URL
 }
