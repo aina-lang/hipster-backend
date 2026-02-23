@@ -1148,12 +1148,13 @@ REALISM INSTRUCTIONS:
       const conversationMap = new Map<string, any>();
       
       allItems.forEach((item) => {
-        // Each item is its own conversation, or group by conversationId if present
-        const key = item.conversationId || `standalone_${item.id}`;
+        // Group by conversationId, or treat each item as standalone if null
+        const key = item.conversationId ?? `standalone_${item.id}`;
         
         if (!conversationMap.has(key)) {
           conversationMap.set(key, {
-            id: item.conversationId || `standalone_${item.id}`,
+            // Use conversationId when present, else use ai_generation id for load/delete
+            id: item.conversationId ?? String(item.id),
             title: item.title,
             date: item.createdAt,
             count: 0,
@@ -1162,7 +1163,19 @@ REALISM INSTRUCTIONS:
         }
         
         const conversation = conversationMap.get(key);
-        conversation.count += 1;
+        // For CHAT type, count messages in prompt (user+assistant) for accurate preview
+        let msgCount = 1;
+        if (item.type === AiGenerationType.CHAT && item.prompt) {
+          try {
+            const parsed = JSON.parse(item.prompt);
+            if (Array.isArray(parsed)) {
+              msgCount = parsed.filter((m: any) => m.role === 'user' || m.role === 'assistant').length;
+            }
+          } catch {
+            msgCount = 1;
+          }
+        }
+        conversation.count += msgCount;
         conversation.items.push({
           id: item.id,
           type: item.type,

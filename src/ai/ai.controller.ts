@@ -83,14 +83,19 @@ export class AiController {
   @Get('history/:id')
   @Roles(Role.AI_USER)
   async getConversation(@Param('id') id: string, @Req() req) {
-    return this.aiService.getConversation(parseInt(id), req.user.sub);
+    const numId = id.startsWith('standalone_') ? parseInt(id.replace('standalone_', ''), 10) : parseInt(id, 10);
+    if (isNaN(numId)) throw new BadRequestException('ID invalide');
+    return this.aiService.getConversation(numId, req.user.sub);
   }
 
   @ApiOperation({ summary: "Supprimer un item d'historique" })
   @Post('history/:id/delete') // Using POST for broader compatibility if needed, but DELETE is better REST
   @Roles(Role.AI_USER)
   async deleteHistoryItem(@Param('id') id: string, @Req() req) {
-    await this.aiService.deleteGeneration(parseInt(id), req.user.sub);
+    // Handle "standalone_123" format from grouped conversations
+    const numId = id.startsWith('standalone_') ? parseInt(id.replace('standalone_', ''), 10) : parseInt(id, 10);
+    if (isNaN(numId)) throw new BadRequestException('ID invalide');
+    await this.aiService.deleteGeneration(numId, req.user.sub);
     return { message: 'Item deleted' };
   }
 
