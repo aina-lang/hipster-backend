@@ -83,19 +83,32 @@ export class AiController {
   @Get('history/:id')
   @Roles(Role.AI_USER)
   async getConversation(@Param('id') id: string, @Req() req) {
-    const numId = id.startsWith('standalone_') ? parseInt(id.replace('standalone_', ''), 10) : parseInt(id, 10);
-    if (isNaN(numId)) throw new BadRequestException('ID invalide');
-    return this.aiService.getConversation(numId, req.user.sub);
+    // Support UUID (contains '-'), numeric id, or legacy standalone_XXX
+    let idOrConvId: number | string = id;
+    if (id.startsWith('standalone_')) {
+      const numId = parseInt(id.replace('standalone_', ''), 10);
+      if (isNaN(numId)) throw new BadRequestException('ID invalide');
+      idOrConvId = numId;
+    } else if (!id.includes('-') && !isNaN(parseInt(id, 10))) {
+      idOrConvId = parseInt(id, 10);
+    }
+    return this.aiService.getConversation(idOrConvId, req.user.sub);
   }
 
   @ApiOperation({ summary: "Supprimer un item d'historique" })
   @Post('history/:id/delete') // Using POST for broader compatibility if needed, but DELETE is better REST
   @Roles(Role.AI_USER)
   async deleteHistoryItem(@Param('id') id: string, @Req() req) {
-    // Handle "standalone_123" format from grouped conversations
-    const numId = id.startsWith('standalone_') ? parseInt(id.replace('standalone_', ''), 10) : parseInt(id, 10);
-    if (isNaN(numId)) throw new BadRequestException('ID invalide');
-    await this.aiService.deleteGeneration(numId, req.user.sub);
+    // Support UUID, numeric id, or legacy standalone_XXX
+    let idToDelete: number | string = id;
+    if (id.startsWith('standalone_')) {
+      const numId = parseInt(id.replace('standalone_', ''), 10);
+      if (isNaN(numId)) throw new BadRequestException('ID invalide');
+      idToDelete = numId;
+    } else if (!id.includes('-') && !isNaN(parseInt(id, 10))) {
+      idToDelete = parseInt(id, 10);
+    }
+    await this.aiService.deleteGeneration(idToDelete, req.user.sub);
     return { message: 'Item deleted' };
   }
 

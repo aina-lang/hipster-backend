@@ -861,6 +861,7 @@ REALISM INSTRUCTIONS:
         return {
           id: pendingGen.id,
           generationId: pendingGen.id,
+          conversationId: existingConversationId || String(pendingGen.id),
           url: null,
           isAsync: true,
           status: 'PENDING',
@@ -899,7 +900,7 @@ REALISM INSTRUCTIONS:
       return {
         url: imageUrl,
         generationId: saved?.id,
-        conversationId: saved?.id.toString(),
+        conversationId: existingConversationId || saved?.id.toString(),
         seed: seed || 0,
       };
     } catch (error) {
@@ -1201,11 +1202,17 @@ REALISM INSTRUCTIONS:
     }
   }
 
-  async getConversation(id: number, userId: number) {
+  async getConversation(idOrConversationId: number | string, userId: number) {
     try {
-      return await this.aiGenRepo.findOne({
-        where: { id, user: { id: userId } },
-      });
+      const where: any = { user: { id: userId } };
+      if (typeof idOrConversationId === 'string' && idOrConversationId.includes('-')) {
+        // UUID: find by conversationId
+        where.conversationId = idOrConversationId;
+      } else {
+        // Numeric: find by record id
+        where.id = typeof idOrConversationId === 'number' ? idOrConversationId : parseInt(String(idOrConversationId), 10);
+      }
+      return await this.aiGenRepo.findOne({ where });
     } catch (error) {
       this.logger.error(`[getConversation] Error: ${error.message}`);
       return null;
@@ -1256,40 +1263,41 @@ REALISM INSTRUCTIONS:
     return await this.generateImage(params, style, userId, file, seedToUse);
   }
 
-  async deleteGeneration(id: number, userId: number) {
+  async deleteGeneration(id: number | string, userId: number) {
     this.logger.log(`[deleteGeneration] START - ID: ${id}, UserID: ${userId}`);
     try {
-      const gen = await this.aiGenRepo.findOne({
-        where: { id, user: { id: userId } },
-        relations: ['user'],
-      });
+      let toDelete: AiGeneration[] = [];
+      if (typeof id === 'string' && id.includes('-')) {
+        // UUID: find all records with this conversationId (conversation can have multiple items)
+        toDelete = await this.aiGenRepo.find({
+          where: { conversationId: id, user: { id: userId } },
+          relations: ['user'],
+        });
+      } else {
+        const numId = typeof id === 'number' ? id : parseInt(String(id), 10);
+        if (!isNaN(numId)) {
+          const gen = await this.aiGenRepo.findOne({
+            where: { id: numId, user: { id: userId } },
+            relations: ['user'],
+          });
+          if (gen) toDelete = [gen];
+        }
+      }
 
-      if (!gen) {
+      if (toDelete.length === 0) {
         this.logger.warn(
           `[deleteGeneration] Not found or unauthorized. ID: ${id}, User: ${userId}`,
         );
         return { success: false, message: 'Génération non trouvée' };
       }
 
-      this.logger.log(
-        `[deleteGeneration] Found item: "${gen.title}" (Type: ${gen.type})`,
-      );
-
-      // Delete associated files using utility
-      if (gen.imageUrl) {
-        this.logger.log(
-          `[deleteGeneration] Deleting imageUrl: ${gen.imageUrl}`,
-        );
-        deleteFile(gen.imageUrl);
+      for (const gen of toDelete) {
+        if (gen.imageUrl) deleteFile(gen.imageUrl);
+        if (gen.fileUrl) deleteFile(gen.fileUrl);
       }
-      if (gen.fileUrl) {
-        this.logger.log(`[deleteGeneration] Deleting fileUrl: ${gen.fileUrl}`);
-        deleteFile(gen.fileUrl);
-      }
-
-      await this.aiGenRepo.remove(gen);
+      await this.aiGenRepo.remove(toDelete);
       this.logger.log(
-        `[deleteGeneration] SUCCESS - Deleted item ${id} for user ${userId}`,
+        `[deleteGeneration] SUCCESS - Deleted ${toDelete.length} item(s) for user ${userId}`,
       );
       return { success: true };
     } catch (error) {
@@ -1336,20 +1344,30 @@ REALISM INSTRUCTIONS:
     conversationId?: string,
     file?: Express.Multer.File,
   ) {
-    // Generate a unique conversationId if this is a new conversation
+    // Modern apps pattern: conversationId is stable (UUID from client or legacy numeric id)
     const finalConversationId = conversationId || uuidv4();
     
     this.logger.log(
       `[chat] START - User: ${userId}, Messages: ${messages.length}, ConversationId: ${finalConversationId}, HasFile: ${!!file}`,
     );
     try {
-      // 1. Load or initialize the conversation record
+      // 1. Load existing conversation by conversationId (supports UUID and legacy numeric id)
       let conversation: AiGeneration | null = null;
-      if (conversationId && !conversationId.includes('-')) {
-        // If conversationId is numeric (legacy), try to find by ID
-        conversation = await this.aiGenRepo.findOne({
-          where: { id: parseInt(conversationId), user: { id: userId } },
-        });
+      if (conversationId) {
+        if (conversationId.includes('-')) {
+          // UUID: find by conversationId
+          conversation = await this.aiGenRepo.findOne({
+            where: { conversationId, user: { id: userId } },
+          });
+        } else {
+          // Legacy numeric: find by id (conversationId = record id)
+          const numId = parseInt(conversationId, 10);
+          if (!isNaN(numId)) {
+            conversation = await this.aiGenRepo.findOne({
+              where: { id: numId, user: { id: userId } },
+            });
+          }
+        }
       }
 
       // Get the last user message to detect request type
@@ -1455,16 +1473,17 @@ REALISM INSTRUCTIONS:
       const finalMessages = [...messages, { role: 'assistant', content }];
 
       if (conversation) {
+        // UPDATE existing: same conversationId for the whole thread
         conversation.prompt = JSON.stringify(finalMessages);
         conversation.result = content;
-        conversation.conversationId = conversation.id.toString();
+        conversation.conversationId = finalConversationId;
         await this.aiGenRepo.save(conversation);
-        // Force-persist conversationId (workaround for MySQL/TypeORM mapping)
         await this.aiGenRepo.update(
           { id: conversation.id },
-          { conversationId: conversation.id.toString() },
+          { conversationId: finalConversationId },
         );
       } else {
+        // CREATE new: use the stable conversationId from client
         const title = this.generateSmartTitle(
           lastUserMessage,
           AiGenerationType.CHAT,
@@ -1475,15 +1494,17 @@ REALISM INSTRUCTIONS:
           prompt: JSON.stringify(finalMessages),
           result: content,
           title,
-          conversationId: undefined, // Will be set after save
+          conversationId: finalConversationId,
         });
         conversation = await this.aiGenRepo.save(conversation);
-        // Persist conversationId using generation id (consistent with other endpoints)
-        const convId = conversation.id.toString();
-        await this.aiGenRepo.update({ id: conversation.id }, { conversationId: convId });
+        await this.aiGenRepo.update(
+          { id: conversation.id },
+          { conversationId: finalConversationId },
+        );
       }
 
-      const returnedConvId = conversation.id.toString();
+      // Always return the same conversationId (never a new one)
+      const returnedConvId = finalConversationId;
       return {
         type: 'text',
         content: content,
