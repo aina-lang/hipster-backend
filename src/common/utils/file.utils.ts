@@ -8,26 +8,52 @@ import { join } from 'path';
 export const deleteFile = (fileUrl: string | undefined | null): void => {
   if (!fileUrl) return;
 
-  // If it's a full URL, we can't easily delete it if it's external
+  // Skip external URLs
   if (fileUrl.startsWith('http')) return;
 
-  // Resolve the path. Assuming storage is in the 'uploads' folder relative to process.cwd()
-  // and fileUrl starts with /uploads/
-  const relativePath = fileUrl.startsWith('/') ? fileUrl.substring(1) : fileUrl;
-  // Use hardcoded path for production on Ubuntu VPS
-  const baseUploadPath = '/home/ubuntu/uploads';
-  // Extract filename from /uploads/filename.ext or just filename.ext
-  const filename = relativePath.startsWith('uploads/')
-    ? relativePath.substring(8)
-    : relativePath;
-  const filePath = join(baseUploadPath, filename);
+  // Clean the relative path
+  const cleanedPath = fileUrl.startsWith('/') ? fileUrl.substring(1) : fileUrl;
 
-  try {
-    if (existsSync(filePath)) {
-      unlinkSync(filePath);
-      console.log(`[FileUtil] Deleted old file: ${filePath}`);
+  // Try to find the file in several common locations
+  // 1. Hardcoded production path for Ubuntu VPS
+  // 2. Local uploads folder relative to process.cwd()
+  const pathsToTry = [
+    join(
+      '/home/ubuntu/uploads',
+      cleanedPath.startsWith('uploads/')
+        ? cleanedPath.substring(8)
+        : cleanedPath,
+    ),
+    join(process.cwd(), cleanedPath),
+    join(
+      process.cwd(),
+      'uploads',
+      cleanedPath.startsWith('uploads/')
+        ? cleanedPath.substring(8)
+        : cleanedPath,
+    ),
+  ];
+
+  let deleted = false;
+  for (const filePath of pathsToTry) {
+    try {
+      if (existsSync(filePath)) {
+        unlinkSync(filePath);
+        console.log(`[FileUtil] SUCCESS - Deleted file: ${filePath}`);
+        deleted = true;
+        break;
+      }
+    } catch (error) {
+      console.error(
+        `[FileUtil] ERROR - Failed to delete file: ${filePath}`,
+        error.message,
+      );
     }
-  } catch (error) {
-    console.error(`[FileUtil] Failed to delete file: ${filePath}`, error);
+  }
+
+  if (!deleted) {
+    console.warn(
+      `[FileUtil] WARNING - File not found in any expected location: ${fileUrl}`,
+    );
   }
 };

@@ -37,41 +37,56 @@ export class AiService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    // Ensure conversationId column exists and update old records
+    this.logger.log(
+      '[AiService] Initializing database schema for conversations...',
+    );
     try {
       const queryRunner = this.aiGenRepo.manager.connection.createQueryRunner();
-      
+
       // Check if conversationId column exists
-      const hasColumn = await queryRunner.hasColumn('ai_generations', 'conversationId');
-      
+      const hasColumn = await queryRunner.hasColumn(
+        'ai_generations',
+        'conversationId',
+      );
+
       if (!hasColumn) {
-        this.logger.log('[AiService] Adding conversationId column to ai_generations...');
+        this.logger.log(
+          '[AiService] Adding conversationId column to ai_generations...',
+        );
         await queryRunner.query(
           `ALTER TABLE ai_generations ADD COLUMN conversationId VARCHAR(255) NULL`,
         );
         await queryRunner.query(
           `CREATE INDEX idx_ai_generations_conversationId ON ai_generations(conversationId)`,
         );
-        this.logger.log('[AiService] conversationId column added successfully');
+        this.logger.log('[AiService] SUCCESS - conversationId column added');
+      } else {
+        this.logger.log('[AiService] verified: conversationId column exists');
       }
-      
+
       // Update existing NULL records with UUID
       const nullRecords = await this.aiGenRepo.find({
         where: { conversationId: null as any },
       });
-      
+
       if (nullRecords.length > 0) {
-        this.logger.log(`[AiService] Updating ${nullRecords.length} NULL conversationIds...`);
+        this.logger.log(
+          `[AiService] Found ${nullRecords.length} old records without conversationId. Updating...`,
+        );
         for (const record of nullRecords) {
           record.conversationId = uuidv4();
           await this.aiGenRepo.save(record);
         }
-        this.logger.log('[AiService] Conversion IDs updated successfully');
+        this.logger.log(
+          '[AiService] SUCCESS - All records now have a conversationId',
+        );
       }
-      
+
       await queryRunner.release();
     } catch (error) {
-      this.logger.error(`[AiService] Error initializing conversationId: ${error.message}`);
+      this.logger.error(
+        `[AiService] FATAL ERROR during conversationId initialization: ${error.message}`,
+      );
     }
   }
 
@@ -99,7 +114,7 @@ export class AiService implements OnModuleInit {
     try {
       // Generate conversationId if not provided (use generation id for API consistency)
       const finalConversationId = conversationId || uuidv4();
-      
+
       const gen = this.aiGenRepo.create({
         user: { id: userId } as any,
         result,
@@ -114,7 +129,10 @@ export class AiService implements OnModuleInit {
       // Force-persist conversationId (workaround for MySQL/TypeORM column mapping)
       if (saved?.id) {
         const convId = conversationId || saved.id.toString();
-        await this.aiGenRepo.update({ id: saved.id }, { conversationId: convId });
+        await this.aiGenRepo.update(
+          { id: saved.id },
+          { conversationId: convId },
+        );
         saved.conversationId = convId;
       }
       return saved;
@@ -1147,11 +1165,11 @@ REALISM INSTRUCTIONS:
 
       // Group by conversationId or create groups for items without one
       const conversationMap = new Map<string, any>();
-      
+
       allItems.forEach((item) => {
         // Group by conversationId, or treat each item as standalone if null
         const key = item.conversationId ?? `standalone_${item.id}`;
-        
+
         if (!conversationMap.has(key)) {
           conversationMap.set(key, {
             // Use conversationId when present, else use ai_generation id for load/delete
@@ -1162,7 +1180,7 @@ REALISM INSTRUCTIONS:
             items: [],
           });
         }
-        
+
         const conversation = conversationMap.get(key);
         // For CHAT type, count messages in prompt (user+assistant) for accurate preview
         let msgCount = 1;
@@ -1170,7 +1188,9 @@ REALISM INSTRUCTIONS:
           try {
             const parsed = JSON.parse(item.prompt);
             if (Array.isArray(parsed)) {
-              msgCount = parsed.filter((m: any) => m.role === 'user' || m.role === 'assistant').length;
+              msgCount = parsed.filter(
+                (m: any) => m.role === 'user' || m.role === 'assistant',
+              ).length;
             }
           } catch {
             msgCount = 1;
@@ -1187,10 +1207,14 @@ REALISM INSTRUCTIONS:
       });
 
       // Convert to array and sort by latest date
-      const conversations = Array.from(conversationMap.values()).sort((a, b) => {
-        return new Date(b.items[0]?.date || b.date).getTime() - 
-               new Date(a.items[0]?.date || a.date).getTime();
-      });
+      const conversations = Array.from(conversationMap.values()).sort(
+        (a, b) => {
+          return (
+            new Date(b.items[0]?.date || b.date).getTime() -
+            new Date(a.items[0]?.date || a.date).getTime()
+          );
+        },
+      );
 
       this.logger.log(
         `[getGroupedConversations] Retrieved ${conversations.length} conversations for user ${userId}`,
@@ -1203,18 +1227,54 @@ REALISM INSTRUCTIONS:
   }
 
   async getConversation(idOrConversationId: number | string, userId: number) {
+    this.logger.log(
+      `[getConversation] Loading ID: ${idOrConversationId} for User: ${userId}`,
+    );
     try {
       const where: any = { user: { id: userId } };
-      if (typeof idOrConversationId === 'string' && idOrConversationId.includes('-')) {
-        // UUID: find by conversationId
+      if (
+        typeof idOrConversationId === 'string' &&
+        idOrConversationId.includes('-')
+      ) {
+        // UUID: find all records for this conversation
         where.conversationId = idOrConversationId;
+        const items = await this.aiGenRepo.find({
+          where,
+          order: { createdAt: 'DESC' },
+        });
+
+        // Favor CHAT type which contains the full history
+        const chatItem = items.find((i) => i.type === AiGenerationType.CHAT);
+        if (chatItem) {
+          this.logger.log(
+            `[getConversation] FOUND - CHAT record for UUID: ${idOrConversationId}`,
+          );
+          return chatItem;
+        }
+        this.logger.log(
+          `[getConversation] FOUND - ${items.length} records (no CHAT type) for UUID: ${idOrConversationId}`,
+        );
+        return items[0] || null;
       } else {
         // Numeric: find by record id
-        where.id = typeof idOrConversationId === 'number' ? idOrConversationId : parseInt(String(idOrConversationId), 10);
+        where.id =
+          typeof idOrConversationId === 'number'
+            ? idOrConversationId
+            : parseInt(String(idOrConversationId), 10);
+        const item = await this.aiGenRepo.findOne({ where });
+        if (item) {
+          this.logger.log(
+            `[getConversation] FOUND - Record ID: ${item.id} (Type: ${item.type})`,
+          );
+        } else {
+          this.logger.warn(
+            `[getConversation] NOT FOUND - ID: ${idOrConversationId}`,
+          );
+        }
+        return item;
       }
-      return await this.aiGenRepo.findOne({ where });
     } catch (error) {
-      this.logger.error(`[getConversation] Error: ${error.message}`);
+      this.logger.error(`[getConversation] ERROR: ${error.message}`);
       return null;
     }
   }
@@ -1284,7 +1344,10 @@ REALISM INSTRUCTIONS:
             // Delete the whole conversation: if record has conversationId, delete ALL with same conversationId
             if (gen.conversationId) {
               toDelete = await this.aiGenRepo.find({
-                where: { conversationId: gen.conversationId, user: { id: userId } },
+                where: {
+                  conversationId: gen.conversationId,
+                  user: { id: userId },
+                },
                 relations: ['user'],
               });
             } else {
@@ -1302,12 +1365,21 @@ REALISM INSTRUCTIONS:
       }
 
       for (const gen of toDelete) {
-        if (gen.imageUrl) deleteFile(gen.imageUrl);
-        if (gen.fileUrl) deleteFile(gen.fileUrl);
+        this.logger.log(
+          `[deleteGeneration] Cleaning files for Item ID: ${gen.id} (Type: ${gen.type})`,
+        );
+        if (gen.imageUrl) {
+          this.logger.log(`[deleteGeneration] -> imageUrl: ${gen.imageUrl}`);
+          deleteFile(gen.imageUrl);
+        }
+        if (gen.fileUrl) {
+          this.logger.log(`[deleteGeneration] -> fileUrl: ${gen.fileUrl}`);
+          deleteFile(gen.fileUrl);
+        }
       }
       await this.aiGenRepo.remove(toDelete);
       this.logger.log(
-        `[deleteGeneration] SUCCESS - Deleted ${toDelete.length} item(s) for user ${userId}`,
+        `[deleteGeneration] SUCCESS - Deleted ${toDelete.length} item(s) from database for user ${userId}`,
       );
       return { success: true };
     } catch (error) {
@@ -1356,7 +1428,7 @@ REALISM INSTRUCTIONS:
   ) {
     // Modern apps pattern: conversationId is stable (UUID from client or legacy numeric id)
     const finalConversationId = conversationId || uuidv4();
-    
+
     this.logger.log(
       `[chat] START - User: ${userId}, Messages: ${messages.length}, ConversationId: ${finalConversationId}, HasFile: ${!!file}`,
     );
@@ -1433,7 +1505,7 @@ REALISM INSTRUCTIONS:
         if (conversationIdToReturn) {
           await this.aiGenRepo.update(
             { conversationId: conversationIdToReturn, user: { id: userId } },
-            { prompt: JSON.stringify(savedMessages) }
+            { prompt: JSON.stringify(savedMessages) },
           );
         }
 

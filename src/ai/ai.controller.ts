@@ -69,8 +69,13 @@ export class AiController {
   @Get('conversations')
   @Roles(Role.AI_USER)
   async getGroupedConversations(@Req() req) {
-    console.log('[AiController] GET /conversations called by user:', req.user.sub);
-    const conversations = await this.aiService.getGroupedConversations(req.user.sub);
+    console.log(
+      '[AiController] GET /conversations called by user:',
+      req.user.sub,
+    );
+    const conversations = await this.aiService.getGroupedConversations(
+      req.user.sub,
+    );
     console.log(
       '[AiController] Returning',
       conversations?.length,
@@ -99,25 +104,43 @@ export class AiController {
   @Post('history/:id/delete') // Using POST for broader compatibility if needed, but DELETE is better REST
   @Roles(Role.AI_USER)
   async deleteHistoryItem(@Param('id') id: string, @Req() req) {
+    console.log(
+      `[AiController] POST /history/${id}/delete - User: ${req.user.sub}`,
+    );
+
     // Support UUID, numeric id, or legacy standalone_XXX
     let idToDelete: number | string = id;
     if (id.startsWith('standalone_')) {
       const numId = parseInt(id.replace('standalone_', ''), 10);
-      if (isNaN(numId)) throw new BadRequestException('ID invalide');
+      if (isNaN(numId)) {
+        console.error(`[AiController] Invalid standalone ID format: ${id}`);
+        throw new BadRequestException('ID invalide');
+      }
       idToDelete = numId;
     } else if (!id.includes('-') && !isNaN(parseInt(id, 10))) {
       idToDelete = parseInt(id, 10);
     }
-    await this.aiService.deleteGeneration(idToDelete, req.user.sub);
-    return { message: 'Item deleted' };
+
+    console.log(
+      `[AiController] Calling AiService.deleteGeneration with ID: ${idToDelete}`,
+    );
+    const result = await this.aiService.deleteGeneration(
+      idToDelete,
+      req.user.sub,
+    );
+    console.log(`[AiController] AiService.deleteGeneration result:`, result);
+
+    return result;
   }
 
   @ApiOperation({ summary: "Effacer tout l'historique" })
   @Post('history/clear')
   @Roles(Role.AI_USER)
   async clearHistory(@Req() req) {
-    await this.aiService.clearHistory(req.user.sub);
-    return { message: 'History cleared' };
+    console.log(`[AiController] POST /history/clear - User: ${req.user.sub}`);
+    const result = await this.aiService.clearHistory(req.user.sub);
+    console.log(`[AiController] AiService.clearHistory result:`, result);
+    return result;
   }
 
   @ApiOperation({ summary: "Chat avec l'IA (GPT-5)" })
