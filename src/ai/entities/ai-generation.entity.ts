@@ -47,7 +47,7 @@ export class AiGeneration {
   @Column({ type: 'json', nullable: true })
   attributes?: Record<string, any>;
 
-  @Column({ nullable: true })
+  @Column({ name: 'conversationId', nullable: true })
   conversationId?: string;
 
   @Index()

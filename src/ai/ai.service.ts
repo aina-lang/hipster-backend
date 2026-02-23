@@ -97,7 +97,7 @@ export class AiService implements OnModuleInit {
     conversationId?: string,
   ) {
     try {
-      // Generate conversationId if not provided
+      // Generate conversationId if not provided (use generation id for API consistency)
       const finalConversationId = conversationId || uuidv4();
       
       const gen = this.aiGenRepo.create({
@@ -110,7 +110,14 @@ export class AiService implements OnModuleInit {
         conversationId: finalConversationId,
         title: this.generateSmartTitle(prompt, type, attributes),
       });
-      return await this.aiGenRepo.save(gen);
+      const saved = await this.aiGenRepo.save(gen);
+      // Force-persist conversationId (workaround for MySQL/TypeORM column mapping)
+      if (saved?.id) {
+        const convId = conversationId || saved.id.toString();
+        await this.aiGenRepo.update({ id: saved.id }, { conversationId: convId });
+        saved.conversationId = convId;
+      }
+      return saved;
     } catch (error) {
       this.logger.error(`[saveGeneration] Error: ${error.message}`);
       return null;
@@ -1437,8 +1444,13 @@ REALISM INSTRUCTIONS:
       if (conversation) {
         conversation.prompt = JSON.stringify(finalMessages);
         conversation.result = content;
-        conversation.conversationId = finalConversationId;
+        conversation.conversationId = conversation.id.toString();
         await this.aiGenRepo.save(conversation);
+        // Force-persist conversationId (workaround for MySQL/TypeORM mapping)
+        await this.aiGenRepo.update(
+          { id: conversation.id },
+          { conversationId: conversation.id.toString() },
+        );
       } else {
         const title = this.generateSmartTitle(
           lastUserMessage,
@@ -1450,15 +1462,19 @@ REALISM INSTRUCTIONS:
           prompt: JSON.stringify(finalMessages),
           result: content,
           title,
-          conversationId: finalConversationId,
+          conversationId: undefined, // Will be set after save
         });
         conversation = await this.aiGenRepo.save(conversation);
+        // Persist conversationId using generation id (consistent with other endpoints)
+        const convId = conversation.id.toString();
+        await this.aiGenRepo.update({ id: conversation.id }, { conversationId: convId });
       }
 
+      const returnedConvId = conversation.id.toString();
       return {
         type: 'text',
         content: content,
-        conversationId: finalConversationId,
+        conversationId: returnedConvId,
       };
     } catch (error) {
       this.logger.error(`[chat] Error: ${error.message}`);
