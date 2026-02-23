@@ -1268,7 +1268,7 @@ REALISM INSTRUCTIONS:
     try {
       let toDelete: AiGeneration[] = [];
       if (typeof id === 'string' && id.includes('-')) {
-        // UUID: find all records with this conversationId (conversation can have multiple items)
+        // UUID: find all records with this conversationId (chat + images in same conversation)
         toDelete = await this.aiGenRepo.find({
           where: { conversationId: id, user: { id: userId } },
           relations: ['user'],
@@ -1280,7 +1280,17 @@ REALISM INSTRUCTIONS:
             where: { id: numId, user: { id: userId } },
             relations: ['user'],
           });
-          if (gen) toDelete = [gen];
+          if (gen) {
+            // Delete the whole conversation: if record has conversationId, delete ALL with same conversationId
+            if (gen.conversationId) {
+              toDelete = await this.aiGenRepo.find({
+                where: { conversationId: gen.conversationId, user: { id: userId } },
+                relations: ['user'],
+              });
+            } else {
+              toDelete = [gen];
+            }
+          }
         }
       }
 
