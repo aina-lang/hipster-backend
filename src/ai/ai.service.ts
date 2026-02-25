@@ -475,7 +475,8 @@ export class AiService implements OnModuleInit {
         filename: 'image.png',
         contentType: 'image/png',
       });
-      formData.append('purpose', 'vision');
+      // 'assistants' is the correct purpose for images used in edits/generations
+      formData.append('purpose', 'assistants');
 
       const response = await axios.post(
         'https://api.openai.com/v1/files',
@@ -498,95 +499,128 @@ export class AiService implements OnModuleInit {
   }
 
   /**
-   * Appelle l'API OpenAI Images Edit pour modifier une image
-   * @param image Buffer de l'image d'entrée
-   * @param prompt Prompt décrivant l'édition
-   * @returns Buffer de l'image générée (en b64_json converti en Buffer)
-   */
-  /**
-   * Appelle l'API OpenAI Images Edit pour modifier une image
-   * @param image Buffer de l'image d'entrée
-   * @param prompt Prompt décrivant l'édition
-   * @returns Buffer de l'image générée
+   * Appelle POST /v1/images/edits avec stream: true.
+   * Attend l'événement `image_edit.completed` (ImageEditCompletedEvent) pour récupérer le b64_json final.
    */
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
   ): Promise<Buffer> {
     this.logger.log(
-      `[callOpenAiImageEdit] Starting Axios-based edit (gpt-image-1.5)`,
+      `[callOpenAiImageEdit] Starting streaming edit (gpt-image-1.5)`,
     );
 
-    try {
-      // 1. Force conversion to PNG with Sharp + Resize to 1024x1536 (GPT-1.5 requirement)
-      // OpenAI requires an alpha channel for image edits.
-      const pngBuffer = await sharp(image)
-        .resize(1024, 1536, {
-          fit: 'contain',
-          background: { r: 0, g: 0, b: 0, alpha: 0 },
-        })
-        .ensureAlpha()
-        .png()
-        .toBuffer();
+    // 1. Resize & convert to PNG
+    const pngBuffer = await sharp(image)
+      .resize(1024, 1536, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .ensureAlpha()
+      .png()
+      .toBuffer();
 
-      this.logger.log(
-        `[callOpenAiImageEdit] Image optimized. Size: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
-      );
+    this.logger.log(
+      `[callOpenAiImageEdit] Image optimized: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
+    );
 
-      // Refine prompt to stay under 1000 chars
-      const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
+    // 2. Refine prompt
+    const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
 
-      // 2. Prepare multipart form data using 'form-data' library (axios compatible)
-      const formData = new NodeFormData();
-      formData.append('model', 'gpt-image-1.5');
-      formData.append('prompt', refinedPrompt);
-      formData.append('image', pngBuffer, {
-        filename: 'image.png',
-        contentType: 'image/png',
-      });
-      formData.append('size', '1024x1536');
-      formData.append('response_format', 'b64_json');
+    // 3. Build base64 data URL
+    const imageDataUrl = `data:image/png;base64,${pngBuffer.toString('base64')}`;
 
-      const response = await axios.post(
-        'https://api.openai.com/v1/images/edits',
-        formData,
-        {
-          headers: {
-            ...formData.getHeaders(),
-            Authorization: `Bearer ${this.openAiKey}`,
-          },
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity,
+    // 4. POST with stream: true — receive SSE events
+    const response = await axios.post(
+      'https://api.openai.com/v1/images/edits',
+      {
+        model: 'gpt-image-1.5',
+        prompt: refinedPrompt,
+        images: [{ image_url: imageDataUrl }],
+        size: '1024x1536',
+        quality: 'high',
+        output_format: 'png',
+        moderation: 'low',
+        input_fidelity: 'high',
+        n: 1,
+        stream: true,
+        partial_images: 0, // no partial previews — only final event
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.openAiKey}`,
         },
-      );
+        responseType: 'stream',
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        timeout: 300000,
+      },
+    );
 
-      const b64 = response.data?.data?.[0]?.b64_json;
-      if (!b64) {
-        this.logger.error(
-          `[callOpenAiImageEdit] Missing b64_json in response: ${JSON.stringify(response.data)}`,
+    // 5. Parse SSE stream — wait for image_edit.completed
+    return new Promise<Buffer>((resolve, reject) => {
+      let buffer = '';
+      response.data.on('data', (chunk: Buffer) => {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const raw = line.slice(5).trim();
+          if (!raw || raw === '[DONE]') continue;
+          try {
+            const event = JSON.parse(raw);
+            if (event.type === 'image_edit.partial_image') {
+              this.logger.log(
+                `[callOpenAiImageEdit] Partial image #${event.partial_image_index} received`,
+              );
+            }
+            if (event.type === 'image_edit.completed') {
+              const b64 = event.b64_json;
+              if (!b64) {
+                reject(
+                  new Error(
+                    '[callOpenAiImageEdit] image_edit.completed has no b64_json',
+                  ),
+                );
+                return;
+              }
+              this.logger.log(
+                `[callOpenAiImageEdit] SUCCESS — image_edit.completed received`,
+              );
+              resolve(Buffer.from(b64, 'base64'));
+            }
+          } catch {
+            // ignore malformed SSE lines
+          }
+        }
+      });
+      response.data.on('error', (err: Error) => {
+        this.logger.error(`[callOpenAiImageEdit] Stream error: ${err.message}`);
+        reject(err);
+      });
+      response.data.on('end', () => {
+        reject(
+          new Error(
+            '[callOpenAiImageEdit] Stream ended without image_edit.completed',
+          ),
         );
-        throw new Error('No image data returned from OpenAI');
-      }
-
-      this.logger.log(`[callOpenAiImageEdit] SUCCESS.`);
-      return Buffer.from(b64, 'base64');
-    } catch (e: any) {
-      const errorMsg = e.response?.data
-        ? JSON.stringify(e.response.data)
-        : e.message;
-      this.logger.error(`[callOpenAiImageEdit] FAILED: ${errorMsg}`);
-      throw e;
-    }
+      });
+    });
   }
 
   /**
-   * Call OpenAI /v1/images/generations with gpt-image-1.5
+   * Call POST /v1/images/generations avec stream: true.
+   * Attend l'événement `image_generation.completed` (ImageGenCompletedEvent) pour récupérer le b64_json final.
    */
   private async callOpenAiToolImage(prompt: string): Promise<Buffer> {
-    this.logger.log(`[callOpenAiToolImage] Generating with gpt-image-1.5...`);
+    this.logger.log(
+      `[callOpenAiToolImage] Generating with gpt-image-1.5 (streaming)...`,
+    );
     const startTime = Date.now();
 
-    // Inject "Grain of Reality" and realism constraints directly into the prompt
     const realismEnhancedPrompt = `
 ${prompt}
 
@@ -598,56 +632,82 @@ REALISM INSTRUCTIONS:
 - Grain of Reality: Include tiny variations in lighting and shadows.
 `.trim();
 
-    try {
-      const response = await axios.post(
-        'https://api.openai.com/v1/images/generations',
-        {
-          model: 'gpt-image-1.5',
-          prompt: realismEnhancedPrompt,
-          n: 1,
-          size: '1024x1024',
-          background: 'opaque',
-          quality: 'high',
-          output_format: 'png',
+    const response = await axios.post(
+      'https://api.openai.com/v1/images/generations',
+      {
+        model: 'gpt-image-1.5',
+        prompt: realismEnhancedPrompt,
+        n: 1,
+        size: '1024x1024',
+        background: 'opaque',
+        quality: 'high',
+        output_format: 'png',
+        moderation: 'low',
+        stream: true,
+        partial_images: 0, // no partial previews — only final event
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.openAiKey}`,
         },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.openAiKey}`,
-          },
-          timeout: 400000,
-        },
-      );
+        responseType: 'stream',
+        timeout: 400000,
+      },
+    );
 
-      this.logger.log(
-        `[callOpenAiToolImage] RECEIVED RESPONSE after ${(
-          (Date.now() - startTime) /
-          1000
-        ).toFixed(1)}s`,
-      );
+    // Parse SSE stream — wait for image_generation.completed
+    return new Promise<Buffer>((resolve, reject) => {
+      let buffer = '';
+      response.data.on('data', (chunk: Buffer) => {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
 
-      const b64 = response.data?.data?.[0]?.b64_json;
-      if (!b64) {
-        this.logger.error(
-          `[callOpenAiToolImage] No b64_json found: ${JSON.stringify(
-            response.data,
-          )}`,
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          const raw = line.slice(5).trim();
+          if (!raw || raw === '[DONE]') continue;
+          try {
+            const event = JSON.parse(raw);
+            if (event.type === 'image_generation.partial_image') {
+              this.logger.log(
+                `[callOpenAiToolImage] Partial image #${event.partial_image_index} received`,
+              );
+            }
+            if (event.type === 'image_generation.completed') {
+              const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+              const b64 = event.b64_json;
+              if (!b64) {
+                reject(
+                  new Error(
+                    '[callOpenAiToolImage] image_generation.completed has no b64_json',
+                  ),
+                );
+                return;
+              }
+              this.logger.log(
+                `[callOpenAiToolImage] SUCCESS — image_generation.completed in ${elapsed}s`,
+              );
+              resolve(Buffer.from(b64, 'base64'));
+            }
+          } catch {
+            // ignore malformed SSE lines
+          }
+        }
+      });
+      response.data.on('error', (err: Error) => {
+        this.logger.error(`[callOpenAiToolImage] Stream error: ${err.message}`);
+        reject(err);
+      });
+      response.data.on('end', () => {
+        reject(
+          new Error(
+            '[callOpenAiToolImage] Stream ended without image_generation.completed',
+          ),
         );
-        throw new Error('No image result from OpenAI gpt-image-1.5');
-      }
-
-      const buffer = Buffer.from(b64, 'base64');
-      this.logger.log(
-        `[callOpenAiToolImage] SUCCESS - Received ${buffer.length} bytes`,
-      );
-      return buffer;
-    } catch (error: any) {
-      const errorMsg = error.response?.data
-        ? JSON.stringify(error.response.data)
-        : error.message;
-      this.logger.error(`[callOpenAiToolImage] FAILED: ${errorMsg}`);
-      throw error;
-    }
+      });
+    });
   }
 
   /**
