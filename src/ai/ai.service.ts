@@ -753,9 +753,36 @@ export class AiService implements OnModuleInit {
       if (file) {
         // OPENAI IMAGE EDIT (I2I)
         this.logger.log(
-          `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5)`,
+          `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5) - from uploaded file`,
         );
         finalBuffer = await this.callOpenAiImageEdit(file.buffer, finalPrompt);
+      } else if (
+        params.reference_image &&
+        typeof params.reference_image === 'string' &&
+        params.reference_image.startsWith('http')
+      ) {
+        // DOWNLOAD REMOTE IMAGE FOR EDIT
+        this.logger.log(
+          `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5) - from remote URL: ${params.reference_image}`,
+        );
+        try {
+          const downloadResp = await axios.get(params.reference_image, {
+            responseType: 'arraybuffer',
+          });
+          const downloadedBuffer = Buffer.from(downloadResp.data);
+          finalBuffer = await this.callOpenAiImageEdit(
+            downloadedBuffer,
+            finalPrompt,
+          );
+        } catch (downloadError) {
+          this.logger.error(
+            `[generateImage] Failed to download remote reference image: ${downloadError.message}`,
+          );
+          // Fallback to text-to-image or throw? Let's throw to be clear about the failure.
+          throw new Error(
+            "Impossible de charger l'image de référence distante.",
+          );
+        }
       } else {
         // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE (RESTORED ASYNC)
         this.logger.log(
