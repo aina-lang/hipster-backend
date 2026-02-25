@@ -535,6 +535,159 @@ export class AiService implements OnModuleInit {
     return `Minimalist professional photo of ${jobStr}. Extreme simplicity, spacious framing. Natural and empty.`;
   }
 
+  private getModelDescription(
+    modelName: string,
+    job: string,
+    options?: any,
+  ): string {
+    const model = modelName || 'Anniversaire adulte';
+    const jobStr = job || 'professional';
+    const accent = options?.accentColor || 'muted gold';
+    const bg = options?.background || 'clean elegant background';
+    const lighting = options?.lighting || 'sharp professional lighting';
+
+    // Grouping models into "Moods" for easier prompt engineering
+    let mood = 'Professional';
+    let specificDirectives = '';
+
+    // 1. PERSONAL EVENTS
+    if (
+      [
+        'Anniversaire adulte',
+        'Anniversaire enfant',
+        'Baby shower',
+        'Gender reveal',
+        'Mariage',
+        'Fiançailles',
+        'Baptême',
+        'Communion',
+        'Confirmation',
+        'Fête surprise',
+        'Enterrement de vie de garçon (EVG)',
+        'Enterrement de vie de jeune fille (EVJF)',
+        'Soirée privée',
+        'Réunion de famille',
+        'Pendaison de crémaillère',
+        'Remise de diplôme',
+        'Anniversaire de mariage',
+      ].includes(model)
+    ) {
+      mood = 'Festive & Elegant';
+      specificDirectives = `The scene highlights a warm, ${model.toLowerCase()} atmosphere. High-end celebration style. Use warm lighting and sophisticated decor.`;
+    }
+    // 2. PUBLIC EVENTS
+    else if (
+      [
+        'Concert',
+        'Festival',
+        'Soirée DJ',
+        'Showcase',
+        'Conférence',
+        'Séminaire',
+        'Atelier / Workshop',
+        'Lancement de produit',
+        'Exposition',
+        'Salon professionnel',
+        'Meetup',
+        'Webinaire',
+        'Compétition sportive',
+        'Tournoi',
+        'Projection cinéma',
+        'Spectacle',
+        'Théâtre',
+        'Événement caritatif',
+      ].includes(model)
+    ) {
+      mood = 'Dynamic & Impactful';
+      specificDirectives = `Focus on energy and professional event staging for a ${model.toLowerCase()}. High visibility, dynamic composition.`;
+    }
+    // 3. BUSINESS & MARKETING
+    else if (
+      [
+        'Promotion produit',
+        'Offre spéciale',
+        'Soldes',
+        'Black Friday',
+        'Ouverture magasin',
+        'Recrutement',
+        'Nouveau service',
+        'Branding personnel',
+        'Carte de visite version flyer',
+        'Présentation entreprise',
+        'Pack service freelance',
+        'Publicité restaurant',
+        'Menu spécial',
+        'Immobilier à vendre',
+        'Immobilier à louer',
+      ].includes(model)
+    ) {
+      mood = 'Commercial & Clean';
+      specificDirectives = `High-end commercial photography for ${model.toLowerCase()}. Product or service focus, very clean lines.`;
+    }
+    // 4. RESTAURATION
+    else if (
+      [
+        'Menu du jour',
+        'Promotion pizza',
+        'Fast food',
+        'Restaurant chic',
+        'Café',
+        'Pâtisserie',
+        'Livraison gratuite',
+        'Happy hour',
+        'Soirée à thème',
+        'Buffet spécial',
+      ].includes(model)
+    ) {
+      mood = 'Gourmet & Inviting';
+      specificDirectives = `Mouth-watering food photography style for ${model.toLowerCase()}. Fresh ingredients, inviting textures.`;
+    }
+    // 5. SPORT & FITNESS
+    else if (
+      [
+        'Coaching sportif',
+        'Salle de sport',
+        'Programme perte de poids',
+        'Bootcamp',
+        'Zumba',
+        'Yoga',
+        'Arts martiaux',
+        'Tournoi de foot',
+        'Tournoi de basket',
+        'Compétition locale',
+      ].includes(model)
+    ) {
+      mood = 'Action & Vitality';
+      specificDirectives = `High-energy athletic focus for ${model.toLowerCase()}. Sharp movement, motivational atmosphere.`;
+    }
+    // 6. BEAUTÉ & MODE
+    else if (
+      [
+        'Salon de coiffure',
+        'Institut de beauté',
+        'Onglerie',
+        'Maquillage professionnel',
+        'Promo vêtements',
+        'Nouvelle collection',
+        'Défilé de mode',
+        'Spa',
+        'Barber shop',
+      ].includes(model)
+    ) {
+      mood = 'Aesthetic & Glamour';
+      specificDirectives = `Fashion editorial style for ${model.toLowerCase()}. Flawless skin, elegant styling, luxury vibe.`;
+    }
+    // 7. ÉDUCATION, SANTÉ, SERVICES, RÉLIGIEUX, DIGITAL, SAISONNIER...
+    else {
+      mood = 'Professional & Realistic';
+      specificDirectives = `Realistic contextual focus on ${model.toLowerCase()}. Authentic and trustworthy atmosphere.`;
+    }
+
+    return `Mood: ${mood}. ${specificDirectives}. EXTREME CLARITY. Authentic photography. SHARP FOCUS. ${lighting}. ${bg}. RULES: SHARP AND DISTINCT. NO synthetic objects, NO ai banners. PURE PHOTOGRAPHY. All objects must be real, physical, and tangible. Single natural subject. COLOR: Natural colors with a ${accent} accent. High-end candid style. ZERO ai-artifacts. Ensure everything looks like a real-world photograph for a ${model}.`
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   private async uploadToOpenAiFiles(image: Buffer): Promise<string> {
     try {
       const formData = new NodeFormData();
@@ -1389,9 +1542,9 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     file?: Express.Multer.File,
     seed?: number,
   ) {
-    const style = params.style || 'Minimal Studio';
+    const model = params.model || 'Anniversaire adulte';
     this.logger.log(
-      `[generateFlyer] START - User: ${userId}, Style: ${style}, hasFile: ${!!file}`,
+      `[generateFlyer] START - User: ${userId}, Model: ${model}, hasFile: ${!!file}`,
     );
 
     // Build a FLYER-specific prompt
@@ -1418,10 +1571,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       'hashtag',
     ].some((kw) => userQueryLower.includes(kw));
 
-    // For flyers, default is to ADD text if specified, since flyers inherently need text
-    // If user provided ANY userQuery, treat it as text to include on the flyer
     const hasUserQuery = (params.userQuery || '').trim().length > 0;
-    // Force 1024x1536 size for ALL flyers to ensure professional poster format
     const finalSize = '1024x1536';
     const orientation = 'portrait';
 
@@ -1432,30 +1582,25 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
            - Visual Framing: COMPOSITION: Wide or Middle shot. Ensure the person's head and shoulders are fully visible with safe margin above the head.
            - Style: "Premium Editorial" vibe. High-end, clean, professional structure.
            - Typographic Dynamism: USE DYNAMIC COMPOSITION. You ARE ENCOURAGED to use tilted text (angles), rotated titles, and asymmetric placements to make it look like a real professional poster.
-           - SAFE AREA: Ensure all text and critical elements have a 15% margin from the edges to avoid clipping.
+           - SAFE AREA: Ensure all text and critical elements have a 15% margin from the edges.
            - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif).
            - Visual Hierarchy: Absolute clarity. Headline is high-impact, potentially rotated or angled for style.
            - CONTENT POLICY: Use the provided text: "${params.userQuery}" and creatively REPHRASE it into a catchy French slogan. 
            - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
            - COPYWRITING: Improvisation is REQUIRED for catchy impact. Make it sound like a real pro flyer.
-           - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs.
-           - Match style "${style}": Minimal = sophisticated whitespace; Hero = dramatic lighting & centered subject; Premium = luxury textures & refined alignment.`
-        : `ELITE GRAPHIC DESIGN RULES: 
-           - Style: Modern Visual Poster / High-end Brand Display.
-           - Visual Framing: MIDDLE SHOT. Ensure the subject is perfectly centered and elegantly presented with space around.
-           - Typographic Dynamism: Even without text, the layout should feel dynamic and alive.
-           - SAFE AREA: Keep all visual focal points away from the extreme edges.
-           - ZERO TEXT POLICY: Use NO letters, NO numbers, NO words, NO logos.
-           - Create a "cool", trendy visual for style "${style}".`;
+           - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs.`
+        : 'NO text on the image.';
 
+    // 1. Refine the query for visual richness
     const refinedRes = await this.refineQuery(
       params.userQuery || params.job,
       params.job,
-      style,
+      model,
       flyerLanguage,
     );
 
-    const baseStylePrompt = this.getStyleDescription(style, params.job, {
+    // 2. Get specific model description
+    const baseStylePrompt = this.getModelDescription(model, params.job, {
       accentColor: refinedRes.accentColor,
       lighting: refinedRes.lighting,
       angle: refinedRes.angle,
@@ -1472,8 +1617,8 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
     // If we have a file, the prompt should be about TRANSFORMING, not GENERATING.
     const modePrefix = file
-      ? `TRANSFORM THIS IMAGE into a sharp professional photo with the highest realism.`
-      : `GENERATE a sharp professional photo with the highest realism from scratch.`;
+      ? `TRANSFORM THIS IMAGE into a sharp professional photo with the highest realism for a ${model}.`
+      : `GENERATE a sharp professional photo with the highest realism from scratch for a ${model}.`;
     const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
 
     this.logger.log(
@@ -1516,7 +1661,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
           { role: 'assistant', content: 'Flyer généré' },
         ]),
         AiGenerationType.CHAT,
-        { style, hasSourceImage: !!file },
+        { style: model, hasSourceImage: !!file },
         imageUrl,
       );
 
