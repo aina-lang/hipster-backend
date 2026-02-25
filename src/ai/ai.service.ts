@@ -230,10 +230,11 @@ export class AiService implements OnModuleInit {
     }
   }
 
-  private async refineQuery(
+  async refineQuery(
     query: string,
     job: string,
     styleName: string,
+    language: string = 'French',
   ): Promise<{
     prompt: string;
     isPostureChange: boolean;
@@ -246,14 +247,16 @@ export class AiService implements OnModuleInit {
     try {
       // Escape special characters in variables to prevent JSON parsing errors
       const escapedJob = job.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-      const escapedStyle = styleName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-      
+      const escapedStyle = styleName
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"');
+
       const resp = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `Image prompt engineer.Job="${escapedJob}" Style="${escapedStyle}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${escapedJob}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${escapedJob} world.`,
+            content: `Image prompt engineer.Job="${escapedJob}" Style="${escapedStyle}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${escapedJob}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${escapedJob} world. Any text appearing in the image (signs, logos, labels) MUST be in ${language}.`,
           },
           { role: 'user', content: query || `Scene for ${job}` },
         ],
@@ -343,6 +346,7 @@ export class AiService implements OnModuleInit {
       params.userQuery || params.job,
       params.job,
       styleName,
+      params.language || 'French',
     );
     const refinedQuery = refinedRes.prompt;
     this.logger.log(
@@ -421,7 +425,9 @@ export class AiService implements OnModuleInit {
       finalNegativePrompt = `${finalNegativePrompt},glitch,noise,low contrast,oversaturated,distorted face,mismatched eyes`;
     }
 
-    this.logger.log(`[callOpenAiImageEditWithFullPipeline] Étape 4 - Final Prompt: ${finalPrompt.substring(0, 120)}...`);
+    this.logger.log(
+      `[callOpenAiImageEditWithFullPipeline] Étape 4 - Final Prompt: ${finalPrompt.substring(0, 120)}...`,
+    );
     this.logger.log(
       `[callOpenAiImageEditWithFullPipeline] Étape 4 - Negative Prompt (for reference, not used in /v1/images/edits): ${finalNegativePrompt.substring(0, 100)}...`,
     );
@@ -429,10 +435,7 @@ export class AiService implements OnModuleInit {
     // ÉTAPE 5: Appeler callOpenAiImageEdit avec le prompt complet
     // NOTE: negative_prompt is NOT passed because /v1/images/edits doesn't support it
     try {
-      const editedImage = await this.callOpenAiImageEdit(
-        image,
-        finalPrompt,
-      );
+      const editedImage = await this.callOpenAiImageEdit(image, finalPrompt);
       this.logger.log(
         `[callOpenAiImageEditWithFullPipeline] SUCCESS - Image edited`,
       );
@@ -892,6 +895,7 @@ export class AiService implements OnModuleInit {
         params.userQuery || params.job,
         params.job,
         styleName,
+        params.language || 'French',
       );
       const refinedQuery = refinedRes.prompt;
 
@@ -1183,7 +1187,7 @@ export class AiService implements OnModuleInit {
         messages: [
           {
             role: 'system',
-            content: `Professional ${type} writer.French only.Plain text,no markdown.Short & direct.LOGIC:1.If user specifically asks for a caption/text content,follow those instructions.2.If user DOES NOT ask for text,IGNORE the "imagePrompt" details and INVENT an impactful marketing post related to the "job" context.3.NEVER describe the image details (lighting,lens,etc.) unless the user explicitly asks "Décris cette image".4.Focus on professional value and high-end branding.STYLE:Professional,telegraphic,impactful.`,
+            content: `Professional ${type} writer. Language: ${params.language || 'French'}. Plain text,no markdown.Short & direct.LOGIC:1.If user specifically asks for a caption/text content,follow those instructions.2.If user DOES NOT ask for text,IGNORE the "imagePrompt" details and INVENT an impactful marketing post related to the "job" context.3.NEVER describe the image details (lighting,lens,etc.) unless the user explicitly asks "Décris cette image".4.Focus on professional value and high-end branding.STYLE:Professional,telegraphic,impactful.`,
           },
           {
             role: 'user',
