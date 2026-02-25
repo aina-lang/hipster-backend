@@ -25,9 +25,9 @@ export class AiService implements OnModuleInit {
 
   constructor(
     private configService: ConfigService,
-    
+    @InjectRepository(AiUser)
     private aiUserRepo: Repository<AiUser>,
-    
+    @InjectRepository(AiGeneration)
     private aiGenRepo: Repository<AiGeneration>,
   ) {
     this.openAiKey = this.configService.get<string>('OPENAI_API_KEY');

@@ -152,7 +152,7 @@ export class AiUser {
   @OneToMany(() => Otp, (otp) => otp.aiUser)
   otps: Otp[];
 
-  @OneToMany(() => Payment, (p) => p.user)
+  @OneToMany(() => Payment, (p) => p.aiUser)
   payments: Payment[];
 
   @OneToMany(() => AiUsageLog, (l) => l.user)
