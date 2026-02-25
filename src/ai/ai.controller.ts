@@ -28,7 +28,6 @@ import { PlanType } from './entities/ai-user.entity';
 
 @ApiTags('AI')
 @Controller('ai')
-@UseGuards(RolesGuard)
 @ApiBearerAuth()
 export class AiController {
   private readonly logger = new Logger(AiController.name);

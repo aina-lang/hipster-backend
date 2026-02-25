@@ -1787,7 +1787,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     const user = await this.getAiUserWithProfile(userId);
     if (user) {
       const parts = [];
-      if (user.name) parts.push(`Nom: ${user.name}`);
+      if (user.name) parts.push(user.name);
       if (user.professionalPhone) parts.push(`Tel: ${user.professionalPhone}`);
       if (user.professionalAddress)
         parts.push(`Adresse: ${user.professionalAddress}`);
@@ -1884,7 +1884,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     let brandingInfoStr = '';
     if (wantsBrandingInfo && !avoidsBrandingInfo && user) {
       const parts = [];
-      if (user.name) parts.push(`Nom: ${user.name}`);
+      if (user.name) parts.push(user.name);
       if (user.professionalPhone) parts.push(`Tel: ${user.professionalPhone}`);
       if (user.professionalAddress)
         parts.push(`Adresse: ${user.professionalAddress}`);
@@ -1926,9 +1926,10 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
            - Typographic Dynamism: USE DYNAMIC COMPOSITION. You ARE ENCOURAGED to use tilted text (angles), rotated titles, and asymmetric placements to make it look like a real professional poster.
            - SAFE AREA: Ensure all text and critical elements have a 15% margin from the edges.
            - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif).
-           - Visual Hierarchy: Absolute clarity. Headline is high-impact, potentially rotated or angled for style.
-           - CONTENT POLICY: You MUST improvise catchy French "accroches" (hooks) and headlines based on the context: "${params.userQuery || params.job || model}". 
+           - Visual Hierarchy: Absolute clarity. HEADLINE MUST BE the person's name: "${user?.name || ''}". It should be high-impact, potentially rotated or angled for style.
+           - CONTENT POLICY: You MUST improvise catchy French "accroches" (hooks) based on the context: "${params.userQuery || params.job || model}". Use the job/activity ("${params.job || ''}") ONLY to improvise the style and hooks, NEVER as the main title and NEVER verbatim.
              ${brandingInfoStr ? `MANDATORY: Include this professional info clearly: "${brandingInfoStr}".` : ''}
+           - PROHIBITION: NEVER use or display the word "Nom" (Name). NEVER use or display the literal word "Job" or "Profession".
            - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
            - COPYWRITING: HIGH IMPROVISATION is REQUIRED. Create professional marketing copy that SELLS. Make it sound like a real pro flyer.
            - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs. USE ONLY PROVIDED INFO OR IMPROVISED HOOKS.`;
