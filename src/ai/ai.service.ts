@@ -567,17 +567,23 @@ export class AiService implements OnModuleInit {
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
-    negativePrompt?: string,
-    skipRefinement?: boolean,
+    options?: { size?: string; quality?: string; skipRefinement?: boolean },
   ): Promise<Buffer> {
     try {
       this.logger.log(
-        `[callOpenAiImageEdit] Starting streaming edit (gpt-image-1.5)`,
+        `[callOpenAiImageEdit] Starting streaming edit (gpt-image-1.5) - Size: ${options?.size || '1024x1536'}`,
       );
+
+      const targetWidth = options?.size?.split('x')[0]
+        ? parseInt(options.size.split('x')[0])
+        : 1024;
+      const targetHeight = options?.size?.split('x')[1]
+        ? parseInt(options.size.split('x')[1])
+        : 1536;
 
       // 1. Resize & convert to PNG
       const pngBuffer = await sharp(image)
-        .resize(1024, 1536, {
+        .resize(targetWidth, targetHeight, {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 },
         })
@@ -592,10 +598,9 @@ export class AiService implements OnModuleInit {
       // 3. Upload to OpenAI Files to get a file_id
       const fileId = await this.uploadToOpenAiFiles(pngBuffer);
 
-      // 2. Refine prompt ONLY if not explicitly skipped and no negativePrompt passed
-      // skipRefinement=true for flyers (to preserve text/date/location info)
+      // 2. Refine prompt ONLY if not explicitly skipped
       let finalPrompt = prompt;
-      if (!negativePrompt && !skipRefinement) {
+      if (!options?.skipRefinement) {
         finalPrompt = await this.refinePromptForOpenAiEdit(prompt);
       } else {
         this.logger.log(
@@ -604,14 +609,13 @@ export class AiService implements OnModuleInit {
       }
 
       // 4. Construire le POST body
-      // NOTE: Avec gpt-image-1.5, negative_prompt peut être supporté
       const postBody: any = {
         model: 'gpt-image-1.5',
         prompt: finalPrompt,
         images: [{ file_id: fileId }],
-        size: '1024x1024',
-        quality: 'medium',
-        output_format: 'jpeg',
+        size: options?.size || '1024x1536',
+        quality: options?.quality || 'medium',
+        output_format: 'jpeg', // Or 'png' if supported by model
         moderation: 'low',
         input_fidelity: 'high',
         n: 1,
@@ -1412,37 +1416,29 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     // For flyers, default is to ADD text if specified, since flyers inherently need text
     // If user provided ANY userQuery, treat it as text to include on the flyer
     const hasUserQuery = (params.userQuery || '').trim().length > 0;
-    // Determine dimension
-    const requestedSize = params.size || '1024x1536';
-    const finalSize = ['1024x1024', '1536x1024', '1024x1536'].includes(
-      requestedSize,
-    )
-      ? requestedSize
-      : '1024x1536';
-    const orientation =
-      finalSize === '1536x1024'
-        ? 'landscape'
-        : finalSize === '1024x1024'
-          ? 'square'
-          : 'portrait';
+    // Force 1024x1536 size for ALL flyers to ensure professional poster format
+    const finalSize = '1024x1536';
+    const orientation = 'portrait';
 
     const flyerLanguage = params.language || 'French';
     const flyerTextRule =
       userExplicitlyRequestsText || hasUserQuery
         ? `ELITE GRAPHIC DESIGN RULES: 
-           - Visual Framing: Ensure the subject is well-framed, centered, and NOT cropped.
+           - Visual Framing: COMPOSITION: Wide or Middle shot. Ensure the person's head and shoulders are fully visible with safe margin above the head.
            - Style: "Premium Editorial" vibe. High-end, clean, professional structure.
-           - SAFE AREA: Ensure all text and critical elements have a 10% margin from the edges.
-           - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif). Varied weights and perfect alignment.
-           - Visual Hierarchy: Absolute clarity. Headline is impactful and sophisticated.
-           - CONTENT POLICY: Display the following text in ${flyerLanguage}: "${params.userQuery}". 
+           - Typographic Dynamism: USE DYNAMIC COMPOSITION. You ARE ENCOURAGED to use tilted text (angles), rotated titles, and asymmetric placements to make it look like a real professional poster.
+           - SAFE AREA: Ensure all text and critical elements have a 15% margin from the edges to avoid clipping.
+           - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif).
+           - Visual Hierarchy: Absolute clarity. Headline is high-impact, potentially rotated or angled for style.
+           - CONTENT POLICY: Use the provided text: "${params.userQuery}" and creatively REPHRASE it into a catchy French slogan. 
            - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
-           - COPYWRITING: You MAY creatively improve the phrasing for impact in ${flyerLanguage} (e.g., adding "Venez nombreux", "Achetez maintenant", "Événement exceptionnel").
+           - COPYWRITING: Improvisation is REQUIRED for catchy impact. Make it sound like a real pro flyer.
            - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs.
            - Match style "${style}": Minimal = sophisticated whitespace; Hero = dramatic lighting & centered subject; Premium = luxury textures & refined alignment.`
         : `ELITE GRAPHIC DESIGN RULES: 
            - Style: Modern Visual Poster / High-end Brand Display.
-           - Visual Framing: Ensure the subject is perfectly centered and elegantly presented.
+           - Visual Framing: MIDDLE SHOT. Ensure the subject is perfectly centered and elegantly presented with space around.
+           - Typographic Dynamism: Even without text, the layout should feel dynamic and alive.
            - SAFE AREA: Keep all visual focal points away from the extreme edges.
            - ZERO TEXT POLICY: Use NO letters, NO numbers, NO words, NO logos.
            - Create a "cool", trendy visual for style "${style}".`;
@@ -1466,14 +1462,14 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
     // Ensure the subject from userQuery is the central object of the flyer
     const subjectDirectives = params.userQuery
-      ? `VISUAL SUBJECT: Ensure that the main objects or people described in "${params.userQuery}" (e.g. bassist, musical instrument, product) are the central focus of the image.`
+      ? `VISUAL SUBJECT: Ensure that the main objects or people described in "${params.userQuery}" (e.g. bassist, musical instrument, product) are the central focus of the image. Composition: MIDDLE SHOT, subject centered.`
       : '';
 
     // If we have a file, the prompt should be about TRANSFORMING, not GENERATING.
     const modePrefix = file
       ? `TRANSFORM THIS IMAGE into a professional flyer.`
       : `GENERATE a professional flyer from scratch.`;
-    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Designer grade, Cool, Impactful. QUALITY: ${qualityTags}. NO placeholders, NO fake text. TECHNICAL NOTE: Build the scene description in English but the DISPLAYED TEXT on image must be in ${flyerLanguage}.`;
+    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Designer grade, Premium, Impactful. QUALITY: ${qualityTags}. NO placeholders, NO fake text. TECHNICAL NOTE: Output high resolution, professional framing. Displayed text must be in ${flyerLanguage}.`;
 
     this.logger.log(
       `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
@@ -1484,11 +1480,14 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
       if (file) {
         // Use the already-built flyer prompt directly (includes text rules)
-        // Skip callOpenAiImageEditWithFullPipeline to avoid it rebuilding the prompt
         this.logger.log(
           `[generateFlyer] Strategy: Image Edit with FLYER prompt`,
         );
-        finalBuffer = await this.callOpenAiImageEdit(file.buffer, finalPrompt);
+        finalBuffer = await this.callOpenAiImageEdit(file.buffer, finalPrompt, {
+          size: finalSize,
+          quality: 'high',
+          skipRefinement: true,
+        });
       } else {
         // Use HIGH quality and specified size for flyers
         finalBuffer = await this.callOpenAiToolImage(finalPrompt, {
