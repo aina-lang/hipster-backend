@@ -581,7 +581,15 @@ export class AiService implements OnModuleInit {
       else if (modelLower.includes('flat design'))
         specificDirectives =
           'Solid colors, 2D minimalist aesthetics, and vector-style clarity.';
-      else
+      else if (
+        modelLower.includes('dégradé') ||
+        modelLower.includes('gradient')
+      ) {
+        specificDirectives =
+          'Vibrant abstract gradient background (Top-left: White/Cloud Blue; Top-right: Hot Pink/Magenta; Bottom: Deep Electric Purple/Navy). Subtle fine-grain paper texture for a premium feel. At the bottom, a dark-colored semi-transparent angled banner overlay for text.';
+        layout =
+          'LEFT BALANCE: Subject strictly on the LEFT, leaving 60% of the frame on the right and the bottom banner area for typography and negative space.';
+      } else
         specificDirectives =
           'Clean lines, minimalist digital layout, and a contemporary tech vibe.';
     }
@@ -1859,6 +1867,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
         url: imageUrl,
         generationId: saved?.id,
         isAsync: false,
+        seed: seed || 0,
         prompt: finalPrompt,
       };
     } catch (error) {
