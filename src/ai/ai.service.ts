@@ -487,11 +487,34 @@ export class AiService implements OnModuleInit {
       });
     } catch (error: any) {
       if (error.response?.status === 400) {
-        let detail = 'Unable to stringify error data';
-        try {
-          detail = JSON.stringify(error.response.data);
-        } catch (e) {
-          detail = '[Circular or Complex Data]';
+        let detail = '';
+        if (
+          error.response.data &&
+          typeof error.response.data.on === 'function'
+        ) {
+          // It's a stream, try to read it
+          try {
+            detail = await new Promise((resolve) => {
+              let chunkStr = '';
+              error.response.data.on('data', (chunk: any) => {
+                chunkStr += chunk.toString();
+              });
+              error.response.data.on('end', () => resolve(chunkStr));
+              // Safety timeout
+              setTimeout(
+                () => resolve(chunkStr || 'Timeout reading error stream'),
+                3000,
+              );
+            });
+          } catch (e) {
+            detail = '[Failed to read error stream]';
+          }
+        } else {
+          try {
+            detail = JSON.stringify(error.response.data);
+          } catch (e) {
+            detail = '[Circular or Complex Data]';
+          }
         }
         this.logger.error(`[callOpenAiImageEdit] 400 DETAIL: ${detail}`);
       } else {
