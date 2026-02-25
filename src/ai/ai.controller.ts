@@ -401,11 +401,16 @@ export class AiController {
         data: result,
       };
     } catch (error: any) {
-      console.error('[AiController] generateSocial CRASHED:', error);
+      console.error('[AiController] generateSocial CRASHED:', error.message);
+      let safeBody = 'Unable to stringify body';
+      try {
+        safeBody = JSON.stringify(body).substring(0, 500);
+      } catch (e) {
+        safeBody = '[Circular or Large Body]';
+      }
       console.error('[AiController] Error details:', {
         message: error.message,
-        stack: error.stack,
-        body: JSON.stringify(body).substring(0, 500),
+        body: safeBody,
       });
       if (error instanceof BadRequestException) throw error;
       throw new HttpException(

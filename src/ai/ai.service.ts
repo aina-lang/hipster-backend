@@ -485,11 +485,15 @@ export class AiService implements OnModuleInit {
           reject(new Error('Stream ended without completion')),
         );
       });
-    } catch (error) {
-      if (error.response) {
-        this.logger.error(
-          `[callOpenAiImageEdit] 400 DETAIL: ${JSON.stringify(error.response.data)}`,
-        );
+    } catch (error: any) {
+      if (error.response?.status === 400) {
+        let detail = 'Unable to stringify error data';
+        try {
+          detail = JSON.stringify(error.response.data);
+        } catch (e) {
+          detail = '[Circular or Complex Data]';
+        }
+        this.logger.error(`[callOpenAiImageEdit] 400 DETAIL: ${detail}`);
       } else {
         this.logger.error(`[callOpenAiImageEdit] Error: ${error.message}`);
       }
