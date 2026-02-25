@@ -532,6 +532,24 @@ export class AiService implements OnModuleInit {
       return `Minimalist to the maximum. Solid neutral background, huge negative space, soft daylight. The subject is the only focal point. Elegantly empty.`;
     }
 
+    if (styleName === 'Modern Typo') {
+      return this.getModelDescription(
+        'Moderne typographie bold',
+        jobStr,
+        options,
+      );
+    }
+    if (styleName === 'Modern Neon') {
+      return this.getModelDescription('Moderne néon', jobStr, options);
+    }
+    if (styleName === 'Modern Gradient') {
+      return this.getModelDescription(
+        'Moderne dégradé (gradient)',
+        jobStr,
+        options,
+      );
+    }
+
     return `Minimalist professional photo of ${jobStr}. Extreme simplicity, spacious framing. Natural and empty.`;
   }
 
