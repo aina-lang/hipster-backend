@@ -465,6 +465,22 @@ export class AiService implements OnModuleInit {
             if (!raw || raw === '[DONE]') continue;
             try {
               const event = JSON.parse(raw);
+              this.logger.log(
+                `[callOpenAiImageEdit] Received event: ${event.type}`,
+              );
+
+              if (event.type === 'error') {
+                this.logger.error(
+                  `[callOpenAiImageEdit] OpenAI Stream ERROR: ${JSON.stringify(event.error)}`,
+                );
+                reject(
+                  new Error(
+                    `OpenAI Stream Error: ${event.error?.message || 'Unknown error'}`,
+                  ),
+                );
+                return;
+              }
+
               if (event.type === 'image_edit.completed') {
                 const b64 = event.b64_json;
                 if (!b64) {
@@ -475,8 +491,8 @@ export class AiService implements OnModuleInit {
                 }
                 resolve(Buffer.from(b64, 'base64'));
               }
-            } catch {
-              /* ignore sse fragments */
+            } catch (e) {
+              /* ignore sse fragments or malformed json */
             }
           }
         });
