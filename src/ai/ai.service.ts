@@ -969,9 +969,11 @@ REALISM INSTRUCTIONS:
           {
             role: 'system',
             content: `Professional ${type} writer. French only. Plain text, no markdown. Short & direct. 
-          LOGIC: Combine user query and optional image description (imagePrompt) to create a high-end post. 
-          If user asks to describe the image/scene, prioritize a professional visual description. 
-          If minimal input, INVENT a marketing post for the job. 
+          LOGIC: 
+          1. If user specifically asks for a caption/text content, follow those instructions.
+          2. If user DOES NOT ask for text, IGNORE the "imagePrompt" details and INVENT an impactful marketing post related to the "job" context.
+          3. NEVER describe the image details (lighting, lens, etc.) unless the user explicitly asks "Décris cette image".
+          4. Focus on professional value and high-end branding.
           STYLE: Professional, telegraphic, impactful.`,
           },
           {
