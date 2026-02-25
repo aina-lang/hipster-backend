@@ -412,9 +412,33 @@ export class AiService implements OnModuleInit {
       ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
       : baseStylePrompt;
 
-    const noTextRule =
-      'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding';
-    const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule}`;
+    const noTextRulePipeline = (() => {
+      const uq = (params.userQuery || '').toLowerCase();
+      const textRequested = [
+        'texte',
+        'écris',
+        'ecris',
+        'ajoute le texte',
+        'avec le texte',
+        'slogan',
+        'message',
+        'write',
+        'add text',
+        'titre',
+        'prix',
+        'promo',
+        'promotion',
+        'offre',
+        'réduction',
+        'soldes',
+        'citation',
+        'hashtag',
+      ].some((kw) => uq.includes(kw));
+      return textRequested
+        ? `Include ONLY the exact text explicitly requested: "${params.userQuery}". No other text or logo.`
+        : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays';
+    })();
+    const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRulePipeline}`;
 
     let finalNegativePrompt = this.NEGATIVE_PROMPT;
     if (!isHumanRequested) {
@@ -988,10 +1012,34 @@ export class AiService implements OnModuleInit {
           ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
           : baseStylePrompt;
 
-        // Append more descriptive triggers if it's a rich user prompt
-        // CRITICAL: No text, no watermarks, no logos unless explicitly requested
-        const noTextRule =
-          'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding';
+        // CRITICAL: Text on image is ONLY allowed if user explicitly requested it.
+        const userQueryLower = (params.userQuery || '').toLowerCase();
+        const userExplicitlyRequestsText = [
+          'texte',
+          'écris',
+          'ecris',
+          'ajoute le texte',
+          'avec le texte',
+          'inscription',
+          'slogan',
+          'message',
+          'write',
+          'add text',
+          'sans-serif',
+          'titre',
+          'prix',
+          'promo',
+          'promotion',
+          'offre',
+          'réduction',
+          'soldes',
+          'citation',
+          'hashtag',
+        ].some((kw) => userQueryLower.includes(kw));
+
+        const noTextRule = userExplicitlyRequestsText
+          ? `IMPORTANT: Include ONLY the exact text explicitly requested by user: "${params.userQuery}". No other text, logo or watermark.`
+          : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding';
         const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule}`;
 
         let finalNegativePrompt = this.NEGATIVE_PROMPT;
@@ -1192,7 +1240,14 @@ export class AiService implements OnModuleInit {
         messages: [
           {
             role: 'system',
-            content: `Professional ${type} writer. Language: ${params.language || 'French'}. Plain text,no markdown.Short & direct.LOGIC:1.Strictly follow user instructions and provided info. 2.NEVER invent claims, offers, slogans, names, or details not provided by the user or branding info. 3.If user input is minimal, provide a brief, professional presentation of the ${job} world without hallucination. 4.NEVER describe image details unless explicitly asked. STYLE:Professional, impactful.`,
+            content: `Professional ${type} writer. Language: ${params.language || 'French'}. Plain text, no markdown. Short & direct.
+LOGIC:
+1. The user's instructions (userQuery) are the ABSOLUTE PRIORITY and must always be the source of content.
+2. You MAY improve, rephrase, and enhance the style of what the user provided, but you MUST preserve all factual information (prices, names, dates, offers, hashtags, slogans). Enhancing style is encouraged — changing or omitting facts is FORBIDDEN.
+3. If userQuery is brief, rephrase it in a more impactful and professional way using ONLY the information provided. NEVER add prices, names, phone numbers, dates, or any factual claims not given by the user.
+4. NEVER describe image details (lighting, lens, background, composition) unless the user explicitly asks to describe the image.
+5. NEVER add any information not present in userQuery or brandingInfo.
+STYLE: Professional, telegraphic, punchy. Output ONLY the final text.`,
           },
           {
             role: 'user',
