@@ -295,7 +295,7 @@ export class AiService implements OnModuleInit {
           {
             role: 'system',
             content:
-              'You are a prompt engineer for OpenAI Image Edits. Your job is to improve and enhance the visual quality of the prompt while STRICTLY preserving the CORE SUBJECT (person, face, object) of the original image. RULES: (1) NEVER remove or replace the person or main subject visible in the original image. (2) Describe the changes as modifications to the surroundings, style, or lighting AROUND the existing subject. (3) Use verbs like "Keep the [subject] and modify the background...", "Stylize the existing image to...", "Overlay text on the original subject...". (4) NEVER remove factual info (date, location, text). (5) Explicitly instruct to display text clearly. (6) Output ONE improved English instruction under 400 chars.',
+              'You are a prompt engineer for OpenAI Image Edits. Your job is to improve and enhance the visual quality of the prompt while STRICTLY preserving the CORE SUBJECT of the original image. RULES: (1) NEVER remove or replace the main subject. (2) Describe changes as modifications AROUND the subject. (3) Use verbs like "Keep the [subject] and modify the background...", "Stylize the image to...". (4) Preserve factual info but creatively rephrase for impact. (5) Instruct to use PROFESSIONAL DESIGN LAYOUT: clean structure, varied typography weights (bold titles, light details), and strategic text placement with good contrast. (6) Match the typography style to the aesthetic (e.g., elegant for Minimal, bold/impactful for Premium). (7) Output ONE instruction under 400 chars.',
           },
           { role: 'user', content: prompt },
         ],
@@ -1249,12 +1249,12 @@ export class AiService implements OnModuleInit {
             role: 'system',
             content: `Professional ${type} writer. Language: ${params.language || 'French'}. Plain text, no markdown. Short & direct.
 LOGIC:
-1. The user's instructions (userQuery) are the ABSOLUTE PRIORITY and must always be the source of content.
-2. You MAY improve, rephrase, and enhance the style of what the user provided, but you MUST preserve all factual information (prices, names, dates, offers, hashtags, slogans). Enhancing style is encouraged — changing or omitting facts is FORBIDDEN.
-3. If userQuery is brief, rephrase it in a more impactful and professional way using ONLY the information provided. NEVER add prices, names, phone numbers, dates, or any factual claims not given by the user.
+1. The user's instructions (userQuery) are the main source of content.
+2. You SHOULD improve, rephrase, and improvise the style to make it more impactful and professional. You don't need to be "verbatim", but you MUST NOT add new facts (prices, names, dates, specific offers).
+3. Transform the provided info into a high-quality text. If the user input is minimal, improvise on the tone and impact using ONLY the context provided. NEVER invent factual claims (like phone numbers or specific prices) not given by the user.
 4. NEVER describe image details (lighting, lens, background, composition) unless the user explicitly asks to describe the image.
 5. NEVER add any information not present in userQuery or brandingInfo.
-STYLE: Professional, telegraphic, punchy. Output ONLY the final text.`,
+STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
           },
           {
             role: 'user',
@@ -1414,8 +1414,17 @@ STYLE: Professional, telegraphic, punchy. Output ONLY the final text.`,
     const hasUserQuery = (params.userQuery || '').trim().length > 0;
     const flyerTextRule =
       userExplicitlyRequestsText || hasUserQuery
-        ? `FLYER DESIGN: Include the following text on the image, displayed clearly and prominently with bold modern typography: "${params.userQuery}" — Place text in visible zones. NO extra text, NO fake logos.`
-        : 'FLYER DESIGN: Create a visually stunning flyer without text. Bold visual composition, strong colors, no text or watermarks.';
+        ? `GRAPHIC DESIGN RULES: 
+           - Create a professional flyer layout for style "${style}". 
+           - Use high-end modern typography (varied weights, elegant spacing). 
+           - Establish a clear visual hierarchy: main title is bold and large, secondary info is smaller but legible. 
+           - Place the text: "${params.userQuery}" strategically with good contrast and negative space. 
+           - Match the layout to the aesthetic: if "${style}" is Minimal, use lots of white space and thin fonts; if Hero/Premium, use bold layout and dramatic typography. 
+           - NO overlapping text on faces, NO fake placeholder text.`
+        : `GRAPHIC DESIGN RULES: 
+           - Create a stunning visual-only flyer for style "${style}". 
+           - Focus on composition, balance, and artistic impact. 
+           - NO text, NO watermarks, NO logos. Bold aesthetic focus on the subject.`;
 
     const refinedRes = await this.refineQuery(
       params.userQuery || params.job,
