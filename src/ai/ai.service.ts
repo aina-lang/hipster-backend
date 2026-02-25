@@ -256,7 +256,7 @@ export class AiService implements OnModuleInit {
         messages: [
           {
             role: 'system',
-            content: `Image prompt engineer.Job="${escapedJob}" Style="${escapedStyle}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${escapedJob}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${escapedJob} world. DO NOT invent any text, names, or brands. ONLY include text or branding if specifically provided in the user prompt. If text is included, it MUST be in ${language}. PHYSICAL COHERENCE LAW: If the user specifies a count (e.g. "4-string bass", "6-string guitar", "4 wheels"), the generated scene MUST strictly match that count. The number of mechanically linked parts (strings=tuning pegs, wheels=axles, fingers=keys) MUST always be consistent and physically accurate. NEVER generate an instrument with a mismatched string/peg count. NEVER generate a vehicle with the wrong number of wheels.`,
+            content: `Image prompt engineer.Job="${escapedJob}" Style="${escapedStyle}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"Location or environment (e.g. Poitiers street, Madagascar beach, minimalist forest, plain wall)","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${escapedJob}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${escapedJob} world. DO NOT invent any text, names, or brands. ONLY include text or branding if specifically provided in the user prompt. If text is included, it MUST be in ${language}. PHYSICAL COHERENCE LAW: If the user specifies a count (e.g. "4-string bass", "6-string guitar", "4 wheels"), the generated scene MUST strictly match that count. The number of mechanically linked parts (strings=tuning pegs, wheels=axles, fingers=keys) MUST always be consistent and physically accurate. NEVER generate an instrument with a mismatched string/peg count. NEVER generate a vehicle with the wrong number of wheels.`,
           },
           { role: 'user', content: query || `Scene for ${job}` },
         ],
@@ -487,7 +487,7 @@ export class AiService implements OnModuleInit {
   ): string {
     const jobStr = job || 'professional';
 
-    // Premium Style: Realistic, Minimalist, High-end Photography
+    // Premium Style: Extreme Minimalism, Spacious Photography
     if (styleName === 'Premium') {
       const accent =
         options?.accentColor ||
@@ -506,29 +506,33 @@ export class AiService implements OnModuleInit {
       const bg =
         options?.background ||
         this.getRandomItem([
-          'clean neutral wall',
-          'minimalist modern interior',
-          'blurred natural depth of field',
+          'plain empty wall',
+          'solid neutral background',
+          'void-like minimalist studio',
         ]);
+
+      const bgDirectives = options?.background
+        ? `Background: Minimalist representation of ${bg}. EMPTY AND SPACIOUS.`
+        : `Background: ${bg}.`;
 
       let professionalContext = `The subject is in a real ${jobStr} environment.`;
       if (options?.primaryObject) {
         professionalContext = `The scene features a real ${options.primaryObject} in a natural ${jobStr} setting.`;
       }
 
-      return `Authentic professional photography. Minimalist composition, clean and spacious. ${lighting}, ${angle}, realistic skin textures, unedited look. ${bg}. ${professionalContext} RULES: NO AI-synthetic look, NO oversaturation, NO glowing edges. PURE PHOTOGRAPHY. Single natural photo. COLOR: Natural colors with a ${accent} touch on one element. High-end candid style, human and relatable. NO busy backgrounds, NO unnecessary objects.`
+      return `EXTREME MINIMALISM. Authentic photography. MAXIMUM EMPTY SPACE. Cleanest possible composition. ${lighting}, ${angle}, realistic skin textures. ${bgDirectives} ${professionalContext} RULES: MINIMAL TO THE MAXIMUM. NO extra objects, NO props, NO busy details. PURE SIMPLICITY. Single subject only. COLOR: Natural colors with a ${accent} touch on one element. High-end candid style, spacious and airy. ZERO clutter. If background is a location like a city or beach, show it in a highly minimalist and clean way.`
         .replace(/\s+/g, ' ')
         .trim();
     }
 
     if (styleName === 'Hero Studio') {
-      return `Realistic portrait photography. Clean studio background, natural soft lighting, sharp focus on the person. Minimal and professional.`;
+      return `Extreme minimalist portrait. Solid empty background, natural soft lighting. Focus ONLY on the person. NO objects, NO busy background. Clear and breathable.`;
     }
     if (styleName === 'Minimal Studio') {
-      return `Minimalist clean photography. Soft daylight, neutral solid background, lots of negative space, elegant and human.`;
+      return `Minimalist to the maximum. Solid neutral background, huge negative space, soft daylight. The subject is the only focal point. Elegantly empty.`;
     }
 
-    return `Realistic professional photo of ${jobStr}. Style: ${styleName}. Natural and minimal.`;
+    return `Minimalist professional photo of ${jobStr}. Extreme simplicity, spacious framing. Natural and empty.`;
   }
 
   private async uploadToOpenAiFiles(image: Buffer): Promise<string> {
@@ -1459,18 +1463,18 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     });
 
     const qualityTags =
-      'natural photography,sharp focus on subject,clean organic textures,realistic lighting,high resolution,professional minimal design';
+      'natural photography,extreme minimalist composition,maximum empty space,breathable layout,high resolution,clean professional design';
 
     // Ensure the subject from userQuery is the central object of the flyer
     const subjectDirectives = params.userQuery
-      ? `VISUAL SUBJECT: Ensure that the main objects or people described in "${params.userQuery}" (e.g. bassist, musical instrument, product) are the ONLY central focus. KEEP IT MINIMAL: NO unnecessary props, NO crowded background. Composition: MIDDLE SHOT, subject centered clearly.`
+      ? `VISUAL SUBJECT: Focus ONLY on "${params.userQuery}". EXTREME MINIMALISM: Absolutely NO extra objects, NO props, NO busy background. MAXIMIZE EMPTY SPACE around the subject. Subject must be perfectly centered in a void-like or very simple environment.`
       : '';
 
     // If we have a file, the prompt should be about TRANSFORMING, not GENERATING.
     const modePrefix = file
-      ? `TRANSFORM THIS IMAGE into a real authentic professional photo.`
-      : `GENERATE a real authentic professional photo from scratch.`;
-    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Minimalist, Realistic, Human-centric. QUALITY: ${qualityTags}. NO placeholders, NO fake text, NO synthetic AI art style. TECHNICAL NOTE: Output a natural looking photo with clean framing. Displayed text must be in ${flyerLanguage}.`;
+      ? `TRANSFORM THIS IMAGE into an extremely minimalist professional photo.`
+      : `GENERATE an extremely minimalist professional photo from scratch.`;
+    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Maximum Minimalism, Airy, Spacious. QUALITY: ${qualityTags}. NO placeholders, NO synthetic art. TECHNICAL NOTE: Output a natural photo with maximum empty space and zero clutter. Displayed text must be in ${flyerLanguage}.`;
 
     this.logger.log(
       `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
