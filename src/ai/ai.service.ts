@@ -203,7 +203,7 @@ export class AiService implements OnModuleInit {
   }
 
   private readonly NEGATIVE_PROMPT =
-    `extra fingers,mutated hands,six fingers,four fingers,extra limbs,detached limbs,missing limbs,fused fingers,deformed hands,cloned face,multiple heads,two heads,extra heads,distorted face,blurry,out of focus,low quality,pixelated,grain,lowres,text,watermark,logo,signature,letters,words,captions,labels,numbers,characters,symbols,typography,typesetting,advertisement text,cgi,3d,render,cartoon,anime,illustration,drawing,digital art,smooth plastic skin,artificial,airbrushed,unnatural skin,mustache,beard,facial hair,stubble,plastic,wax,doll,fake,unreal engine,octane render,oversaturated,high contrast,artificial lighting,porcelain,rubber,skin blemishes,distorted eyes,asymmetrical face,hyper-saturated,glowing edges,bad anatomy,bad proportions,amateur,draft,distorted facial features,plastic textures,oversmoothed skin,uncanny valley,oversaturated colors,multiple people,low resolution,photo-collage,heavy makeup,fake eyelashes,distorted gaze,airbrushed skin,digital over-sharpening,smooth plastic skin texture,perfectly symmetrical face,artificial CGI glow`.trim();
+    `extra fingers,mutated hands,six fingers,four fingers,extra limbs,detached limbs,missing limbs,fused fingers,deformed hands,cloned face,multiple heads,two heads,extra heads,distorted face,blurry,out of focus,low quality,pixelated,grain,lowres,text,watermark,logo,signature,letters,words,captions,labels,numbers,characters,symbols,typography,typesetting,advertisement text,cgi,3d,render,cartoon,anime,illustration,drawing,digital art,smooth plastic skin,artificial,airbrushed,unnatural skin,mustache,beard,facial hair,stubble,plastic,wax,doll,fake,unreal engine,octane render,oversaturated,high contrast,artificial lighting,porcelain,rubber,skin blemishes,distorted eyes,asymmetrical face,hyper-saturated,glowing edges,bad anatomy,bad proportions,amateur,draft,distorted facial features,plastic textures,oversmoothed skin,uncanny valley,oversaturated colors,multiple people,low resolution,photo-collage,heavy makeup,fake eyelashes,distorted gaze,airbrushed skin,digital over-sharpening,smooth plastic skin texture,perfectly symmetrical face,artificial CGI glow,wrong number of strings,wrong number of tuning pegs,mismatched strings and tuning pegs,extra tuning pegs,missing tuning pegs,extra strings,guitar with wrong string count,bass with wrong peg count,wrong number of frets,mismatched wheel count,extra wheels,missing wheels,wrong number of fingers,extra keyboard keys,wrong piano keys,mismatched parts,structurally incoherent object,physically impossible object,incorrect mechanical parts`.trim();
 
   private async refineSubject(job: string): Promise<string> {
     if (!job || job.trim().length === 0) return '';
@@ -256,7 +256,7 @@ export class AiService implements OnModuleInit {
         messages: [
           {
             role: 'system',
-            content: `Image prompt engineer.Job="${escapedJob}" Style="${escapedStyle}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${escapedJob}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${escapedJob} world. Any text appearing in the image (signs, logos, labels) MUST be in ${language}.`,
+            content: `Image prompt engineer.Job="${escapedJob}" Style="${escapedStyle}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${escapedJob}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${escapedJob} world. DO NOT invent any text, names, or brands. ONLY include text or branding if specifically provided in the user prompt. If text is included, it MUST be in ${language}. PHYSICAL COHERENCE LAW: If the user specifies a count (e.g. "4-string bass", "6-string guitar", "4 wheels"), the generated scene MUST strictly match that count. The number of mechanically linked parts (strings=tuning pegs, wheels=axles, fingers=keys) MUST always be consistent and physically accurate. NEVER generate an instrument with a mismatched string/peg count. NEVER generate a vehicle with the wrong number of wheels.`,
           },
           { role: 'user', content: query || `Scene for ${job}` },
         ],
@@ -295,7 +295,7 @@ export class AiService implements OnModuleInit {
           {
             role: 'system',
             content:
-              'You are a prompt engineer for OpenAI Image Edits. Transform the user input into a single, direct instruction in English that describes the FINAL look. Start with "Modify this image to have a [Style] aesthetic...". Remove technical tags like 8k or masterpiece. Keep it under 250 chars.',
+              'You are a prompt engineer for OpenAI Image Edits. Transform the user input into a single, direct instruction in English that describes the FINAL look. Start with "Modify this image to have a [Style] aesthetic...". NEVER add text, logos, watermarks or numbers unless explicitly in the user input. Remove technical tags like 8k or masterpiece. Keep it under 250 chars.',
           },
           { role: 'user', content: prompt },
         ],
@@ -412,7 +412,9 @@ export class AiService implements OnModuleInit {
       ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
       : baseStylePrompt;
 
-    const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}`;
+    const noTextRule =
+      'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding';
+    const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule}`;
 
     let finalNegativePrompt = this.NEGATIVE_PROMPT;
     if (!isHumanRequested) {
@@ -710,7 +712,7 @@ export class AiService implements OnModuleInit {
       const startTime = Date.now();
 
       const realismEnhancedPrompt =
-        `${prompt} REALISM:Hyper-realistic-photo,natural-skin-texture,visible-pores,correct-anatomy,natural-light`
+        `${prompt} REALISM:Hyper-realistic-photo,natural-skin-texture,visible-pores,correct-anatomy,natural-light. NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays`
           .replace(/\s+/g, ' ')
           .trim();
 
@@ -987,7 +989,10 @@ export class AiService implements OnModuleInit {
           : baseStylePrompt;
 
         // Append more descriptive triggers if it's a rich user prompt
-        const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}`;
+        // CRITICAL: No text, no watermarks, no logos unless explicitly requested
+        const noTextRule =
+          'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding';
+        const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule}`;
 
         let finalNegativePrompt = this.NEGATIVE_PROMPT;
 
@@ -1187,7 +1192,7 @@ export class AiService implements OnModuleInit {
         messages: [
           {
             role: 'system',
-            content: `Professional ${type} writer. Language: ${params.language || 'French'}. Plain text,no markdown.Short & direct.LOGIC:1.If user specifically asks for a caption/text content,follow those instructions.2.If user DOES NOT ask for text,IGNORE the "imagePrompt" details and INVENT an impactful marketing post related to the "job" context.3.NEVER describe the image details (lighting,lens,etc.) unless the user explicitly asks "Décris cette image".4.Focus on professional value and high-end branding.STYLE:Professional,telegraphic,impactful.`,
+            content: `Professional ${type} writer. Language: ${params.language || 'French'}. Plain text,no markdown.Short & direct.LOGIC:1.Strictly follow user instructions and provided info. 2.NEVER invent claims, offers, slogans, names, or details not provided by the user or branding info. 3.If user input is minimal, provide a brief, professional presentation of the ${job} world without hallucination. 4.NEVER describe image details unless explicitly asked. STYLE:Professional, impactful.`,
           },
           {
             role: 'user',
