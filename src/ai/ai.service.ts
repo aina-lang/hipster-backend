@@ -202,26 +202,8 @@ export class AiService implements OnModuleInit {
     return substring.length < cleaned.length ? substring + '...' : substring;
   }
 
-  private readonly NEGATIVE_PROMPT = `
-    extra fingers, mutated hands, six fingers, four fingers, 
-    extra limbs, detached limbs, missing limbs, fused fingers, deformed hands, 
-    cloned face, multiple heads, two heads, extra heads, distorted face, 
-    blurry, out of focus, low quality, pixelated, grain, lowres, 
-    text, watermark, logo, signature, letters, words, captions, labels,
-    numbers, characters, symbols, typography, typesetting, advertisement text, 
-    cgi, 3d, render, cartoon, anime, illustration, drawing, digital art,
-    smooth plastic skin, artificial, airbrushed, unnatural skin,
-    mustache, beard, facial hair, stubble (unless specified),
-    plastic, wax, doll, fake, unreal engine, octane render, oversaturated, 
-    high contrast, artificial lighting, porcelain, rubber, skin blemishes, 
-    distorted eyes, asymmetrical face, hyper-saturated, glowing edges,
-    vibrant neon colors (unless specified), bad anatomy, bad proportions,
-    amateur, draft, distorted facial features, plastic textures, oversmoothed skin,
-    uncanny valley, oversaturated colors, multiple people, low resolution, 
-    photo-collage, heavy makeup, fake eyelashes, distorted gaze,
-    airbrushed skin, digital over-sharpening, smooth plastic skin texture,
-    perfectly symmetrical face, artificial CGI glow.
-  `.trim();
+  private readonly NEGATIVE_PROMPT =
+    `extra fingers,mutated hands,six fingers,four fingers,extra limbs,detached limbs,missing limbs,fused fingers,deformed hands,cloned face,multiple heads,two heads,extra heads,distorted face,blurry,out of focus,low quality,pixelated,grain,lowres,text,watermark,logo,signature,letters,words,captions,labels,numbers,characters,symbols,typography,typesetting,advertisement text,cgi,3d,render,cartoon,anime,illustration,drawing,digital art,smooth plastic skin,artificial,airbrushed,unnatural skin,mustache,beard,facial hair,stubble,plastic,wax,doll,fake,unreal engine,octane render,oversaturated,high contrast,artificial lighting,porcelain,rubber,skin blemishes,distorted eyes,asymmetrical face,hyper-saturated,glowing edges,bad anatomy,bad proportions,amateur,draft,distorted facial features,plastic textures,oversmoothed skin,uncanny valley,oversaturated colors,multiple people,low resolution,photo-collage,heavy makeup,fake eyelashes,distorted gaze,airbrushed skin,digital over-sharpening,smooth plastic skin texture,perfectly symmetrical face,artificial CGI glow`.trim();
 
   private async refineSubject(job: string): Promise<string> {
     if (!job || job.trim().length === 0) return '';
@@ -232,7 +214,7 @@ export class AiService implements OnModuleInit {
           {
             role: 'system',
             content:
-              'Translate job title to 2-3 word English visual subject. Reply ONLY the subject.',
+              'Translate job to 2-3 word English visual subject. Reply ONLY the subject.',
           },
           { role: 'user', content: job },
         ],
@@ -267,10 +249,7 @@ export class AiService implements OnModuleInit {
         messages: [
           {
             role: 'system',
-            content: `Image prompt engineer. Job="${job}" Style="${styleName}".
-Return JSON only:
-{"prompt":"short English scene (max 40 words)","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}
-If user provides prompt, enhance it. No people unless asked.`,
+            content: `Image prompt engineer.Job="${job}" Style="${styleName}".Return JSON only:{"prompt":"short English scene(max 40 words)","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}If user provides prompt,enhance it.No people unless asked.`,
           },
           { role: 'user', content: query || `Scene for ${job}` },
         ],
@@ -312,7 +291,7 @@ If user provides prompt, enhance it. No people unless asked.`,
           {
             role: 'system',
             content:
-              'Compress this image prompt to under 300 chars. Keep key visual elements only. Reply ONLY the compressed prompt.',
+              'Compress image prompt < 300 chars. Key visual elements only. Reply ONLY compressed prompt.',
           },
           { role: 'user', content: prompt },
         ],
@@ -371,25 +350,9 @@ If user provides prompt, enhance it. No people unless asked.`,
         professionalContext = `The scene prominently features a ${options.primaryObject} that belongs to the ${jobStr} world.`;
       }
 
-      return `
-        Ultra high contrast black and white professional photographic representation. 
-        High-end luxury editorial style, sharp focus, cinematic composition.
-        ${lighting}, ${angle}, strong dramatic shadows, meticulous textures and high-fidelity details.
-        ${bg}.
-        ${professionalContext}
-
-        STRICT VISUAL RULES:
-        1. NO geometric shapes, NO lines, NO rectangles, NO squares, NO triangles.
-        2. NO graphic design overlays, NO frames, NO borders, NO layout guides.
-        3. PURE PHOTOGRAPHY: The image must look like a single, authentic professional photo.
-        
-        STRICT COLOR RULE: 
-        The image is monochrome black and white. 
-        ONE ACCENT COLOR ONLY: ${accent}, used subtly on a key element of the scene (like the ${options?.primaryObject || 'subject'}).
-        
-        CRITICAL: High-end campaign execution, luxury branding, ultra clean studio atmosphere.
-        No watermark, no random text, no logo.
-      `.trim();
+      return `Ultra high contrast black white professional photo.High-end luxury editorial,sharp focus,cinematic. ${lighting},${angle},dramatic shadows,high-fidelity. ${bg}. ${professionalContext} RULES:No geometric shapes/lines/frames.PURE PHOTOGRAPHY.Single authentic photo.COLOR:Monochrome.ONE ACCENT:${accent} on key element.High-end campaign,luxury branding,clean studio.No text/logo/watermark.`
+        .replace(/\s+/g, ' ')
+        .trim();
     }
 
     if (styleName === 'Hero Studio') {
@@ -440,57 +403,58 @@ If user provides prompt, enhance it. No people unless asked.`,
     image: Buffer,
     prompt: string,
   ): Promise<Buffer> {
-    this.logger.log(
-      `[callOpenAiImageEdit] Starting streaming edit (gpt-image-1.5)`,
-    );
+    try {
+      this.logger.log(
+        `[callOpenAiImageEdit] Starting streaming edit (gpt-image-1.5)`,
+      );
 
-    // 1. Resize & convert to PNG
-    const pngBuffer = await sharp(image)
-      .resize(1024, 1536, {
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
-      })
-      .ensureAlpha()
-      .png()
-      .toBuffer();
+      // 1. Resize & convert to PNG
+      const pngBuffer = await sharp(image)
+        .resize(1024, 1536, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        })
+        .ensureAlpha()
+        .png()
+        .toBuffer();
 
-    this.logger.log(
-      `[callOpenAiImageEdit] Image optimized: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
-    );
+      this.logger.log(
+        `[callOpenAiImageEdit] Image optimized: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
+      );
 
-    // 3. Upload to OpenAI Files to get a file_id (as requested by USER for performance/token reasons)
-    const fileId = await this.uploadToOpenAiFiles(pngBuffer);
+      // 3. Upload to OpenAI Files to get a file_id
+      const fileId = await this.uploadToOpenAiFiles(pngBuffer);
 
-    // 2. Refine prompt
-    const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
+      // 2. Refine prompt
+      const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
 
-    // 4. POST with stream: true — receive SSE events using input_file_id
-    const response = await axios.post(
-      'https://api.openai.com/v1/images/edits',
-      {
-        model: 'gpt-image-1.5',
-        prompt: refinedPrompt,
-        images: [{ input_file_id: fileId }],
-        size: '1024x1024', // réduit vs 1024x1536 — moins de tokens output
-        quality: 'medium',
-        output_format: 'jpeg', // jpeg = moins lourd que png en output tokens
-        moderation: 'low',
-        input_fidelity: 'high', // garder la fidélité à l'image source
-        n: 1,
-        stream: true,
-        partial_images: 0,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.openAiKey}`,
+      // 4. POST with stream: true — receive SSE events using input_file_id
+      const response = await axios.post(
+        'https://api.openai.com/v1/images/edits',
+        {
+          model: 'gpt-image-1.5',
+          prompt: refinedPrompt,
+          images: [{ input_file_id: fileId }],
+          size: '1024x1024',
+          quality: 'medium',
+          output_format: 'jpeg',
+          moderation: 'low',
+          input_fidelity: 'high',
+          n: 1,
+          stream: true,
+          partial_images: 0,
         },
-        responseType: 'stream',
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        timeout: 300000,
-      },
-    );
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.openAiKey}`,
+          },
+          responseType: 'stream',
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          timeout: 300000,
+        },
+      );
 
     // 5. Parse SSE stream — wait for image_edit.completed
     return new Promise<Buffer>((resolve, reject) => {
@@ -506,142 +470,100 @@ If user provides prompt, enhance it. No people unless asked.`,
           if (!raw || raw === '[DONE]') continue;
           try {
             const event = JSON.parse(raw);
-            if (event.type === 'image_edit.partial_image') {
-              this.logger.log(
-                `[callOpenAiImageEdit] Partial image #${event.partial_image_index} received`,
-              );
-            }
             if (event.type === 'image_edit.completed') {
               const b64 = event.b64_json;
               if (!b64) {
-                reject(
-                  new Error(
-                    '[callOpenAiImageEdit] image_edit.completed has no b64_json',
-                  ),
-                );
+                reject(new Error('[callOpenAiImageEdit] completed but no b64'));
                 return;
               }
-              this.logger.log(
-                `[callOpenAiImageEdit] SUCCESS — image_edit.completed received`,
-              );
               resolve(Buffer.from(b64, 'base64'));
             }
-          } catch {
-            // ignore malformed SSE lines
-          }
+          } catch { /* ignore sse fragments */ }
         }
       });
-      response.data.on('error', (err: Error) => {
-        this.logger.error(`[callOpenAiImageEdit] Stream error: ${err.message}`);
-        reject(err);
-      });
-      response.data.on('end', () => {
-        reject(
-          new Error(
-            '[callOpenAiImageEdit] Stream ended without image_edit.completed',
-          ),
-        );
-      });
+      response.data.on('error', (err) => reject(err));
+      response.data.on('end', () => reject(new Error('Stream ended without completion')));
     });
+  } catch (error) {
+    if (error.response) {
+      this.logger.error(`[callOpenAiImageEdit] 400 DETAIL: ${JSON.stringify(error.response.data)}`);
+    } else {
+      this.logger.error(`[callOpenAiImageEdit] Error: ${error.message}`);
+    }
+    throw error;
   }
+}
 
   /**
    * Call POST /v1/images/generations avec stream: true.
    * Attend l'événement `image_generation.completed` (ImageGenCompletedEvent) pour récupérer le b64_json final.
    */
   private async callOpenAiToolImage(prompt: string): Promise<Buffer> {
-    this.logger.log(
-      `[callOpenAiToolImage] Generating with gpt-image-1.5 (streaming)...`,
-    );
-    const startTime = Date.now();
+    try {
+      this.logger.log(
+        `[callOpenAiToolImage] Generating with gpt-image-1.5 (streaming)...`,
+      );
+      const startTime = Date.now();
 
-    const realismEnhancedPrompt = `
-${prompt}
+      const realismEnhancedPrompt = `${prompt} REALISM:Hyper-realistic-photo,natural-skin-texture,visible-pores,correct-anatomy,natural-light`.replace(/\s+/g, ' ').trim();
 
-REALISM INSTRUCTIONS:
-- Hyper-realistic photographic style.
-- Natural skin texture with visible pores and subtle imperfections.
-- Avoid plastic/smooth digital skin or overly perfect symmetry.
-- Correct anatomical details: realistic fingers, hands, body proportions.
-- Grain of Reality: Include tiny variations in lighting and shadows.
-`.trim();
-
-    const response = await axios.post(
-      'https://api.openai.com/v1/images/generations',
-      {
-        model: 'gpt-image-1.5',
-        prompt: realismEnhancedPrompt,
-        n: 1,
-        size: '1024x1024',
-        background: 'opaque',
-        quality: 'medium', // réduit vs 'high' — moins de tokens output
-        output_format: 'jpeg', // jpeg less output weight than png
-        moderation: 'low',
-        stream: true,
-        partial_images: 0,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.openAiKey}`,
+      const response = await axios.post(
+        'https://api.openai.com/v1/images/generations',
+        {
+          model: 'gpt-image-1.5',
+          prompt: realismEnhancedPrompt,
+          n: 1,
+          size: '1024x1024',
+          background: 'opaque',
+          quality: 'medium',
+          output_format: 'jpeg',
+          moderation: 'low',
+          stream: true,
+          partial_images: 0,
         },
-        responseType: 'stream',
-        timeout: 400000,
-      },
-    );
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.openAiKey}`,
+          },
+          responseType: 'stream',
+          timeout: 400000,
+        },
+      );
 
-    // Parse SSE stream — wait for image_generation.completed
-    return new Promise<Buffer>((resolve, reject) => {
-      let buffer = '';
-      response.data.on('data', (chunk: Buffer) => {
-        buffer += chunk.toString();
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
+      return new Promise<Buffer>((resolve, reject) => {
+        let buffer = '';
+        response.data.on('data', (chunk: Buffer) => {
+          buffer += chunk.toString();
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
 
-        for (const line of lines) {
-          if (!line.startsWith('data:')) continue;
-          const raw = line.slice(5).trim();
-          if (!raw || raw === '[DONE]') continue;
-          try {
-            const event = JSON.parse(raw);
-            if (event.type === 'image_generation.partial_image') {
-              this.logger.log(
-                `[callOpenAiToolImage] Partial image #${event.partial_image_index} received`,
-              );
-            }
-            if (event.type === 'image_generation.completed') {
-              const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-              const b64 = event.b64_json;
-              if (!b64) {
-                reject(
-                  new Error(
-                    '[callOpenAiToolImage] image_generation.completed has no b64_json',
-                  ),
-                );
-                return;
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            const raw = line.slice(5).trim();
+            if (!raw || raw === '[DONE]') continue;
+            try {
+              const event = JSON.parse(raw);
+              if (event.type === 'image_generation.completed') {
+                const b64 = event.b64_json;
+                if (!b64) {
+                  reject(new Error('No b64 in completion'));
+                  return;
+                }
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                this.logger.log(`[callOpenAiToolImage] SUCCESS in ${elapsed}s`);
+                resolve(Buffer.from(b64, 'base64'));
               }
-              this.logger.log(
-                `[callOpenAiToolImage] SUCCESS — image_generation.completed in ${elapsed}s`,
-              );
-              resolve(Buffer.from(b64, 'base64'));
-            }
-          } catch {
-            // ignore malformed SSE lines
+            } catch { /* ignore fragments */ }
           }
-        }
+        });
+        response.data.on('error', (err) => reject(err));
+        response.data.on('end', () => reject(new Error('Stream ended without completion')));
       });
-      response.data.on('error', (err: Error) => {
-        this.logger.error(`[callOpenAiToolImage] Stream error: ${err.message}`);
-        reject(err);
-      });
-      response.data.on('end', () => {
-        reject(
-          new Error(
-            '[callOpenAiToolImage] Stream ended without image_generation.completed',
-          ),
-        );
-      });
-    });
+    } catch (error) {
+      this.logger.error(`[callOpenAiToolImage] Error: ${error.message}`);
+      throw error;
+    }
   }
 
   /**
@@ -790,8 +712,7 @@ REALISM INSTRUCTIONS:
     try {
       let finalBuffer: Buffer;
 
-      const qualityTags =
-        'masterpiece, ultra high quality, photorealistic, 8k resolution, highly detailed natural skin texture, sharp focus, soft natural lighting, professional photography, cinematic composition, realistic hair, clear eyes';
+      const qualityTags = 'masterpiece,high quality,photorealistic,8k,detailed skin,sharp focus,natural lighting,cinematic,realistic hair';
 
       // Build the final prompt by combining the base style guide with the refined query.
       const promptBody = refinedQuery
@@ -799,12 +720,8 @@ REALISM INSTRUCTIONS:
         : baseStylePrompt;
 
       // REALISM BOOST: Inject hyper-realistic photography triggers
-      const realismTriggers = `
-        photorealistic, 8k, highly detailed human skin texture, visible pores, 
-        natural skin imperfections, subtle film grain, soft natural organic lighting, 
-        candid photography style, sharp focus on eyes, 35mm lens, f/1.8. 
-        NO plastic skin, NO artificial perfection.
-      `.trim();
+      const realismTriggers =
+        'photorealistic,8k,detailed skin,pores,imperfections,film grain,natural lighting,candid,sharp focus eyes,35mm,f/1.8.NO plastic,NO CGI'.trim();
 
       const finalPrompt = `STYLE: ${styleName}. ${promptBody} QUALITY: ${realismTriggers} ${qualityTags}`;
 
@@ -815,19 +732,11 @@ REALISM INSTRUCTIONS:
         styleName.toLowerCase().includes('premium') ||
         styleName.toLowerCase().includes('hero')
       ) {
-        finalNegativePrompt = `
-          ${finalNegativePrompt},
-          glitch, noise, low contrast, oversaturated, distorted facial proportions, 
-          mismatched eyes, weird gaze.
-        `.trim();
+        finalNegativePrompt = `${finalNegativePrompt},glitch,noise,low contrast,oversaturated,distorted face,mismatched eyes`;
       }
 
       if (styleName.toLowerCase().includes('monochrome')) {
-        finalNegativePrompt = `
-          ${finalNegativePrompt},
-          geometric shapes, lines, rectangles, squares, triangles, abstract frames, 
-          grids, artificial borders.
-        `.trim();
+        finalNegativePrompt = `${finalNegativePrompt},geometric shapes,lines,rectangles,squares,triangles,frames,grids,borders`;
       }
 
       if (file) {
@@ -968,15 +877,8 @@ REALISM INSTRUCTIONS:
         messages: [
           {
             role: 'system',
-            content: `Professional ${type} writer. French only. Plain text, no markdown. Short & direct. 
-          LOGIC: 
-          1. If user specifically asks for a caption/text content, follow those instructions.
-          2. If user DOES NOT ask for text, IGNORE the "imagePrompt" details and INVENT an impactful marketing post related to the "job" context.
-          3. NEVER describe the image details (lighting, lens, etc.) unless the user explicitly asks "Décris cette image".
-          4. Focus on professional value and high-end branding.
-          STYLE: Professional, telegraphic, impactful.`,
-          },
-          {
+            content: `Professional ${type} writer.French only.Plain text,no markdown.Short & direct.LOGIC:1.If user specifically asks for a caption/text content,follow those instructions.2.If user DOES NOT ask for text,IGNORE the "imagePrompt" details and INVENT an impactful marketing post related to the "job" context.3.NEVER describe the image details (lighting,lens,etc.) unless the user explicitly asks "Décris cette image".4.Focus on professional value and high-end branding.STYLE:Professional,telegraphic,impactful.`
+          },{
             role: 'user',
             content: `${type}: ${JSON.stringify(params)}`,
           },
@@ -1484,7 +1386,7 @@ REALISM INSTRUCTIONS:
             {
               role: 'system',
               content:
-                'Expert visual analyzer. French only. Style: telegraphic. Direct & short. Focus on professional context.',
+                'Expert visual analyzer.French only.Style:telegraphic.Direct & short.Focus on professional context.',
             },
             {
               role: 'user',
@@ -1615,7 +1517,7 @@ REALISM INSTRUCTIONS:
       const systemMessage = {
         role: 'system',
         content:
-          'Expert branding assistant. Respond in French. Style: telegraphic (keywords, short sentences). Direct & concise. NO long lists. Respond under 100 words if possible.',
+          'Expert branding assistant.French only.Style:telegraphic.Direct & concise.NO long lists.Respond < 100 words.',
       };
 
       const hasSystem = messages.some((m) => m.role === 'system');
@@ -1690,11 +1592,7 @@ REALISM INSTRUCTIONS:
         messages: [
           {
             role: 'system',
-            content: `Classify user intent. Reply ONLY with one word:
-- "image": User wants to create, draw, generate, or edit a new visual.
-- "analyze": User provided an image and is asking a question about it or its content.
-- "text": General conversation, questions, or requests for text.
-Context: User has ${hasFile ? '' : 'NOT '}uploaded a file.`,
+            content: `Classify user intent.Reply ONLY one word:"image":generate/edit new visual."analyze":question about uploaded image."text":general conversation.Context:User has ${hasFile ? '' : 'NOT '}uploaded file.`,
           },
           {
             role: 'user',
