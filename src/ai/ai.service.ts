@@ -308,6 +308,143 @@ export class AiService implements OnModuleInit {
     }
   }
 
+  /**
+   * 🎨 IMAGE EDIT WITH FULL PIPELINE (I2I)
+   * Suit les mêmes 5 étapes que generateImage:
+   * 1. refineSubject()       → Traduire job en sujet visuel
+   * 2. refineQuery()         → Enrichir avec détails visuels
+   * 3. getStyleDescription() → Appliquer style visuel
+   * 4. Construire prompt final
+   * 5. Appeler callOpenAiImageEdit avec prompt complet
+   */
+  private async callOpenAiImageEditWithFullPipeline(
+    image: Buffer,
+    params: any,
+    style: string,
+    userId?: number,
+  ): Promise<Buffer> {
+    this.logger.log(
+      `[callOpenAiImageEditWithFullPipeline] START - Job: ${params.job}, Style: ${style}`,
+    );
+
+    const styleName = style;
+
+    // ÉTAPE 1: refineSubject()
+    let refinedSubject = '';
+    if (params.job && params.job.length > 0) {
+      refinedSubject = await this.refineSubject(params.job);
+    }
+    this.logger.log(
+      `[callOpenAiImageEditWithFullPipeline] Étape 1 - refineSubject: "${refinedSubject}"`,
+    );
+
+    // ÉTAPE 2: refineQuery()
+    const refinedRes = await this.refineQuery(
+      params.userQuery || params.job,
+      params.job,
+      styleName,
+    );
+    const refinedQuery = refinedRes.prompt;
+    this.logger.log(
+      `[callOpenAiImageEditWithFullPipeline] Étape 2 - refineQuery: "${refinedQuery.substring(0, 100)}..."`,
+    );
+
+    // ÉTAPE 3: getStyleDescription()
+    const baseStylePrompt = this.getStyleDescription(style, params.job, {
+      accentColor: refinedRes.accentColor,
+      lighting: refinedRes.lighting,
+      angle: refinedRes.angle,
+      background: refinedRes.background,
+      primaryObject: refinedRes.primaryObject,
+    });
+    this.logger.log(
+      `[callOpenAiImageEditWithFullPipeline] Étape 3 - Style: ${baseStylePrompt.substring(0, 100)}...`,
+    );
+
+    // Détection humains pour qualité tags
+    const humanKeywords = [
+      'homme',
+      'femme',
+      'personne',
+      'visage',
+      'mannequin',
+      'worker',
+      'ouvrier',
+      'artisan',
+      'man',
+      'woman',
+      'person',
+      'human',
+      'face',
+      'eyes',
+      'skin',
+      'hair',
+      'model',
+      'portrait',
+    ];
+    const isHumanRequested = humanKeywords.some(
+      (kw) =>
+        refinedQuery.toLowerCase().includes(kw) ||
+        (params.userQuery || '').toLowerCase().includes(kw) ||
+        (params.job || '').toLowerCase().includes(kw),
+    );
+
+    // ÉTAPE 4: Construire prompt final (EXACTEMENT comme generateImage)
+    const baseQuality =
+      'masterpiece,high quality,photorealistic,8k,sharp focus,natural lighting,cinematic';
+    const qualityTags = isHumanRequested
+      ? `${baseQuality},detailed skin,realistic hair`
+      : baseQuality;
+
+    const genericRealism =
+      'photorealistic,8k,hyper-detailed texture,film grain,natural lighting,cinematic composition,35mm,f/1.8.NO plastic,NO CGI';
+    const humanRealism =
+      'detailed skin,pores,imperfections,candid,sharp focus eyes';
+    const realismTriggers = isHumanRequested
+      ? `${genericRealism},${humanRealism}`
+      : genericRealism;
+
+    const promptBody = refinedQuery
+      ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
+      : baseStylePrompt;
+
+    const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}`;
+
+    let finalNegativePrompt = this.NEGATIVE_PROMPT;
+    if (!isHumanRequested) {
+      finalNegativePrompt = `${finalNegativePrompt},person,human,man,woman,mannequin,face,portrait,skin`;
+    }
+    if (
+      styleName.toLowerCase().includes('premium') ||
+      styleName.toLowerCase().includes('hero')
+    ) {
+      finalNegativePrompt = `${finalNegativePrompt},glitch,noise,low contrast,oversaturated,distorted face,mismatched eyes`;
+    }
+
+    this.logger.log(`[callOpenAiImageEditWithFullPipeline] Étape 4 - Final Prompt: ${finalPrompt.substring(0, 120)}...`);
+    this.logger.log(
+      `[callOpenAiImageEditWithFullPipeline] Étape 4 - Negative: ${finalNegativePrompt.substring(0, 100)}...`,
+    );
+
+    // ÉTAPE 5: Appeler callOpenAiImageEdit avec le prompt complet
+    try {
+      const editedImage = await this.callOpenAiImageEdit(
+        image,
+        finalPrompt,
+        finalNegativePrompt,
+      );
+      this.logger.log(
+        `[callOpenAiImageEditWithFullPipeline] SUCCESS - Image edited`,
+      );
+      return editedImage;
+    } catch (e) {
+      this.logger.error(
+        `[callOpenAiImageEditWithFullPipeline] FAILED - ${e.message}`,
+      );
+      throw e;
+    }
+  }
+
   private getStyleDescription(
     styleName: string,
     job: string,
@@ -401,6 +538,7 @@ export class AiService implements OnModuleInit {
   private async callOpenAiImageEdit(
     image: Buffer,
     prompt: string,
+    negativePrompt?: string,
   ): Promise<Buffer> {
     try {
       this.logger.log(
@@ -424,25 +562,38 @@ export class AiService implements OnModuleInit {
       // 3. Upload to OpenAI Files to get a file_id
       const fileId = await this.uploadToOpenAiFiles(pngBuffer);
 
-      // 2. Refine prompt
-      const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
+      // 2. Refine prompt (ONLY if negative prompt not provided)
+      // Si negativePrompt est fourni, c'est qu'on vient de callOpenAiImageEditWithFullPipeline
+      // et le prompt est déjà complet, donc on ne le raffine pas
+      let finalPrompt = prompt;
+      if (!negativePrompt) {
+        finalPrompt = await this.refinePromptForOpenAiEdit(prompt);
+      }
 
-      // 4. POST with stream: true — receive SSE events using input_file_id
+      // 4. Construire le POST body
+      const postBody: any = {
+        model: 'gpt-image-1.5',
+        prompt: finalPrompt,
+        images: [{ file_id: fileId }],
+        size: '1024x1024',
+        quality: 'medium',
+        output_format: 'jpeg',
+        moderation: 'low',
+        input_fidelity: 'high',
+        n: 1,
+        stream: true,
+        partial_images: 0,
+      };
+
+      // Ajouter negative_prompt si fourni
+      if (negativePrompt) {
+        postBody.negative_prompt = negativePrompt;
+      }
+
+      // 5. POST with stream: true — receive SSE events using input_file_id
       const response = await axios.post(
         'https://api.openai.com/v1/images/edits',
-        {
-          model: 'gpt-image-1.5',
-          prompt: refinedPrompt,
-          images: [{ file_id: fileId }],
-          size: '1024x1024',
-          quality: 'medium',
-          output_format: 'jpeg',
-          moderation: 'low',
-          input_fidelity: 'high',
-          n: 1,
-          stream: true,
-          partial_images: 0,
-        },
+        postBody,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -853,31 +1004,35 @@ export class AiService implements OnModuleInit {
         }
 
         if (file) {
-          // OPENAI IMAGE EDIT (I2I)
+          // OPENAI IMAGE EDIT (I2I) WITH FULL PIPELINE
           this.logger.log(
-            `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5) - from uploaded file`,
+            `[generateImage] Strategy: OpenAI Image Edit with FULL PIPELINE (gpt-image-1.5) - from uploaded file`,
           );
-          finalBuffer = await this.callOpenAiImageEdit(
+          finalBuffer = await this.callOpenAiImageEditWithFullPipeline(
             file.buffer,
-            finalPrompt,
+            params,
+            styleName,
+            userId,
           );
         } else if (
           params.reference_image &&
           typeof params.reference_image === 'string' &&
           params.reference_image.startsWith('http')
         ) {
-          // DOWNLOAD REMOTE IMAGE FOR EDIT
+          // DOWNLOAD REMOTE IMAGE FOR EDIT WITH FULL PIPELINE
           this.logger.log(
-            `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5) - from remote URL: ${params.reference_image}`,
+            `[generateImage] Strategy: OpenAI Image Edit with FULL PIPELINE (gpt-image-1.5) - from remote URL: ${params.reference_image}`,
           );
           try {
             const downloadResp = await axios.get(params.reference_image, {
               responseType: 'arraybuffer',
             });
             const downloadedBuffer = Buffer.from(downloadResp.data);
-            finalBuffer = await this.callOpenAiImageEdit(
+            finalBuffer = await this.callOpenAiImageEditWithFullPipeline(
               downloadedBuffer,
-              finalPrompt,
+              params,
+              styleName,
+              userId,
             );
           } catch (downloadError) {
             this.logger.error(
