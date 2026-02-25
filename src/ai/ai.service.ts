@@ -203,7 +203,7 @@ export class AiService implements OnModuleInit {
   }
 
   private readonly NEGATIVE_PROMPT =
-    `extra fingers,mutated hands,six fingers,four fingers,extra limbs,detached limbs,missing limbs,fused fingers,deformed hands,cloned face,multiple heads,two heads,extra heads,distorted face,blurry,out of focus,low quality,pixelated,grain,lowres,text,watermark,logo,signature,letters,words,captions,labels,numbers,characters,symbols,typography,typesetting,advertisement text,cgi,3d,render,cartoon,anime,illustration,drawing,digital art,smooth plastic skin,artificial,airbrushed,unnatural skin,mustache,beard,facial hair,stubble,plastic,wax,doll,fake,unreal engine,octane render,oversaturated,high contrast,artificial lighting,porcelain,rubber,skin blemishes,distorted eyes,asymmetrical face,hyper-saturated,glowing edges,bad anatomy,bad proportions,amateur,draft,distorted facial features,plastic textures,oversmoothed skin,uncanny valley,oversaturated colors,multiple people,low resolution,photo-collage,heavy makeup,fake eyelashes,distorted gaze,airbrushed skin,digital over-sharpening,smooth plastic skin texture,perfectly symmetrical face,artificial CGI glow,wrong number of strings,wrong number of tuning pegs,mismatched strings and tuning pegs,extra tuning pegs,missing tuning pegs,extra strings,guitar with wrong string count,bass with wrong peg count,wrong number of frets,mismatched wheel count,extra wheels,missing wheels,wrong number of fingers,extra keyboard keys,wrong piano keys,mismatched parts,structurally incoherent object,physically impossible object,incorrect mechanical parts`.trim();
+    `extra fingers,mutated hands,six fingers,four fingers,extra limbs,detached limbs,missing limbs,fused fingers,deformed hands,cloned face,multiple heads,two heads,extra heads,distorted face,blurry,out of focus,low quality,pixelated,grain,lowres,text,watermark,logo,signature,letters,words,captions,labels,numbers,characters,symbols,typography,typesetting,advertisement text,cgi,3d,render,cartoon,anime,illustration,drawing,digital art,smooth plastic skin,artificial,airbrushed,unnatural skin,mustache,beard,facial hair,stubble,plastic,wax,doll,fake,unreal engine,octane render,oversaturated,high contrast,artificial lighting,porcelain,rubber,skin blemishes,distorted eyes,asymmetrical face,hyper-saturated,glowing edges,bad anatomy,bad proportions,amateur,draft,distorted facial features,plastic textures,oversmoothed skin,uncanny valley,oversaturated colors,multiple people,low resolution,photo-collage,heavy makeup,fake eyelashes,distorted gaze,airbrushed skin,digital over-sharpening,smooth plastic skin texture,perfectly symmetrical face,artificial CGI glow,wrong number of strings,wrong number of tuning pegs,mismatched strings and tuning pegs,extra tuning pegs,missing tuning pegs,extra strings,guitar with wrong string count,bass with wrong peg count,wrong number of frets,mismatched wheel count,extra wheels,missing wheels,wrong number of fingers,extra keyboard keys,wrong piano keys,mismatched parts,structurally incoherent object,physically impossible object,incorrect mechanical parts,synthetic banner,ai banner,digital banner,floating banner,fake signage,ai objects,synthetic texture,plastic objects,unrealistic furniture,cg banners`.trim();
 
   private async refineSubject(job: string): Promise<string> {
     if (!job || job.trim().length === 0) return '';
@@ -520,7 +520,7 @@ export class AiService implements OnModuleInit {
         professionalContext = `The scene features a real ${options.primaryObject} in a natural ${jobStr} setting.`;
       }
 
-      return `EXTREME CLARITY. Authentic photography. SHARP FOCUS on subject. Cleanest possible composition. ${lighting}, ${angle}, realistic skin textures. ${bgDirectives} ${professionalContext} RULES: SHARP AND DISTINCT. NO extra objects, NO busy details. PURE PHOTOGRAPHY. Single natural subject. COLOR: Natural colors with a ${accent} accent. High-end candid style. ATMO: Subtle localized white haze allowed only in small sections (like a light leak) to add depth. Background must remain well-defined and visible overall.`
+      return `EXTREME CLARITY. Authentic photography. SHARP FOCUS on subject. Cleanest possible composition. ${lighting}, ${angle}, realistic skin textures. ${bgDirectives} ${professionalContext} RULES: SHARP AND DISTINCT. NO synthetic objects, NO ai-generated banners, NO floating graphics. PURE PHOTOGRAPHY. All objects must be real, physical, and tangible. Single natural subject. COLOR: Natural colors with a ${accent} accent. High-end candid style. ZERO ai-artifacts, ZERO fake signage, ZERO digital banners. Ensure everything looks like a real-world photograph.`
         .replace(/\s+/g, ' ')
         .trim();
     }
@@ -1463,18 +1463,18 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     });
 
     const qualityTags =
-      'sharp authentic photography,crystal clear subject,localized light-leak depth,high resolution,professional artistic design';
+      'sharp authentic photography,crystal clear subject,tangible real objects,high resolution,professional minimal design';
 
     // Ensure the subject from userQuery is the central object of the flyer
     const subjectDirectives = params.userQuery
-      ? `VISUAL SUBJECT: Focus on "${params.userQuery}" with sharp clarity. Add a subtle, partial white atmospheric haze only in specific sections (edges or corners) for an artistic touch. Background must remain visible and well-defined.`
+      ? `VISUAL SUBJECT: Focus on "${params.userQuery}" with sharp clarity. Only include REAL physical objects. NO ai-generated banners, NO synthetic graphics, NO fake digital overlays. Background must remain visible and well-defined.`
       : '';
 
     // If we have a file, the prompt should be about TRANSFORMING, not GENERATING.
     const modePrefix = file
-      ? `TRANSFORM THIS IMAGE into a sharp professional photo with subtle light depth.`
-      : `GENERATE a sharp professional photo with subtle light depth from scratch.`;
-    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Sharp with subtle atmospheric texture. QUALITY: ${qualityTags}. NO flat white overlay. ATMO: Localized soft light veil allowed in small portions only. Displayed text must be in ${flyerLanguage}.`;
+      ? `TRANSFORM THIS IMAGE into a sharp professional photo with the highest realism.`
+      : `GENERATE a sharp professional photo with the highest realism from scratch.`;
+    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
 
     this.logger.log(
       `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
