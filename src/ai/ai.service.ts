@@ -487,40 +487,40 @@ export class AiService implements OnModuleInit {
   ): string {
     const jobStr = job || 'professional';
 
-    // Premium Style: Extreme Minimalism, Spacious Photography
+    // Premium Style: Realistic Photography with Sharp Backgrounds
     if (styleName === 'Premium') {
       const accent =
         options?.accentColor ||
         this.getRandomItem([
-          'muted burgundy',
-          'soft amber',
-          'sage green',
-          'navy blue',
+          'ruby red',
+          'golden amber',
+          'deep emerald',
+          'royal blue',
         ]);
       const lighting =
         options?.lighting ||
-        this.getRandomItem(['soft natural daylight', 'gentle side lighting']);
+        this.getRandomItem(['crisp natural sunlight', 'sharp side lighting']);
       const angle =
         options?.angle ||
         this.getRandomItem(['eye-level shot', 'natural three-quarter view']);
       const bg =
         options?.background ||
         this.getRandomItem([
-          'plain empty wall',
-          'solid neutral background',
-          'void-like minimalist studio',
+          'clean modern architecture',
+          'neutral sophisticated wall',
+          'minimalist studio backdrop',
         ]);
 
       const bgDirectives = options?.background
-        ? `Background: Minimalist representation of ${bg}. EMPTY AND SPACIOUS.`
-        : `Background: ${bg}.`;
+        ? `Background: Crystal clear and distinctive representation of ${bg}. High visibility, sharp details. Add a subtle localized atmospheric haze (soft light veil) only in specific corners or edges for depth.`
+        : `Background: Clean and elegant ${bg} with a hint of soft atmospheric lighting.`;
 
       let professionalContext = `The subject is in a real ${jobStr} environment.`;
       if (options?.primaryObject) {
         professionalContext = `The scene features a real ${options.primaryObject} in a natural ${jobStr} setting.`;
       }
 
-      return `EXTREME MINIMALISM. Authentic photography. MAXIMUM EMPTY SPACE. Cleanest possible composition. ${lighting}, ${angle}, realistic skin textures. ${bgDirectives} ${professionalContext} RULES: MINIMAL TO THE MAXIMUM. NO extra objects, NO props, NO busy details. PURE SIMPLICITY. Single subject only. COLOR: Natural colors with a ${accent} touch on one element. High-end candid style, spacious and airy. ZERO clutter. If background is a location like a city or beach, show it in a highly minimalist and clean way.`
+      return `EXTREME CLARITY. Authentic photography. SHARP FOCUS on subject. Cleanest possible composition. ${lighting}, ${angle}, realistic skin textures. ${bgDirectives} ${professionalContext} RULES: SHARP AND DISTINCT. NO extra objects, NO busy details. PURE PHOTOGRAPHY. Single natural subject. COLOR: Natural colors with a ${accent} accent. High-end candid style. ATMO: Subtle localized white haze allowed only in small sections (like a light leak) to add depth. Background must remain well-defined and visible overall.`
         .replace(/\s+/g, ' ')
         .trim();
     }
@@ -1463,18 +1463,18 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     });
 
     const qualityTags =
-      'natural photography,extreme minimalist composition,maximum empty space,breathable layout,high resolution,clean professional design';
+      'sharp authentic photography,crystal clear subject,localized light-leak depth,high resolution,professional artistic design';
 
     // Ensure the subject from userQuery is the central object of the flyer
     const subjectDirectives = params.userQuery
-      ? `VISUAL SUBJECT: Focus ONLY on "${params.userQuery}". EXTREME MINIMALISM: Absolutely NO extra objects, NO props, NO busy background. MAXIMIZE EMPTY SPACE around the subject. Subject must be perfectly centered in a void-like or very simple environment.`
+      ? `VISUAL SUBJECT: Focus on "${params.userQuery}" with sharp clarity. Add a subtle, partial white atmospheric haze only in specific sections (edges or corners) for an artistic touch. Background must remain visible and well-defined.`
       : '';
 
     // If we have a file, the prompt should be about TRANSFORMING, not GENERATING.
     const modePrefix = file
-      ? `TRANSFORM THIS IMAGE into an extremely minimalist professional photo.`
-      : `GENERATE an extremely minimalist professional photo from scratch.`;
-    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Maximum Minimalism, Airy, Spacious. QUALITY: ${qualityTags}. NO placeholders, NO synthetic art. TECHNICAL NOTE: Output a natural photo with maximum empty space and zero clutter. Displayed text must be in ${flyerLanguage}.`;
+      ? `TRANSFORM THIS IMAGE into a sharp professional photo with subtle light depth.`
+      : `GENERATE a sharp professional photo with subtle light depth from scratch.`;
+    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Sharp with subtle atmospheric texture. QUALITY: ${qualityTags}. NO flat white overlay. ATMO: Localized soft light veil allowed in small portions only. Displayed text must be in ${flyerLanguage}.`;
 
     this.logger.log(
       `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
