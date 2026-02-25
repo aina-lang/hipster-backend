@@ -487,47 +487,48 @@ export class AiService implements OnModuleInit {
   ): string {
     const jobStr = job || 'professional';
 
-    // Premium Style with randomized pools (New Spec)
+    // Premium Style: Realistic, Minimalist, High-end Photography
     if (styleName === 'Premium') {
       const accent =
         options?.accentColor ||
         this.getRandomItem([
-          'deep red',
-          'burnt orange',
-          'electric purple',
-          'muted gold',
+          'muted burgundy',
+          'soft amber',
+          'sage green',
+          'navy blue',
         ]);
       const lighting =
         options?.lighting ||
-        this.getRandomItem(['side lighting dramatic', 'top light cinematic']);
+        this.getRandomItem(['soft natural daylight', 'gentle side lighting']);
       const angle =
         options?.angle ||
-        this.getRandomItem(['slight low angle', 'three quarter view']);
+        this.getRandomItem(['eye-level shot', 'natural three-quarter view']);
       const bg =
         options?.background ||
         this.getRandomItem([
-          'textured dark concrete background',
-          'matte charcoal backdrop',
+          'clean neutral wall',
+          'minimalist modern interior',
+          'blurred natural depth of field',
         ]);
 
-      let professionalContext = `The scene is set in a realistic ${jobStr} professional environment.`;
+      let professionalContext = `The subject is in a real ${jobStr} environment.`;
       if (options?.primaryObject) {
-        professionalContext = `The scene prominently features a ${options.primaryObject} within a realistic ${jobStr} professional environment.`;
+        professionalContext = `The scene features a real ${options.primaryObject} in a natural ${jobStr} setting.`;
       }
 
-      return `Ultra high contrast black white professional photo.High-end luxury editorial,sharp focus,cinematic. ${lighting},${angle},dramatic shadows,high-fidelity. ${bg}. ${professionalContext} RULES:No geometric shapes/lines/frames.PURE PHOTOGRAPHY.Single authentic photo.COLOR:Monochrome.ONE ACCENT:${accent} on key element.High-end campaign,luxury branding,clean studio.No text/logo/watermark.`
+      return `Authentic professional photography. Minimalist composition, clean and spacious. ${lighting}, ${angle}, realistic skin textures, unedited look. ${bg}. ${professionalContext} RULES: NO AI-synthetic look, NO oversaturation, NO glowing edges. PURE PHOTOGRAPHY. Single natural photo. COLOR: Natural colors with a ${accent} touch on one element. High-end candid style, human and relatable. NO busy backgrounds, NO unnecessary objects.`
         .replace(/\s+/g, ' ')
         .trim();
     }
 
     if (styleName === 'Hero Studio') {
-      return `Heroic cinematic studio shot centered on the subject. Dark premium background, dramatic lighting, sharp focus.`;
+      return `Realistic portrait photography. Clean studio background, natural soft lighting, sharp focus on the person. Minimal and professional.`;
     }
     if (styleName === 'Minimal Studio') {
-      return `Minimal clean studio shot centered on the subject. Soft natural light, clean white/neutral background, elegant composition.`;
+      return `Minimalist clean photography. Soft daylight, neutral solid background, lots of negative space, elegant and human.`;
     }
 
-    return `Professional high-quality representation of ${jobStr}. Style: ${styleName}.`;
+    return `Realistic professional photo of ${jobStr}. Style: ${styleName}. Natural and minimal.`;
   }
 
   private async uploadToOpenAiFiles(image: Buffer): Promise<string> {
@@ -1458,18 +1459,18 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     });
 
     const qualityTags =
-      'masterpiece,ultra high quality,sharp focus,8k,high resolution,print-ready,professional graphic design,trendy editorial layout';
+      'natural photography,sharp focus on subject,clean organic textures,realistic lighting,high resolution,professional minimal design';
 
     // Ensure the subject from userQuery is the central object of the flyer
     const subjectDirectives = params.userQuery
-      ? `VISUAL SUBJECT: Ensure that the main objects or people described in "${params.userQuery}" (e.g. bassist, musical instrument, product) are the central focus of the image. Composition: MIDDLE SHOT, subject centered.`
+      ? `VISUAL SUBJECT: Ensure that the main objects or people described in "${params.userQuery}" (e.g. bassist, musical instrument, product) are the ONLY central focus. KEEP IT MINIMAL: NO unnecessary props, NO crowded background. Composition: MIDDLE SHOT, subject centered clearly.`
       : '';
 
     // If we have a file, the prompt should be about TRANSFORMING, not GENERATING.
     const modePrefix = file
-      ? `TRANSFORM THIS IMAGE into a professional flyer.`
-      : `GENERATE a professional flyer from scratch.`;
-    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Designer grade, Premium, Impactful. QUALITY: ${qualityTags}. NO placeholders, NO fake text. TECHNICAL NOTE: Output high resolution, professional framing. Displayed text must be in ${flyerLanguage}.`;
+      ? `TRANSFORM THIS IMAGE into a real authentic professional photo.`
+      : `GENERATE a real authentic professional photo from scratch.`;
+    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Minimalist, Realistic, Human-centric. QUALITY: ${qualityTags}. NO placeholders, NO fake text, NO synthetic AI art style. TECHNICAL NOTE: Output a natural looking photo with clean framing. Displayed text must be in ${flyerLanguage}.`;
 
     this.logger.log(
       `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,

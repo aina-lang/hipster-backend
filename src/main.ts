@@ -43,6 +43,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(process.env.PORT ?? 4000, '0.0.0.0');
+  const server = await app.listen(process.env.PORT ?? 4000, '0.0.0.0');
+  server.setTimeout(300000); // 5 minutes timeout to prevent 504 Gateway Timeout during heavy AI tasks
 }
 void bootstrap();
