@@ -678,189 +678,211 @@ export class AiService implements OnModuleInit {
     seed?: number,
     existingConversationId?: string,
   ) {
-    const defaultStyle = 'Hero Studio';
-    const styleName = style || params.style || defaultStyle;
-
     this.logger.log(
-      `[generateImage] START - User: ${userId}, hasFile: ${!!file}, Style: ${styleName}, Job: ${params.job}`,
+      `[generateImage] START - User: ${userId}, Style: ${style}, hasFile: ${!!file}`,
     );
-
-    let refinedSubject = '';
-    if (params.job && params.job.length > 0) {
-      refinedSubject = await this.refineSubject(params.job);
-    }
-
-    const userQuery = (params.userQuery || '').trim();
-
-    let refinedQuery = userQuery;
-    let isPostureChange = false;
-    let styleOptions: any = {};
-
-    // Enable GPT-powered prompt expansion for ALL modes (with or without image)
-    // Now always refinement to get contextually aware style options (color, object, etc.)
-    const refinedData = await this.refineQuery(
-      userQuery,
-      refinedSubject,
-      styleName,
-    );
-    refinedQuery = refinedData.prompt;
-    isPostureChange = refinedData.isPostureChange;
-    styleOptions = {
-      accentColor: refinedData.accentColor,
-      lighting: refinedData.lighting,
-      angle: refinedData.angle,
-      background: refinedData.background,
-      primaryObject: refinedData.primaryObject,
-    };
-
-    const baseStylePrompt = this.getStyleDescription(
-      styleName,
-      refinedSubject,
-      styleOptions,
-    );
-
     try {
-      let finalBuffer: Buffer;
+      const styleInfo = this.getStyleDescription(style, params.job);
+      const styleName = style;
+      const baseStylePrompt = styleInfo;
 
-      const qualityTags =
-        'masterpiece,high quality,photorealistic,8k,detailed skin,sharp focus,natural lighting,cinematic,realistic hair';
+      this.logger.log(
+        `[generateImage] Refined style prompt: ${baseStylePrompt.substring(0, 100)}...`,
+      );
 
-      // Build the final prompt by combining the base style guide with the refined query.
-      const promptBody = refinedQuery
-        ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
-        : baseStylePrompt;
+      const refinedRes = await this.refineQuery(
+        params.userQuery || params.job,
+        params.job,
+        styleName,
+      );
+      const refinedQuery = refinedRes.prompt;
 
-      // REALISM BOOST: Inject hyper-realistic photography triggers
-      const realismTriggers =
-        'photorealistic,8k,detailed skin,pores,imperfections,film grain,natural lighting,candid,sharp focus eyes,35mm,f/1.8.NO plastic,NO CGI'.trim();
-
-      const finalPrompt = `STYLE: ${styleName}. ${promptBody} QUALITY: ${realismTriggers} ${qualityTags}`;
-
-      let finalNegativePrompt = this.NEGATIVE_PROMPT;
-
-      // Additional specific filters for high-end styles
-      if (
-        styleName.toLowerCase().includes('premium') ||
-        styleName.toLowerCase().includes('hero')
-      ) {
-        finalNegativePrompt = `${finalNegativePrompt},glitch,noise,low contrast,oversaturated,distorted face,mismatched eyes`;
+      this.logger.log(
+        `[generateImage] Refined user query: ${refinedQuery.substring(0, 100)}...`,
+      );
+      let refinedSubject = '';
+      if (params.job && params.job.length > 0) {
+        refinedSubject = await this.refineSubject(params.job);
       }
 
-      if (styleName.toLowerCase().includes('monochrome')) {
-        finalNegativePrompt = `${finalNegativePrompt},geometric shapes,lines,rectangles,squares,triangles,frames,grids,borders`;
-      }
+      const userQuery = (params.userQuery || '').trim();
 
-      if (file) {
-        // OPENAI IMAGE EDIT (I2I)
-        this.logger.log(
-          `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5) - from uploaded file`,
-        );
-        finalBuffer = await this.callOpenAiImageEdit(file.buffer, finalPrompt);
-      } else if (
-        params.reference_image &&
-        typeof params.reference_image === 'string' &&
-        params.reference_image.startsWith('http')
-      ) {
-        // DOWNLOAD REMOTE IMAGE FOR EDIT
-        this.logger.log(
-          `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5) - from remote URL: ${params.reference_image}`,
-        );
-        try {
-          const downloadResp = await axios.get(params.reference_image, {
-            responseType: 'arraybuffer',
-          });
-          const downloadedBuffer = Buffer.from(downloadResp.data);
+      // let refinedQuery = userQuery; // This line is now redundant due to the new refinedQuery above
+      let isPostureChange = false;
+      let styleOptions: any = {};
+
+      // Enable GPT-powered prompt expansion for ALL modes (with or without image)
+      // Now always refinement to get contextually aware style options (color, object, etc.)
+      // const refinedData = await this.refineQuery( // This block is now redundant due to the new refinedRes above
+      //   userQuery,
+      //   refinedSubject,
+      //   styleName,
+      // );
+      // refinedQuery = refinedData.prompt;
+      isPostureChange = refinedRes.isPostureChange; // Use refinedRes
+      styleOptions = {
+        accentColor: refinedRes.accentColor,
+        lighting: refinedRes.lighting,
+        angle: refinedRes.angle,
+        background: refinedRes.background,
+        primaryObject: refinedRes.primaryObject,
+      };
+
+      // const baseStylePrompt = this.getStyleDescription( // This line is now redundant due to the new baseStylePrompt above
+      //   styleName,
+      //   refinedSubject,
+      //   styleOptions,
+      // );
+
+      try {
+        let finalBuffer: Buffer;
+
+        const qualityTags =
+          'masterpiece,high quality,photorealistic,8k,detailed skin,sharp focus,natural lighting,cinematic,realistic hair';
+
+        // Build the final prompt by combining the base style guide with the refined query.
+        const promptBody = refinedQuery
+          ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
+          : baseStylePrompt;
+
+        // REALISM BOOST: Inject hyper-realistic photography triggers
+        const realismTriggers =
+          'photorealistic,8k,detailed skin,pores,imperfections,film grain,natural lighting,candid,sharp focus eyes,35mm,f/1.8.NO plastic,NO CGI'.trim();
+
+        const finalPrompt = `STYLE: ${styleName}. ${promptBody} QUALITY: ${realismTriggers} ${qualityTags}`;
+
+        let finalNegativePrompt = this.NEGATIVE_PROMPT;
+
+        // Additional specific filters for high-end styles
+        if (
+          styleName.toLowerCase().includes('premium') ||
+          styleName.toLowerCase().includes('hero')
+        ) {
+          finalNegativePrompt = `${finalNegativePrompt},glitch,noise,low contrast,oversaturated,distorted face,mismatched eyes`;
+        }
+
+        if (styleName.toLowerCase().includes('monochrome')) {
+          finalNegativePrompt = `${finalNegativePrompt},geometric shapes,lines,rectangles,squares,triangles,frames,grids,borders`;
+        }
+
+        if (file) {
+          // OPENAI IMAGE EDIT (I2I)
+          this.logger.log(
+            `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5) - from uploaded file`,
+          );
           finalBuffer = await this.callOpenAiImageEdit(
-            downloadedBuffer,
+            file.buffer,
             finalPrompt,
           );
-        } catch (downloadError) {
-          this.logger.error(
-            `[generateImage] Failed to download remote reference image: ${downloadError.message}`,
+        } else if (
+          params.reference_image &&
+          typeof params.reference_image === 'string' &&
+          params.reference_image.startsWith('http')
+        ) {
+          // DOWNLOAD REMOTE IMAGE FOR EDIT
+          this.logger.log(
+            `[generateImage] Strategy: OpenAI Image Edit (gpt-image-1.5) - from remote URL: ${params.reference_image}`,
           );
-          // Fallback to text-to-image or throw? Let's throw to be clear about the failure.
-          throw new Error(
-            "Impossible de charger l'image de référence distante.",
+          try {
+            const downloadResp = await axios.get(params.reference_image, {
+              responseType: 'arraybuffer',
+            });
+            const downloadedBuffer = Buffer.from(downloadResp.data);
+            finalBuffer = await this.callOpenAiImageEdit(
+              downloadedBuffer,
+              finalPrompt,
+            );
+          } catch (downloadError) {
+            this.logger.error(
+              `[generateImage] Failed to download remote reference image: ${downloadError.message}`,
+            );
+            // Fallback to text-to-image or throw? Let's throw to be clear about the failure.
+            throw new Error(
+              "Impossible de charger l'image de référence distante.",
+            );
+          }
+        } else {
+          // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE (RESTORED ASYNC)
+          this.logger.log(
+            `[generateImage] Strategy: OpenAI GPT-5 (ASYNC REALISM)`,
           );
-        }
-      } else {
-        // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE (RESTORED ASYNC)
-        this.logger.log(
-          `[generateImage] Strategy: OpenAI GPT-5 (ASYNC REALISM)`,
-        );
 
-        // 1. Create a PENDING record immediately
-        const pendingGen = await this.saveGeneration(
+          // 1. Create a PENDING record immediately
+          const pendingGen = await this.saveGeneration(
+            userId,
+            'PENDING',
+            finalPrompt,
+            AiGenerationType.CHAT,
+            {
+              engine: 'openai-tool',
+              model: 'gpt-5',
+              async: true,
+              style: styleName,
+            },
+            undefined,
+            existingConversationId,
+          );
+
+          // 2. Process in background without awaiting (Realism focus in process helper)
+          this.processOpenAiToolImageBackground(
+            pendingGen.id,
+            finalPrompt,
+            userId,
+            styleName,
+          );
+
+          // 3. Return immediately with isAsync flag
+          return {
+            id: pendingGen.id,
+            generationId: pendingGen.id,
+            conversationId: existingConversationId || String(pendingGen.id),
+            url: null,
+            isAsync: true,
+            status: 'PENDING',
+            prompt: finalPrompt,
+          };
+        }
+
+        const fileName = `gen_${Date.now()}.jpg`;
+        const uploadPath = '/home/ubuntu/uploads/ai-generations';
+        if (!fs.existsSync(uploadPath)) {
+          fs.mkdirSync(uploadPath, { recursive: true });
+        }
+
+        const filePath = path.join(uploadPath, fileName);
+        fs.writeFileSync(filePath, finalBuffer);
+
+        const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+        const saved = await this.saveGeneration(
           userId,
-          'PENDING',
-          finalPrompt,
+          file ? 'OPENAI_IMAGE_EDIT' : 'OPENAI_TOOL_TEXT_TO_IMAGE',
+          JSON.stringify([
+            { role: 'user', content: finalPrompt },
+            { role: 'assistant', content: "Voici l'image générée" },
+          ]),
           AiGenerationType.CHAT,
           {
-            engine: 'openai-tool',
-            model: 'gpt-5',
-            async: true,
             style: styleName,
+            seed,
+            hasSourceImage: !!file,
           },
-          undefined,
+          imageUrl,
           existingConversationId,
         );
 
-        // 2. Process in background without awaiting (Realism focus in process helper)
-        this.processOpenAiToolImageBackground(
-          pendingGen.id,
-          finalPrompt,
-          userId,
-          styleName,
-        );
-
-        // 3. Return immediately with isAsync flag
+        this.logger.log(`[generateImage] SUCCESS - URL: ${imageUrl}`);
         return {
-          id: pendingGen.id,
-          generationId: pendingGen.id,
-          conversationId: existingConversationId || String(pendingGen.id),
-          url: null,
-          isAsync: true,
-          status: 'PENDING',
+          url: imageUrl,
+          generationId: saved?.id,
+          conversationId: existingConversationId || saved?.id.toString(),
+          seed: seed || 0,
           prompt: finalPrompt,
         };
+      } catch (error) {
+        this.logger.error(`[generateImage] FAILED: ${error.message}`);
+        throw error;
       }
-
-      const fileName = `gen_${Date.now()}.jpg`;
-      const uploadPath = '/home/ubuntu/uploads/ai-generations';
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true });
-      }
-
-      const filePath = path.join(uploadPath, fileName);
-      fs.writeFileSync(filePath, finalBuffer);
-
-      const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-
-      const saved = await this.saveGeneration(
-        userId,
-        file ? 'OPENAI_IMAGE_EDIT' : 'OPENAI_TOOL_TEXT_TO_IMAGE',
-        JSON.stringify([
-          { role: 'user', content: finalPrompt },
-          { role: 'assistant', content: "Voici l'image générée" },
-        ]),
-        AiGenerationType.CHAT,
-        {
-          style: styleName,
-          seed,
-          hasSourceImage: !!file,
-        },
-        imageUrl,
-        existingConversationId,
-      );
-
-      this.logger.log(`[generateImage] SUCCESS - URL: ${imageUrl}`);
-      return {
-        url: imageUrl,
-        generationId: saved?.id,
-        conversationId: existingConversationId || saved?.id.toString(),
-        seed: seed || 0,
-        prompt: finalPrompt,
-      };
     } catch (error) {
       this.logger.error(`[generateImage] FAILED: ${error.message}`);
       throw error;
@@ -907,9 +929,13 @@ export class AiService implements OnModuleInit {
     existingConversationId?: string,
   ) {
     this.logger.log(
-      `[generateText] START - User: ${userId}, Type: ${type}, Params: ${JSON.stringify(params)}`,
+      `[generateText] START - Type: ${type}, User: ${userId}, Job: ${params.job}`,
     );
     try {
+      const { userQuery, job, brandingInfo, imagePrompt } = params;
+      this.logger.log(
+        `[generateText] Params: query=${userQuery?.substring(0, 50)}, job=${job}`,
+      );
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
@@ -998,6 +1024,7 @@ export class AiService implements OnModuleInit {
     }
 
     // 2. Generate Image (Direct Ultra)
+    this.logger.log(`[generateSocial] Calling generateImage...`);
     const imageRes = await this.generateImage(
       params,
       params.style || 'Hero Studio',
@@ -1005,14 +1032,20 @@ export class AiService implements OnModuleInit {
       file,
       seed,
     );
+    this.logger.log(
+      `[generateSocial] generateImage returned. ID: ${imageRes?.id || imageRes?.generationId}`,
+    );
 
     // 3. Generate Caption (Simple GPT)
-    // We include the 'imagePrompt' from generateImage to help the text IA describe the scene
+    this.logger.log(`[generateSocial] Calling generateText for caption...`);
     const { style: _, ...textParams } = params;
     const textRes = await this.generateText(
       { ...textParams, brandingInfo, imagePrompt: imageRes.prompt },
       'social',
       userId,
+    );
+    this.logger.log(
+      `[generateSocial] generateText returned. Length: ${textRes?.content?.length}`,
     );
 
     const result = {

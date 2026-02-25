@@ -47,7 +47,14 @@ export class AiController {
   @Public()
   @Get('ping')
   async ping() {
-    return { status: 'ok', message: 'AiController is reachable' };
+    return { status: 'ok', message: 'AiController is reachable (GET)' };
+  }
+
+  @Public()
+  @Post('ping')
+  async postPing(@Body() body: any) {
+    this.logger.log('[AiController] POST ping received with body:', body);
+    return { status: 'ok', message: 'AiController is reachable (POST)', body };
   }
 
   // DOIT ETRE VISIBLE PAR TOUS
@@ -345,7 +352,9 @@ export class AiController {
   @ResponseMessage('Post généré succès')
   @Post('social')
   @Roles(Role.AI_USER)
-  @UseInterceptors(FileInterceptor('image'))
+  @UseInterceptors(
+    FileInterceptor('image', { limits: { fileSize: 20 * 1024 * 1024 } }),
+  )
   async generateSocial(
     @Body() body: { params: any; seed?: number },
     @Req() req,
@@ -365,9 +374,18 @@ export class AiController {
         '[AiController] generateSocial - headers:',
         JSON.stringify(req.headers, null, 2),
       );
-      console.log('[AiController] generateSocial - file present:', !!file);
+      console.log(
+        '[AiController] generateSocial - body size (approx):',
+        JSON.stringify(body).length,
+      );
+      console.log(
+        '[AiController] generateSocial - file:',
+        file ? `${file.originalname} (${file.size} bytes)` : 'NOT PRESENT',
+      );
+
       console.log('--- API POST /ai/social ---', {
         params,
+        userId: req.user.sub,
         hasFile: !!file,
         seed: body.seed,
       });
@@ -378,9 +396,17 @@ export class AiController {
         body.seed,
       );
       console.log('--- API SOCIAL RESULT SUCCESS ---');
-      return result;
+      return {
+        success: true,
+        data: result,
+      };
     } catch (error: any) {
-      this.logger.error('Social generation error:', error);
+      console.error('[AiController] generateSocial CRASHED:', error);
+      console.error('[AiController] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        body: JSON.stringify(body).substring(0, 500),
+      });
       if (error instanceof BadRequestException) throw error;
       throw new HttpException(
         {
