@@ -423,15 +423,15 @@ export class AiService implements OnModuleInit {
 
     this.logger.log(`[callOpenAiImageEditWithFullPipeline] Étape 4 - Final Prompt: ${finalPrompt.substring(0, 120)}...`);
     this.logger.log(
-      `[callOpenAiImageEditWithFullPipeline] Étape 4 - Negative: ${finalNegativePrompt.substring(0, 100)}...`,
+      `[callOpenAiImageEditWithFullPipeline] Étape 4 - Negative Prompt (for reference, not used in /v1/images/edits): ${finalNegativePrompt.substring(0, 100)}...`,
     );
 
     // ÉTAPE 5: Appeler callOpenAiImageEdit avec le prompt complet
+    // NOTE: negative_prompt is NOT passed because /v1/images/edits doesn't support it
     try {
       const editedImage = await this.callOpenAiImageEdit(
         image,
         finalPrompt,
-        finalNegativePrompt,
       );
       this.logger.log(
         `[callOpenAiImageEditWithFullPipeline] SUCCESS - Image edited`,
@@ -586,13 +586,9 @@ export class AiService implements OnModuleInit {
         partial_images: 0,
       };
 
-      // Ajouter negative_prompt si fourni (pour image edits)
-      if (negativePrompt) {
-        postBody.negative_prompt = negativePrompt;
-        this.logger.log(
-          `[callOpenAiImageEdit] Using negative_prompt: ${negativePrompt.substring(0, 100)}...`,
-        );
-      }
+      // NOTE: OpenAI /v1/images/edits does NOT support negative_prompt parameter
+      // Only /v1/images/generations supports it
+      // So we ignore negativePrompt here even if provided
 
       // 5. POST with stream: true — receive SSE events using input_file_id
       const response = await axios.post(
