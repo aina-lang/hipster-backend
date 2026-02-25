@@ -571,6 +571,7 @@ export class AiService implements OnModuleInit {
       }
 
       // 4. Construire le POST body
+      // NOTE: Avec gpt-image-1.5, negative_prompt peut être supporté
       const postBody: any = {
         model: 'gpt-image-1.5',
         prompt: finalPrompt,
@@ -585,9 +586,12 @@ export class AiService implements OnModuleInit {
         partial_images: 0,
       };
 
-      // Ajouter negative_prompt si fourni
+      // Ajouter negative_prompt si fourni (pour image edits)
       if (negativePrompt) {
         postBody.negative_prompt = negativePrompt;
+        this.logger.log(
+          `[callOpenAiImageEdit] Using negative_prompt: ${negativePrompt.substring(0, 100)}...`,
+        );
       }
 
       // 5. POST with stream: true — receive SSE events using input_file_id
