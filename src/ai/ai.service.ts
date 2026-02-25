@@ -244,12 +244,16 @@ export class AiService implements OnModuleInit {
     primaryObject?: string;
   }> {
     try {
+      // Escape special characters in variables to prevent JSON parsing errors
+      const escapedJob = job.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      const escapedStyle = styleName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      
       const resp = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `Image prompt engineer.Job="${job}" Style="${styleName}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${job}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${job} world.`,
+            content: `Image prompt engineer.Job="${escapedJob}" Style="${escapedStyle}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${escapedJob}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${escapedJob} world.`,
           },
           { role: 'user', content: query || `Scene for ${job}` },
         ],
