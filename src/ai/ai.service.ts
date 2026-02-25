@@ -249,13 +249,13 @@ export class AiService implements OnModuleInit {
         messages: [
           {
             role: 'system',
-            content: `Image prompt engineer.Job="${job}" Style="${styleName}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools and atmosphere.`,
+            content: `Image prompt engineer.Job="${job}" Style="${styleName}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${job}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${job} world.`,
           },
           { role: 'user', content: query || `Scene for ${job}` },
         ],
         response_format: { type: 'json_object' },
         temperature: 0.2,
-        max_tokens: 120,
+        max_tokens: 400,
       });
       const data = JSON.parse(resp.choices[0]?.message?.content || '{}');
       this.logger.log(`[refineQuery] ${JSON.stringify(data)}`);
@@ -340,9 +340,9 @@ export class AiService implements OnModuleInit {
           'matte charcoal backdrop',
         ]);
 
-      let professionalContext = '';
+      let professionalContext = `The scene is set in a realistic ${jobStr} professional environment.`;
       if (options?.primaryObject) {
-        professionalContext = `The scene prominently features a ${options.primaryObject} that belongs to the ${jobStr} world.`;
+        professionalContext = `The scene prominently features a ${options.primaryObject} within a realistic ${jobStr} professional environment.`;
       }
 
       return `Ultra high contrast black white professional photo.High-end luxury editorial,sharp focus,cinematic. ${lighting},${angle},dramatic shadows,high-fidelity. ${bg}. ${professionalContext} RULES:No geometric shapes/lines/frames.PURE PHOTOGRAPHY.Single authentic photo.COLOR:Monochrome.ONE ACCENT:${accent} on key element.High-end campaign,luxury branding,clean studio.No text/logo/watermark.`
