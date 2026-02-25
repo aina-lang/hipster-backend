@@ -728,7 +728,10 @@ export class AiService implements OnModuleInit {
    * Call POST /v1/images/generations avec stream: true.
    * Attend l'événement `image_generation.completed` (ImageGenCompletedEvent) pour récupérer le b64_json final.
    */
-  private async callOpenAiToolImage(prompt: string): Promise<Buffer> {
+  private async callOpenAiToolImage(
+    prompt: string,
+    options?: { size?: string; quality?: string },
+  ): Promise<Buffer> {
     try {
       this.logger.log(
         `[callOpenAiToolImage] Generating with gpt-image-1.5 (streaming)...`,
@@ -746,9 +749,9 @@ export class AiService implements OnModuleInit {
           model: 'gpt-image-1.5',
           prompt: realismEnhancedPrompt,
           n: 1,
-          size: '1024x1024',
+          size: options?.size || '1024x1024',
           background: 'opaque',
-          quality: 'medium',
+          quality: options?.quality || 'medium',
           output_format: 'jpeg',
           moderation: 'low',
           stream: true,
@@ -1367,7 +1370,6 @@ STYLE: Professional, telegraphic, punchy. Output ONLY the final text.`,
     return result;
   }
 
-  /* --------------------- OTHER SPECIALIZED METHODS (PLACEHOLDERS) --------------------- */
   async generateFlyer(
     params: any,
     userId: number,
@@ -1375,8 +1377,112 @@ STYLE: Professional, telegraphic, punchy. Output ONLY the final text.`,
     seed?: number,
   ) {
     const style = params.style || 'Minimal Studio';
-    const result = await this.generateImage(params, style, userId, file, seed);
-    return { ...result, url: result.url, isAsync: !!result.isAsync };
+    this.logger.log(
+      `[generateFlyer] START - User: ${userId}, Style: ${style}, hasFile: ${!!file}`,
+    );
+
+    // Build a FLYER-specific prompt
+    const userQueryLower = (params.userQuery || '').toLowerCase();
+    const userExplicitlyRequestsText = [
+      'texte',
+      'écris',
+      'ecris',
+      'ajoute le texte',
+      'avec le texte',
+      'inscription',
+      'slogan',
+      'message',
+      'write',
+      'add text',
+      'titre',
+      'prix',
+      'promo',
+      'promotion',
+      'offre',
+      'réduction',
+      'soldes',
+      'citation',
+      'hashtag',
+    ].some((kw) => userQueryLower.includes(kw));
+
+    // For flyers, default is to ADD text if specified, since flyers inherently need text
+    // If user provided ANY userQuery, treat it as text to include on the flyer
+    const hasUserQuery = (params.userQuery || '').trim().length > 0;
+    const flyerTextRule =
+      userExplicitlyRequestsText || hasUserQuery
+        ? `FLYER DESIGN: Include the following text on the image, displayed clearly and prominently with bold modern typography: "${params.userQuery}" — Place text in visible zones. NO extra text, NO fake logos.`
+        : 'FLYER DESIGN: Create a visually stunning flyer without text. Bold visual composition, strong colors, no text or watermarks.';
+
+    const refinedRes = await this.refineQuery(
+      params.userQuery || params.job,
+      params.job,
+      style,
+      params.language || 'French',
+    );
+
+    const baseStylePrompt = this.getStyleDescription(style, params.job, {
+      accentColor: refinedRes.accentColor,
+      lighting: refinedRes.lighting,
+      angle: refinedRes.angle,
+      background: refinedRes.background,
+    });
+
+    const qualityTags =
+      'masterpiece,ultra high quality,sharp,8k,high resolution,print-ready,professional design';
+    const finalPrompt = `FLYER (portrait format, large print). ${baseStylePrompt}. ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. QUALITY: ${qualityTags}`;
+
+    this.logger.log(
+      `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
+    );
+
+    try {
+      let finalBuffer: Buffer;
+
+      if (file) {
+        // Use the already-built flyer prompt directly (includes text rules)
+        // Skip callOpenAiImageEditWithFullPipeline to avoid it rebuilding the prompt
+        this.logger.log(
+          `[generateFlyer] Strategy: Image Edit with FLYER prompt`,
+        );
+        finalBuffer = await this.callOpenAiImageEdit(file.buffer, finalPrompt);
+      } else {
+        // Use HIGH quality and PORTRAIT size for flyers
+        finalBuffer = await this.callOpenAiToolImage(finalPrompt, {
+          size: '1024x1536',
+          quality: 'high',
+        });
+      }
+
+      const fileName = `flyer_${Date.now()}.jpg`;
+      const uploadPath = '/home/ubuntu/uploads/ai-generations';
+      if (!fs.existsSync(uploadPath))
+        fs.mkdirSync(uploadPath, { recursive: true });
+      fs.writeFileSync(path.join(uploadPath, fileName), finalBuffer);
+
+      const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+      const saved = await this.saveGeneration(
+        userId,
+        'FLYER',
+        JSON.stringify([
+          { role: 'user', content: finalPrompt },
+          { role: 'assistant', content: 'Flyer généré' },
+        ]),
+        AiGenerationType.CHAT,
+        { style, hasSourceImage: !!file },
+        imageUrl,
+      );
+
+      this.logger.log(`[generateFlyer] SUCCESS - URL: ${imageUrl}`);
+      return {
+        url: imageUrl,
+        generationId: saved?.id,
+        isAsync: false,
+        prompt: finalPrompt,
+      };
+    } catch (error) {
+      this.logger.error(`[generateFlyer] FAILED: ${error.message}`);
+      throw error;
+    }
   }
 
   async transcribeAudio(file: Express.Multer.File) {
