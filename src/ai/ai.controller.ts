@@ -361,6 +361,10 @@ export class AiController {
         }
       }
 
+      console.log(
+        '[AiController] generateSocial - headers:',
+        JSON.stringify(req.headers, null, 2),
+      );
       console.log('[AiController] generateSocial - file present:', !!file);
       console.log('--- API POST /ai/social ---', {
         params,
