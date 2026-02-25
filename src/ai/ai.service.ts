@@ -1426,6 +1426,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
           ? 'square'
           : 'portrait';
 
+    const flyerLanguage = params.language || 'French';
     const flyerTextRule =
       userExplicitlyRequestsText || hasUserQuery
         ? `ELITE GRAPHIC DESIGN RULES: 
@@ -1433,7 +1434,9 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
            - SAFE AREA: Ensure all text and critical elements have a 10% margin from the edges.
            - Typography: COOL & STYLIZED. Use professional designer fonts (varied weights, liquid metal effects, 3D extruded textures, or neon glow as appropriate). 
            - Visual Hierarchy: Absolute clarity. Headline is bold and stylized.
-           - CONTENT POLICY: Use the provided text: "${params.userQuery}". You MAY creatively improve the phrasing for impact (e.g., adding "Don't miss out", "Store opening", "New collection") but NEVER invent dates, prices, or locations.
+           - CONTENT POLICY: Display the following text in ${flyerLanguage}: "${params.userQuery}". 
+           - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
+           - COPYWRITING: You MAY creatively improve the phrasing for impact in ${flyerLanguage} (e.g., adding "Venez nombreux", "Achetez maintenant", "Offre limitée") based on the context, but NEVER invent dates, prices, or locations.
            - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs, NO placeholder text.
            - Match style "${style}": Minimal = clean & sophisticated; Hero = bold & centered; Premium = luxury & high-contrast.`
         : `ELITE GRAPHIC DESIGN RULES: 
@@ -1446,7 +1449,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       params.userQuery || params.job,
       params.job,
       style,
-      params.language || 'French',
+      flyerLanguage,
     );
 
     const baseStylePrompt = this.getStyleDescription(style, params.job, {
@@ -1458,10 +1461,17 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
     const qualityTags =
       'masterpiece,ultra high quality,sharp focus,8k,high resolution,print-ready,professional graphic design,trendy editorial layout';
-    
+
+    // Ensure the subject from userQuery is the central object of the flyer
+    const subjectDirectives = params.userQuery
+      ? `VISUAL SUBJECT: Ensure that the main objects or people described in "${params.userQuery}" (e.g. bassist, musical instrument, product) are the central focus of the image.`
+      : '';
+
     // If we have a file, the prompt should be about TRANSFORMING, not GENERATING.
-    const modePrefix = file ? `TRANSFORM THIS IMAGE into a professional flyer.` : `GENERATE a professional flyer from scratch.`;
-    const finalPrompt = `${modePrefix} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Designer grade, Cool, Impactful. QUALITY: ${qualityTags}. NO placeholders, NO fake text.`;
+    const modePrefix = file
+      ? `TRANSFORM THIS IMAGE into a professional flyer.`
+      : `GENERATE a professional flyer from scratch.`;
+    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Designer grade, Cool, Impactful. QUALITY: ${qualityTags}. NO placeholders, NO fake text. TECHNICAL NOTE: Build the scene description in English but the DISPLAYED TEXT on image must be in ${flyerLanguage}.`;
 
     this.logger.log(
       `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
