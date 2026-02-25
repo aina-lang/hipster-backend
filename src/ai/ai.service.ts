@@ -249,7 +249,7 @@ export class AiService implements OnModuleInit {
         messages: [
           {
             role: 'system',
-            content: `Image prompt engineer.Job="${job}" Style="${styleName}".Return JSON only:{"prompt":"short English scene(max 40 words)","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}If user provides prompt,enhance it.No people unless asked.`,
+            content: `Image prompt engineer.Job="${job}" Style="${styleName}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools and atmosphere.`,
           },
           { role: 'user', content: query || `Scene for ${job}` },
         ],
@@ -827,7 +827,8 @@ export class AiService implements OnModuleInit {
           ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
           : baseStylePrompt;
 
-        const finalPrompt = `STYLE: ${styleName}. ${promptBody} QUALITY: ${realismTriggers} ${qualityTags}`;
+        // Append more descriptive triggers if it's a rich user prompt
+        const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}`;
 
         let finalNegativePrompt = this.NEGATIVE_PROMPT;
 
