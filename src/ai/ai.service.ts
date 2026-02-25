@@ -1790,29 +1790,15 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       'ma charte graphique',
     ].some((kw) => userQueryLower.includes(kw));
 
-    const wantsBrandingInfo = [
-      'mes infos',
-      'mes informations',
-      'mes coordonnées',
-      'mon adresse',
-      'mon tel',
-      'mon numéro',
-      'mon site',
-      'ma boutique',
-    ].some((kw) => userQueryLower.includes(kw));
-
-    const avoidsBrandingColor = [
-      'sans ma couleur',
-      'pas ma couleur',
-      'sans branding',
-    ].some((kw) => userQueryLower.includes(kw));
-
     const avoidsBrandingInfo = [
       'sans mes infos',
       'sans mes informations',
       'sans mes coordonnées',
       'sans texte info',
     ].some((kw) => userQueryLower.includes(kw));
+
+    // Proactively include branding info by default for flyers unless avoided
+    const wantsBrandingInfo = !avoidsBrandingInfo;
 
     const brandingColor =
       user?.brandingColor && wantsBrandingColor && !avoidsBrandingColor
@@ -1857,20 +1843,19 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     const orientation = 'portrait';
 
     const flyerLanguage = params.language || 'French';
-    const flyerTextRule =
-      userExplicitlyRequestsText || hasUserQuery || brandingInfoStr
-        ? `ELITE GRAPHIC DESIGN RULES: 
+    // Flyers should ALWAYS have text rules and hooks improvisation
+    const flyerTextRule = `ELITE GRAPHIC DESIGN RULES: 
            - Visual Framing: COMPOSITION: Wide or Middle shot. Ensure the person's head and shoulders are fully visible with safe margin above the head.
            - Style: "Premium Editorial" vibe. High-end, clean, professional structure.
            - Typographic Dynamism: USE DYNAMIC COMPOSITION. You ARE ENCOURAGED to use tilted text (angles), rotated titles, and asymmetric placements to make it look like a real professional poster.
            - SAFE AREA: Ensure all text and critical elements have a 15% margin from the edges.
            - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif).
            - Visual Hierarchy: Absolute clarity. Headline is high-impact, potentially rotated or angled for style.
-           - CONTENT POLICY: Use the provided text: "${params.userQuery}"${brandingInfoStr ? ` AND professional info: "${brandingInfoStr}"` : ''} and creatively REPHRASE it into a catchy French slogan. 
+           - CONTENT POLICY: You MUST improvise catchy French "accroches" (hooks) and headlines based on the context: "${params.userQuery || params.job || model}". 
+             ${brandingInfoStr ? `MANDATORY: Include this professional info clearly: "${brandingInfoStr}".` : ''}
            - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
-           - COPYWRITING: Improvisation is REQUIRED for catchy impact. Make it sound like a real pro flyer.
-           - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs.`
-        : 'NO text on the image.';
+           - COPYWRITING: HIGH IMPROVISATION is REQUIRED. Create professional marketing copy that SELLS. Make it sound like a real pro flyer.
+           - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs. USE ONLY PROVIDED INFO OR IMPROVISED HOOKS.`;
 
     // 2. Refine the query for visual richness
     const refinedRes = await this.refineQuery(
