@@ -295,7 +295,7 @@ export class AiService implements OnModuleInit {
           {
             role: 'system',
             content:
-              'You are a prompt engineer for OpenAI Image Edits. Your job is to improve and enhance visual quality while STRICTLY preserving the CORE SUBJECT of the original image. RULES: (1) NEVER remove or replace the main subject. (2) Use verbs like "Keep the [subject] and modify the background...". (3) ZERO HALLUCINATION POLICY: NEVER invent text, dates, names, prices, or logos not in the input. (4) Layout: PROFESSIONAL DESIGN (Swiss Style), clean hierarchy, varied typography weights. (5) If text is requested, display it clearly. If NOT requested, add NO text at all. (6) Output ONE instruction under 400 chars. DO NOT use placeholder text or fake branding.',
+              'You are a prompt engineer for OpenAI Image Edits. Your goal is to transform the PROVIDED IMAGE into a professional flyer. MANDATORY RULES: (1) The subject in the image (person, face, object) is SACRED: NEVER replace it. (2) Use transformation instructions ONLY: "Keep the person from the image exactly as they are, but stylize the environment into [Style]...", "Preserve the original subject and overlay professional typography...". (3) Typography must be COOL, TRENDY and BOLD: use terms like "3D extruded letters", "Liquid metal typography", "Neon glow text", "Brutalist editorial layout", or "Futuristic tech-wear fonts" depending on the vibe. (4) ZERO HALLUCINATION: Never add names, dates, or info NOT in the user input. (5) Output ONE ONE-SHOT instruction in English (< 450 chars).',
           },
           { role: 'user', content: prompt },
         ],
@@ -1429,15 +1429,15 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     const flyerTextRule =
       userExplicitlyRequestsText || hasUserQuery
         ? `ELITE GRAPHIC DESIGN RULES: 
-           - Layout: Swiss Style / Modern Editorial. Clean, high-impact, professional structure.
-           - SAFE AREA: Ensure all text and critical elements have a 10% margin from the edges. DO NOT place text too close to the borders.
-           - Typography: Premium sans-serif fonts, varied weights (Heavy for titles, Light for details). Perfect kerning and leading.
-           - Visual Hierarchy: Absolute clarity.
-           - CONTENT IMPROVEMENT: Use the provided text: "${params.userQuery}". You MAY creatively improve the phrasing to make it more persuasive (e.g., adding "Venez nombreux", "Achetez maintenant", "Offre limitée") based on the context, but NEVER invent new facts (dates, prices, specific locations not provided).
-           - ZERO HALLUCINATION POLICY: NEVER invent new factual data (phone numbers, specific addresses, real-world URLs).
-           - Match style "${style}": Minimal = maximum negative space; Hero = bold, centered, cinematic; Premium = luxury texture, sophisticated alignment.`
+           - Style Style: "Cool Designer" vibe. High-impact, trendy editorial layout.
+           - SAFE AREA: Ensure all text and critical elements have a 10% margin from the edges.
+           - Typography: COOL & STYLIZED. Use professional designer fonts (varied weights, liquid metal effects, 3D extruded textures, or neon glow as appropriate). 
+           - Visual Hierarchy: Absolute clarity. Headline is bold and stylized.
+           - CONTENT POLICY: Use the provided text: "${params.userQuery}". You MAY creatively improve the phrasing for impact (e.g., adding "Don't miss out", "Store opening", "New collection") but NEVER invent dates, prices, or locations.
+           - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs, NO placeholder text.
+           - Match style "${style}": Minimal = clean & sophisticated; Hero = bold & centered; Premium = luxury & high-contrast.`
         : `ELITE GRAPHIC DESIGN RULES: 
-           - Style: Modern Visual Poster / Artistic Display.
+           - Style: Modern Visual Poster / High-end Brand Display.
            - SAFE AREA: Keep all visual focal points away from the extreme edges.
            - ZERO TEXT POLICY: Use NO letters, NO numbers, NO words, NO logos.
            - Create a "cool", trendy visual for style "${style}".`;
@@ -1457,8 +1457,11 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     });
 
     const qualityTags =
-      'masterpiece,ultra high quality,sharp focus,8k,high resolution,print-ready,professional graphic design,social-media-first aesthetic,editorial layout';
-    const finalPrompt = `FLYER DESIGN (${orientation} format). ${baseStylePrompt}. SUBJECT OR CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Designer grade, Trendy, Impactful Layout. QUALITY: ${qualityTags}. NO placeholders, NO fake text, NO generic logos.`;
+      'masterpiece,ultra high quality,sharp focus,8k,high resolution,print-ready,professional graphic design,trendy editorial layout';
+    
+    // If we have a file, the prompt should be about TRANSFORMING, not GENERATING.
+    const modePrefix = file ? `TRANSFORM THIS IMAGE into a professional flyer.` : `GENERATE a professional flyer from scratch.`;
+    const finalPrompt = `${modePrefix} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Designer grade, Cool, Impactful. QUALITY: ${qualityTags}. NO placeholders, NO fake text.`;
 
     this.logger.log(
       `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
