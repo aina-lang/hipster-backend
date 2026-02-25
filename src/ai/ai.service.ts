@@ -540,150 +540,339 @@ export class AiService implements OnModuleInit {
     job: string,
     options?: any,
   ): string {
-    const model = modelName || 'Anniversaire adulte';
+    const model = modelName || 'Moderne minimaliste';
     const jobStr = job || 'professional';
-    const accent = options?.accentColor || 'muted gold';
-    const bg = options?.background || 'clean elegant background';
-    const lighting = options?.lighting || 'sharp professional lighting';
+    const accent = options?.accentColor || 'deep blue';
+    const bg = options?.background || 'clean professional environment';
+    const lighting = options?.lighting || 'natural professional lighting';
 
-    // Grouping models into "Moods" for easier prompt engineering
-    let mood = 'Professional';
+    let mood = 'Modern';
     let specificDirectives = '';
+    let layout =
+      'CENTERED COMPOSITION: Subject in the middle, clear space at the top/bottom for text.';
 
-    // 1. PERSONAL EVENTS
+    // Transform categories into prompt moods
+    const modelLower = model.toLowerCase();
+
+    // 1. STYLES MODERNES
     if (
-      [
-        'Anniversaire adulte',
-        'Anniversaire enfant',
-        'Baby shower',
-        'Gender reveal',
-        'Mariage',
-        'Fiançailles',
-        'Baptême',
-        'Communion',
-        'Confirmation',
-        'Fête surprise',
-        'Enterrement de vie de garçon (EVG)',
-        'Enterrement de vie de jeune fille (EVJF)',
-        'Soirée privée',
-        'Réunion de famille',
-        'Pendaison de crémaillère',
-        'Remise de diplôme',
-        'Anniversaire de mariage',
-      ].includes(model)
+      modelLower.includes('moderne') ||
+      ['moderne flat design', 'moderne glassmorphism', 'moderne néon'].includes(
+        modelLower,
+      )
     ) {
-      mood = 'Festive & Elegant';
-      specificDirectives = `The scene highlights a warm, ${model.toLowerCase()} atmosphere. High-end celebration style. Use warm lighting and sophisticated decor.`;
+      mood = 'Modern & Tech';
+      layout =
+        'RULE OF THIRDS: Subject strictly on the LEFT or RIGHT side, leaving 60% of the frame as clean negative space for typography.';
+      if (modelLower.includes('glassmorphism'))
+        specificDirectives =
+          'Frosted glass effects, translucent layers with soft backlighting, and subtle colorful glows.';
+      else if (modelLower.includes('néon')) {
+        specificDirectives =
+          'High contrast, dark background with vibrant neon tubes, glowing edges, and saturated electric colors.';
+        layout =
+          'CENTERED GLOW: Subject in center, radiating light towards the edges.';
+      } else if (modelLower.includes('géométrique'))
+        specificDirectives =
+          'Sharp vector shapes (triangles, circles, diagonals) integrated into the composition.';
+      else if (modelLower.includes('fond sombre'))
+        specificDirectives =
+          'Deep obsidian or charcoal background with high-contrast text and sleek, rim lighting.';
+      else if (modelLower.includes('flat design'))
+        specificDirectives =
+          'Solid colors, 2D minimalist aesthetics, and vector-style clarity.';
+      else
+        specificDirectives =
+          'Clean lines, minimalist digital layout, and a contemporary tech vibe.';
     }
-    // 2. PUBLIC EVENTS
+    // 2. STYLES COLORÉS / FUN
     else if (
       [
-        'Concert',
-        'Festival',
-        'Soirée DJ',
-        'Showcase',
-        'Conférence',
-        'Séminaire',
-        'Atelier / Workshop',
-        'Lancement de produit',
-        'Exposition',
-        'Salon professionnel',
-        'Meetup',
-        'Webinaire',
-        'Compétition sportive',
-        'Tournoi',
-        'Projection cinéma',
-        'Spectacle',
-        'Théâtre',
-        'Événement caritatif',
-      ].includes(model)
+        'coloré vibrant',
+        'pastel doux',
+        'cartoon',
+        'pop art',
+        'fun enfants',
+        'confettis',
+        'festival couleurs',
+        'abstrait artistique',
+      ].includes(modelLower)
     ) {
-      mood = 'Dynamic & Impactful';
-      specificDirectives = `Focus on energy and professional event staging for a ${model.toLowerCase()}. High visibility, dynamic composition.`;
+      mood = 'Colorful & Playful';
+      layout =
+        'DYNAMIC CLUSTER: High-energy placement, objects/subject slightly tilted, organic and non-rigid composition.';
+      if (modelLower.includes('pop art')) {
+        specificDirectives =
+          'Bold halftone patterns, high saturation, Ben-Day dots, and hard black outlines in Andy Warhol style.';
+        layout =
+          'QUADRANT SPLIT: Subject repeated or split into high-contrast color blocks.';
+      } else if (modelLower.includes('pastel'))
+        specificDirectives =
+          'Soft desaturated tones, mint, lavender, and soft peaches. Gentle, welcoming lighting.';
+      else if (modelLower.includes('cartoon'))
+        specificDirectives =
+          '3D stylized illustration, exaggerated proportions, and a cheerful, saturated environment.';
+      else if (modelLower.includes('abstrait'))
+        specificDirectives =
+          'Fluid paint splashes, geometric patterns, and experimental artistic textures.';
+      else
+        specificDirectives =
+          'Explosion of vibrant colors, energetic patterns, and a joyful, high-spirited atmosphere.';
     }
-    // 3. BUSINESS & MARKETING
+    // 3. STYLES ÉLÉGANTS / LUXE
     else if (
       [
-        'Promotion produit',
-        'Offre spéciale',
-        'Soldes',
-        'Black Friday',
-        'Ouverture magasin',
-        'Recrutement',
-        'Nouveau service',
-        'Branding personnel',
-        'Carte de visite version flyer',
-        'Présentation entreprise',
-        'Pack service freelance',
-        'Publicité restaurant',
-        'Menu spécial',
-        'Immobilier à vendre',
-        'Immobilier à louer',
-      ].includes(model)
+        'noir & or',
+        'blanc & or',
+        'élégant minimal',
+        'luxe premium',
+        'classique chic',
+        'royal (violet/or)',
+        'doré brillant',
+        'soirée glamour',
+      ].includes(modelLower)
     ) {
-      mood = 'Commercial & Clean';
-      specificDirectives = `High-end commercial photography for ${model.toLowerCase()}. Product or service focus, very clean lines.`;
+      mood = 'Elegant & Luxury';
+      layout =
+        'SYMMETRICAL PORTRAIT: Perfect central balance, wide margins for a premium "breathable" feel. High-fashion composition.';
+      if (modelLower.includes('noir & or'))
+        specificDirectives =
+          'Matte black textures with polished 24k gold accents, gold foil elements, and premium dark lighting.';
+      else if (modelLower.includes('blanc & or'))
+        specificDirectives =
+          'Pure white marble or silk textures with delicate gold linework and high-key soft lighting.';
+      else if (modelLower.includes('royal'))
+        specificDirectives =
+          'Rich jewel tones like deep violet and emerald, with ornate gold flourishes and velvet textures.';
+      else if (modelLower.includes('glamour'))
+        specificDirectives =
+          'Sparkling red carpet atmosphere with crystal reflections and elegant evening lighting.';
+      else
+        specificDirectives =
+          'High-end editorial photoshoot, sophisticated rim lighting, and luxury material textures.';
     }
-    // 4. RESTAURATION
+    // 4. STYLES FESTIFS / SOIRÉE
     else if (
       [
-        'Menu du jour',
-        'Promotion pizza',
-        'Fast food',
-        'Restaurant chic',
-        'Café',
-        'Pâtisserie',
-        'Livraison gratuite',
-        'Happy hour',
-        'Soirée à thème',
-        'Buffet spécial',
-      ].includes(model)
+        'dj party',
+        'clubbing',
+        'neon night',
+        'glow party',
+        'urban street',
+        'hip-hop',
+        'afro vibe',
+        'tropical party',
+        'beach party',
+        'sunset vibe',
+      ].includes(modelLower)
     ) {
-      mood = 'Gourmet & Inviting';
-      specificDirectives = `Mouth-watering food photography style for ${model.toLowerCase()}. Fresh ingredients, inviting textures.`;
+      mood = 'Festive & Nightlife';
+      layout =
+        'LOW ANGLE POWER: Subject viewed from a low angle to appear heroic/energetic. Text area in the upper 30% of the frame.';
+      if (modelLower.includes('neon') || modelLower.includes('glow'))
+        specificDirectives =
+          'UV blacklight aesthetic, neon face paint, and intense glowing party accessories.';
+      else if (
+        modelLower.includes('tropical') ||
+        modelLower.includes('beach') ||
+        modelLower.includes('sunset')
+      ) {
+        specificDirectives =
+          'Summer evening colors, silhouettes against a sunset, palm leaves, and relaxed beach-club vibes.';
+      } else if (
+        modelLower.includes('urban') ||
+        modelLower.includes('hip-hop')
+      ) {
+        specificDirectives =
+          'Street culture aesthetic, concrete textures, graffiti elements, and raw urban photography style.';
+        layout =
+          'WIDE URBAN SHOT: Subject integrated into a wide city/street background, rule of thirds.';
+      } else
+        specificDirectives =
+          'Dynamic laser beams, smoke machine effects, pulsing club lights, and an energetic dancefloor atmosphere.';
     }
-    // 5. SPORT & FITNESS
+    // 5. STYLES PROFESSIONNELS
     else if (
       [
-        'Coaching sportif',
-        'Salle de sport',
-        'Programme perte de poids',
-        'Bootcamp',
-        'Zumba',
-        'Yoga',
-        'Arts martiaux',
-        'Tournoi de foot',
-        'Tournoi de basket',
-        'Compétition locale',
-      ].includes(model)
+        'corporate clean',
+        'conférence pro',
+        'business formel',
+        'tech digital',
+        'startup moderne',
+        'minimal corporate',
+        'linkedin style',
+        'webinaire professionnel',
+      ].includes(modelLower)
     ) {
-      mood = 'Action & Vitality';
-      specificDirectives = `High-energy athletic focus for ${model.toLowerCase()}. Sharp movement, motivational atmosphere.`;
+      mood = 'Professional & Corporate';
+      layout =
+        'BALANCED SPLIT: Subject on one side (left or right), clear structured block on the other side for professional details.';
+      if (modelLower.includes('tech'))
+        specificDirectives =
+          'Circuit board patterns, holographic data visualizations, and blue-tinted modern technology lighting.';
+      else if (modelLower.includes('startup'))
+        specificDirectives =
+          'Creative open-space office, collaborative vibes with whiteboards and modern minimalist furniture.';
+      else if (modelLower.includes('linkedin')) {
+        specificDirectives =
+          'High-end studio portrait lighting, clean non-distracting background, and approachable professional look.';
+        layout =
+          'TIGHT HEADSHOT: Focused solely on shoulders and head, centered.';
+      } else
+        specificDirectives =
+          'Sharp corporate layout, trustworthy blue and white tones, and crystal-clear business imagery.';
     }
-    // 6. BEAUTÉ & MODE
+    // 6. STYLES SPORTIFS
     else if (
       [
-        'Salon de coiffure',
-        'Institut de beauté',
-        'Onglerie',
-        'Maquillage professionnel',
-        'Promo vêtements',
-        'Nouvelle collection',
-        'Défilé de mode',
-        'Spa',
-        'Barber shop',
-      ].includes(model)
+        'dynamique rouge/noir',
+        'explosion énergie',
+        'fitness impact',
+        'sport compétition',
+        'tournoi officiel',
+        'street sport',
+        'performance extrême',
+      ].includes(modelLower)
     ) {
-      mood = 'Aesthetic & Glamour';
-      specificDirectives = `Fashion editorial style for ${model.toLowerCase()}. Flawless skin, elegant styling, luxury vibe.`;
+      mood = 'Sport & High Performance';
+      layout =
+        'DIAGONAL TENSION: Subject in motion crossing the frame diagonally. Creates a sense of speed and power.';
+      if (modelLower.includes('explosion'))
+        specificDirectives =
+          'Epic dust and smoke explosions, flying gravel, and hyper-dynamic action trails.';
+      else if (modelLower.includes('rouge/noir'))
+        specificDirectives =
+          'Aggressive high-contrast red and black palette with sharp speed lines and intense shadows.';
+      else
+        specificDirectives =
+          'Dramatic lighting emphasizing muscle definition, sweat particles, and raw physical intensity.';
     }
-    // 7. ÉDUCATION, SANTÉ, SERVICES, RÉLIGIEUX, DIGITAL, SAISONNIER...
-    else {
-      mood = 'Professional & Realistic';
-      specificDirectives = `Realistic contextual focus on ${model.toLowerCase()}. Authentic and trustworthy atmosphere.`;
+    // 7. STYLES CLASSIQUES
+    else if (
+      [
+        'classique traditionnel',
+        'vintage',
+        'rétro années 80',
+        'rétro années 90',
+        'old school',
+        'papier texturé',
+        'style affiche ancienne',
+      ].includes(modelLower)
+    ) {
+      mood = 'Classic & Retro';
+      layout =
+        'FRAMED CENTER: Subject centered within a physical border or distinct "box" area. Classic poster structure.';
+      if (modelLower.includes('80')) {
+        specificDirectives =
+          'Synthwave aesthetic, hot pink and cyan neon, chrome text effects, and retro-grid horizons.';
+        layout =
+          'HORIZON SPLIT: Subject in the upper half, grid/road in the lower half.';
+      } else if (modelLower.includes('90'))
+        specificDirectives =
+          'Grainy film texture, vibrant primary colors, baggy street fashion vibes, and early digital elements.';
+      else if (
+        modelLower.includes('vintage') ||
+        modelLower.includes('affiche ancienne')
+      ) {
+        specificDirectives =
+          'Aged paper textures, ink-print imperfections, sepia tones, and classic turn-of-the-century typography.';
+      } else
+        specificDirectives =
+          'Nostalgic film stock appearance, warm organic grain, and a timeless heritage atmosphere.';
+    }
+    // 8. STYLES NATURE
+    else if (
+      [
+        'nature verte',
+        'floral élégant',
+        'tropical jungle',
+        'éco / bio',
+        'bohème',
+        'minimal naturel',
+        'rustique bois',
+      ].includes(modelLower)
+    ) {
+      mood = 'Nature & Organic';
+      layout =
+        'ORGANIC INTEGRATION: Subject is not isolated, but blended into the environment (foliage, trees). Asymmetrical and natural.';
+      if (modelLower.includes('floral'))
+        specificDirectives =
+          'Delicate botanical arrangements, soft petals, and high-key natural lighting.';
+      else if (modelLower.includes('tropical'))
+        specificDirectives =
+          'Lush exotic greenery, monsteras, palm trees, and humid atmospheric depth.';
+      else if (modelLower.includes('bois'))
+        specificDirectives =
+          'Warm raw wood grains, forest landscape, and rustic handcrafted textures.';
+      else
+        specificDirectives =
+          'Sovereign greens, organic compositions, and a fresh eco-friendly professional vibe.';
+    }
+    // 9. STYLES VISUELS IMPACT
+    else if (
+      [
+        'photo centrale dominante',
+        'image plein écran',
+        'poster cinéma',
+        'affiche dramatique',
+        'fond flou artistique',
+        'double exposition',
+        'collage moderne',
+      ].includes(modelLower)
+    ) {
+      mood = 'Visual Impact';
+      layout =
+        'CINEMATIC POSTER: Wide shot, centered subject, dramatic lighting, large empty area at the bottom for major title.';
+      if (modelLower.includes('poster cinéma'))
+        specificDirectives =
+          'Epic wide-angle shot, teal and orange cinematic color grading, and dramatic backlighting.';
+      else if (modelLower.includes('double exposition')) {
+        specificDirectives =
+          'Artistic double exposure: a silhouette layered with a secondary landscape or texture (e.g. city lights or forest).';
+        layout =
+          'SILHOUETTE CENTER: Centered clear silhouette acting as a container for the landscape.';
+      } else if (modelLower.includes('flou'))
+        specificDirectives =
+          'Extreme bokeh, soft focus backgrounds to isolate the subject with surgical precision.';
+      else
+        specificDirectives =
+          'One powerful central focal point, high visual contrast, and a "heroic" composition style.';
+    }
+    // 10. STYLES CRÉATIFS
+    else if (
+      [
+        'asymétrique',
+        'layout split (2 colonnes)',
+        'typographie géante',
+        'encadré central',
+        'cercle dominant',
+        'diagonal dynamique',
+        'bloc moderne',
+        'style magazine',
+      ].includes(modelLower)
+    ) {
+      mood = 'Creative & Editorial';
+      layout =
+        'OVERLAP & DEPTH: Elements layering behind and in front of the subject. Breaking the grid.';
+      if (modelLower.includes('magazine')) {
+        specificDirectives =
+          'High-fashion magazine cover layout (e.g., Vogue, GQ style), large masthead, and editorial lighting.';
+        layout =
+          'EDITORIAL COVER: Subject full-height centered, text overlapping at the very top (masthead).';
+      } else if (modelLower.includes('typographie')) {
+        specificDirectives =
+          'Giant, experimental typography that overlaps with the subject, creating a 3D depth effect.';
+        layout =
+          'TEXT DOMINANT: Giant letters occupying 50% of the frame, subject integrated into the letters.';
+      } else if (modelLower.includes('split')) {
+        layout =
+          'VERTICAL SPLIT: Frame cut in half down the middle. One side for high-impact photo, one side for text backup.';
+      } else
+        specificDirectives =
+          'Experimental grid-work, bold use of white space, and innovative graphic architecture.';
     }
 
-    return `Mood: ${mood}. ${specificDirectives}. EXTREME CLARITY. Authentic photography. SHARP FOCUS. ${lighting}. ${bg}. RULES: SHARP AND DISTINCT. NO synthetic objects, NO ai banners. PURE PHOTOGRAPHY. All objects must be real, physical, and tangible. Single natural subject. COLOR: Natural colors with a ${accent} accent. High-end candid style. ZERO ai-artifacts. Ensure everything looks like a real-world photograph for a ${model}.`
+    return `Mood: ${mood}. Layout Priority: ${layout}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. RULES: All objects must be real, physical, and tangible. NO synthetic AI banners. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
       .replace(/\s+/g, ' ')
       .trim();
   }
