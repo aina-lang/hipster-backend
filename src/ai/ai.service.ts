@@ -780,21 +780,60 @@ export class AiService implements OnModuleInit {
       try {
         let finalBuffer: Buffer;
 
-        const qualityTags =
-          'masterpiece,high quality,photorealistic,8k,detailed skin,sharp focus,natural lighting,cinematic,realistic hair';
+        const humanKeywords = [
+          'homme',
+          'femme',
+          'personne',
+          'visage',
+          'mannequin',
+          'worker',
+          'ouvrier',
+          'artisan',
+          'man',
+          'woman',
+          'person',
+          'human',
+          'face',
+          'eyes',
+          'skin',
+          'hair',
+          'model',
+          'portrait',
+        ];
+        const isHumanRequested = humanKeywords.some(
+          (kw) =>
+            refinedQuery.toLowerCase().includes(kw) ||
+            (params.userQuery || '').toLowerCase().includes(kw) ||
+            (params.job || '').toLowerCase().includes(kw),
+        );
+
+        const baseQuality =
+          'masterpiece,high quality,photorealistic,8k,sharp focus,natural lighting,cinematic';
+        const qualityTags = isHumanRequested
+          ? `${baseQuality},detailed skin,realistic hair`
+          : baseQuality;
+
+        // REALISM BOOST: Inject hyper-realistic photography triggers
+        const genericRealism =
+          'photorealistic,8k,hyper-detailed texture,film grain,natural lighting,cinematic composition,35mm,f/1.8.NO plastic,NO CGI';
+        const humanRealism =
+          'detailed skin,pores,imperfections,candid,sharp focus eyes';
+        const realismTriggers = isHumanRequested
+          ? `${genericRealism},${humanRealism}`
+          : genericRealism;
 
         // Build the final prompt by combining the base style guide with the refined query.
         const promptBody = refinedQuery
           ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
           : baseStylePrompt;
 
-        // REALISM BOOST: Inject hyper-realistic photography triggers
-        const realismTriggers =
-          'photorealistic,8k,detailed skin,pores,imperfections,film grain,natural lighting,candid,sharp focus eyes,35mm,f/1.8.NO plastic,NO CGI'.trim();
-
         const finalPrompt = `STYLE: ${styleName}. ${promptBody} QUALITY: ${realismTriggers} ${qualityTags}`;
 
         let finalNegativePrompt = this.NEGATIVE_PROMPT;
+
+        if (!isHumanRequested) {
+          finalNegativePrompt = `${finalNegativePrompt},person,human,man,woman,mannequin,face,portrait,skin`;
+        }
 
         // Additional specific filters for high-end styles
         if (
