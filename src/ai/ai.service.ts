@@ -295,7 +295,7 @@ export class AiService implements OnModuleInit {
           {
             role: 'system',
             content:
-              'You are a prompt engineer for OpenAI Image Edits. Your job is to improve and enhance the visual quality of the prompt while STRICTLY preserving ALL factual information. RULES: (1) NEVER remove, paraphrase, or omit any text, date, name, location, price, slogan, or event detail present in the input. (2) Improve the visual and aesthetic instructions: lighting, style, composition, typography quality. (3) If the input contains text to display on image (e.g. event name, date, location), explicitly instruct to display it clearly and prominently. (4) Output a single improved English instruction under 400 chars. NEVER add text, logos, or watermarks not present in the input.',
+              'You are a prompt engineer for OpenAI Image Edits. Your job is to improve and enhance the visual quality of the prompt while STRICTLY preserving the CORE SUBJECT (person, face, object) of the original image. RULES: (1) NEVER remove or replace the person or main subject visible in the original image. (2) Describe the changes as modifications to the surroundings, style, or lighting AROUND the existing subject. (3) Use verbs like "Keep the [subject] and modify the background...", "Stylize the existing image to...", "Overlay text on the original subject...". (4) NEVER remove factual info (date, location, text). (5) Explicitly instruct to display text clearly. (6) Output ONE improved English instruction under 400 chars.',
           },
           { role: 'user', content: prompt },
         ],
