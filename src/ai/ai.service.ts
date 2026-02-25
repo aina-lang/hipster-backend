@@ -429,7 +429,7 @@ export class AiService implements OnModuleInit {
         {
           model: 'gpt-image-1.5',
           prompt: refinedPrompt,
-          images: [{ input_file_id: fileId }],
+          images: [{ file_id: fileId }],
           size: '1024x1024',
           quality: 'medium',
           output_format: 'jpeg',
