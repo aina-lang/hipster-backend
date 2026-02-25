@@ -225,28 +225,25 @@ export class AiService implements OnModuleInit {
 
   private async refineSubject(job: string): Promise<string> {
     if (!job || job.trim().length === 0) return '';
-
     try {
       const resp = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `Refine the user's job, function, or role into a concise 2-3 word visual subject for an image prompt (in English).
-            If the input is already a good subject, just translate it to English.
-            Example: "Développeur fullstack" -> "software engineer", "Chef de cuisine" -> "restaurant chef", "Un gars qui fait du crossfit" -> "crossfit athlete".
-            Respond ONLY with the refined subject without any punctuation.`,
+            content:
+              'Translate job title to 2-3 word English visual subject. Reply ONLY the subject.',
           },
           { role: 'user', content: job },
         ],
-        temperature: 0.3,
-        max_tokens: 15,
+        temperature: 0.1,
+        max_tokens: 10,
       });
       const refined = resp.choices[0]?.message?.content?.trim() || job;
-      this.logger.log(`[refineSubject] Result: "${refined}"`);
+      this.logger.log(`[refineSubject] "${refined}"`);
       return refined;
     } catch (e) {
-      this.logger.error(`[refineSubject] Error: ${e.message}`);
+      this.logger.error(`[refineSubject] ${e.message}`);
       return job;
     }
   }
@@ -265,79 +262,24 @@ export class AiService implements OnModuleInit {
     primaryObject?: string;
   }> {
     try {
-      const accentColors = [
-        'deep red',
-        'burnt orange',
-        'electric purple',
-        'muted gold',
-        'royal blue',
-        'emerald green',
-      ];
-      const lightings = [
-        'side lighting dramatic',
-        'top light cinematic',
-        'rim light silhouette',
-        'split lighting high contrast',
-        'soft diffused studio light',
-      ];
-      const angles = [
-        'slight low angle',
-        'slight high angle',
-        'profile view',
-        'three quarter view',
-        'front view centered',
-      ];
-      const backgrounds = [
-        'textured dark concrete background',
-        'minimal white seamless studio',
-        'grainy film texture',
-        'matte charcoal backdrop',
-        'soft gradient grey background',
-      ];
-
       const resp = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `You are an expert image prompt engineer for a luxury professional branding tool.
-            Your goal is to choose the most contextually relevant visual style and professional objects for a given job and user request.
-            
-            CONTEXT:
-            - Job: "${job}"
-            - Style: "${styleName}"
-            
-            ASSIGNMENT:
-            1. PRIMARY OBJECT: Identify a single, iconic professional object relevant to "${job}" (e.g., "vintage espresso machine" for a barista, "stethoscope" for a doctor, "luxury sports car" for a chauffeur).
-            2. ACCENT COLOR: Pick one from: ${accentColors.join(', ')}.
-            3. LIGHTING: Pick one from: ${lightings.join(', ')}.
-            4. ANGLE: Pick one from: ${angles.join(', ')}.
-            5. BACKGROUND: Pick one from: ${backgrounds.join(', ')}.
-            6. PROMPT EXPANSION & STRICT ADHERENCE:
-               - If the user provides a specific prompt, follow it EXCLUSIVELY. Enhance the visual detail but DO NOT ADD ANY PEOPLE, HANDS, OR HUMAN FIGURES unless specifically mentioned in their text.
-               - If the user provides NO prompt, invent a descriptive, cinematic professional scene featuring the PRIMARY OBJECT or a typical workspace for "${job}". This scene can include a professional if it's the most natural way to represent the job, but focus on the environment.
-               - Apply the characteristics of "${styleName}" (lighting, mood) without mentioning its name.
-            
-            OUTPUT FORMAT: Return ONLY a JSON object:
-            {
-              "prompt": "expanded English prompt focusing on the visual scene",
-              "isPostureChange": boolean,
-              "accentColor": "selected color",
-              "lighting": "selected lighting",
-              "angle": "selected angle",
-              "background": "selected background",
-              "primaryObject": "short description of the professional object identified"
-            }`,
+            content: `Image prompt engineer. Job="${job}" Style="${styleName}".
+Return JSON only:
+{"prompt":"short English scene (max 40 words)","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"dark concrete|white studio|film grain|charcoal|grey gradient","primaryObject":"iconic object for job"}
+If user provides prompt, enhance it. No people unless asked.`,
           },
-          {
-            role: 'user',
-            content: query || `Describe a professional scene for a ${job}`,
-          },
+          { role: 'user', content: query || `Scene for ${job}` },
         ],
         response_format: { type: 'json_object' },
+        temperature: 0.2,
+        max_tokens: 120,
       });
       const data = JSON.parse(resp.choices[0]?.message?.content || '{}');
-      this.logger.log(`[refineQuery] Result: ${JSON.stringify(data)}`);
+      this.logger.log(`[refineQuery] ${JSON.stringify(data)}`);
       return {
         prompt: data.prompt || query,
         isPostureChange: !!data.isPostureChange,
@@ -348,7 +290,7 @@ export class AiService implements OnModuleInit {
         primaryObject: data.primaryObject,
       };
     } catch (e) {
-      this.logger.error(`[refineQuery] Error: ${e.message}`);
+      this.logger.error(`[refineQuery] ${e.message}`);
       return { prompt: query, isPostureChange: false };
     }
   }
@@ -357,42 +299,34 @@ export class AiService implements OnModuleInit {
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  /**
-   * Shortens a prompt for OpenAI Image Edit API (max 1000 chars)
-   * uses ChatGPT as requested to maintain context.
-   */
   private async refinePromptForOpenAiEdit(prompt: string): Promise<string> {
-    if (prompt.length <= 1000) return prompt;
-
+    // GPT image models support up to 32000 chars — only compress if really too long
+    if (prompt.length <= 4000) return prompt.substring(0, 4000);
     this.logger.log(
-      `[refinePromptForOpenAiEdit] Prompt too long (${prompt.length}). Summarizing...`,
+      `[refinePromptForOpenAiEdit] Compressing (${prompt.length} chars)...`,
     );
-
     try {
       const resp = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `You are an expert prompt engineer. Shorten the following image generation prompt to be under 1000 characters.
-            Keep all essential visual elements, subject details, .
-            Optimize for quality and detail within the limit. 
-            Respond with ONLY the condensed prompt text.`,
+            content:
+              'Compress this image prompt to under 300 chars. Keep key visual elements only. Reply ONLY the compressed prompt.',
           },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.3,
-        max_tokens: 400,
+        temperature: 0.1,
+        max_tokens: 80,
       });
-
       const compressed = resp.choices[0]?.message?.content?.trim() || prompt;
       this.logger.log(
-        `[refinePromptForOpenAiEdit] Compressed length: ${compressed.length}`,
+        `[refinePromptForOpenAiEdit] Compressed: ${compressed.length} chars`,
       );
-      return compressed.substring(0, 1000);
+      return compressed.substring(0, 4000);
     } catch (e) {
-      this.logger.error(`[refinePromptForOpenAiEdit] FAILED: ${e.message}`);
-      return prompt.substring(0, 1000);
+      this.logger.error(`[refinePromptForOpenAiEdit] ${e.message}`);
+      return prompt.substring(0, 4000);
     }
   }
 
@@ -524,27 +458,27 @@ export class AiService implements OnModuleInit {
       `[callOpenAiImageEdit] Image optimized: ${(pngBuffer.length / 1024 / 1024).toFixed(2)} MB`,
     );
 
+    // 3. Upload to OpenAI Files to get a file_id (as requested by USER for performance/token reasons)
+    const fileId = await this.uploadToOpenAiFiles(pngBuffer);
+
     // 2. Refine prompt
     const refinedPrompt = await this.refinePromptForOpenAiEdit(prompt);
 
-    // 3. Build base64 data URL
-    const imageDataUrl = `data:image/png;base64,${pngBuffer.toString('base64')}`;
-
-    // 4. POST with stream: true — receive SSE events
+    // 4. POST with stream: true — receive SSE events using input_file_id
     const response = await axios.post(
       'https://api.openai.com/v1/images/edits',
       {
         model: 'gpt-image-1.5',
         prompt: refinedPrompt,
-        images: [{ image_url: imageDataUrl }],
-        size: '1024x1536',
-        quality: 'high',
-        output_format: 'png',
+        images: [{ input_file_id: fileId }],
+        size: '1024x1024', // réduit vs 1024x1536 — moins de tokens output
+        quality: 'medium',
+        output_format: 'jpeg', // jpeg = moins lourd que png en output tokens
         moderation: 'low',
-        input_fidelity: 'high',
+        input_fidelity: 'high', // garder la fidélité à l'image source
         n: 1,
         stream: true,
-        partial_images: 0, // no partial previews — only final event
+        partial_images: 0,
       },
       {
         headers: {
@@ -640,11 +574,11 @@ REALISM INSTRUCTIONS:
         n: 1,
         size: '1024x1024',
         background: 'opaque',
-        quality: 'high',
-        output_format: 'png',
+        quality: 'medium', // réduit vs 'high' — moins de tokens output
+        output_format: 'jpeg', // jpeg less output weight than png
         moderation: 'low',
         stream: true,
-        partial_images: 0, // no partial previews — only final event
+        partial_images: 0,
       },
       {
         headers: {
@@ -1035,20 +969,16 @@ REALISM INSTRUCTIONS:
         messages: [
           {
             role: 'system',
-            content: `You are a professional ${type} content writer. 
-            LANGUAGE: Write STRICTLY in French.
-            STYLE: Professional, engaging, and well-formatted with clear line breaks between paragraphs.
-            EMOJIS: Use emojis occasionally and relevantly (not too many).
-            BRANDING: If branding information (name, contact, address) is provided in the params, include it naturally in the text (e.g., at the end or in a "Contact" section) so the reader knows who to reach out to.
-            CRITICAL FORMATTING RULE: Never use markdown formatting (no **, __, ##, italic, bold, etc.). 
-            Write plain text only. 
-            For social media posts, include relevant hashtags at the end.`,
+            content: `Professional ${type} writer. French only. Plain text, no markdown. Short & direct. Hashtags at end for social.`,
           },
           {
             role: 'user',
-            content: `Type: ${type}\nParams: ${JSON.stringify(params)}`,
+            content: `${type}: ${JSON.stringify(params)}`,
           },
         ],
+        temperature: 0.3,
+        max_tokens: 600,
+        n: 1,
       });
       const result = response.choices[0]?.message?.content || '';
 
@@ -1522,10 +1452,73 @@ REALISM INSTRUCTIONS:
       this.logger.log(`[chat] Last message: "${lastUserMessage}"`);
 
       // Detect if user is requesting an image (or if they provided a file)
-      let requestType = await this.detectChatRequestType(lastUserMessage);
-      if (file && requestType !== 'image') {
-        this.logger.log('[chat] File provided, forcing requestType to image');
-        requestType = 'image';
+      let requestType = await this.detectChatRequestType(lastUserMessage, !!file);
+
+      // Handle Vision (Analysis) if a file is present and intent is to analyze
+      if (file && requestType === 'analyze') {
+        this.logger.log('[chat] Vision analysis detected...');
+        
+        // Save file locally to provide a URL (user requested NO base64)
+        const fileName = `vision_${Date.now()}_${file.originalname}`;
+        const uploadPath = path.join(process.cwd(), 'uploads', 'chat-visions');
+        if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
+        const filePath = path.join(uploadPath, fileName);
+        fs.writeFileSync(filePath, file.buffer);
+        
+        const imageUrl = `https://hipster-api.fr/uploads/chat-visions/${fileName}`;
+
+        const promptSummary = lastUserMessage || "Analyze this image.";
+        
+        const visionResponse = await this.openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: 'Expert visual analyzer. French only. Style: telegraphic. Direct & short. Focus on professional context.',
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: promptSummary },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: imageUrl,
+                    detail: 'low', // Minimize tokens as requested
+                  },
+                },
+              ],
+            },
+          ],
+          max_tokens: 300,
+          temperature: 0.2,
+          n: 1,
+        });
+
+        const visionContent = visionResponse.choices[0]?.message?.content || '';
+        
+        // Persist
+        const visionMessages = [...messages, { 
+          role: 'assistant', 
+          content: visionContent,
+          type: 'text'
+        }];
+        
+        await this.saveGeneration(
+          userId,
+          visionContent,
+          JSON.stringify(visionMessages),
+          AiGenerationType.CHAT,
+          { hasVision: true, imageUrl },
+          undefined,
+          finalConversationId
+        );
+
+        return {
+          type: 'text',
+          content: visionContent,
+          conversationId: finalConversationId,
+        };
       }
 
       if (requestType === 'image') {
@@ -1604,9 +1597,23 @@ REALISM INSTRUCTIONS:
 
       // 2. Otherwise, generate text response
       this.logger.log('[chat] Text response generation...');
+
+      // Inject professional system constraints for efficiency (user's UX request)
+      const systemMessage = {
+        role: 'system',
+        content:
+          'Expert branding assistant. Respond in French. Style: telegraphic (keywords, short sentences). Direct & concise. NO long lists. Respond under 100 words if possible.',
+      };
+
+      const hasSystem = messages.some((m) => m.role === 'system');
+      const finalChatMessages = hasSystem ? messages : [systemMessage, ...messages];
+
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
-        messages: messages,
+        messages: finalChatMessages as any[],
+        temperature: 0.3,
+        max_tokens: 1000,
+        n: 1,
       });
 
       const content = response.choices[0]?.message?.content || '';
@@ -1660,35 +1667,34 @@ REALISM INSTRUCTIONS:
 
   private async detectChatRequestType(
     message: string,
-  ): Promise<'image' | 'text'> {
+    hasFile: boolean,
+  ): Promise<'image' | 'analyze' | 'text'> {
     try {
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `Analyze the user message and determine if they are asking for:
-            - "image": Any request to generate, create, draw, imagine, show a visual, photo, picture, etc.
-            - "text": General questions, answers, explanations, conversations, etc.
-            
-            Respond with ONLY the word "image" or "text".`,
+            content: `Classify user intent. Reply ONLY with one word:
+- "image": User wants to create, draw, generate, or edit a new visual.
+- "analyze": User provided an image and is asking a question about it or its content.
+- "text": General conversation, questions, or requests for text.
+Context: User has ${hasFile ? '' : 'NOT '}uploaded a file.`,
           },
-          {
-            role: 'user',
-            content: message,
-          },
+          { role: 'user', content: message || (hasFile ? 'Analyze this image' : 'Hello') },
         ],
         temperature: 0,
         max_tokens: 10,
+        n: 1,
       });
 
-      const result = response.choices[0]?.message?.content
-        ?.trim()
-        .toLowerCase();
-      return result === 'image' ? 'image' : 'text';
+      const result = response.choices[0]?.message?.content?.trim().toLowerCase();
+      if (result === 'image') return 'image';
+      if (result === 'analyze') return 'analyze';
+      return 'text';
     } catch (error) {
-      this.logger.error(`[detectChatRequestType] Error: ${error.message}`);
-      return 'text'; // Default to text on error
+      this.logger.error(`[detectChatRequestType] ${error.message}`);
+      return hasFile ? 'analyze' : 'text';
     }
   }
 }
