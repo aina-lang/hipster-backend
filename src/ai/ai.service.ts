@@ -295,7 +295,7 @@ export class AiService implements OnModuleInit {
           {
             role: 'system',
             content:
-              'You are a prompt engineer for OpenAI Image Edits. Your goal is to transform the PROVIDED IMAGE into a professional flyer. MANDATORY RULES: (1) The subject in the image (person, face, object) is SACRED: NEVER replace it. (2) Use transformation instructions ONLY: "Keep the person from the image exactly as they are, but stylize the environment into [Style]...", "Preserve the original subject and overlay professional typography...". (3) Typography must be COOL, TRENDY and BOLD: use terms like "3D extruded letters", "Liquid metal typography", "Neon glow text", "Brutalist editorial layout", or "Futuristic tech-wear fonts" depending on the vibe. (4) ZERO HALLUCINATION: Never add names, dates, or info NOT in the user input. (5) Output ONE ONE-SHOT instruction in English (< 450 chars).',
+              'You are a prompt engineer for OpenAI Image Edits. Your goal is to transform the PROVIDED IMAGE into a professional flyer. MANDATORY RULES: (1) Preserve the FACE and IDENTITY of the person in the image. (2) You MAY modify clothing and ADD context-relevant objects (e.g., if "bassiste" is mentioned, add a bass guitar being played). (3) Use transformation instructions: "Keep the person facial features from the image, but change their outfit to [Style] and add a [Object]...". (4) Typography must be ELEGANT and PREMIUM: use terms like "Modern Serif typography", "Swiss Minimalist layout", "Luxury fashion editorial fonts", or "Clean high-contrast sans-serif". AVOID "liquid metal" or "3D extruded". (5) ZERO HALLUCINATION: Never add data not in input. (6) Output ONE ONE-SHOT instruction in English (< 450 chars).',
           },
           { role: 'user', content: prompt },
         ],
@@ -1430,17 +1430,19 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     const flyerTextRule =
       userExplicitlyRequestsText || hasUserQuery
         ? `ELITE GRAPHIC DESIGN RULES: 
-           - Style Style: "Cool Designer" vibe. High-impact, trendy editorial layout.
+           - Visual Framing: Ensure the subject is well-framed, centered, and NOT cropped.
+           - Style: "Premium Editorial" vibe. High-end, clean, professional structure.
            - SAFE AREA: Ensure all text and critical elements have a 10% margin from the edges.
-           - Typography: COOL & STYLIZED. Use professional designer fonts (varied weights, liquid metal effects, 3D extruded textures, or neon glow as appropriate). 
-           - Visual Hierarchy: Absolute clarity. Headline is bold and stylized.
+           - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif). Varied weights and perfect alignment.
+           - Visual Hierarchy: Absolute clarity. Headline is impactful and sophisticated.
            - CONTENT POLICY: Display the following text in ${flyerLanguage}: "${params.userQuery}". 
            - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
-           - COPYWRITING: You MAY creatively improve the phrasing for impact in ${flyerLanguage} (e.g., adding "Venez nombreux", "Achetez maintenant", "Offre limitée") based on the context, but NEVER invent dates, prices, or locations.
-           - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs, NO placeholder text.
-           - Match style "${style}": Minimal = clean & sophisticated; Hero = bold & centered; Premium = luxury & high-contrast.`
+           - COPYWRITING: You MAY creatively improve the phrasing for impact in ${flyerLanguage} (e.g., adding "Venez nombreux", "Achetez maintenant", "Événement exceptionnel").
+           - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs.
+           - Match style "${style}": Minimal = sophisticated whitespace; Hero = dramatic lighting & centered subject; Premium = luxury textures & refined alignment.`
         : `ELITE GRAPHIC DESIGN RULES: 
            - Style: Modern Visual Poster / High-end Brand Display.
+           - Visual Framing: Ensure the subject is perfectly centered and elegantly presented.
            - SAFE AREA: Keep all visual focal points away from the extreme edges.
            - ZERO TEXT POLICY: Use NO letters, NO numbers, NO words, NO logos.
            - Create a "cool", trendy visual for style "${style}".`;
