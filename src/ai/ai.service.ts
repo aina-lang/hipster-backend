@@ -25,9 +25,9 @@ export class AiService implements OnModuleInit {
 
   constructor(
     private configService: ConfigService,
-    @InjectRepository(AiUser)
+    
     private aiUserRepo: Repository<AiUser>,
-    @InjectRepository(AiGeneration)
+    
     private aiGenRepo: Repository<AiGeneration>,
   ) {
     this.openAiKey = this.configService.get<string>('OPENAI_API_KEY');
@@ -550,6 +550,7 @@ export class AiService implements OnModuleInit {
     let specificDirectives = '';
     let layout =
       'CENTERED COMPOSITION: Subject in the middle, clear space at the top/bottom for text.';
+    let structure = 'CLEAN OVERLAYS: Subtle semi-transparent areas for text.';
 
     // Transform categories into prompt moods
     const modelLower = model.toLowerCase();
@@ -564,6 +565,8 @@ export class AiService implements OnModuleInit {
       mood = 'Modern & Tech';
       layout =
         'RULE OF THIRDS: Subject strictly on the LEFT or RIGHT side, leaving 60% of the frame as clean negative space for typography.';
+      structure =
+        'GLASS PANELS: Floating semi-transparent "glassmorphism" panels for hosting titles and details.';
       if (modelLower.includes('glassmorphism'))
         specificDirectives =
           'Frosted glass effects, translucent layers with soft backlighting, and subtle colorful glows.';
@@ -572,10 +575,14 @@ export class AiService implements OnModuleInit {
           'High contrast, dark background with vibrant neon tubes, glowing edges, and saturated electric colors.';
         layout =
           'CENTERED GLOW: Subject in center, radiating light towards the edges.';
-      } else if (modelLower.includes('géométrique'))
+        structure =
+          'NEON BARS: Horizontal glowing neon lines/bars acting as separators for text.';
+      } else if (modelLower.includes('géométrique')) {
         specificDirectives =
           'Sharp vector shapes (triangles, circles, diagonals) integrated into the composition.';
-      else if (modelLower.includes('fond sombre'))
+        structure =
+          'GEOMETRIC SHAPES: Sharp, colorful abstract shapes behind the text areas.';
+      } else if (modelLower.includes('fond sombre'))
         specificDirectives =
           'Deep obsidian or charcoal background with high-contrast text and sleek, rim lighting.';
       else if (modelLower.includes('flat design'))
@@ -586,9 +593,11 @@ export class AiService implements OnModuleInit {
         modelLower.includes('gradient')
       ) {
         specificDirectives =
-          'Vibrant abstract gradient background (Top-left: White/Cloud Blue; Top-right: Hot Pink/Magenta; Bottom: Deep Electric Purple/Navy). Subtle fine-grain paper texture for a premium feel. At the bottom, a dark-colored semi-transparent angled banner overlay for text.';
+          'Vibrant abstract gradient background (Top-left: White/Cloud Blue; Top-right: Hot Pink/Magenta; Bottom: Deep Electric Purple/Navy). Subtle fine-grain paper texture for a premium feel.';
         layout =
-          'LEFT BALANCE: Subject strictly on the LEFT, leaving 60% of the frame on the right and the bottom banner area for typography and negative space.';
+          'LEFT BALANCE: Subject strictly on the LEFT, leaving 60% of the frame on the right and the bottom area for typography and negative space.';
+        structure =
+          'GRADIENT OVERLAYS: Smooth color-matched banners at the bottom and sides.';
       } else
         specificDirectives =
           'Clean lines, minimalist digital layout, and a contemporary tech vibe.';
@@ -609,11 +618,15 @@ export class AiService implements OnModuleInit {
       mood = 'Colorful & Playful';
       layout =
         'DYNAMIC CLUSTER: High-energy placement, objects/subject slightly tilted, organic and non-rigid composition.';
+      structure =
+        'PLAYFUL BLOBS: Organic, colorful rounded shapes (blobs) used as backgrounds for text.';
       if (modelLower.includes('pop art')) {
         specificDirectives =
           'Bold halftone patterns, high saturation, Ben-Day dots, and hard black outlines in Andy Warhol style.';
         layout =
           'QUADRANT SPLIT: Subject repeated or split into high-contrast color blocks.';
+        structure =
+          'COMIC SPEECH BUBBLES: Stylized speech bubbles for key text.';
       } else if (modelLower.includes('pastel'))
         specificDirectives =
           'Soft desaturated tones, mint, lavender, and soft peaches. Gentle, welcoming lighting.';
@@ -643,6 +656,8 @@ export class AiService implements OnModuleInit {
       mood = 'Elegant & Luxury';
       layout =
         'SYMMETRICAL PORTRAIT: Perfect central balance, wide margins for a premium "breathable" feel. High-fashion composition.';
+      structure =
+        'PREMIUM RIBBONS: Thin, elegant horizontal or vertical ribbons (gold or silk) for titles.';
       if (modelLower.includes('noir & or'))
         specificDirectives =
           'Matte black textures with polished 24k gold accents, gold foil elements, and premium dark lighting.';
@@ -677,6 +692,8 @@ export class AiService implements OnModuleInit {
       mood = 'Festive & Nightlife';
       layout =
         'LOW ANGLE POWER: Subject viewed from a low angle to appear heroic/energetic. Text area in the upper 30% of the frame.';
+      structure =
+        'SLANTED TITLE BLOCKS: Aggressive, high-contrast diagonal banners for main headlines.';
       if (modelLower.includes('neon') || modelLower.includes('glow'))
         specificDirectives =
           'UV blacklight aesthetic, neon face paint, and intense glowing party accessories.';
@@ -695,6 +712,7 @@ export class AiService implements OnModuleInit {
           'Street culture aesthetic, concrete textures, graffiti elements, and raw urban photography style.';
         layout =
           'WIDE URBAN SHOT: Subject integrated into a wide city/street background, rule of thirds.';
+        structure = 'SPRAY PAINT BLOCKS: Rough textured blocks for event info.';
       } else
         specificDirectives =
           'Dynamic laser beams, smoke machine effects, pulsing club lights, and an energetic dancefloor atmosphere.';
@@ -715,6 +733,8 @@ export class AiService implements OnModuleInit {
       mood = 'Professional & Corporate';
       layout =
         'BALANCED SPLIT: Subject on one side (left or right), clear structured block on the other side for professional details.';
+      structure =
+        'CLEAN SIDEBARS: Solid or semi-transparent vertical panels for structured information.';
       if (modelLower.includes('tech'))
         specificDirectives =
           'Circuit board patterns, holographic data visualizations, and blue-tinted modern technology lighting.';
@@ -745,6 +765,8 @@ export class AiService implements OnModuleInit {
       mood = 'Sport & High Performance';
       layout =
         'DIAGONAL TENSION: Subject in motion crossing the frame diagonally. Creates a sense of speed and power.';
+      structure =
+        'DYNAMIC SPEED LINES: Slanted panels and aggressive sharp-edged banners.';
       if (modelLower.includes('explosion'))
         specificDirectives =
           'Epic dust and smoke explosions, flying gravel, and hyper-dynamic action trails.';
@@ -770,11 +792,14 @@ export class AiService implements OnModuleInit {
       mood = 'Classic & Retro';
       layout =
         'FRAMED CENTER: Subject centered within a physical border or distinct "box" area. Classic poster structure.';
+      structure =
+        'ORNAMENTAL FRAMES: Classic physical borders and aged paper ribbon overlays.';
       if (modelLower.includes('80')) {
         specificDirectives =
           'Synthwave aesthetic, hot pink and cyan neon, chrome text effects, and retro-grid horizons.';
         layout =
           'HORIZON SPLIT: Subject in the upper half, grid/road in the lower half.';
+        structure = 'CHROME BANDS: Reflective metallic bars for titles.';
       } else if (modelLower.includes('90'))
         specificDirectives =
           'Grainy film texture, vibrant primary colors, baggy street fashion vibes, and early digital elements.';
@@ -784,6 +809,7 @@ export class AiService implements OnModuleInit {
       ) {
         specificDirectives =
           'Aged paper textures, ink-print imperfections, sepia tones, and classic turn-of-the-century typography.';
+        structure = 'AGED BADGES: Retro-style stamped badges or banners.';
       } else
         specificDirectives =
           'Nostalgic film stock appearance, warm organic grain, and a timeless heritage atmosphere.';
@@ -803,6 +829,8 @@ export class AiService implements OnModuleInit {
       mood = 'Nature & Organic';
       layout =
         'ORGANIC INTEGRATION: Subject is not isolated, but blended into the environment (foliage, trees). Asymmetrical and natural.';
+      structure =
+        'BOTANICAL PANELS: Semi-transparent panels with subtle leaf or vine patterns.';
       if (modelLower.includes('floral'))
         specificDirectives =
           'Delicate botanical arrangements, soft petals, and high-key natural lighting.';
@@ -831,6 +859,8 @@ export class AiService implements OnModuleInit {
       mood = 'Visual Impact';
       layout =
         'CINEMATIC POSTER: Wide shot, centered subject, dramatic lighting, large empty area at the bottom for major title.';
+      structure =
+        'CINEMATIC OVERLAYS: Letterbox-style dark bands or centered focal panels.';
       if (modelLower.includes('poster cinéma'))
         specificDirectives =
           'Epic wide-angle shot, teal and orange cinematic color grading, and dramatic backlighting.';
@@ -862,6 +892,8 @@ export class AiService implements OnModuleInit {
       mood = 'Creative & Editorial';
       layout =
         'OVERLAP & DEPTH: Elements layering behind and in front of the subject. Breaking the grid.';
+      structure =
+        'EDITORIAL PANELS: Magazine-style solid blocks and overlapping title ribbons.';
       if (modelLower.includes('magazine')) {
         specificDirectives =
           'High-fashion magazine cover layout (e.g., Vogue, GQ style), large masthead, and editorial lighting.';
@@ -880,7 +912,7 @@ export class AiService implements OnModuleInit {
           'Experimental grid-work, bold use of white space, and innovative graphic architecture.';
     }
 
-    return `Mood: ${mood}. Layout Priority: ${layout}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. RULES: All objects must be real, physical, and tangible. NO synthetic AI banners. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
+    return `Mood: ${mood}. Layout Priority: ${layout}. Structural Elements: ${structure}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. RULES: All objects must be real, physical, and tangible. Professional graphic design overlays and banners are ENCOURAGED for text readability. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -1746,6 +1778,58 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
     // Build a FLYER-specific prompt
     const userQueryLower = (params.userQuery || '').toLowerCase();
+
+    // 1. Fetch user profile for branding
+    const user = await this.getAiUserWithProfile(userId);
+
+    // Detect branding intent
+    const wantsBrandingColor = [
+      'ma couleur',
+      'mon branding',
+      'branding color',
+      'ma charte graphique',
+    ].some((kw) => userQueryLower.includes(kw));
+
+    const wantsBrandingInfo = [
+      'mes infos',
+      'mes informations',
+      'mes coordonnées',
+      'mon adresse',
+      'mon tel',
+      'mon numéro',
+      'mon site',
+      'ma boutique',
+    ].some((kw) => userQueryLower.includes(kw));
+
+    const avoidsBrandingColor = [
+      'sans ma couleur',
+      'pas ma couleur',
+      'sans branding',
+    ].some((kw) => userQueryLower.includes(kw));
+
+    const avoidsBrandingInfo = [
+      'sans mes infos',
+      'sans mes informations',
+      'sans mes coordonnées',
+      'sans texte info',
+    ].some((kw) => userQueryLower.includes(kw));
+
+    const brandingColor =
+      user?.brandingColor && wantsBrandingColor && !avoidsBrandingColor
+        ? user.brandingColor
+        : null;
+
+    let brandingInfoStr = '';
+    if (wantsBrandingInfo && !avoidsBrandingInfo && user) {
+      const parts = [];
+      if (user.name) parts.push(`Nom: ${user.name}`);
+      if (user.professionalPhone) parts.push(`Tel: ${user.professionalPhone}`);
+      if (user.professionalAddress)
+        parts.push(`Adresse: ${user.professionalAddress}`);
+      if (user.websiteUrl) parts.push(`Web: ${user.websiteUrl}`);
+      brandingInfoStr = parts.join(' | ');
+    }
+
     const userExplicitlyRequestsText = [
       'texte',
       'écris',
@@ -1774,7 +1858,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
     const flyerLanguage = params.language || 'French';
     const flyerTextRule =
-      userExplicitlyRequestsText || hasUserQuery
+      userExplicitlyRequestsText || hasUserQuery || brandingInfoStr
         ? `ELITE GRAPHIC DESIGN RULES: 
            - Visual Framing: COMPOSITION: Wide or Middle shot. Ensure the person's head and shoulders are fully visible with safe margin above the head.
            - Style: "Premium Editorial" vibe. High-end, clean, professional structure.
@@ -1782,13 +1866,13 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
            - SAFE AREA: Ensure all text and critical elements have a 15% margin from the edges.
            - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif).
            - Visual Hierarchy: Absolute clarity. Headline is high-impact, potentially rotated or angled for style.
-           - CONTENT POLICY: Use the provided text: "${params.userQuery}" and creatively REPHRASE it into a catchy French slogan. 
+           - CONTENT POLICY: Use the provided text: "${params.userQuery}"${brandingInfoStr ? ` AND professional info: "${brandingInfoStr}"` : ''} and creatively REPHRASE it into a catchy French slogan. 
            - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
            - COPYWRITING: Improvisation is REQUIRED for catchy impact. Make it sound like a real pro flyer.
            - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs.`
         : 'NO text on the image.';
 
-    // 1. Refine the query for visual richness
+    // 2. Refine the query for visual richness
     const refinedRes = await this.refineQuery(
       params.userQuery || params.job,
       params.job,
@@ -1796,9 +1880,9 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       flyerLanguage,
     );
 
-    // 2. Get specific model description
+    // 3. Get specific model description
     const baseStylePrompt = this.getModelDescription(model, params.job, {
-      accentColor: refinedRes.accentColor,
+      accentColor: brandingColor || refinedRes.accentColor,
       lighting: refinedRes.lighting,
       angle: refinedRes.angle,
       background: refinedRes.background,
