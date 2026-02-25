@@ -654,16 +654,13 @@ REALISM INSTRUCTIONS:
 
     try {
       const buffer = await this.callOpenAiToolImage(prompt);
-      const fileName = `gen_openai_${Date.now()}.png`;
-      const filePath = path.join(
-        __dirname,
-        '../../../../uploads/ai-generations',
-        fileName,
-      );
+      const fileName = `gen_openai_${Date.now()}.jpg`;
+      const uploadPath = '/home/ubuntu/uploads/ai-generations';
 
-      if (!fs.existsSync(path.dirname(filePath))) {
-        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
       }
+      const filePath = path.join(uploadPath, fileName);
       fs.writeFileSync(filePath, buffer);
 
       const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
@@ -702,8 +699,8 @@ REALISM INSTRUCTIONS:
 
     try {
       const buffer = await this.callOpenAiToolImage(prompt);
-      const fileName = `gen_final_${generationId}_${Date.now()}.png`;
-      const uploadPath = path.join(process.cwd(), 'uploads', 'ai-generations');
+      const fileName = `gen_final_${generationId}_${Date.now()}.jpg`;
+      const uploadPath = '/home/ubuntu/uploads/ai-generations';
 
       if (!fs.existsSync(uploadPath)) {
         fs.mkdirSync(uploadPath, { recursive: true });
@@ -877,11 +874,12 @@ REALISM INSTRUCTIONS:
           url: null,
           isAsync: true,
           status: 'PENDING',
+          prompt: finalPrompt,
         };
       }
 
-      const fileName = `gen_${Date.now()}.png`;
-      const uploadPath = path.join(process.cwd(), 'uploads', 'ai-generations');
+      const fileName = `gen_${Date.now()}.jpg`;
+      const uploadPath = '/home/ubuntu/uploads/ai-generations';
       if (!fs.existsSync(uploadPath)) {
         fs.mkdirSync(uploadPath, { recursive: true });
       }
@@ -914,6 +912,7 @@ REALISM INSTRUCTIONS:
         generationId: saved?.id,
         conversationId: existingConversationId || saved?.id.toString(),
         seed: seed || 0,
+        prompt: finalPrompt,
       };
     } catch (error) {
       this.logger.error(`[generateImage] FAILED: ${error.message}`);
@@ -969,7 +968,11 @@ REALISM INSTRUCTIONS:
         messages: [
           {
             role: 'system',
-            content: `Professional ${type} writer. French only. Plain text, no markdown. Short & direct. Hashtags at end for social.`,
+            content: `Professional ${type} writer. French only. Plain text, no markdown. Short & direct. 
+          LOGIC: Combine user query and optional image description (imagePrompt) to create a high-end post. 
+          If user asks to describe the image/scene, prioritize a professional visual description. 
+          If minimal input, INVENT a marketing post for the job. 
+          STYLE: Professional, telegraphic, impactful.`,
           },
           {
             role: 'user',
@@ -1061,10 +1064,10 @@ REALISM INSTRUCTIONS:
     );
 
     // 3. Generate Caption (Simple GPT)
-    // We strip 'style' from params to ensure the text generation is ONLY based on job and prompt.
+    // We include the 'imagePrompt' from generateImage to help the text IA describe the scene
     const { style: _, ...textParams } = params;
     const textRes = await this.generateText(
-      { ...textParams, brandingInfo },
+      { ...textParams, brandingInfo, imagePrompt: imageRes.prompt },
       'social',
       userId,
     );
@@ -1452,29 +1455,34 @@ REALISM INSTRUCTIONS:
       this.logger.log(`[chat] Last message: "${lastUserMessage}"`);
 
       // Detect if user is requesting an image (or if they provided a file)
-      let requestType = await this.detectChatRequestType(lastUserMessage, !!file);
+      let requestType = await this.detectChatRequestType(
+        lastUserMessage,
+        !!file,
+      );
 
       // Handle Vision (Analysis) if a file is present and intent is to analyze
       if (file && requestType === 'analyze') {
         this.logger.log('[chat] Vision analysis detected...');
-        
+
         // Save file locally to provide a URL (user requested NO base64)
-        const fileName = `vision_${Date.now()}_${file.originalname}`;
-        const uploadPath = path.join(process.cwd(), 'uploads', 'chat-visions');
-        if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
+        const fileName = `vision_${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`;
+        const uploadPath = '/home/ubuntu/uploads/chat-visions';
+        if (!fs.existsSync(uploadPath))
+          fs.mkdirSync(uploadPath, { recursive: true });
         const filePath = path.join(uploadPath, fileName);
         fs.writeFileSync(filePath, file.buffer);
-        
+
         const imageUrl = `https://hipster-api.fr/uploads/chat-visions/${fileName}`;
 
-        const promptSummary = lastUserMessage || "Analyze this image.";
-        
+        const promptSummary = lastUserMessage || 'Analyze this image.';
+
         const visionResponse = await this.openai.chat.completions.create({
           model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
-              content: 'Expert visual analyzer. French only. Style: telegraphic. Direct & short. Focus on professional context.',
+              content:
+                'Expert visual analyzer. French only. Style: telegraphic. Direct & short. Focus on professional context.',
             },
             {
               role: 'user',
@@ -1496,14 +1504,17 @@ REALISM INSTRUCTIONS:
         });
 
         const visionContent = visionResponse.choices[0]?.message?.content || '';
-        
+
         // Persist
-        const visionMessages = [...messages, { 
-          role: 'assistant', 
-          content: visionContent,
-          type: 'text'
-        }];
-        
+        const visionMessages = [
+          ...messages,
+          {
+            role: 'assistant',
+            content: visionContent,
+            type: 'text',
+          },
+        ];
+
         await this.saveGeneration(
           userId,
           visionContent,
@@ -1511,7 +1522,7 @@ REALISM INSTRUCTIONS:
           AiGenerationType.CHAT,
           { hasVision: true, imageUrl },
           undefined,
-          finalConversationId
+          finalConversationId,
         );
 
         return {
@@ -1606,7 +1617,9 @@ REALISM INSTRUCTIONS:
       };
 
       const hasSystem = messages.some((m) => m.role === 'system');
-      const finalChatMessages = hasSystem ? messages : [systemMessage, ...messages];
+      const finalChatMessages = hasSystem
+        ? messages
+        : [systemMessage, ...messages];
 
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -1681,14 +1694,19 @@ REALISM INSTRUCTIONS:
 - "text": General conversation, questions, or requests for text.
 Context: User has ${hasFile ? '' : 'NOT '}uploaded a file.`,
           },
-          { role: 'user', content: message || (hasFile ? 'Analyze this image' : 'Hello') },
+          {
+            role: 'user',
+            content: message || (hasFile ? 'Analyze this image' : 'Hello'),
+          },
         ],
         temperature: 0,
         max_tokens: 10,
         n: 1,
       });
 
-      const result = response.choices[0]?.message?.content?.trim().toLowerCase();
+      const result = response.choices[0]?.message?.content
+        ?.trim()
+        .toLowerCase();
       if (result === 'image') return 'image';
       if (result === 'analyze') return 'analyze';
       return 'text';
