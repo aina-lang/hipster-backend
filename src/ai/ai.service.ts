@@ -279,11 +279,8 @@ export class AiService implements OnModuleInit {
   }
 
   private async refinePromptForOpenAiEdit(prompt: string): Promise<string> {
-    // GPT image models support up to 32000 chars — only compress if really too long
-    if (prompt.length <= 4000) return prompt.substring(0, 4000);
-    this.logger.log(
-      `[refinePromptForOpenAiEdit] Compressing (${prompt.length} chars)...`,
-    );
+    // For Image Edit (I2I), the prompt should emphasize "Transforming the style to..."
+    // We use GPT-4o-mini to ensure the prompt is optimized for a technical edit instruction.
     try {
       const resp = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -291,21 +288,19 @@ export class AiService implements OnModuleInit {
           {
             role: 'system',
             content:
-              'Compress image prompt < 300 chars. Key visual elements only. Reply ONLY compressed prompt.',
+              'You are a prompt engineer for OpenAI Image Edits. Transform the user input into a single, direct instruction in English that describes the FINAL look. Start with "Modify this image to have a [Style] aesthetic...". Remove technical tags like 8k or masterpiece. Keep it under 250 chars.',
           },
           { role: 'user', content: prompt },
         ],
-        temperature: 0.1,
-        max_tokens: 80,
+        temperature: 0.2,
+        max_tokens: 150,
       });
-      const compressed = resp.choices[0]?.message?.content?.trim() || prompt;
-      this.logger.log(
-        `[refinePromptForOpenAiEdit] Compressed: ${compressed.length} chars`,
-      );
-      return compressed.substring(0, 4000);
+      const refined = resp.choices[0]?.message?.content?.trim() || prompt;
+      this.logger.log(`[refinePromptForOpenAiEdit] Refined: ${refined}`);
+      return refined;
     } catch (e) {
       this.logger.error(`[refinePromptForOpenAiEdit] ${e.message}`);
-      return prompt.substring(0, 4000);
+      return prompt.substring(0, 1000);
     }
   }
 
@@ -456,43 +451,51 @@ export class AiService implements OnModuleInit {
         },
       );
 
-    // 5. Parse SSE stream — wait for image_edit.completed
-    return new Promise<Buffer>((resolve, reject) => {
-      let buffer = '';
-      response.data.on('data', (chunk: Buffer) => {
-        buffer += chunk.toString();
-        const lines = buffer.split('\n');
-        buffer = lines.pop() ?? '';
+      // 5. Parse SSE stream — wait for image_edit.completed
+      return new Promise<Buffer>((resolve, reject) => {
+        let buffer = '';
+        response.data.on('data', (chunk: Buffer) => {
+          buffer += chunk.toString();
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
 
-        for (const line of lines) {
-          if (!line.startsWith('data:')) continue;
-          const raw = line.slice(5).trim();
-          if (!raw || raw === '[DONE]') continue;
-          try {
-            const event = JSON.parse(raw);
-            if (event.type === 'image_edit.completed') {
-              const b64 = event.b64_json;
-              if (!b64) {
-                reject(new Error('[callOpenAiImageEdit] completed but no b64'));
-                return;
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            const raw = line.slice(5).trim();
+            if (!raw || raw === '[DONE]') continue;
+            try {
+              const event = JSON.parse(raw);
+              if (event.type === 'image_edit.completed') {
+                const b64 = event.b64_json;
+                if (!b64) {
+                  reject(
+                    new Error('[callOpenAiImageEdit] completed but no b64'),
+                  );
+                  return;
+                }
+                resolve(Buffer.from(b64, 'base64'));
               }
-              resolve(Buffer.from(b64, 'base64'));
+            } catch {
+              /* ignore sse fragments */
             }
-          } catch { /* ignore sse fragments */ }
-        }
+          }
+        });
+        response.data.on('error', (err) => reject(err));
+        response.data.on('end', () =>
+          reject(new Error('Stream ended without completion')),
+        );
       });
-      response.data.on('error', (err) => reject(err));
-      response.data.on('end', () => reject(new Error('Stream ended without completion')));
-    });
-  } catch (error) {
-    if (error.response) {
-      this.logger.error(`[callOpenAiImageEdit] 400 DETAIL: ${JSON.stringify(error.response.data)}`);
-    } else {
-      this.logger.error(`[callOpenAiImageEdit] Error: ${error.message}`);
+    } catch (error) {
+      if (error.response) {
+        this.logger.error(
+          `[callOpenAiImageEdit] 400 DETAIL: ${JSON.stringify(error.response.data)}`,
+        );
+      } else {
+        this.logger.error(`[callOpenAiImageEdit] Error: ${error.message}`);
+      }
+      throw error;
     }
-    throw error;
   }
-}
 
   /**
    * Call POST /v1/images/generations avec stream: true.
@@ -505,7 +508,10 @@ export class AiService implements OnModuleInit {
       );
       const startTime = Date.now();
 
-      const realismEnhancedPrompt = `${prompt} REALISM:Hyper-realistic-photo,natural-skin-texture,visible-pores,correct-anatomy,natural-light`.replace(/\s+/g, ' ').trim();
+      const realismEnhancedPrompt =
+        `${prompt} REALISM:Hyper-realistic-photo,natural-skin-texture,visible-pores,correct-anatomy,natural-light`
+          .replace(/\s+/g, ' ')
+          .trim();
 
       const response = await axios.post(
         'https://api.openai.com/v1/images/generations',
@@ -554,11 +560,15 @@ export class AiService implements OnModuleInit {
                 this.logger.log(`[callOpenAiToolImage] SUCCESS in ${elapsed}s`);
                 resolve(Buffer.from(b64, 'base64'));
               }
-            } catch { /* ignore fragments */ }
+            } catch {
+              /* ignore fragments */
+            }
           }
         });
         response.data.on('error', (err) => reject(err));
-        response.data.on('end', () => reject(new Error('Stream ended without completion')));
+        response.data.on('end', () =>
+          reject(new Error('Stream ended without completion')),
+        );
       });
     } catch (error) {
       this.logger.error(`[callOpenAiToolImage] Error: ${error.message}`);
@@ -712,7 +722,8 @@ export class AiService implements OnModuleInit {
     try {
       let finalBuffer: Buffer;
 
-      const qualityTags = 'masterpiece,high quality,photorealistic,8k,detailed skin,sharp focus,natural lighting,cinematic,realistic hair';
+      const qualityTags =
+        'masterpiece,high quality,photorealistic,8k,detailed skin,sharp focus,natural lighting,cinematic,realistic hair';
 
       // Build the final prompt by combining the base style guide with the refined query.
       const promptBody = refinedQuery
@@ -877,8 +888,9 @@ export class AiService implements OnModuleInit {
         messages: [
           {
             role: 'system',
-            content: `Professional ${type} writer.French only.Plain text,no markdown.Short & direct.LOGIC:1.If user specifically asks for a caption/text content,follow those instructions.2.If user DOES NOT ask for text,IGNORE the "imagePrompt" details and INVENT an impactful marketing post related to the "job" context.3.NEVER describe the image details (lighting,lens,etc.) unless the user explicitly asks "Décris cette image".4.Focus on professional value and high-end branding.STYLE:Professional,telegraphic,impactful.`
-          },{
+            content: `Professional ${type} writer.French only.Plain text,no markdown.Short & direct.LOGIC:1.If user specifically asks for a caption/text content,follow those instructions.2.If user DOES NOT ask for text,IGNORE the "imagePrompt" details and INVENT an impactful marketing post related to the "job" context.3.NEVER describe the image details (lighting,lens,etc.) unless the user explicitly asks "Décris cette image".4.Focus on professional value and high-end branding.STYLE:Professional,telegraphic,impactful.`,
+          },
+          {
             role: 'user',
             content: `${type}: ${JSON.stringify(params)}`,
           },
