@@ -295,7 +295,7 @@ export class AiService implements OnModuleInit {
           {
             role: 'system',
             content:
-              'You are a prompt engineer for OpenAI Image Edits. Transform the user input into a single, direct instruction in English that describes the FINAL look. Start with "Modify this image to have a [Style] aesthetic...". NEVER add text, logos, watermarks or numbers unless explicitly in the user input. Remove technical tags like 8k or masterpiece. Keep it under 250 chars.',
+              'You are a prompt engineer for OpenAI Image Edits. Your job is to improve and enhance the visual quality of the prompt while STRICTLY preserving ALL factual information. RULES: (1) NEVER remove, paraphrase, or omit any text, date, name, location, price, slogan, or event detail present in the input. (2) Improve the visual and aesthetic instructions: lighting, style, composition, typography quality. (3) If the input contains text to display on image (e.g. event name, date, location), explicitly instruct to display it clearly and prominently. (4) Output a single improved English instruction under 400 chars. NEVER add text, logos, or watermarks not present in the input.',
           },
           { role: 'user', content: prompt },
         ],
@@ -568,6 +568,7 @@ export class AiService implements OnModuleInit {
     image: Buffer,
     prompt: string,
     negativePrompt?: string,
+    skipRefinement?: boolean,
   ): Promise<Buffer> {
     try {
       this.logger.log(
@@ -591,12 +592,15 @@ export class AiService implements OnModuleInit {
       // 3. Upload to OpenAI Files to get a file_id
       const fileId = await this.uploadToOpenAiFiles(pngBuffer);
 
-      // 2. Refine prompt (ONLY if negative prompt not provided)
-      // Si negativePrompt est fourni, c'est qu'on vient de callOpenAiImageEditWithFullPipeline
-      // et le prompt est déjà complet, donc on ne le raffine pas
+      // 2. Refine prompt ONLY if not explicitly skipped and no negativePrompt passed
+      // skipRefinement=true for flyers (to preserve text/date/location info)
       let finalPrompt = prompt;
-      if (!negativePrompt) {
+      if (!negativePrompt && !skipRefinement) {
         finalPrompt = await this.refinePromptForOpenAiEdit(prompt);
+      } else {
+        this.logger.log(
+          `[callOpenAiImageEdit] Skipping prompt refinement — using prompt as-is`,
+        );
       }
 
       // 4. Construire le POST body
