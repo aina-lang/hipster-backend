@@ -295,7 +295,7 @@ export class AiService implements OnModuleInit {
           {
             role: 'system',
             content:
-              'You are a prompt engineer for OpenAI Image Edits. Your job is to improve and enhance the visual quality of the prompt while STRICTLY preserving the CORE SUBJECT of the original image. RULES: (1) NEVER remove or replace the main subject. (2) Describe changes as modifications AROUND the subject. (3) Use verbs like "Keep the [subject] and modify the background...", "Stylize the image to...". (4) Preserve factual info but creatively rephrase for impact. (5) Instruct to use PROFESSIONAL DESIGN LAYOUT: clean structure, varied typography weights (bold titles, light details), and strategic text placement with good contrast. (6) Match the typography style to the aesthetic (e.g., elegant for Minimal, bold/impactful for Premium). (7) Output ONE instruction under 400 chars.',
+              'You are a prompt engineer for OpenAI Image Edits. Your job is to improve and enhance visual quality while STRICTLY preserving the CORE SUBJECT of the original image. RULES: (1) NEVER remove or replace the main subject. (2) Use verbs like "Keep the [subject] and modify the background...". (3) ZERO HALLUCINATION POLICY: NEVER invent text, dates, names, prices, or logos not in the input. (4) Layout: PROFESSIONAL DESIGN (Swiss Style), clean hierarchy, varied typography weights. (5) If text is requested, display it clearly. If NOT requested, add NO text at all. (6) Output ONE instruction under 400 chars. DO NOT use placeholder text or fake branding.',
           },
           { role: 'user', content: prompt },
         ],
@@ -1412,19 +1412,35 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     // For flyers, default is to ADD text if specified, since flyers inherently need text
     // If user provided ANY userQuery, treat it as text to include on the flyer
     const hasUserQuery = (params.userQuery || '').trim().length > 0;
+    // Determine dimension
+    const requestedSize = params.size || '1024x1536';
+    const finalSize = ['1024x1024', '1536x1024', '1024x1536'].includes(
+      requestedSize,
+    )
+      ? requestedSize
+      : '1024x1536';
+    const orientation =
+      finalSize === '1536x1024'
+        ? 'landscape'
+        : finalSize === '1024x1024'
+          ? 'square'
+          : 'portrait';
+
     const flyerTextRule =
       userExplicitlyRequestsText || hasUserQuery
-        ? `GRAPHIC DESIGN RULES: 
-           - Create a professional flyer layout for style "${style}". 
-           - Use high-end modern typography (varied weights, elegant spacing). 
-           - Establish a clear visual hierarchy: main title is bold and large, secondary info is smaller but legible. 
-           - Place the text: "${params.userQuery}" strategically with good contrast and negative space. 
-           - Match the layout to the aesthetic: if "${style}" is Minimal, use lots of white space and thin fonts; if Hero/Premium, use bold layout and dramatic typography. 
-           - NO overlapping text on faces, NO fake placeholder text.`
-        : `GRAPHIC DESIGN RULES: 
-           - Create a stunning visual-only flyer for style "${style}". 
-           - Focus on composition, balance, and artistic impact. 
-           - NO text, NO watermarks, NO logos. Bold aesthetic focus on the subject.`;
+        ? `ELITE GRAPHIC DESIGN RULES: 
+           - Layout: Swiss Style / Modern Editorial. Clean, high-impact, professional structure.
+           - SAFE AREA: Ensure all text and critical elements have a 10% margin from the edges. DO NOT place text too close to the borders.
+           - Typography: Premium sans-serif fonts, varied weights (Heavy for titles, Light for details). Perfect kerning and leading.
+           - Visual Hierarchy: Absolute clarity.
+           - CONTENT IMPROVEMENT: Use the provided text: "${params.userQuery}". You MAY creatively improve the phrasing to make it more persuasive (e.g., adding "Venez nombreux", "Achetez maintenant", "Offre limitée") based on the context, but NEVER invent new facts (dates, prices, specific locations not provided).
+           - ZERO HALLUCINATION POLICY: NEVER invent new factual data (phone numbers, specific addresses, real-world URLs).
+           - Match style "${style}": Minimal = maximum negative space; Hero = bold, centered, cinematic; Premium = luxury texture, sophisticated alignment.`
+        : `ELITE GRAPHIC DESIGN RULES: 
+           - Style: Modern Visual Poster / Artistic Display.
+           - SAFE AREA: Keep all visual focal points away from the extreme edges.
+           - ZERO TEXT POLICY: Use NO letters, NO numbers, NO words, NO logos.
+           - Create a "cool", trendy visual for style "${style}".`;
 
     const refinedRes = await this.refineQuery(
       params.userQuery || params.job,
@@ -1441,8 +1457,8 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     });
 
     const qualityTags =
-      'masterpiece,ultra high quality,sharp,8k,high resolution,print-ready,professional design';
-    const finalPrompt = `FLYER (portrait format, large print). ${baseStylePrompt}. ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. QUALITY: ${qualityTags}`;
+      'masterpiece,ultra high quality,sharp focus,8k,high resolution,print-ready,professional graphic design,social-media-first aesthetic,editorial layout';
+    const finalPrompt = `FLYER DESIGN (${orientation} format). ${baseStylePrompt}. SUBJECT OR CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: Designer grade, Trendy, Impactful Layout. QUALITY: ${qualityTags}. NO placeholders, NO fake text, NO generic logos.`;
 
     this.logger.log(
       `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
@@ -1459,9 +1475,9 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
         );
         finalBuffer = await this.callOpenAiImageEdit(file.buffer, finalPrompt);
       } else {
-        // Use HIGH quality and PORTRAIT size for flyers
+        // Use HIGH quality and specified size for flyers
         finalBuffer = await this.callOpenAiToolImage(finalPrompt, {
-          size: '1024x1536',
+          size: finalSize,
           quality: 'high',
         });
       }
