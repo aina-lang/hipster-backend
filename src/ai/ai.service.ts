@@ -682,7 +682,7 @@ export class AiService implements OnModuleInit {
     const styleName = style || params.style || defaultStyle;
 
     this.logger.log(
-      `[generateImage] START - User: ${userId}, Seed: ${seed}, Style: ${styleName}, Job: ${params.job}, Query: ${params.userQuery}`,
+      `[generateImage] START - User: ${userId}, hasFile: ${!!file}, Style: ${styleName}, Job: ${params.job}`,
     );
 
     let refinedSubject = '';
@@ -954,7 +954,7 @@ export class AiService implements OnModuleInit {
   ) {
     if (typeof params === 'string') params = { userQuery: params };
     this.logger.log(
-      `[generateSocial] START - User: ${userId}, Job: "${params.job}", Query: "${params.userQuery}"`,
+      `[generateSocial] START - User: ${userId}, hasFile: ${!!file}, Job: "${params.job}"`,
     );
 
     // 1. Fetch user branding info

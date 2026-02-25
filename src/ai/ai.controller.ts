@@ -249,6 +249,12 @@ export class AiController {
         }
       }
 
+      console.log(
+        '[AiController] generateImage - file present:',
+        !!file,
+        'filename:',
+        file?.originalname,
+      );
       console.log('--- API POST /ai/image ---', {
         ...body,
         params,
@@ -355,6 +361,7 @@ export class AiController {
         }
       }
 
+      console.log('[AiController] generateSocial - file present:', !!file);
       console.log('--- API POST /ai/social ---', {
         params,
         hasFile: !!file,
@@ -433,6 +440,7 @@ export class AiController {
         }
       }
 
+      console.log('[AiController] generateFlyer - file present:', !!file);
       console.log('--- API POST /ai/flyer ---', {
         params,
         hasFile: !!file,
