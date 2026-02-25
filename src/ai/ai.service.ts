@@ -1294,6 +1294,74 @@ export class AiService implements OnModuleInit {
     }
   }
 
+  /* --------------------- BACKGROUND FLYER PROCESSOR --------------------- */
+  private async processFlyerBackground(
+    generationId: number,
+    prompt: string,
+    userId: number,
+    model: string,
+    imageBuffer?: Buffer,
+  ) {
+    this.logger.log(
+      `[processFlyerBackground] Started for Gen: ${generationId}`,
+    );
+
+    try {
+      let finalBuffer: Buffer;
+      const finalSize = '1024x1536';
+
+      if (imageBuffer) {
+        this.logger.log(
+          `[processFlyerBackground] Strategy: Image Edit with FLYER prompt`,
+        );
+        finalBuffer = await this.callOpenAiImageEdit(imageBuffer, prompt, {
+          size: finalSize,
+          quality: 'high',
+          skipRefinement: true,
+        });
+      } else {
+        this.logger.log(`[processFlyerBackground] Strategy: Text-to-Image`);
+        finalBuffer = await this.callOpenAiToolImage(prompt, {
+          size: finalSize,
+          quality: 'high',
+        });
+      }
+
+      const fileName = `flyer_final_${generationId}_${Date.now()}.jpg`;
+      const uploadPath = '/home/ubuntu/uploads/ai-generations';
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      const filePath = path.join(uploadPath, fileName);
+      fs.writeFileSync(filePath, finalBuffer);
+
+      const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
+
+      // Update the record with the final image
+      await this.aiGenRepo.update(generationId, {
+        imageUrl,
+        result: 'FLYER',
+        attributes: {
+          style: model,
+          async: true,
+          hasSourceImage: !!imageBuffer,
+          completedAt: new Date().toISOString(),
+        },
+      } as any);
+
+      this.logger.log(
+        `[processFlyerBackground] SUCCESS - Gen: ${generationId}, URL: ${imageUrl}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `[processFlyerBackground] FAILED for Gen: ${generationId} - ${error.message}`,
+      );
+      await this.aiGenRepo.update(generationId, {
+        result: `ERROR: ${error.message}`,
+      } as any);
+    }
+  }
+
   /* --------------------- IMAGE GENERATION --------------------- */
   async generateImage(
     params: any,
@@ -1770,6 +1838,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     userId: number,
     file?: Express.Multer.File,
     seed?: number,
+    existingConversationId?: string,
   ) {
     const model = params.model || 'Anniversaire adulte';
     this.logger.log(
@@ -1799,6 +1868,13 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
     // Proactively include branding info by default for flyers unless avoided
     const wantsBrandingInfo = !avoidsBrandingInfo;
+
+    const avoidsBrandingColor = [
+      'sans ma couleur',
+      'sans mon branding',
+      'sans couleur branding',
+      'sans branding color',
+    ].some((kw) => userQueryLower.includes(kw));
 
     const brandingColor =
       user?.brandingColor && wantsBrandingColor && !avoidsBrandingColor
@@ -1891,58 +1967,43 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
     );
 
-    try {
-      let finalBuffer: Buffer;
+    // 1. Create a PENDING record immediately to avoid 504 timeout
+    const pendingGen = await this.saveGeneration(
+      userId,
+      'PENDING',
+      JSON.stringify([
+        { role: 'user', content: finalPrompt },
+        { role: 'assistant', content: 'Génération du flyer en cours...' },
+      ]),
+      AiGenerationType.CHAT,
+      {
+        style: model,
+        hasSourceImage: !!file,
+        async: true,
+      },
+      undefined,
+      existingConversationId,
+    );
 
-      if (file) {
-        // Use the already-built flyer prompt directly (includes text rules)
-        this.logger.log(
-          `[generateFlyer] Strategy: Image Edit with FLYER prompt`,
-        );
-        finalBuffer = await this.callOpenAiImageEdit(file.buffer, finalPrompt, {
-          size: finalSize,
-          quality: 'high',
-          skipRefinement: true,
-        });
-      } else {
-        // Use HIGH quality and specified size for flyers
-        finalBuffer = await this.callOpenAiToolImage(finalPrompt, {
-          size: finalSize,
-          quality: 'high',
-        });
-      }
+    // 2. Process in background without awaiting
+    this.processFlyerBackground(
+      pendingGen.id,
+      finalPrompt,
+      userId,
+      model,
+      file?.buffer,
+    );
 
-      const fileName = `flyer_${Date.now()}.jpg`;
-      const uploadPath = '/home/ubuntu/uploads/ai-generations';
-      if (!fs.existsSync(uploadPath))
-        fs.mkdirSync(uploadPath, { recursive: true });
-      fs.writeFileSync(path.join(uploadPath, fileName), finalBuffer);
-
-      const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-      const saved = await this.saveGeneration(
-        userId,
-        'FLYER',
-        JSON.stringify([
-          { role: 'user', content: finalPrompt },
-          { role: 'assistant', content: 'Flyer généré' },
-        ]),
-        AiGenerationType.CHAT,
-        { style: model, hasSourceImage: !!file },
-        imageUrl,
-      );
-
-      this.logger.log(`[generateFlyer] SUCCESS - URL: ${imageUrl}`);
-      return {
-        url: imageUrl,
-        generationId: saved?.id,
-        isAsync: false,
-        seed: seed || 0,
-        prompt: finalPrompt,
-      };
-    } catch (error) {
-      this.logger.error(`[generateFlyer] FAILED: ${error.message}`);
-      throw error;
-    }
+    // 3. Return immediately with isAsync flag
+    return {
+      id: pendingGen.id,
+      generationId: pendingGen.id,
+      conversationId: existingConversationId || String(pendingGen.id),
+      url: null,
+      isAsync: true,
+      status: 'PENDING',
+      prompt: finalPrompt,
+    };
   }
 
   async transcribeAudio(file: Express.Multer.File) {

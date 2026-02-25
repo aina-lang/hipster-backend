@@ -486,13 +486,12 @@ export class AiController {
         req.user.sub,
         file,
         body.seed,
+        body.params?.conversationId,
       );
-      console.log('--- FLYER GENERATION SUCCESS ---');
+      console.log('--- FLYER GENERATION RESPONSE ---', result);
       return {
-        url: result.url,
-        imageData: result.url,
-        generationId: result.generationId,
-        seed: result.seed,
+        ...result,
+        imageData: result.url, // Legacy support
       };
     } catch (error: any) {
       this.logger.error('Flyer generation error:', error);
