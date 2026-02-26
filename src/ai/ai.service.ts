@@ -1289,21 +1289,96 @@ COMPOSITION ARCHITECTURE:
     }
   }
 
-  /**
-   * Background processor for slow OpenAI Tool generations
-   */
   private async processOpenAiToolImageBackground(
     generationId: number,
-    prompt: string,
+    params: any,
     userId: number,
     styleName: string,
+    imageBuffer?: Buffer,
   ) {
     this.logger.log(
-      `[processOpenAiToolImageBackground] Started for Gen: ${generationId} (gpt-image-1.5)`,
+      `[processOpenAiToolImageBackground] START for Gen: ${generationId}. (Background Refinement active)`,
     );
 
     try {
-      const buffer = await this.callOpenAiToolImage(prompt);
+      const startTime = Date.now();
+
+      // 1. Fetch user branding info
+      const user = await this.getAiUserWithProfile(userId);
+      const brandingColor = user?.brandingColor || null;
+      const logoUrl = user?.logoUrl || null;
+
+      // 2. Refine the query for visual richness
+      const refinedRes = await this.refineQuery(
+        params.userQuery || params.job,
+        params.job,
+        styleName,
+        params.language || 'French',
+        brandingColor,
+      );
+
+      // 3. Get style description
+      const baseStylePrompt = this.getStyleDescription(styleName, params.job, {
+        accentColor: brandingColor || refinedRes.accentColor,
+        lighting: refinedRes.lighting,
+        angle: refinedRes.angle,
+        background: refinedRes.background,
+        primaryObject: refinedRes.primaryObject,
+        logoUrl,
+      });
+
+      // 4. Refine subject if job is present
+      let refinedSubject = '';
+      if (params.job && params.job.length > 0) {
+        refinedSubject = await this.refineSubject(params.job);
+      }
+
+      const humanKeywords = [
+        'homme', 'femme', 'personne', 'visage', 'mannequin', 'worker', 'ouvrier', 'artisan',
+        'man', 'woman', 'person', 'human', 'face', 'eyes', 'skin', 'hair', 'model', 'portrait',
+      ];
+      const isHumanRequested = humanKeywords.some(
+        (kw) =>
+          refinedRes.prompt.toLowerCase().includes(kw) ||
+          (params.userQuery || '').toLowerCase().includes(kw) ||
+          (params.job || '').toLowerCase().includes(kw),
+      );
+
+      const baseQuality = 'masterpiece,high quality,photorealistic,8k,sharp focus,natural lighting,cinematic';
+      const qualityTags = isHumanRequested ? `${baseQuality},detailed skin,realistic hair` : baseQuality;
+
+      const genericRealism = 'photorealistic,8k,hyper-detailed texture,film grain,natural lighting,cinematic composition,35mm,f/1.8.NO plastic,NO CGI';
+      const humanRealism = 'detailed skin,pores,imperfections,candid,sharp focus eyes';
+      const realismTriggers = isHumanRequested ? `${genericRealism},${humanRealism}` : genericRealism;
+
+      const promptBody = refinedRes.prompt ? `${refinedRes.prompt}. Aesthetic: ${baseStylePrompt}.` : baseStylePrompt;
+
+      const userExplicitlyRequestsText = [
+        'texte', 'écris', 'ecris', 'ajoute le texte', 'avec le texte', 'inscription', 'slogan', 'message',
+        'write', 'add text', 'sans-serif', 'titre', 'prix', 'promo', 'promotion', 'offre', 'réduction',
+        'soldes', 'citation', 'hashtag',
+      ].some((kw) => (params.userQuery || '').toLowerCase().includes(kw));
+
+      const noTextRule = userExplicitlyRequestsText
+        ? `IMPORTANT: Include ONLY the exact text explicitly requested: "${params.userQuery}". No other text, logo or watermark.`
+        : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding';
+
+      const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule}`;
+
+      let finalBuffer: Buffer;
+      if (imageBuffer) {
+        this.logger.log(`[processOpenAiToolImageBackground] Strategy: OpenAI Image Edit`);
+        finalBuffer = await this.callOpenAiImageEdit(imageBuffer, finalPrompt, {
+          quality: 'medium',
+          skipRefinement: true,
+        });
+      } else {
+        this.logger.log(`[processOpenAiToolImageBackground] Strategy: Text-to-Image`);
+        finalBuffer = await this.callOpenAiToolImage(finalPrompt, {
+          quality: 'medium',
+        });
+      }
+
       const fileName = `gen_final_${generationId}_${Date.now()}.jpg`;
       const uploadPath = '/home/ubuntu/uploads/ai-generations';
 
@@ -1312,20 +1387,19 @@ COMPOSITION ARCHITECTURE:
       }
 
       const filePath = path.join(uploadPath, fileName);
-      fs.writeFileSync(filePath, buffer);
+      fs.writeFileSync(filePath, finalBuffer);
 
       const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
 
-      // Update the record with the final image
       await this.aiGenRepo.update(generationId, {
         imageUrl,
-        result: 'OPENAI_TOOL_TEXT_TO_IMAGE',
+        result: imageBuffer ? 'OPENAI_IMAGE_EDIT' : 'OPENAI_TOOL_TEXT_TO_IMAGE',
         attributes: {
-          engine: 'openai-tool',
-          model: 'gpt-image-1.5',
           style: styleName,
           async: true,
           completedAt: new Date().toISOString(),
+          refinementDuration: ((Date.now() - startTime) / 1000).toFixed(1) + 's',
+          prompt: finalPrompt,
         },
       } as any);
 
@@ -1481,296 +1555,53 @@ COMPOSITION ARCHITECTURE:
     existingConversationId?: string,
   ) {
     this.logger.log(
-      `[generateImage] START - User: ${userId}, Style: ${style}, hasFile: ${!!file}`,
+      `[generateImage] START - User: ${userId}, Style: ${style}. Returning PENDING immediately.`,
     );
+
     try {
-      // 1. Fetch user branding info
-      const user = await this.getAiUserWithProfile(userId);
-      const brandingColor = user?.brandingColor || null;
-      const logoUrl = user?.logoUrl || null;
-
-      const styleInfo = this.getStyleDescription(style, params.job, {
-        accentColor: brandingColor || undefined,
-        logoUrl: logoUrl || undefined,
-      });
       const styleName = style;
-      const baseStylePrompt = styleInfo;
 
-      this.logger.log(
-        `[generateImage] Refined style prompt: ${baseStylePrompt.substring(0, 100)}...`,
+      // 1. Create a PENDING record immediately
+      const pendingGen = await this.saveGeneration(
+        userId,
+        'PENDING',
+        params.userQuery || params.job || 'Nouvelle image',
+        AiGenerationType.CHAT,
+        {
+          style: styleName,
+          hasSourceImage: !!file,
+          async: true,
+        },
+        undefined,
+        existingConversationId,
       );
 
-      const refinedRes = await this.refineQuery(
-        params.userQuery || params.job,
-        params.job,
+      // 2. Process in background without awaiting (Refinement + Generation)
+      this.processOpenAiToolImageBackground(
+        pendingGen.id,
+        params,
+        userId,
         styleName,
-        params.language || 'French',
-        brandingColor,
+        file?.buffer,
       );
-      const refinedQuery = refinedRes.prompt;
 
-      this.logger.log(
-        `[generateImage] Refined user query: ${refinedQuery.substring(0, 100)}...`,
-      );
-      let refinedSubject = '';
-      if (params.job && params.job.length > 0) {
-        refinedSubject = await this.refineSubject(params.job);
-      }
-
-      const userQuery = (params.userQuery || '').trim();
-
-      // let refinedQuery = userQuery; // This line is now redundant due to the new refinedQuery above
-      let isPostureChange = false;
-      let styleOptions: any = {};
-
-      // Enable GPT-powered prompt expansion for ALL modes (with or without image)
-      // Now always refinement to get contextually aware style options (color, object, etc.)
-      // const refinedData = await this.refineQuery( // This block is now redundant due to the new refinedRes above
-      //   userQuery,
-      //   refinedSubject,
-      //   styleName,
-      // );
-      // refinedQuery = refinedData.prompt;
-      isPostureChange = refinedRes.isPostureChange; // Use refinedRes
-      styleOptions = {
-        accentColor: refinedRes.accentColor,
-        lighting: refinedRes.lighting,
-        angle: refinedRes.angle,
-        background: refinedRes.background,
-        primaryObject: refinedRes.primaryObject,
+      // 3. Return immediately with isAsync flag
+      return {
+        id: pendingGen.id,
+        generationId: pendingGen.id,
+        conversationId: existingConversationId || String(pendingGen.id),
+        url: null,
+        isAsync: true,
+        status: 'PENDING',
+        prompt: params.userQuery || params.job || 'Génération en cours...',
       };
-
-      // const baseStylePrompt = this.getStyleDescription( // This line is now redundant due to the new baseStylePrompt above
-      //   styleName,
-      //   refinedSubject,
-      //   styleOptions,
-      // );
-
-      try {
-        let finalBuffer: Buffer;
-
-        const humanKeywords = [
-          'homme',
-          'femme',
-          'personne',
-          'visage',
-          'mannequin',
-          'worker',
-          'ouvrier',
-          'artisan',
-          'man',
-          'woman',
-          'person',
-          'human',
-          'face',
-          'eyes',
-          'skin',
-          'hair',
-          'model',
-          'portrait',
-        ];
-        const isHumanRequested = humanKeywords.some(
-          (kw) =>
-            refinedQuery.toLowerCase().includes(kw) ||
-            (params.userQuery || '').toLowerCase().includes(kw) ||
-            (params.job || '').toLowerCase().includes(kw),
-        );
-
-        const baseQuality =
-          'masterpiece,high quality,photorealistic,8k,sharp focus,natural lighting,cinematic';
-        const qualityTags = isHumanRequested
-          ? `${baseQuality},detailed skin,realistic hair`
-          : baseQuality;
-
-        // REALISM BOOST: Inject hyper-realistic photography triggers
-        const genericRealism =
-          'photorealistic,8k,hyper-detailed texture,film grain,natural lighting,cinematic composition,35mm,f/1.8.NO plastic,NO CGI';
-        const humanRealism =
-          'detailed skin,pores,imperfections,candid,sharp focus eyes';
-        const realismTriggers = isHumanRequested
-          ? `${genericRealism},${humanRealism}`
-          : genericRealism;
-
-        // Build the final prompt by combining the base style guide with the refined query.
-        const promptBody = refinedQuery
-          ? `${refinedQuery}. Aesthetic: ${baseStylePrompt}.`
-          : baseStylePrompt;
-
-        // CRITICAL: Text on image is ONLY allowed if user explicitly requested it.
-        const userQueryLower = (params.userQuery || '').toLowerCase();
-        const userExplicitlyRequestsText = [
-          'texte',
-          'écris',
-          'ecris',
-          'ajoute le texte',
-          'avec le texte',
-          'inscription',
-          'slogan',
-          'message',
-          'write',
-          'add text',
-          'sans-serif',
-          'titre',
-          'prix',
-          'promo',
-          'promotion',
-          'offre',
-          'réduction',
-          'soldes',
-          'citation',
-          'hashtag',
-        ].some((kw) => userQueryLower.includes(kw));
-
-        const noTextRule = userExplicitlyRequestsText
-          ? `IMPORTANT: Include ONLY the exact text explicitly requested by user: "${params.userQuery}". No other text, logo or watermark.`
-          : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding';
-        const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule}`;
-
-        let finalNegativePrompt = this.NEGATIVE_PROMPT;
-
-        if (!isHumanRequested) {
-          finalNegativePrompt = `${finalNegativePrompt},person,human,man,woman,mannequin,face,portrait,skin`;
-        }
-
-        // Additional specific filters for high-end styles
-        if (
-          styleName.toLowerCase().includes('premium') ||
-          styleName.toLowerCase().includes('hero')
-        ) {
-          finalNegativePrompt = `${finalNegativePrompt},glitch,noise,low contrast,oversaturated,distorted face,mismatched eyes`;
-        }
-
-        if (styleName.toLowerCase().includes('monochrome')) {
-          finalNegativePrompt = `${finalNegativePrompt},geometric shapes,lines,rectangles,squares,triangles,frames,grids,borders`;
-        }
-
-        if (file) {
-          // OPENAI IMAGE EDIT (I2I) WITH FULL PIPELINE
-          this.logger.log(
-            `[generateImage] Strategy: OpenAI Image Edit with FULL PIPELINE (gpt-image-1.5) - from uploaded file`,
-          );
-          finalBuffer = await this.callOpenAiImageEditWithFullPipeline(
-            file.buffer,
-            params,
-            styleName,
-            userId,
-          );
-        } else if (
-          params.reference_image &&
-          typeof params.reference_image === 'string' &&
-          params.reference_image.startsWith('http')
-        ) {
-          // DOWNLOAD REMOTE IMAGE FOR EDIT WITH FULL PIPELINE
-          this.logger.log(
-            `[generateImage] Strategy: OpenAI Image Edit with FULL PIPELINE (gpt-image-1.5) - from remote URL: ${params.reference_image}`,
-          );
-          try {
-            const downloadResp = await axios.get(params.reference_image, {
-              responseType: 'arraybuffer',
-            });
-            const downloadedBuffer = Buffer.from(downloadResp.data);
-            finalBuffer = await this.callOpenAiImageEditWithFullPipeline(
-              downloadedBuffer,
-              params,
-              styleName,
-              userId,
-            );
-          } catch (downloadError) {
-            this.logger.error(
-              `[generateImage] Failed to download remote reference image: ${downloadError.message}`,
-            );
-            // Fallback to text-to-image or throw? Let's throw to be clear about the failure.
-            throw new Error(
-              "Impossible de charger l'image de référence distante.",
-            );
-          }
-        } else {
-          // EXCLUSIVE OPENAI GPT-5 TOOL TEXT-TO-IMAGE (RESTORED ASYNC)
-          this.logger.log(
-            `[generateImage] Strategy: OpenAI GPT-5 (ASYNC REALISM)`,
-          );
-
-          // 1. Create a PENDING record immediately
-          const pendingGen = await this.saveGeneration(
-            userId,
-            'PENDING',
-            finalPrompt,
-            AiGenerationType.CHAT,
-            {
-              engine: 'openai-tool',
-              model: 'gpt-5',
-              async: true,
-              style: styleName,
-            },
-            undefined,
-            existingConversationId,
-          );
-
-          // 2. Process in background without awaiting (Realism focus in process helper)
-          this.processOpenAiToolImageBackground(
-            pendingGen.id,
-            finalPrompt,
-            userId,
-            styleName,
-          );
-
-          // 3. Return immediately with isAsync flag
-          return {
-            id: pendingGen.id,
-            generationId: pendingGen.id,
-            conversationId: existingConversationId || String(pendingGen.id),
-            url: null,
-            isAsync: true,
-            status: 'PENDING',
-            prompt: finalPrompt,
-          };
-        }
-
-        const fileName = `gen_${Date.now()}.jpg`;
-        const uploadPath = '/home/ubuntu/uploads/ai-generations';
-        if (!fs.existsSync(uploadPath)) {
-          fs.mkdirSync(uploadPath, { recursive: true });
-        }
-
-        const filePath = path.join(uploadPath, fileName);
-        fs.writeFileSync(filePath, finalBuffer);
-
-        const imageUrl = `https://hipster-api.fr/uploads/ai-generations/${fileName}`;
-
-        const saved = await this.saveGeneration(
-          userId,
-          file ? 'OPENAI_IMAGE_EDIT' : 'OPENAI_TOOL_TEXT_TO_IMAGE',
-          JSON.stringify([
-            { role: 'user', content: finalPrompt },
-            { role: 'assistant', content: "Voici l'image générée" },
-          ]),
-          AiGenerationType.CHAT,
-          {
-            style: styleName,
-            seed,
-            hasSourceImage: !!file,
-          },
-          imageUrl,
-          existingConversationId,
-        );
-
-        this.logger.log(`[generateImage] SUCCESS - URL: ${imageUrl}`);
-        return {
-          url: imageUrl,
-          generationId: saved?.id,
-          conversationId: existingConversationId || saved?.id.toString(),
-          seed: seed || 0,
-          prompt: finalPrompt,
-        };
-      } catch (error) {
-        this.logger.error(`[generateImage] FAILED: ${error.message}`);
-        throw error;
-      }
     } catch (error) {
       this.logger.error(`[generateImage] FAILED: ${error.message}`);
       throw error;
     }
   }
+
+
 
   async generateFreeImage(
     params: any,
@@ -1960,138 +1791,18 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
   ) {
     const model = params.model || 'Anniversaire adulte';
     this.logger.log(
-      `[generateFlyer] START - User: ${userId}, Model: ${model}, hasFile: ${!!file}`,
+      `[generateFlyer] START - User: ${userId}, Model: ${model}. Returning PENDING immediately.`,
     );
 
-    // Build a FLYER-specific prompt
-    const userQueryLower = (params.userQuery || '').toLowerCase();
+    // Initial placeholder prompt for history
+    const initialPrompt = `Génération d'un flyer pour "${model}" en cours...`;
 
-    // 1. Fetch user profile for branding
-    const user = await this.getAiUserWithProfile(userId);
-
-    // Detect branding intent
-    const wantsBrandingColor = [
-      'ma couleur',
-      'mon branding',
-      'branding color',
-      'ma charte graphique',
-    ].some((kw) => userQueryLower.includes(kw));
-
-    const avoidsBrandingInfo = [
-      'sans mes infos',
-      'sans mes informations',
-      'sans mes coordonnées',
-      'sans texte info',
-    ].some((kw) => userQueryLower.includes(kw));
-
-    // Proactively include branding info by default for flyers unless avoided
-    const wantsBrandingInfo = !avoidsBrandingInfo;
-
-    const avoidsBrandingColor = [
-      'sans ma couleur',
-      'sans mon branding',
-      'sans couleur branding',
-      'sans branding color',
-    ].some((kw) => userQueryLower.includes(kw));
-
-    const brandingColor =
-      user?.brandingColor && !avoidsBrandingColor
-        ? user.brandingColor
-        : null;
-
-    let brandingInfoStr = '';
-    if (wantsBrandingInfo && !avoidsBrandingInfo && user) {
-      const parts = [];
-      if (user.name) parts.push(user.name);
-      if (user.professionalPhone) parts.push(`Tel: ${user.professionalPhone}`);
-      if (user.professionalAddress)
-        parts.push(`Adresse: ${user.professionalAddress}`);
-      if (user.websiteUrl) parts.push(`Web: ${user.websiteUrl}`);
-      brandingInfoStr = parts.join(' | ');
-    }
-
-    const userExplicitlyRequestsText = [
-      'texte',
-      'écris',
-      'ecris',
-      'ajoute le texte',
-      'avec le texte',
-      'inscription',
-      'slogan',
-      'message',
-      'write',
-      'add text',
-      'titre',
-      'prix',
-      'promo',
-      'promotion',
-      'offre',
-      'réduction',
-      'soldes',
-      'citation',
-      'hashtag',
-    ].some((kw) => userQueryLower.includes(kw));
-
-    const hasUserQuery = (params.userQuery || '').trim().length > 0;
-    const finalSize = '1024x1536';
-    const orientation = 'portrait';
-
-    const flyerLanguage = params.language || 'French';
-    // Flyers should ALWAYS have text rules and hooks improvisation
-    const flyerTextRule = `ELITE GRAPHIC DESIGN RULES: 
-           - Visual Framing: COMPOSITION: Wide or Middle shot. Ensure the person's head and shoulders are fully visible with safe margin above the head.
-           - Style: "Premium Editorial" vibe. High-end, clean, professional structure.
-           - Typographic Dynamism: USE DYNAMIC COMPOSITION. You ARE ENCOURAGED to use tilted text (angles), rotated titles, and asymmetric placements to make it look like a real professional poster.
-           - SAFE AREA: Ensure all text and critical elements have a 15% margin from the edges.
-           - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif).
-           - Visual Hierarchy: Absolute clarity. HEADLINE MUST BE the person's name: "${user?.name || ''}". It should be high-impact, potentially rotated or angled for style.
-           - CONTENT POLICY: You MUST improvise catchy French "accroches" (hooks) based on the context: "${params.userQuery || params.job || model}". Use the job/activity ("${params.job || ''}") ONLY to improvise the style and hooks, NEVER as the main title and NEVER verbatim.
-             ${brandingInfoStr ? `MANDATORY: Include this professional info clearly: "${brandingInfoStr}".` : ''}
-           - PROHIBITION: NEVER use or display the word "Nom" (Name). NEVER use or display the literal word "Job" or "Profession".
-           - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
-           - COPYWRITING: HIGH IMPROVISATION is REQUIRED. Create professional marketing copy that SELLS. Make it sound like a real pro flyer.
-           - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs. USE ONLY PROVIDED INFO OR IMPROVISED HOOKS.`;
-
-    // 2. Refine the query for visual richness
-    const refinedRes = await this.refineQuery(
-      params.userQuery || params.job,
-      params.job,
-      model,
-      flyerLanguage,
-    );
-
-    // 3. Get specific model description
-    const baseStylePrompt = this.getModelDescription(model, params.job, {
-      accentColor: brandingColor || refinedRes.accentColor,
-      lighting: refinedRes.lighting,
-      angle: refinedRes.angle,
-      background: refinedRes.background,
-    });
-
-    const qualityTags =
-      'sharp authentic photography,crystal clear subject,tangible real objects,high resolution,professional minimal design';
-
-    // Ensure the subject from userQuery is the central object of the flyer
-    const subjectDirectives = params.userQuery
-      ? `VISUAL SUBJECT: Focus on "${params.userQuery}" with sharp clarity. Only include REAL physical objects. NO ai-generated banners, NO synthetic graphics, NO fake digital overlays. Background must remain visible and well-defined.`
-      : '';
-
-    // If we have a file, the prompt should be about TRANSFORMING, not GENERATING.
-    const modePrefix = file
-      ? `TRANSFORM THIS IMAGE into a sharp professional photo with the highest realism for a ${model}.`
-      : `GENERATE a sharp professional photo with the highest realism from scratch for a ${model}.`;
-    const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
-
-    this.logger.log(
-      `[generateFlyer] Final prompt: ${finalPrompt.substring(0, 150)}...`,
-    );
-
-    // 1. Create a PENDING record immediately to avoid 504 timeout
+    // 1. Create a PENDING record immediately to avoid timeout
     const pendingGen = await this.saveGeneration(
       userId,
       'PENDING',
       JSON.stringify([
-        { role: 'user', content: finalPrompt },
+        { role: 'user', content: params.userQuery || 'Nouveau flyer' },
         { role: 'assistant', content: 'Génération du flyer en cours...' },
       ]),
       AiGenerationType.CHAT,
@@ -2104,10 +1815,10 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       existingConversationId,
     );
 
-    // 2. Process in background without awaiting
+    // 2. Process in background without awaiting (Refinement moved here)
     this.processFlyerBackground(
       pendingGen.id,
-      finalPrompt,
+      params,
       userId,
       model,
       file?.buffer,
@@ -2121,7 +1832,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       url: null,
       isAsync: true,
       status: 'PENDING',
-      prompt: finalPrompt,
+      prompt: initialPrompt,
     };
   }
 
