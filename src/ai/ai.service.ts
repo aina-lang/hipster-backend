@@ -16,6 +16,7 @@ import {
   AiGenerationType,
 } from './entities/ai-generation.entity';
 import { deleteFile } from '../common/utils/file.utils';
+import { VISUAL_ARCHITECTURES } from './config/visual-architectures';
 
 @Injectable()
 export class AiService implements OnModuleInit {
@@ -930,7 +931,20 @@ export class AiService implements OnModuleInit {
           'Experimental grid-work, bold use of white space, and innovative graphic architecture.';
     }
 
-    return `Mood: ${mood}. Layout Priority: ${layout}. Structural Elements: ${structure}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. RULES: All objects must be real, physical, and tangible. Professional graphic design overlays and banners are ENCOURAGED for text readability. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
+    const architecture = VISUAL_ARCHITECTURES[model.toLowerCase()] || VISUAL_ARCHITECTURES['minimal studio'];
+
+    const architectureInstructions = `
+COMPOSITION ARCHITECTURE:
+- ${architecture.rules.subject}
+- ${architecture.rules.background}
+- ${architecture.rules.title}
+- ${architecture.rules.subtitle}
+- ${architecture.rules.infoBlock}
+- ${architecture.rules.upperZone}
+- ${architecture.rules.constraints}
+`.trim();
+
+    return `Mood: ${mood}. Layout Priority: ${layout}. Structural Elements: ${structure}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. ${architectureInstructions} RULES: All objects must be real, physical, and tangible. Professional graphic design overlays and banners are ENCOURAGED for text readability. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
       .replace(/\s+/g, ' ')
       .trim();
   }
