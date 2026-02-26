@@ -1306,7 +1306,19 @@ COMPOSITION ARCHITECTURE:
       // 1. Fetch user branding info
       const user = await this.getAiUserWithProfile(userId);
       const brandingColor = user?.brandingColor || null;
-      const logoUrl = user?.logoUrl || null;
+      let logoUrl = user?.logoUrl || null;
+
+      // Check for logo suppression (keyword detection or explicit flag)
+      const userQueryLower = (params.userQuery || '').toLowerCase();
+      const jobLower = (params.job || '').toLowerCase();
+      const noLogoKeywords = ['sans logo', 'pas de logo', 'no logo', 'no-logo', 'supprimer le logo', 'enlever le logo'];
+      const hasNoLogoRequest = params.noLogo === true ||
+        noLogoKeywords.some(kw => userQueryLower.includes(kw) || jobLower.includes(kw));
+
+      if (hasNoLogoRequest) {
+        this.logger.log(`[processOpenAiToolImageBackground] Logo suppression detected for Gen: ${generationId}`);
+        logoUrl = null;
+      }
 
       // 2. Refine the query for visual richness
       const refinedRes = await this.refineQuery(
@@ -1434,7 +1446,20 @@ COMPOSITION ARCHITECTURE:
       // 1. Fetch user branding info
       const user = await this.getAiUserWithProfile(userId);
       const brandingColor = user?.brandingColor || null;
-      const logoUrl = user?.logoUrl || null;
+      let logoUrl = user?.logoUrl || null;
+
+      // Check for logo suppression (keyword detection or explicit flag)
+      const userQueryLower = (params.userQuery || '').toLowerCase();
+      const jobLower = (params.job || '').toLowerCase();
+      const noLogoKeywords = ['sans logo', 'pas de logo', 'no logo', 'no-logo', 'supprimer le logo', 'enlever le logo'];
+      const hasNoLogoRequest = params.noLogo === true ||
+        noLogoKeywords.some(kw => userQueryLower.includes(kw) || jobLower.includes(kw));
+
+      if (hasNoLogoRequest) {
+        this.logger.log(`[processFlyerBackground] Logo suppression detected for Gen: ${generationId}`);
+        logoUrl = null;
+      }
+
       const flyerLanguage = params.language || 'French';
 
       // 2. Refine the query for visual richness (Moved to background)
