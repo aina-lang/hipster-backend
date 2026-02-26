@@ -17,6 +17,8 @@ import {
 } from './entities/ai-generation.entity';
 import { deleteFile } from '../common/utils/file.utils';
 import { VISUAL_ARCHITECTURES } from './config/visual-architectures';
+import { FlyerCategory, VariantStructure } from './types/flyer.types';
+import { FLYER_CATEGORIES } from './constants/flyer-categories';
 
 @Injectable()
 export class AiService implements OnModuleInit {
@@ -283,7 +285,11 @@ export class AiService implements OnModuleInit {
       };
     } catch (e) {
       this.logger.error(`[refineQuery] ${e.message}`);
-      return { prompt: query, isPostureChange: false, accentColor: brandingColor };
+      return {
+        prompt: query,
+        isPostureChange: false,
+        accentColor: brandingColor,
+      };
     }
   }
 
@@ -961,7 +967,8 @@ COMPOSITION ARCHITECTURE:
 - ${architecture.rules.constraints}
 `.trim();
 
-    const logoDirectives = options?.noLogo === true ? 'NO logo. NO watermark.' : '';
+    const logoDirectives =
+      options?.noLogo === true ? 'NO logo. NO watermark.' : '';
 
     return `Mood: ${mood}. Layout Priority: ${layout}. Structural Elements: ${structure}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. ${architectureInstructions} ${logoDirectives} RULES: NO OpenAI logo, NO OpenAI branding, NO watermarks. All objects must be real, physical, and tangible. Professional graphic design overlays and banners are ENCOURAGED for text readability. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
       .replace(/\s+/g, ' ')
@@ -1184,7 +1191,8 @@ COMPOSITION ARCHITECTURE:
       );
       const startTime = Date.now();
 
-      const containsArchitecture = prompt.includes('COMPOSITION ARCHITECTURE') || prompt.includes('FLYER');
+      const containsArchitecture =
+        prompt.includes('COMPOSITION ARCHITECTURE') || prompt.includes('FLYER');
       const textConstraint = containsArchitecture
         ? 'NO watermark, NO unsolicited branding, NO OpenAI logo, NO OpenAI branding'
         : 'NO text, NO watermark, NO logo, NO letters, NO numbers, NO words, NO captions, NO overlays, NO unsolicited branding, NO OpenAI logo, NO OpenAI branding';
@@ -1319,12 +1327,24 @@ COMPOSITION ARCHITECTURE:
       // Check for logo suppression (keyword detection or explicit flag)
       const userQueryLower = (params.userQuery || '').toLowerCase();
       const jobLower = (params.job || '').toLowerCase();
-      const noLogoKeywords = ['sans logo', 'pas de logo', 'no logo', 'no-logo', 'supprimer le logo', 'enlever le logo'];
-      const hasNoLogoRequest = params.noLogo === true ||
-        noLogoKeywords.some(kw => userQueryLower.includes(kw) || jobLower.includes(kw));
+      const noLogoKeywords = [
+        'sans logo',
+        'pas de logo',
+        'no logo',
+        'no-logo',
+        'supprimer le logo',
+        'enlever le logo',
+      ];
+      const hasNoLogoRequest =
+        params.noLogo === true ||
+        noLogoKeywords.some(
+          (kw) => userQueryLower.includes(kw) || jobLower.includes(kw),
+        );
 
       if (hasNoLogoRequest) {
-        this.logger.log(`[processOpenAiToolImageBackground] Logo suppression detected for Gen: ${generationId}`);
+        this.logger.log(
+          `[processOpenAiToolImageBackground] Logo suppression detected for Gen: ${generationId}`,
+        );
         logoUrl = null;
       }
 
@@ -1355,8 +1375,24 @@ COMPOSITION ARCHITECTURE:
       }
 
       const humanKeywords = [
-        'homme', 'femme', 'personne', 'visage', 'mannequin', 'worker', 'ouvrier', 'artisan',
-        'man', 'woman', 'person', 'human', 'face', 'eyes', 'skin', 'hair', 'model', 'portrait',
+        'homme',
+        'femme',
+        'personne',
+        'visage',
+        'mannequin',
+        'worker',
+        'ouvrier',
+        'artisan',
+        'man',
+        'woman',
+        'person',
+        'human',
+        'face',
+        'eyes',
+        'skin',
+        'hair',
+        'model',
+        'portrait',
       ];
       const isHumanRequested = humanKeywords.some(
         (kw) =>
@@ -1365,24 +1401,50 @@ COMPOSITION ARCHITECTURE:
           (params.job || '').toLowerCase().includes(kw),
       );
 
-      const baseQuality = 'masterpiece,high quality,photorealistic,8k,sharp focus,natural lighting,cinematic';
-      const qualityTags = isHumanRequested ? `${baseQuality},detailed skin,realistic hair` : baseQuality;
+      const baseQuality =
+        'masterpiece,high quality,photorealistic,8k,sharp focus,natural lighting,cinematic';
+      const qualityTags = isHumanRequested
+        ? `${baseQuality},detailed skin,realistic hair`
+        : baseQuality;
 
-      const genericRealism = 'photorealistic,8k,hyper-detailed texture,film grain,natural lighting,cinematic composition,35mm,f/1.8.NO plastic,NO CGI';
-      const humanRealism = 'detailed skin,pores,imperfections,candid,sharp focus eyes';
-      const realismTriggers = isHumanRequested ? `${genericRealism},${humanRealism}` : genericRealism;
+      const genericRealism =
+        'photorealistic,8k,hyper-detailed texture,film grain,natural lighting,cinematic composition,35mm,f/1.8.NO plastic,NO CGI';
+      const humanRealism =
+        'detailed skin,pores,imperfections,candid,sharp focus eyes';
+      const realismTriggers = isHumanRequested
+        ? `${genericRealism},${humanRealism}`
+        : genericRealism;
 
-      const promptBody = refinedRes.prompt ? `${refinedRes.prompt}. Aesthetic: ${baseStylePrompt}.` : baseStylePrompt;
+      const promptBody = refinedRes.prompt
+        ? `${refinedRes.prompt}. Aesthetic: ${baseStylePrompt}.`
+        : baseStylePrompt;
 
       const userExplicitlyRequestsText = [
-        'texte', 'écris', 'ecris', 'ajoute le texte', 'avec le texte', 'inscription', 'slogan', 'message',
-        'write', 'add text', 'sans-serif', 'titre', 'prix', 'promo', 'promotion', 'offre', 'réduction',
-        'soldes', 'citation', 'hashtag',
+        'texte',
+        'écris',
+        'ecris',
+        'ajoute le texte',
+        'avec le texte',
+        'inscription',
+        'slogan',
+        'message',
+        'write',
+        'add text',
+        'sans-serif',
+        'titre',
+        'prix',
+        'promo',
+        'promotion',
+        'offre',
+        'réduction',
+        'soldes',
+        'citation',
+        'hashtag',
       ].some((kw) => (params.userQuery || '').toLowerCase().includes(kw));
 
       let cleanedUserQuery = params.userQuery || '';
       if (hasNoLogoRequest) {
-        noLogoKeywords.forEach(kw => {
+        noLogoKeywords.forEach((kw) => {
           cleanedUserQuery = cleanedUserQuery.replace(new RegExp(kw, 'gi'), '');
         });
         cleanedUserQuery = cleanedUserQuery.trim().replace(/^(et|and)\s+/i, '');
@@ -1396,13 +1458,17 @@ COMPOSITION ARCHITECTURE:
 
       let finalBuffer: Buffer;
       if (imageBuffer) {
-        this.logger.log(`[processOpenAiToolImageBackground] Strategy: OpenAI Image Edit`);
+        this.logger.log(
+          `[processOpenAiToolImageBackground] Strategy: OpenAI Image Edit`,
+        );
         finalBuffer = await this.callOpenAiImageEdit(imageBuffer, finalPrompt, {
           quality: 'medium',
           skipRefinement: true,
         });
       } else {
-        this.logger.log(`[processOpenAiToolImageBackground] Strategy: Text-to-Image`);
+        this.logger.log(
+          `[processOpenAiToolImageBackground] Strategy: Text-to-Image`,
+        );
         finalBuffer = await this.callOpenAiToolImage(finalPrompt, {
           quality: 'medium',
         });
@@ -1427,7 +1493,8 @@ COMPOSITION ARCHITECTURE:
           style: styleName,
           async: true,
           completedAt: new Date().toISOString(),
-          refinementDuration: ((Date.now() - startTime) / 1000).toFixed(1) + 's',
+          refinementDuration:
+            ((Date.now() - startTime) / 1000).toFixed(1) + 's',
           prompt: finalPrompt,
         },
       } as any);
@@ -1468,18 +1535,30 @@ COMPOSITION ARCHITECTURE:
       // Check for logo suppression (keyword detection or explicit flag)
       const userQueryLower = (params.userQuery || '').toLowerCase();
       const jobLower = (params.job || '').toLowerCase();
-      const noLogoKeywords = ['sans logo', 'pas de logo', 'no logo', 'no-logo', 'supprimer le logo', 'enlever le logo'];
-      const hasNoLogoRequest = params.noLogo === true ||
-        noLogoKeywords.some(kw => userQueryLower.includes(kw) || jobLower.includes(kw));
+      const noLogoKeywords = [
+        'sans logo',
+        'pas de logo',
+        'no logo',
+        'no-logo',
+        'supprimer le logo',
+        'enlever le logo',
+      ];
+      const hasNoLogoRequest =
+        params.noLogo === true ||
+        noLogoKeywords.some(
+          (kw) => userQueryLower.includes(kw) || jobLower.includes(kw),
+        );
 
       if (hasNoLogoRequest) {
-        this.logger.log(`[processFlyerBackground] Logo suppression detected for Gen: ${generationId}`);
+        this.logger.log(
+          `[processFlyerBackground] Logo suppression detected for Gen: ${generationId}`,
+        );
         logoUrl = null;
       }
 
       let cleanedUserQuery = params.userQuery || '';
       if (hasNoLogoRequest) {
-        noLogoKeywords.forEach(kw => {
+        noLogoKeywords.forEach((kw) => {
           cleanedUserQuery = cleanedUserQuery.replace(new RegExp(kw, 'gi'), '');
         });
         cleanedUserQuery = cleanedUserQuery.trim().replace(/^(et|and)\s+/i, '');
@@ -1497,21 +1576,60 @@ COMPOSITION ARCHITECTURE:
       );
 
       // 3. Get specific model description
-      const baseStylePrompt = this.getModelDescription(model, params.job, {
-        accentColor: brandingColor || refinedRes.accentColor,
-        lighting: refinedRes.lighting,
-        angle: refinedRes.angle,
-        background: refinedRes.background,
-        logoUrl,
-        noLogo: hasNoLogoRequest,
-      });
+      let baseStylePrompt = '';
+      let variantStructurePrompt = '';
+
+      // Try to find the variant in our new centralized categories
+      let foundVariant = null;
+      for (const cat of FLYER_CATEGORIES) {
+        for (const m of cat.models) {
+          for (const v of m.variants) {
+            if (v.label === model) {
+              foundVariant = v;
+              break;
+            }
+          }
+          if (foundVariant) break;
+        }
+        if (foundVariant) break;
+      }
+
+      if (foundVariant) {
+        this.logger.log(
+          `[processFlyerBackground] Found variant structure for: ${model}`,
+        );
+        variantStructurePrompt = this.getPromptFromVariantStructure(
+          foundVariant.structure,
+        );
+        // We still use getModelDescription for general mood/directives if needed,
+        // but the architecture instructions will be more precise.
+        baseStylePrompt = this.getModelDescription(model, params.job, {
+          accentColor: brandingColor || refinedRes.accentColor,
+          lighting: refinedRes.lighting,
+          angle: refinedRes.angle,
+          background: refinedRes.background,
+          logoUrl,
+          noLogo: hasNoLogoRequest,
+        });
+      } else {
+        baseStylePrompt = this.getModelDescription(model, params.job, {
+          accentColor: brandingColor || refinedRes.accentColor,
+          lighting: refinedRes.lighting,
+          angle: refinedRes.angle,
+          background: refinedRes.background,
+          logoUrl,
+          noLogo: hasNoLogoRequest,
+        });
+      }
 
       let brandingInfoStr = '';
       if (user) {
         const parts = [];
         if (user.name) parts.push(user.name);
-        if (user.professionalPhone) parts.push(`Tel: ${user.professionalPhone}`);
-        if (user.professionalAddress) parts.push(`Adresse: ${user.professionalAddress}`);
+        if (user.professionalPhone)
+          parts.push(`Tel: ${user.professionalPhone}`);
+        if (user.professionalAddress)
+          parts.push(`Adresse: ${user.professionalAddress}`);
         if (user.websiteUrl) parts.push(`Web: ${user.websiteUrl}`);
         brandingInfoStr = parts.join(' | ');
       }
@@ -1530,7 +1648,8 @@ COMPOSITION ARCHITECTURE:
              - COPYWRITING: HIGH IMPROVISATION is REQUIRED. Create professional marketing copy that SELLS. Make it sound like a real pro flyer.
              - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs. USE ONLY PROVIDED INFO OR IMPROVISED HOOKS.`;
 
-      const qualityTags = 'sharp authentic photography,crystal clear subject,tangible real objects,high resolution,professional minimal design';
+      const qualityTags =
+        'sharp authentic photography,crystal clear subject,tangible real objects,high resolution,professional minimal design';
       const subjectDirectives = cleanedUserQuery
         ? `VISUAL SUBJECT: Focus on "${cleanedUserQuery}" with sharp clarity. Only include REAL physical objects. NO ai-generated banners, NO synthetic graphics, NO fake digital overlays. Background must remain visible and well-defined.`
         : '';
@@ -1539,13 +1658,15 @@ COMPOSITION ARCHITECTURE:
         ? `TRANSFORM THIS IMAGE into a sharp professional photo with the highest realism for a ${model}.`
         : `GENERATE a sharp professional photo with the highest realism from scratch for a ${model}.`;
 
-      const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects, NO OpenAI logo, NO OpenAI branding, NO watermarks. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
+      const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. ${variantStructurePrompt ? `STRUCTURE: ${variantStructurePrompt}.` : ''} CONTENT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects, NO OpenAI logo, NO OpenAI branding, NO watermarks. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
 
       let finalBuffer: Buffer;
       const finalSize = '1024x1536';
 
       if (imageBuffer) {
-        this.logger.log(`[processFlyerBackground] Strategy: Image Edit with FLYER prompt`);
+        this.logger.log(
+          `[processFlyerBackground] Strategy: Image Edit with FLYER prompt`,
+        );
         finalBuffer = await this.callOpenAiImageEdit(imageBuffer, finalPrompt, {
           size: finalSize,
           quality: 'medium', // Faster for better responsiveness
@@ -1578,7 +1699,8 @@ COMPOSITION ARCHITECTURE:
           async: true,
           hasSourceImage: !!imageBuffer,
           completedAt: new Date().toISOString(),
-          refinementDuration: ((Date.now() - startTime) / 1000).toFixed(1) + 's',
+          refinementDuration:
+            ((Date.now() - startTime) / 1000).toFixed(1) + 's',
           prompt: finalPrompt, // Keep for debugging
         },
       } as any);
@@ -1652,8 +1774,6 @@ COMPOSITION ARCHITECTURE:
       throw error;
     }
   }
-
-
 
   async generateFreeImage(
     params: any,
@@ -2503,5 +2623,38 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       this.logger.error(`[detectChatRequestType] ${error.message}`);
       return hasFile ? 'analyze' : 'text';
     }
+  }
+
+  getFlyerCategories(): FlyerCategory[] {
+    return FLYER_CATEGORIES;
+  }
+
+  getPromptFromVariantStructure(structure: VariantStructure): string {
+    const {
+      subject,
+      subjectSize,
+      title,
+      banner,
+      particles,
+      decorations,
+      background,
+      colorFilter,
+      typography,
+      frame,
+    } = structure;
+
+    const parts = [
+      `COMPOSITION: Subject position is ${subject}, Subject size is ${subjectSize}.`,
+      `TITLE: Positioned ${title}.`,
+      `BANNER: ${banner !== 'none' ? banner : 'No banner'}.`,
+      `ATMOSPHERE: Particles effect is ${particles !== 'none' ? particles : 'none'}.`,
+      `DECORATIONS: ${decorations.length > 0 ? decorations.join(', ') : 'none'}.`,
+      `BACKGROUND: ${background}.`,
+      `FILTER: Applied ${colorFilter} filter effect.`,
+      `TYPOGRAPHY: Dominant style is ${typography}.`,
+      `FRAME: ${frame !== 'none' ? frame : 'No frame'}.`,
+    ];
+
+    return parts.join(' ');
   }
 }

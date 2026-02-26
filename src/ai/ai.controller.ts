@@ -43,6 +43,13 @@ export class AiController {
     return this.aiService.getAiUserWithProfile(req.user.sub);
   }
 
+  @ApiOperation({ summary: 'Récupérer les catégories de flyers' })
+  @Public() // Accessible even without full profile if needed, or @Roles(Role.AI_USER)
+  @Get('flyer-categories')
+  async getFlyerCategories() {
+    return this.aiService.getFlyerCategories();
+  }
+
   @Public()
   @Get('ping')
   async ping() {
