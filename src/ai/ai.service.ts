@@ -1643,6 +1643,7 @@ COMPOSITION ARCHITECTURE:
              - VISUAL HIERARCHY: High-impact Headline (Subject Name: "${user?.name || ''}") must be the focal point. Use professional kerning and leading.
              - CONTENT EVOCATION: Improvise professional French "accroches" (taglines) that feel like real marketing copy: "${params.userQuery || params.job || model}". Translate the vibe of the "${params.job || ''}" into a sophisticated design language.
                ${brandingInfoStr ? `MANDATORY ATTACHMENT: Include this verified contact detail block subtly but clearly: "${brandingInfoStr}".` : ''}
+             - LOGO POLICY: STRICTLY PROHIBITED. Do NOT include any logos, company emblems, or brand icons. The design must remain clean, focusing only on typography and photography.
              - REALISM PROTECTOR: NO generic AI banners, NO floating plastic ribbons, NO synthetic glows. Every light source must be physically plausible.
              - LANGUAGE: All visible messaging MUST be in ${flyerLanguage}.
              - COPYWRITING: High-level improvisation required. Create evocative, professional hooks that sound like a luxury agency produced them.`;
@@ -1657,7 +1658,7 @@ COMPOSITION ARCHITECTURE:
         ? `PROFESSIONAL GRADE RE-DESIGN: Re-imagine this image using elite graphic design principles for a ${model} context.`
         : `MASTERPIECE GENERATION: Craft a high-end, professional graphic design flyer from scratch for a ${model}.`;
 
-      const finalPrompt = `${modePrefix} ${subjectDirectives} ART DIRECTION: ${baseStylePrompt}. ${variantStructurePrompt ? `DESIGN ARCHITECTURE: ${variantStructurePrompt}.` : ''} CONCEPT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. THEME: Authentic Studio Environment, No "AI-looking" graphics. QUALITY: ${qualityTags}. NO FLOATING ICONS, NO WATERMARKS, NO OPENAI LOGOS. Displayed text must be in ${flyerLanguage}.`;
+      const finalPrompt = `${modePrefix} ${subjectDirectives} ART DIRECTION: ${baseStylePrompt}. ${variantStructurePrompt ? `DESIGN ARCHITECTURE: ${variantStructurePrompt}.` : ''} CONCEPT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. THEME: Authentic Studio Environment, No "AI-looking" graphics. QUALITY: ${qualityTags}. NO LOGOS, NO BRAND ICONS, NO WATERMARKS, NO OPENAI LOGOS. Displayed text must be in ${flyerLanguage}.`;
 
       let finalBuffer: Buffer;
       const finalSize = '1024x1536';
