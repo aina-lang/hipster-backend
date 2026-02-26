@@ -1176,8 +1176,13 @@ COMPOSITION ARCHITECTURE:
       );
       const startTime = Date.now();
 
+      const containsArchitecture = prompt.includes('COMPOSITION ARCHITECTURE') || prompt.includes('FLYER');
+      const textConstraint = containsArchitecture
+        ? 'NO watermark, NO unsolicited branding'
+        : 'NO text, NO watermark, NO logo, NO letters, NO numbers, NO words, NO captions, NO overlays';
+
       const realismEnhancedPrompt =
-        `${prompt} REALISM:Hyper-realistic-photo,natural-skin-texture,visible-pores,correct-anatomy,natural-light. NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays`
+        `${prompt} REALISM:Hyper-realistic-photo,natural-skin-texture,visible-pores,correct-anatomy,natural-light. ${textConstraint}`
           .replace(/\s+/g, ' ')
           .trim();
 
@@ -1340,33 +1345,92 @@ COMPOSITION ARCHITECTURE:
   /* --------------------- BACKGROUND FLYER PROCESSOR --------------------- */
   private async processFlyerBackground(
     generationId: number,
-    prompt: string,
+    params: any,
     userId: number,
     model: string,
     imageBuffer?: Buffer,
   ) {
     this.logger.log(
-      `[processFlyerBackground] Started for Gen: ${generationId}`,
+      `[processFlyerBackground] START for Gen: ${generationId}. (Background Refinement active)`,
     );
 
     try {
+      const startTime = Date.now();
+
+      // 1. Fetch user branding info
+      const user = await this.getAiUserWithProfile(userId);
+      const brandingColor = user?.brandingColor || null;
+      const logoUrl = user?.logoUrl || null;
+      const flyerLanguage = params.language || 'French';
+
+      // 2. Refine the query for visual richness (Moved to background)
+      const refinedRes = await this.refineQuery(
+        params.userQuery || params.job,
+        params.job,
+        model,
+        flyerLanguage,
+        brandingColor,
+      );
+
+      // 3. Get specific model description
+      const baseStylePrompt = this.getModelDescription(model, params.job, {
+        accentColor: brandingColor || refinedRes.accentColor,
+        lighting: refinedRes.lighting,
+        angle: refinedRes.angle,
+        background: refinedRes.background,
+        logoUrl,
+      });
+
+      let brandingInfoStr = '';
+      if (user) {
+        const parts = [];
+        if (user.name) parts.push(user.name);
+        if (user.professionalPhone) parts.push(`Tel: ${user.professionalPhone}`);
+        if (user.professionalAddress) parts.push(`Adresse: ${user.professionalAddress}`);
+        if (user.websiteUrl) parts.push(`Web: ${user.websiteUrl}`);
+        brandingInfoStr = parts.join(' | ');
+      }
+
+      const flyerTextRule = `ELITE GRAPHIC DESIGN RULES: 
+             - Visual Framing: COMPOSITION: Wide or Middle shot. Ensure the person's head and shoulders are fully visible with safe margin above the head.
+             - Style: "Premium Editorial" vibe. High-end, clean, professional structure.
+             - Typographic Dynamism: USE DYNAMIC COMPOSITION. You ARE ENCOURAGED to use tilted text (angles), rotated titles, and asymmetric placements to make it look like a real professional poster.
+             - SAFE AREA: Ensure all text and critical elements have a 15% margin from the edges.
+             - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif).
+             - Visual Hierarchy: Absolute clarity. HEADLINE MUST BE the person's name: "${user?.name || ''}". It should be high-impact, potentially rotated or angled for style.
+             - CONTENT POLICY: You MUST improvise catchy French "accroches" (hooks) based on the context: "${params.userQuery || params.job || model}". Use the job/activity ("${params.job || ''}") ONLY to improvise the style and hooks, NEVER as the main title and NEVER verbatim.
+               ${brandingInfoStr ? `MANDATORY: Include this professional info clearly: "${brandingInfoStr}".` : ''}
+             - PROHIBITION: NEVER use or display the word "Nom" (Name). NEVER use or display the literal word "Job" or "Profession".
+             - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
+             - COPYWRITING: HIGH IMPROVISATION is REQUIRED. Create professional marketing copy that SELLS. Make it sound like a real pro flyer.
+             - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs. USE ONLY PROVIDED INFO OR IMPROVISED HOOKS.`;
+
+      const qualityTags = 'sharp authentic photography,crystal clear subject,tangible real objects,high resolution,professional minimal design';
+      const subjectDirectives = params.userQuery
+        ? `VISUAL SUBJECT: Focus on "${params.userQuery}" with sharp clarity. Only include REAL physical objects. NO ai-generated banners, NO synthetic graphics, NO fake digital overlays. Background must remain visible and well-defined.`
+        : '';
+
+      const modePrefix = imageBuffer
+        ? `TRANSFORM THIS IMAGE into a sharp professional photo with the highest realism for a ${model}.`
+        : `GENERATE a sharp professional photo with the highest realism from scratch for a ${model}.`;
+
+      const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
+
       let finalBuffer: Buffer;
       const finalSize = '1024x1536';
 
       if (imageBuffer) {
-        this.logger.log(
-          `[processFlyerBackground] Strategy: Image Edit with FLYER prompt`,
-        );
-        finalBuffer = await this.callOpenAiImageEdit(imageBuffer, prompt, {
+        this.logger.log(`[processFlyerBackground] Strategy: Image Edit with FLYER prompt`);
+        finalBuffer = await this.callOpenAiImageEdit(imageBuffer, finalPrompt, {
           size: finalSize,
-          quality: 'high',
+          quality: 'medium', // Faster for better responsiveness
           skipRefinement: true,
         });
       } else {
         this.logger.log(`[processFlyerBackground] Strategy: Text-to-Image`);
-        finalBuffer = await this.callOpenAiToolImage(prompt, {
+        finalBuffer = await this.callOpenAiToolImage(finalPrompt, {
           size: finalSize,
-          quality: 'high',
+          quality: 'medium', // Faster
         });
       }
 
@@ -1389,6 +1453,8 @@ COMPOSITION ARCHITECTURE:
           async: true,
           hasSourceImage: !!imageBuffer,
           completedAt: new Date().toISOString(),
+          refinementDuration: ((Date.now() - startTime) / 1000).toFixed(1) + 's',
+          prompt: finalPrompt, // Keep for debugging
         },
       } as any);
 
