@@ -441,10 +441,10 @@ export class AiService implements OnModuleInit {
         'hashtag',
       ].some((kw) => uq.includes(kw));
       return textRequested
-        ? `Include ONLY the exact text explicitly requested: "${params.userQuery}". No other text or logo.`
-        : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays';
+        ? `Include ONLY the exact text explicitly requested: "${params.userQuery}". No other text, logo or watermark. NO OpenAI logo.`
+        : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding,NO OpenAI logo';
     })();
-    const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRulePipeline}`;
+    const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRulePipeline} NO OpenAI branding.`;
 
     let finalNegativePrompt = this.NEGATIVE_PROMPT;
     if (!isHumanRequested) {
@@ -528,7 +528,7 @@ export class AiService implements OnModuleInit {
         professionalContext = `The scene features a real ${options.primaryObject} in a natural ${jobStr} setting.`;
       }
 
-      return `EXTREME CLARITY. Authentic photography. SHARP FOCUS on subject. Cleanest possible composition. ${lighting}, ${angle}, realistic skin textures. ${bgDirectives} ${professionalContext} RULES: SHARP AND DISTINCT. NO synthetic objects, NO ai-generated banners, NO floating graphics. PURE PHOTOGRAPHY. All objects must be real, physical, and tangible. Single natural subject. COLOR: Natural colors with a ${accent} accent. High-end candid style. ZERO ai-artifacts, ZERO fake signage, ZERO digital banners. Ensure everything looks like a real-world photograph.`
+      return `EXTREME CLARITY. Authentic photography. SHARP FOCUS on subject. Cleanest possible composition. ${lighting}, ${angle}, realistic skin textures. ${bgDirectives} ${professionalContext} RULES: SHARP AND DISTINCT. NO synthetic objects, NO ai-generated banners, NO floating graphics. PURE PHOTOGRAPHY. All objects must be real, physical, and tangible. Single natural subject. COLOR: Natural colors with a ${accent} accent. High-end candid style. ZERO ai-artifacts, ZERO fake signage, ZERO digital banners, NO OpenAI logo, NO OpenAI branding, NO watermarks. Ensure everything looks like a real-world photograph.`
         .replace(/\s+/g, ' ')
         .trim();
     }
@@ -940,11 +940,14 @@ export class AiService implements OnModuleInit {
       VISUAL_ARCHITECTURES[model.toLowerCase()] ||
       VISUAL_ARCHITECTURES['minimal studio'];
 
-    let upperZoneRule = architecture.rules.upperZone;
+    let upperZoneRule = `UPPER: Empty. Fixed 10% top margin.`; // Default to empty
     if (options?.noLogo === true) {
       upperZoneRule = `UPPER: Empty. Fixed 10% top margin.`;
     } else if (options?.logoUrl) {
       upperZoneRule = `UPPER: Clear professional BRAND LOGO from user profile. Placed centered in upper margin. High-end visibility.`;
+    } else {
+      // If no logo provided, we strictly want Empty, even if architecture says otherwise
+      upperZoneRule = `UPPER: Empty. Fixed 10% top margin.`;
     }
 
     const architectureInstructions = `
@@ -960,7 +963,7 @@ COMPOSITION ARCHITECTURE:
 
     const logoDirectives = options?.noLogo === true ? 'NO logo. NO watermark.' : '';
 
-    return `Mood: ${mood}. Layout Priority: ${layout}. Structural Elements: ${structure}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. ${architectureInstructions} ${logoDirectives} RULES: All objects must be real, physical, and tangible. Professional graphic design overlays and banners are ENCOURAGED for text readability. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
+    return `Mood: ${mood}. Layout Priority: ${layout}. Structural Elements: ${structure}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. ${architectureInstructions} ${logoDirectives} RULES: NO OpenAI logo, NO OpenAI branding, NO watermarks. All objects must be real, physical, and tangible. Professional graphic design overlays and banners are ENCOURAGED for text readability. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -1183,8 +1186,8 @@ COMPOSITION ARCHITECTURE:
 
       const containsArchitecture = prompt.includes('COMPOSITION ARCHITECTURE') || prompt.includes('FLYER');
       const textConstraint = containsArchitecture
-        ? 'NO watermark, NO unsolicited branding'
-        : 'NO text, NO watermark, NO logo, NO letters, NO numbers, NO words, NO captions, NO overlays';
+        ? 'NO watermark, NO unsolicited branding, NO OpenAI logo, NO OpenAI branding'
+        : 'NO text, NO watermark, NO logo, NO letters, NO numbers, NO words, NO captions, NO overlays, NO unsolicited branding, NO OpenAI logo, NO OpenAI branding';
 
       const realismEnhancedPrompt =
         `${prompt} REALISM:Hyper-realistic-photo,natural-skin-texture,visible-pores,correct-anatomy,natural-light. ${textConstraint}`
@@ -1386,10 +1389,10 @@ COMPOSITION ARCHITECTURE:
       }
 
       const noTextRule = userExplicitlyRequestsText
-        ? `IMPORTANT: Include ONLY the exact text explicitly requested: "${cleanedUserQuery}". No other text, logo or watermark.`
-        : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding';
+        ? `IMPORTANT: Include ONLY the exact text explicitly requested: "${cleanedUserQuery}". No other text, logo or watermark. NO OpenAI logo.`
+        : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding,NO OpenAI logo';
 
-      const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${cleanedUserQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule}`;
+      const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${cleanedUserQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule} NO OpenAI branding.`;
 
       let finalBuffer: Buffer;
       if (imageBuffer) {
@@ -1536,7 +1539,7 @@ COMPOSITION ARCHITECTURE:
         ? `TRANSFORM THIS IMAGE into a sharp professional photo with the highest realism for a ${model}.`
         : `GENERATE a sharp professional photo with the highest realism from scratch for a ${model}.`;
 
-      const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
+      const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects, NO OpenAI logo, NO OpenAI branding, NO watermarks. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
 
       let finalBuffer: Buffer;
       const finalSize = '1024x1536';
