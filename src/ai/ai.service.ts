@@ -1645,6 +1645,7 @@ COMPOSITION ARCHITECTURE:
         isAsync: true,
         status: 'PENDING',
         prompt: params.userQuery || params.job || 'Génération en cours...',
+        seed: seed,
       };
     } catch (error) {
       this.logger.error(`[generateImage] FAILED: ${error.message}`);
@@ -1825,6 +1826,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       text: textRes.content || '',
       generationId: imageRes.id || imageRes.generationId,
       isAsync: !!imageRes.isAsync,
+      seed: seed,
     };
 
     this.logger.log(
@@ -1884,6 +1886,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
       isAsync: true,
       status: 'PENDING',
       prompt: initialPrompt,
+      seed: seed,
     };
   }
 
