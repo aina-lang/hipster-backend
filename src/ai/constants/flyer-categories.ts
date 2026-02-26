@@ -16,8 +16,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Noir & Or – Sobre & Raffiné',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'sparks',
@@ -31,8 +30,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Noir & Or – Festif & Brillant',
             structure: {
-              subject: 'center',
-              subjectSize: 'hero',
+              subject: 'center', subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'sparks',
@@ -46,8 +44,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Noir & Or – Corporate',
             structure: {
-              subject: 'bleed-right',
-              subjectSize: 'large',
+              subject: 'bleed-right', subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'none',
@@ -61,8 +58,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Noir & Or – Romantique',
             structure: {
-              subject: 'center',
-              subjectSize: 'large',
+              subject: 'center', subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'petals',
@@ -81,8 +77,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minuit Premium – Sobre',
             structure: {
-              subject: 'bleed-right',
-              subjectSize: 'large',
+              subject: 'bleed-right', subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'bokeh',
@@ -96,8 +91,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minuit Premium – Festif',
             structure: {
-              subject: 'center',
-              subjectSize: 'hero',
+              subject: 'center', subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'stars',
@@ -111,8 +105,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minuit Premium – Cérémoniel',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'sparks',
@@ -131,8 +124,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Élégance Sombre – Minimaliste',
             structure: {
-              subject: 'center',
-              subjectSize: 'large',
+              subject: 'center', subjectSize: 'large',
               title: 'top-left',
               banner: 'none',
               particles: 'none',
@@ -146,8 +138,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Élégance Sombre – Texturé',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'dust',
@@ -161,8 +152,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Élégance Sombre – Floral',
             structure: {
-              subject: 'center',
-              subjectSize: 'large',
+              subject: 'center', subjectSize: 'large',
               title: 'bottom-center',
               banner: 'badge-pill',
               particles: 'petals',
@@ -181,8 +171,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Néon Sombre – Rose & Noir',
             structure: {
-              subject: 'center',
-              subjectSize: 'hero',
+              subject: 'center', subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'sparks',
@@ -196,8 +185,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Néon Sombre – Vert & Noir',
             structure: {
-              subject: 'bleed-left',
-              subjectSize: 'large',
+              subject: 'bleed-left', subjectSize: 'large',
               title: 'center-right',
               banner: 'strip-right',
               particles: 'sparks',
@@ -211,8 +199,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Néon Sombre – Multi-Néon',
             structure: {
-              subject: 'center',
-              subjectSize: 'hero',
+              subject: 'center', subjectSize: 'hero',
               title: 'top-center',
               banner: 'badge-circle',
               particles: 'sparks',
@@ -226,8 +213,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Néon Sombre – Cyber Violet',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'sparks',
@@ -258,8 +244,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Blanc Pur – Ultra Minimaliste',
             structure: {
-              subject: 'center',
-              subjectSize: 'medium',
+              subject: 'center', subjectSize: 'medium',
               title: 'top-center',
               banner: 'none',
               particles: 'none',
@@ -273,8 +258,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Blanc Pur – Avec Accent Sombre',
             structure: {
-              subject: 'bleed-left',
-              subjectSize: 'large',
+              subject: 'bleed-left', subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'none',
@@ -288,8 +272,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Blanc Pur – Avec Accent Doré',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'sparks',
@@ -308,8 +291,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minimaliste Doux – Sobre',
             structure: {
-              subject: 'center',
-              subjectSize: 'medium',
+              subject: 'center', subjectSize: 'medium',
               title: 'top-left',
               banner: 'none',
               particles: 'none',
@@ -323,8 +305,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minimaliste Doux – Festif',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'confetti',
@@ -338,8 +319,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minimaliste Doux – Poétique',
             structure: {
-              subject: 'center',
-              subjectSize: 'medium',
+              subject: 'center', subjectSize: 'medium',
               title: 'bottom-center',
               banner: 'badge-pill',
               particles: 'petals',
@@ -358,8 +338,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Pastel Tendre – Anniversaire',
             structure: {
-              subject: 'center',
-              subjectSize: 'hero',
+              subject: 'center', subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'confetti',
@@ -373,14 +352,27 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Pastel Tendre – Baby Shower',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'bubbles',
               decorations: ['floral-ornament'],
               background: 'gradient-linear',
               colorFilter: 'none',
+              typography: 'script-hand',
+              frame: 'full-arch',
+            },
+          },
+          {
+            label: 'Pastel Tendre – Romantique',
+            structure: {
+              subject: 'center', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'badge-pill',
+              particles: 'petals',
+              decorations: ['floral-ornament', 'ribbon-seal'],
+              background: 'gradient-radial',
+              colorFilter: 'faded',
               typography: 'script-hand',
               frame: 'full-arch',
             },
@@ -405,8 +397,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Brutaliste – Brut & Cru',
             structure: {
-              subject: 'center',
-              subjectSize: 'hero',
+              subject: 'center', subjectSize: 'hero',
               title: 'top-left',
               banner: 'strip-left',
               particles: 'dust',
@@ -420,8 +411,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Brutaliste – Sombre',
             structure: {
-              subject: 'bleed-left',
-              subjectSize: 'large',
+              subject: 'bleed-left', subjectSize: 'large',
               title: 'center-right',
               banner: 'strip-right',
               particles: 'dust',
@@ -432,6 +422,20 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
               frame: 'thick-border',
             },
           },
+          {
+            label: 'Brutaliste – Néon Impact',
+            structure: {
+              subject: 'center', subjectSize: 'hero',
+              title: 'bottom-center',
+              banner: 'strip-top',
+              particles: 'sparks',
+              decorations: ['neon-glow-outline'],
+              background: 'solid-dark',
+              colorFilter: 'neon-wash',
+              typography: 'oversized-display',
+              frame: 'none',
+            },
+          },
         ],
       },
       {
@@ -440,8 +444,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Rouge Total – Plein',
             structure: {
-              subject: 'center',
-              subjectSize: 'hero',
+              subject: 'center', subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'none',
@@ -455,8 +458,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Rouge Total – Dégradé',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-top',
               particles: 'sparks',
@@ -465,6 +467,20 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
               colorFilter: 'vivid',
               typography: 'oversized-display',
               frame: 'none',
+            },
+          },
+          {
+            label: 'Rouge Total – Brutal',
+            structure: {
+              subject: 'bleed-right', subjectSize: 'large',
+              title: 'center-left',
+              banner: 'strip-left',
+              particles: 'dust',
+              decorations: ['scanlines'],
+              background: 'solid-color',
+              colorFilter: 'bw',
+              typography: 'condensed-stack',
+              frame: 'thick-border',
             },
           },
         ],
@@ -487,8 +503,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Confettis Pop – Enfant',
             structure: {
-              subject: 'center',
-              subjectSize: 'hero',
+              subject: 'center', subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'confetti',
@@ -502,8 +517,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Confettis Pop – Luxe',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'sparks',
@@ -514,6 +528,20 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
               frame: 'double-border',
             },
           },
+          {
+            label: 'Confettis Pop – Disco',
+            structure: {
+              subject: 'center', subjectSize: 'hero',
+              title: 'bottom-center',
+              banner: 'badge-circle',
+              particles: 'sparks',
+              decorations: ['foil-texture', 'halftone-overlay'],
+              background: 'solid-dark',
+              colorFilter: 'vivid',
+              typography: 'condensed-stack',
+              frame: 'none',
+            },
+          },
         ],
       },
       {
@@ -522,8 +550,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Tropicale – Plage & Soleil',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'bokeh',
@@ -537,8 +564,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Tropicale – Néon',
             structure: {
-              subject: 'center',
-              subjectSize: 'hero',
+              subject: 'center', subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'sparks',
@@ -547,6 +573,20 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
               colorFilter: 'neon-wash',
               typography: 'oversized-display',
               frame: 'none',
+            },
+          },
+          {
+            label: 'Tropicale – Jungle',
+            structure: {
+              subject: 'center', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'badge-pill',
+              particles: 'petals',
+              decorations: ['floral-ornament'],
+              background: 'gradient-linear',
+              colorFilter: 'none',
+              typography: 'script-hand',
+              frame: 'full-arch',
             },
           },
         ],
@@ -569,8 +609,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Corporate – Sobre & Professionnel',
             structure: {
-              subject: 'bleed-right',
-              subjectSize: 'large',
+              subject: 'bleed-right', subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'none',
@@ -584,8 +623,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Corporate – Moderne & Aéré',
             structure: {
-              subject: 'center',
-              subjectSize: 'medium',
+              subject: 'center', subjectSize: 'medium',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'none',
@@ -596,6 +634,20 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
               frame: 'thin-border',
             },
           },
+          {
+            label: 'Corporate – Institutionnel',
+            structure: {
+              subject: 'none', subjectSize: 'none',
+              title: 'center',
+              banner: 'strip-top',
+              particles: 'none',
+              decorations: ['corner-marks', 'ribbon-seal'],
+              background: 'solid-light',
+              colorFilter: 'none',
+              typography: 'serif-editorial',
+              frame: 'double-border',
+            },
+          },
         ],
       },
       {
@@ -604,8 +656,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Business – Marine & Or',
             structure: {
-              subject: 'bleed-left',
-              subjectSize: 'large',
+              subject: 'bleed-left', subjectSize: 'large',
               title: 'center-right',
               banner: 'strip-right',
               particles: 'none',
@@ -616,6 +667,34 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
               frame: 'double-border',
             },
           },
+          {
+            label: 'Business – Bleu & Blanc',
+            structure: {
+              subject: 'bleed-right', subjectSize: 'large',
+              title: 'center-left',
+              banner: 'strip-top',
+              particles: 'none',
+              decorations: ['geometric-border', 'corner-marks'],
+              background: 'solid-light',
+              colorFilter: 'none',
+              typography: 'sans-bold',
+              frame: 'corner-brackets',
+            },
+          },
+          {
+            label: 'Business – Gris & Noir',
+            structure: {
+              subject: 'center-bottom', subjectSize: 'large',
+              title: 'top-left',
+              banner: 'strip-bottom',
+              particles: 'none',
+              decorations: ['corner-marks'],
+              background: 'solid-dark',
+              colorFilter: 'bw',
+              typography: 'condensed-stack',
+              frame: 'thin-border',
+            },
+          },
         ],
       },
       {
@@ -624,8 +703,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Art Déco – Or & Noir',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
+              subject: 'center-bottom', subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'geometric-shapes',
@@ -634,6 +712,128 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
               colorFilter: 'duotone',
               typography: 'serif-editorial',
               frame: 'double-border',
+            },
+          },
+          {
+            label: 'Art Déco – Blanc & Or',
+            structure: {
+              subject: 'center', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'strip-bottom',
+              particles: 'geometric-shapes',
+              decorations: ['foil-texture', 'geometric-border'],
+              background: 'solid-light',
+              colorFilter: 'none',
+              typography: 'serif-editorial',
+              frame: 'double-border',
+            },
+          },
+          {
+            label: 'Art Déco – Coloré',
+            structure: {
+              subject: 'center-bottom', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'strip-top',
+              particles: 'geometric-shapes',
+              decorations: ['geometric-border', 'diagonal-stripe'],
+              background: 'gradient-linear',
+              colorFilter: 'vivid',
+              typography: 'serif-editorial',
+              frame: 'thin-border',
+            },
+          },
+        ],
+      },
+      {
+        label: 'Vintage Années 50',
+        variants: [
+          {
+            label: 'Vintage 50s – Américain',
+            structure: {
+              subject: 'center-bottom', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'badge-circle',
+              particles: 'stars',
+              decorations: ['halftone-overlay', 'diagonal-stripe'],
+              background: 'solid-color',
+              colorFilter: 'sepia',
+              typography: 'condensed-stack',
+              frame: 'thick-border',
+            },
+          },
+          {
+            label: 'Vintage 50s – Français',
+            structure: {
+              subject: 'center', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'strip-bottom',
+              particles: 'none',
+              decorations: ['floral-ornament', 'corner-marks'],
+              background: 'texture-paper',
+              colorFilter: 'sepia',
+              typography: 'serif-editorial',
+              frame: 'thin-border',
+            },
+          },
+          {
+            label: 'Vintage 50s – Publicitaire',
+            structure: {
+              subject: 'bleed-right', subjectSize: 'large',
+              title: 'center-left',
+              banner: 'strip-left',
+              particles: 'stars',
+              decorations: ['halftone-overlay'],
+              background: 'solid-color',
+              colorFilter: 'duotone',
+              typography: 'condensed-stack',
+              frame: 'thick-border',
+            },
+          },
+        ],
+      },
+      {
+        label: 'Rétro Années 70',
+        variants: [
+          {
+            label: 'Rétro 70s – Disco',
+            structure: {
+              subject: 'center', subjectSize: 'hero',
+              title: 'top-center',
+              banner: 'strip-top',
+              particles: 'sparks',
+              decorations: ['foil-texture', 'halftone-overlay'],
+              background: 'solid-dark',
+              colorFilter: 'vivid',
+              typography: 'condensed-stack',
+              frame: 'none',
+            },
+          },
+          {
+            label: 'Rétro 70s – Funk',
+            structure: {
+              subject: 'center', subjectSize: 'hero',
+              title: 'bottom-center',
+              banner: 'badge-circle',
+              particles: 'geometric-shapes',
+              decorations: ['halftone-overlay'],
+              background: 'gradient-mesh',
+              colorFilter: 'vivid',
+              typography: 'oversized-display',
+              frame: 'none',
+            },
+          },
+          {
+            label: 'Rétro 70s – Chaud & Ocre',
+            structure: {
+              subject: 'center-bottom', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'strip-bottom',
+              particles: 'none',
+              decorations: ['halftone-overlay', 'wave-bottom'],
+              background: 'solid-color',
+              colorFilter: 'sepia',
+              typography: 'serif-editorial',
+              frame: 'thick-border',
             },
           },
         ],
@@ -656,8 +856,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Double Exposition – Sombre',
             structure: {
-              subject: 'full-bleed',
-              subjectSize: 'hero',
+              subject: 'full-bleed', subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'bokeh',
@@ -671,8 +870,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Double Exposition – Colorée',
             structure: {
-              subject: 'full-bleed',
-              subjectSize: 'hero',
+              subject: 'full-bleed', subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'bokeh',
@@ -683,44 +881,342 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
               frame: 'none',
             },
           },
-        ],
-      },
-      {
-        label: 'Photo Argentique',
-        variants: [
           {
-            label: 'Argentique – Noir & Blanc',
+            label: 'Double Exposition – Lumineuse',
             structure: {
-              subject: 'full-bleed',
-              subjectSize: 'hero',
-              title: 'bottom-left',
-              banner: 'strip-bottom',
-              particles: 'noise-grain',
+              subject: 'full-bleed', subjectSize: 'hero',
+              title: 'bottom-center',
+              banner: 'badge-pill',
+              particles: 'bokeh',
               decorations: ['none'],
-              background: 'photo-overlay',
-              colorFilter: 'bw',
-              typography: 'minimal-label',
+              background: 'solid-light',
+              colorFilter: 'color-pop',
+              typography: 'sans-bold',
               frame: 'none',
             },
           },
         ],
       },
       {
-        label: 'Marbre & Pierre',
+        label: 'Verre Givré',
         variants: [
           {
-            label: 'Marbre – Blanc & Or',
+            label: 'Verre Givré – Clair',
             structure: {
-              subject: 'center-bottom',
-              subjectSize: 'large',
-              title: 'top-center',
-              banner: 'strip-bottom',
-              particles: 'sparks',
-              decorations: ['foil-texture', 'corner-marks'],
-              background: 'texture-marble',
-              colorFilter: 'none',
+              subject: 'center', subjectSize: 'large',
+              title: 'bottom-center',
+              banner: 'badge-pill',
+              particles: 'bokeh',
+              decorations: ['none'],
+              background: 'gradient-radial',
+              colorFilter: 'faded',
+              typography: 'sans-bold',
+              frame: 'thin-border',
+            },
+          },
+          {
+            label: 'Verre Givré – Sombre',
+            structure: {
+              subject: 'center', subjectSize: 'large',
+              title: 'bottom-center',
+              banner: 'badge-pill',
+              particles: 'bokeh',
+              decorations: ['none'],
+              background: 'gradient-mesh',
+              colorFilter: 'matte',
+              typography: 'sans-bold',
+              frame: 'thin-border',
+            },
+          },
+          {
+            label: 'Verre Givré – Luxe',
+            structure: {
+              subject: 'bleed-right', subjectSize: 'large',
+              title: 'center-left',
+              banner: 'strip-top',
+              particles: 'bokeh',
+              decorations: ['foil-texture'],
+              background: 'gradient-linear',
+              colorFilter: 'matte',
               typography: 'serif-editorial',
               frame: 'double-border',
+            },
+          },
+          {
+            label: 'Verre Givré – Coloré',
+            structure: {
+              subject: 'center-bottom', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'badge-pill',
+              particles: 'bokeh',
+              decorations: ['neon-glow-outline'],
+              background: 'gradient-mesh',
+              colorFilter: 'vivid',
+              typography: 'oversized-display',
+              frame: 'none',
+            },
+          },
+        ],
+      },
+      {
+        label: 'Illustration Plate',
+        variants: [
+          {
+            label: 'Illustration – Personnages',
+            structure: {
+              subject: 'center', subjectSize: 'hero',
+              title: 'bottom-center',
+              banner: 'badge-pill',
+              particles: 'none',
+              decorations: ['none'],
+              background: 'solid-color',
+              colorFilter: 'none',
+              typography: 'sans-bold',
+              frame: 'thin-border',
+            },
+          },
+          {
+            label: 'Illustration – Urbain',
+            structure: {
+              subject: 'center-bottom', subjectSize: 'large',
+              title: 'top-left',
+              banner: 'strip-top',
+              particles: 'dust',
+              decorations: ['white-city-silhouette'],
+              background: 'gradient-linear',
+              colorFilter: 'duotone',
+              typography: 'oversized-display',
+              frame: 'none',
+            },
+          },
+          {
+            label: 'Illustration – Abstrait',
+            structure: {
+              subject: 'none', subjectSize: 'none',
+              title: 'center',
+              banner: 'strip-bottom',
+              particles: 'geometric-shapes',
+              decorations: ['ink-splatter'],
+              background: 'gradient-mesh',
+              colorFilter: 'none',
+              typography: 'sans-bold',
+              frame: 'none',
+            },
+          },
+          {
+            label: 'Illustration – Nature',
+            structure: {
+              subject: 'center-bottom', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'badge-pill',
+              particles: 'petals',
+              decorations: ['floral-ornament', 'wave-bottom'],
+              background: 'gradient-radial',
+              colorFilter: 'none',
+              typography: 'script-hand',
+              frame: 'full-arch',
+            },
+          },
+        ],
+      },
+      {
+        label: 'Forme Géométrique',
+        variants: [
+          {
+            label: 'Géométrique – Sobre',
+            structure: {
+              subject: 'center', subjectSize: 'medium',
+              title: 'top-left',
+              banner: 'none',
+              particles: 'geometric-shapes',
+              decorations: ['geometric-border', 'corner-marks'],
+              background: 'solid-light',
+              colorFilter: 'none',
+              typography: 'sans-bold',
+              frame: 'thin-border',
+            },
+          },
+          {
+            label: 'Géométrique – Coloré',
+            structure: {
+              subject: 'center', subjectSize: 'hero',
+              title: 'bottom-center',
+              banner: 'badge-pill',
+              particles: 'geometric-shapes',
+              decorations: ['diagonal-stripe'],
+              background: 'gradient-mesh',
+              colorFilter: 'vivid',
+              typography: 'condensed-stack',
+              frame: 'none',
+            },
+          },
+          {
+            label: 'Géométrique – Sombre',
+            structure: {
+              subject: 'bleed-right', subjectSize: 'large',
+              title: 'center-left',
+              banner: 'strip-top',
+              particles: 'geometric-shapes',
+              decorations: ['grid-overlay'],
+              background: 'solid-dark',
+              colorFilter: 'duotone',
+              typography: 'mono-tech',
+              frame: 'corner-brackets',
+            },
+          },
+        ],
+      },
+      {
+        label: 'Collage Découpé',
+        variants: [
+          {
+            label: 'Collage – Magazine',
+            structure: {
+              subject: 'bleed-left', subjectSize: 'large',
+              title: 'center-right',
+              banner: 'strip-top',
+              particles: 'none',
+              decorations: ['torn-edge', 'corner-marks'],
+              background: 'solid-light',
+              colorFilter: 'none',
+              typography: 'mixed-scale',
+              frame: 'none',
+            },
+          },
+          {
+            label: 'Collage – Vintage',
+            structure: {
+              subject: 'center', subjectSize: 'large',
+              title: 'top-left',
+              banner: 'tag-corner',
+              particles: 'dust',
+              decorations: ['torn-edge', 'noise-grain'],
+              background: 'texture-paper',
+              colorFilter: 'sepia',
+              typography: 'mixed-scale',
+              frame: 'torn-edge',
+            },
+          },
+          {
+            label: 'Collage – Moderne',
+            structure: {
+              subject: 'bleed-right', subjectSize: 'large',
+              title: 'center-left',
+              banner: 'strip-top',
+              particles: 'geometric-shapes',
+              decorations: ['diagonal-stripe'],
+              background: 'gradient-mesh',
+              colorFilter: 'vivid',
+              typography: 'mixed-scale',
+              frame: 'diagonal-split',
+            },
+          },
+        ],
+      },
+      {
+        label: 'Éclaboussure Abstraite',
+        variants: [
+          {
+            label: 'Abstraite – Aquarelle',
+            structure: {
+              subject: 'center', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'badge-pill',
+              particles: 'bokeh',
+              decorations: ['ink-splatter'],
+              background: 'texture-paper',
+              colorFilter: 'faded',
+              typography: 'script-hand',
+              frame: 'none',
+            },
+          },
+          {
+            label: 'Abstraite – Peinture',
+            structure: {
+              subject: 'full-bleed', subjectSize: 'hero',
+              title: 'bottom-center',
+              banner: 'strip-bottom',
+              particles: 'bokeh',
+              decorations: ['ink-splatter'],
+              background: 'gradient-mesh',
+              colorFilter: 'vivid',
+              typography: 'oversized-display',
+              frame: 'none',
+            },
+          },
+          {
+            label: 'Abstraite – Ink & Encre',
+            structure: {
+              subject: 'center', subjectSize: 'hero',
+              title: 'bottom-center',
+              banner: 'strip-top',
+              particles: 'dust',
+              decorations: ['ink-splatter', 'noise-grain'],
+              background: 'solid-light',
+              colorFilter: 'bw',
+              typography: 'serif-editorial',
+              frame: 'none',
+            },
+          },
+          {
+            label: 'Abstraite – Numérique',
+            structure: {
+              subject: 'none', subjectSize: 'none',
+              title: 'center',
+              banner: 'strip-bottom',
+              particles: 'geometric-shapes',
+              decorations: ['glitch-lines'],
+              background: 'gradient-mesh',
+              colorFilter: 'neon-wash',
+              typography: 'mono-tech',
+              frame: 'none',
+            },
+          },
+        ],
+      },
+      {
+        label: 'Relief Doux',
+        variants: [
+          {
+            label: 'Relief – Clair & Léger',
+            structure: {
+              subject: 'center', subjectSize: 'medium',
+              title: 'top-center',
+              banner: 'badge-pill',
+              particles: 'none',
+              decorations: ['corner-marks'],
+              background: 'solid-light',
+              colorFilter: 'none',
+              typography: 'minimal-label',
+              frame: 'thin-border',
+            },
+          },
+          {
+            label: 'Relief – Sombre & Profond',
+            structure: {
+              subject: 'center', subjectSize: 'large',
+              title: 'bottom-center',
+              banner: 'strip-top',
+              particles: 'none',
+              decorations: ['none'],
+              background: 'solid-dark',
+              colorFilter: 'matte',
+              typography: 'sans-bold',
+              frame: 'thin-border',
+            },
+          },
+          {
+            label: 'Relief – Coloré',
+            structure: {
+              subject: 'center-bottom', subjectSize: 'large',
+              title: 'top-center',
+              banner: 'badge-pill',
+              particles: 'bokeh',
+              decorations: ['none'],
+              background: 'gradient-radial',
+              colorFilter: 'vivid',
+              typography: 'sans-bold',
+              frame: 'none',
             },
           },
         ],

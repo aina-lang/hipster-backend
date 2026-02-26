@@ -1634,31 +1634,30 @@ COMPOSITION ARCHITECTURE:
         brandingInfoStr = parts.join(' | ');
       }
 
-      const flyerTextRule = `ELITE GRAPHIC DESIGN RULES: 
-             - Visual Framing: COMPOSITION: Wide or Middle shot. Ensure the person's head and shoulders are fully visible with safe margin above the head.
-             - Style: "Premium Editorial" vibe. High-end, clean, professional structure.
-             - Typographic Dynamism: USE DYNAMIC COMPOSITION. You ARE ENCOURAGED to use tilted text (angles), rotated titles, and asymmetric placements to make it look like a real professional poster.
-             - SAFE AREA: Ensure all text and critical elements have a 15% margin from the edges.
-             - Typography: ELEGANT & PREMIUM. Use professional designer fonts (Modern Serif, Swiss Minimalist, or Luxury Sans-serif).
-             - Visual Hierarchy: Absolute clarity. HEADLINE MUST BE the person's name: "${user?.name || ''}". It should be high-impact, potentially rotated or angled for style.
-             - CONTENT POLICY: You MUST improvise catchy French "accroches" (hooks) based on the context: "${params.userQuery || params.job || model}". Use the job/activity ("${params.job || ''}") ONLY to improvise the style and hooks, NEVER as the main title and NEVER verbatim.
-               ${brandingInfoStr ? `MANDATORY: Include this professional info clearly: "${brandingInfoStr}".` : ''}
-             - PROHIBITION: NEVER use or display the word "Nom" (Name). NEVER use or display the literal word "Job" or "Profession".
-             - LANGUAGE RULE: All text displayed on the image MUST be in ${flyerLanguage}.
-             - COPYWRITING: HIGH IMPROVISATION is REQUIRED. Create professional marketing copy that SELLS. Make it sound like a real pro flyer.
-             - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs. USE ONLY PROVIDED INFO OR IMPROVISED HOOKS.`;
+      const flyerTextRule = `ELITE GRAPHIC DESIGN & ART DIRECTION RULES: 
+             - AESTHETIC: High-end "Vogue" or "Apple-style" minimalism. Absolute focus on REAL-WORLD materials and authentic lighting.
+             - COMPOSITION: Masterful use of Negative Space. The design must feel intentional and balanced. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
+             - TYPOGRAPHIC MASTERY: Typography is NOT just text; it's a design element. USE DYNAMIC HIERARCHY. You are ENCOURAGED to use sophisticated layouts: tilted/angled text, asymmetric balance, and overlapping elements that suggest a human designer's touch.
+             - SAFE AREA & MARGINS: Maintain a strict 15% professional inner margin. No text should touch the edges.
+             - FONTS: Emulate high-end foundry typefaces (Modern Serifs, Geometric Sans, or Editorial Scripts). 
+             - VISUAL HIERARCHY: High-impact Headline (Subject Name: "${user?.name || ''}") must be the focal point. Use professional kerning and leading.
+             - CONTENT EVOCATION: Improvise professional French "accroches" (taglines) that feel like real marketing copy: "${params.userQuery || params.job || model}". Translate the vibe of the "${params.job || ''}" into a sophisticated design language.
+               ${brandingInfoStr ? `MANDATORY ATTACHMENT: Include this verified contact detail block subtly but clearly: "${brandingInfoStr}".` : ''}
+             - REALISM PROTECTOR: NO generic AI banners, NO floating plastic ribbons, NO synthetic glows. Every light source must be physically plausible.
+             - LANGUAGE: All visible messaging MUST be in ${flyerLanguage}.
+             - COPYWRITING: High-level improvisation required. Create evocative, professional hooks that sound like a luxury agency produced them.`;
 
       const qualityTags =
-        'sharp authentic photography,crystal clear subject,tangible real objects,high resolution,professional minimal design';
+        'authentic photography, ultra-sharp details, raw texture, 8k resolution, cinematic studio lighting, professional color grading, realistic fabric/skin/metal textures';
       const subjectDirectives = cleanedUserQuery
-        ? `VISUAL SUBJECT: Focus on "${cleanedUserQuery}" with sharp clarity. Only include REAL physical objects. NO ai-generated banners, NO synthetic graphics, NO fake digital overlays. Background must remain visible and well-defined.`
+        ? `FOCAL SUBJECT: Focus on "${cleanedUserQuery}" with absolute photographic clarity. Subject MUST be a real-world entity. No digital artifacts.`
         : '';
 
       const modePrefix = imageBuffer
-        ? `TRANSFORM THIS IMAGE into a sharp professional photo with the highest realism for a ${model}.`
-        : `GENERATE a sharp professional photo with the highest realism from scratch for a ${model}.`;
+        ? `PROFESSIONAL GRADE RE-DESIGN: Re-imagine this image using elite graphic design principles for a ${model} context.`
+        : `MASTERPIECE GENERATION: Craft a high-end, professional graphic design flyer from scratch for a ${model}.`;
 
-      const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. ${variantStructurePrompt ? `STRUCTURE: ${variantStructurePrompt}.` : ''} CONTENT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects, NO OpenAI logo, NO OpenAI branding, NO watermarks. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
+      const finalPrompt = `${modePrefix} ${subjectDirectives} ART DIRECTION: ${baseStylePrompt}. ${variantStructurePrompt ? `DESIGN ARCHITECTURE: ${variantStructurePrompt}.` : ''} CONCEPT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. THEME: Authentic Studio Environment, No "AI-looking" graphics. QUALITY: ${qualityTags}. NO FLOATING ICONS, NO WATERMARKS, NO OPENAI LOGOS. Displayed text must be in ${flyerLanguage}.`;
 
       let finalBuffer: Buffer;
       const finalSize = '1024x1536';
@@ -2644,17 +2643,25 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     } = structure;
 
     const parts = [
-      `COMPOSITION: Subject position is ${subject}, Subject size is ${subjectSize}.`,
-      `TITLE: Positioned ${title}.`,
-      `BANNER: ${banner !== 'none' ? banner : 'No banner'}.`,
-      `ATMOSPHERE: Particles effect is ${particles !== 'none' ? particles : 'none'}.`,
-      `DECORATIONS: ${decorations.length > 0 ? decorations.join(', ') : 'none'}.`,
-      `BACKGROUND: ${background}.`,
-      `FILTER: Applied ${colorFilter} filter effect.`,
-      `TYPOGRAPHY: Dominant style is ${typography}.`,
-      `FRAME: ${frame !== 'none' ? frame : 'No frame'}.`,
+      `ARTISTIC COMPOSITION: The visual focal point (subject) is ${subjectSize !== 'none' ? `sized as "${subjectSize}" and ` : ''}precisely ${subject.replace('-', ' ')} within the frame to balance the negative space.`,
+      `TYPOGRAPHIC ARCHITECTURE: Primary title is strategically integrated at the ${title.replace('-', ' ')} location.`,
+      banner !== 'none'
+        ? `VISUAL ELEMENTS: Features a professional ${banner.replace('-', ' ')} graphic element designed for high-impact messaging.`
+        : '',
+      particles !== 'none'
+        ? `ATMOSPHERIC LAYERING: Subtle organic ${particles.replace('-', ' ')} textures are layered throughout to add depth and professional polish.`
+        : '',
+      decorations.length > 0
+        ? `GRAPHIC ENHANCEMENT: Embellished with designer-grade ${decorations.map((d) => d.replace('-', ' ')).join(', ')} details for a premium look.`
+        : '',
+      `SCENE TEXTURE: The backdrop utilizes a high-end ${background.replace('-', ' ')} aesthetic, avoiding generic AI surfaces in favor of realistic photographic or studio textures.`,
+      `COLOR GRADING: A sophisticated ${colorFilter.replace('-', ' ')} LUT (Look-Up Table) is applied to ensure color harmony and a professional "editor" look.`,
+      `FONT DIRECTION: Typography follows a strict ${typography.replace('-', ' ')} hierarchy, evoking the feel of high-end editorial magazines or brand campaigns.`,
+      frame !== 'none'
+        ? `STRUCTURAL BORDER: Encased in a refined ${frame.replace('-', ' ')} to reinforce the document's professional structure.`
+        : '',
     ];
 
-    return parts.join(' ');
+    return parts.filter((p) => !!p).join(' ');
   }
 }
