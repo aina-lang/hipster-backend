@@ -490,6 +490,7 @@ export class AiService implements OnModuleInit {
       background?: string;
       primaryObject?: string;
       logoUrl?: string;
+      noLogo?: boolean;
     },
   ): string {
     const jobStr = job || 'professional';
@@ -940,7 +941,9 @@ export class AiService implements OnModuleInit {
       VISUAL_ARCHITECTURES['minimal studio'];
 
     let upperZoneRule = architecture.rules.upperZone;
-    if (options?.logoUrl) {
+    if (options?.noLogo === true) {
+      upperZoneRule = `UPPER: Empty. Fixed 10% top margin.`;
+    } else if (options?.logoUrl) {
       upperZoneRule = `UPPER: Clear professional BRAND LOGO from user profile. Placed centered in upper margin. High-end visibility.`;
     }
 
@@ -955,7 +958,9 @@ COMPOSITION ARCHITECTURE:
 - ${architecture.rules.constraints}
 `.trim();
 
-    return `Mood: ${mood}. Layout Priority: ${layout}. Structural Elements: ${structure}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. ${architectureInstructions} RULES: All objects must be real, physical, and tangible. Professional graphic design overlays and banners are ENCOURAGED for text readability. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
+    const logoDirectives = options?.noLogo === true ? 'NO logo. NO watermark.' : '';
+
+    return `Mood: ${mood}. Layout Priority: ${layout}. Structural Elements: ${structure}. Specific Visuals: ${specificDirectives}. Job Context: ${jobStr}. ${lighting}. ${bg}. Accent Color: ${accent}. EXTREME CLARITY. Authentic photography style. SHARP FOCUS. ${architectureInstructions} ${logoDirectives} RULES: All objects must be real, physical, and tangible. Professional graphic design overlays and banners are ENCOURAGED for text readability. High-end production value. Zero AI artifacts. Everything must look like a high-budget professional production for a "${model}" flyer.`
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -1337,6 +1342,7 @@ COMPOSITION ARCHITECTURE:
         background: refinedRes.background,
         primaryObject: refinedRes.primaryObject,
         logoUrl,
+        noLogo: hasNoLogoRequest,
       });
 
       // 4. Refine subject if job is present
@@ -1371,11 +1377,19 @@ COMPOSITION ARCHITECTURE:
         'soldes', 'citation', 'hashtag',
       ].some((kw) => (params.userQuery || '').toLowerCase().includes(kw));
 
+      let cleanedUserQuery = params.userQuery || '';
+      if (hasNoLogoRequest) {
+        noLogoKeywords.forEach(kw => {
+          cleanedUserQuery = cleanedUserQuery.replace(new RegExp(kw, 'gi'), '');
+        });
+        cleanedUserQuery = cleanedUserQuery.trim().replace(/^(et|and)\s+/i, '');
+      }
+
       const noTextRule = userExplicitlyRequestsText
-        ? `IMPORTANT: Include ONLY the exact text explicitly requested: "${params.userQuery}". No other text, logo or watermark.`
+        ? `IMPORTANT: Include ONLY the exact text explicitly requested: "${cleanedUserQuery}". No other text, logo or watermark.`
         : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding';
 
-      const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${params.userQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule}`;
+      const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${cleanedUserQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule}`;
 
       let finalBuffer: Buffer;
       if (imageBuffer) {
@@ -1460,11 +1474,19 @@ COMPOSITION ARCHITECTURE:
         logoUrl = null;
       }
 
+      let cleanedUserQuery = params.userQuery || '';
+      if (hasNoLogoRequest) {
+        noLogoKeywords.forEach(kw => {
+          cleanedUserQuery = cleanedUserQuery.replace(new RegExp(kw, 'gi'), '');
+        });
+        cleanedUserQuery = cleanedUserQuery.trim().replace(/^(et|and)\s+/i, '');
+      }
+
       const flyerLanguage = params.language || 'French';
 
       // 2. Refine the query for visual richness (Moved to background)
       const refinedRes = await this.refineQuery(
-        params.userQuery || params.job,
+        cleanedUserQuery || params.job,
         params.job,
         model,
         flyerLanguage,
@@ -1478,6 +1500,7 @@ COMPOSITION ARCHITECTURE:
         angle: refinedRes.angle,
         background: refinedRes.background,
         logoUrl,
+        noLogo: hasNoLogoRequest,
       });
 
       let brandingInfoStr = '';
@@ -1505,15 +1528,15 @@ COMPOSITION ARCHITECTURE:
              - ZERO HALLUCINATION: NO fake phone numbers, NO fake URLs. USE ONLY PROVIDED INFO OR IMPROVISED HOOKS.`;
 
       const qualityTags = 'sharp authentic photography,crystal clear subject,tangible real objects,high resolution,professional minimal design';
-      const subjectDirectives = params.userQuery
-        ? `VISUAL SUBJECT: Focus on "${params.userQuery}" with sharp clarity. Only include REAL physical objects. NO ai-generated banners, NO synthetic graphics, NO fake digital overlays. Background must remain visible and well-defined.`
+      const subjectDirectives = cleanedUserQuery
+        ? `VISUAL SUBJECT: Focus on "${cleanedUserQuery}" with sharp clarity. Only include REAL physical objects. NO ai-generated banners, NO synthetic graphics, NO fake digital overlays. Background must remain visible and well-defined.`
         : '';
 
       const modePrefix = imageBuffer
         ? `TRANSFORM THIS IMAGE into a sharp professional photo with the highest realism for a ${model}.`
         : `GENERATE a sharp professional photo with the highest realism from scratch for a ${model}.`;
 
-      const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || params.userQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
+      const finalPrompt = `${modePrefix} ${subjectDirectives} STYLE: ${baseStylePrompt}. CONTENT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. DESIGN_STYLE: High-end photography, No artificial graphics. QUALITY: ${qualityTags}. NO AI BANNERS, NO floating objects. TECHNICAL NOTE: Ensure every element in the scene is a real-world object photographed naturally. Displayed text must be in ${flyerLanguage}.`;
 
       let finalBuffer: Buffer;
       const finalSize = '1024x1536';
