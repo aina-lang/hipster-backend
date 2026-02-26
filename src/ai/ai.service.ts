@@ -236,6 +236,7 @@ export class AiService implements OnModuleInit {
     job: string,
     styleName: string,
     language: string = 'French',
+    brandingColor?: string,
   ): Promise<{
     prompt: string;
     isPostureChange: boolean;
@@ -252,12 +253,16 @@ export class AiService implements OnModuleInit {
         .replace(/\\/g, '\\\\')
         .replace(/"/g, '\\"');
 
+      const brandingInstruction = brandingColor
+        ? `IMPORTANT: The user brand color is "${brandingColor}". Use this as the primary accent color for the scene and its atmospheric lighting.`
+        : '';
+
       const resp = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: `Image prompt engineer.Job="${escapedJob}" Style="${escapedStyle}".Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"deep red|burnt orange|electric purple|muted gold|royal blue|emerald green","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"Location or environment (e.g. Poitiers street, Madagascar beach, minimalist forest, plain wall)","primaryObject":"iconic object for job"}IMPORTANT: If the user provided a specific prompt, keep ALL their descriptive details. ALL scenes MUST be strictly grounded in the "${escapedJob}" professional environment. Inclusion of people: Include them ONLY if the user specifically mentions a person, professional, or human action. Otherwise, focus on professional tools, equipment, and atmosphere of the ${escapedJob} world. DO NOT invent any text, names, or brands. ONLY include text or branding if specifically provided in the user prompt. If text is included, it MUST be in ${language}. PHYSICAL COHERENCE LAW: If the user specifies a count (e.g. "4-string bass", "6-string guitar", "4 wheels"), the generated scene MUST strictly match that count. The number of mechanically linked parts (strings=tuning pegs, wheels=axles, fingers=keys) MUST always be consistent and physically accurate. NEVER generate an instrument with a mismatched string/peg count. NEVER generate a vehicle with the wrong number of wheels.`,
+            content: `Image prompt engineer.Job="${escapedJob}" Style="${escapedStyle}". ${brandingInstruction} Return JSON only:{"prompt":"English scene description","isPostureChange":false,"accentColor":"${brandingColor || 'color name'}","lighting":"side dramatic|top cinematic|rim silhouette|split contrast|soft diffused","angle":"low|high|profile|three-quarter|front","background":"Location or environment","primaryObject":"iconic object for job"}`,
           },
           { role: 'user', content: query || `Scene for ${job}` },
         ],
@@ -270,7 +275,7 @@ export class AiService implements OnModuleInit {
       return {
         prompt: data.prompt || query,
         isPostureChange: !!data.isPostureChange,
-        accentColor: data.accentColor,
+        accentColor: data.accentColor || brandingColor,
         lighting: data.lighting,
         angle: data.angle,
         background: data.background,
@@ -278,7 +283,7 @@ export class AiService implements OnModuleInit {
       };
     } catch (e) {
       this.logger.error(`[refineQuery] ${e.message}`);
-      return { prompt: query, isPostureChange: false };
+      return { prompt: query, isPostureChange: false, accentColor: brandingColor };
     }
   }
 
@@ -484,6 +489,7 @@ export class AiService implements OnModuleInit {
       angle?: string;
       background?: string;
       primaryObject?: string;
+      logoUrl?: string;
     },
   ): string {
     const jobStr = job || 'professional';
@@ -923,15 +929,20 @@ export class AiService implements OnModuleInit {
           'Giant, experimental typography that overlaps with the subject, creating a 3D depth effect.';
         layout =
           'TEXT DOMINANT: Giant letters occupying 50% of the frame, subject integrated into the letters.';
-      } else if (modelLower.includes('split')) {
-        layout =
-          'VERTICAL SPLIT: Frame cut in half down the middle. One side for high-impact photo, one side for text backup.';
-      } else
+      } else {
         specificDirectives =
           'Experimental grid-work, bold use of white space, and innovative graphic architecture.';
+      }
     }
 
-    const architecture = VISUAL_ARCHITECTURES[model.toLowerCase()] || VISUAL_ARCHITECTURES['minimal studio'];
+    const architecture =
+      VISUAL_ARCHITECTURES[model.toLowerCase()] ||
+      VISUAL_ARCHITECTURES['minimal studio'];
+
+    let upperZoneRule = architecture.rules.upperZone;
+    if (options?.logoUrl) {
+      upperZoneRule = `UPPER: Clear professional BRAND LOGO from user profile. Placed centered in upper margin. High-end visibility.`;
+    }
 
     const architectureInstructions = `
 COMPOSITION ARCHITECTURE:
@@ -940,7 +951,7 @@ COMPOSITION ARCHITECTURE:
 - ${architecture.rules.title}
 - ${architecture.rules.subtitle}
 - ${architecture.rules.infoBlock}
-- ${architecture.rules.upperZone}
+- ${upperZoneRule}
 - ${architecture.rules.constraints}
 `.trim();
 
@@ -1407,7 +1418,15 @@ COMPOSITION ARCHITECTURE:
       `[generateImage] START - User: ${userId}, Style: ${style}, hasFile: ${!!file}`,
     );
     try {
-      const styleInfo = this.getStyleDescription(style, params.job);
+      // 1. Fetch user branding info
+      const user = await this.getAiUserWithProfile(userId);
+      const brandingColor = user?.brandingColor || null;
+      const logoUrl = user?.logoUrl || null;
+
+      const styleInfo = this.getStyleDescription(style, params.job, {
+        accentColor: brandingColor || undefined,
+        logoUrl: logoUrl || undefined,
+      });
       const styleName = style;
       const baseStylePrompt = styleInfo;
 
@@ -1420,6 +1439,7 @@ COMPOSITION ARCHITECTURE:
         params.job,
         styleName,
         params.language || 'French',
+        brandingColor,
       );
       const refinedQuery = refinedRes.prompt;
 
@@ -1909,7 +1929,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     ].some((kw) => userQueryLower.includes(kw));
 
     const brandingColor =
-      user?.brandingColor && wantsBrandingColor && !avoidsBrandingColor
+      user?.brandingColor && !avoidsBrandingColor
         ? user.brandingColor
         : null;
 
