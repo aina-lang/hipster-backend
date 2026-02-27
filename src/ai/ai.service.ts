@@ -346,7 +346,7 @@ export class AiService implements OnModuleInit {
 - YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
   1. MAIN TITLE: "${mainWord}"
      - POSITION: LEFT margin, oriented VERTICALLY (90° rotation).
-     - STYLE: Ultra-bold uppercase, filling 70-85% of total height.
+     - STYLE: EXTRA BOLD high-impact font (like "Anton", "Bebas Neue", or "Impact"), filling 70-85% of total height.
      - COLOR: Use precisely ${colorPrincipale}.
   2. SCRIPT SUBTITLE: "${scriptPhrase}"
      - POSITION: CENTER-BOTTOM area.
@@ -356,7 +356,8 @@ export class AiService implements OnModuleInit {
      - POSITION: ABSOLUTE BOTTOM, centered.
      - STYLE: Small-caps, wide tracking, minimalist.
      - COLOR: White or light grey.
-- ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.`;
+- ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.
+- TYPOGRAPHY MANDATE: Use aggressive, heavy, and thick lettering for the Main Title. No thin fonts allowed.`;
 
     // QUALITY & TECHNICAL SPECIFICATIONS
     const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
@@ -424,7 +425,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
 <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
   <defs>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Allura&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Anton&family=Bebas+Neue&family=Allura&display=swap');
     </style>
     
     <!-- DROP SHADOW FILTER for title -->
@@ -473,7 +474,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
     <text
       x="0"
       y="0"
-      font-family="Montserrat, sans-serif"
+      font-family="'Anton', 'Bebas Neue', 'Impact', 'Montserrat', sans-serif"
       font-weight="900"
       font-size="240"
       fill="none"
@@ -492,7 +493,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
     <text
       x="0"
       y="0"
-      font-family="Montserrat, sans-serif"
+      font-family="'Anton', 'Bebas Neue', 'Impact', 'Montserrat', sans-serif"
       font-weight="900"
       font-size="240"
       fill="${accentColor}"
@@ -574,7 +575,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
       font-size="26"
       fill="rgba(0,0,0,0.4)"
       text-anchor="middle"
-      font-weight="700"
+      font-weight="900"
       letter-spacing="5"
       font-variant="small-caps"
     >
@@ -590,7 +591,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
       fill="white"
       text-anchor="middle"
       opacity="1.0"
-      font-weight="700"
+      font-weight="900"
       letter-spacing="5"
       font-variant="small-caps"
       filter="url(#glowScript)"
@@ -728,9 +729,10 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
   1. MAIN TITLE: "${userQuery || modelName}"
   2. SUPPORTING TEXT: "${job}"
 - Style for ${isFashion ? 'Fashion' : isLuxury ? 'Luxury' : 'Business'}:
-  ${isFashion ? 'Bold sans-serif headlines (Montserrat Heavy 700+), positioned with graphic confidence. Tilted text 5-15°.' : isLuxury ? 'Fine serif or modern sans, elegant and refined. Centered or perfectly justified.' : 'Professional sans-serif, clean hierarchy.'}
+  ${isFashion ? 'EXTRA BOLD high-impact sans-serif (use "Anton", "Bebas Neue", or "Impact"), positioned with graphic confidence. Tilted text 5-15°.' : isLuxury ? 'Fine serif or modern sans, elegant and refined. Centered or perfectly justified.' : 'Professional EXTRA BOLD sans-serif (Anton/Bebas Neue style), clean hierarchy.'}
 - Color: ${brandingColor || 'High contrast against background'}.
-- ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.`;
+- ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.
+- TYPOGRAPHY MANDATE: Typography must be HEAVY and IMPACTFUL. High design sophistication.`;
 
     // SUBJECT DESCRIPTION ENHANCEMENT (from user job)
     const subjectEnhancer = (() => {
