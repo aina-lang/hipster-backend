@@ -358,7 +358,7 @@ export class AiService implements OnModuleInit {
      - STYLE: Elegant cursive/script font, signature-like.
      - DYNAMIC TILT: AGGRESSIVELY tilted UPWARD to the RIGHT (+20° to +25°) for a high-energy dynamic vibe.
      - SIZE: PROMINENT and large relative to other elements (85px equivalent).
-     - COLOR: Bright White (#FFFFFF).
+     - COLOR: ${colorSecondaire}.
   3. INFO BAR: "${infoLine}"
      - POSITION: ABSOLUTE BOTTOM, centered.
      - STYLE: Small-caps, wide tracking, minimalist.
