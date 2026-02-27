@@ -359,8 +359,9 @@ export class AiService implements OnModuleInit {
      - POSITION: ABSOLUTE BOTTOM, centered.
      - STYLE: Small-caps, wide tracking, minimalist.
      - COLOR: White or light grey.
-- ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.
-- TYPOGRAPHY MANDATE: Use aggressive, heavy, and thick lettering for the Main Title in ALL CAPS. The vertical title must read from top to bottom. No thin fonts allowed.`;
+- ALL TEXT MUST BE LEGIBLE AND INTEGRATED DIRECTLY INTO THE IMAGE.
+- TYPOGRAPHY MANDATE: Use aggressive, heavy, and thick lettering for the Main Title in ALL CAPS. The vertical title must read from top to bottom.
+- ABSOLUTELY NO background boxes, NO border around letters, NO frames, NO containers. Characters must be totally transparent against the image. No thin fonts allowed.`;
 
     // QUALITY & TECHNICAL SPECIFICATIONS
     const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
@@ -473,26 +474,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
   
   <!-- ===== VERTICAL TITLE (90° clockwise rotation, top-to-bottom) ===== -->
   <g transform="translate(70, 100) rotate(90)">
-    <!-- STROKE LAYER (outline effect) -->
-    <text
-      x="0"
-      y="0"
-      font-family="'Anton', 'Bebas Neue', 'Impact', 'Montserrat', sans-serif"
-      font-weight="900"
-      font-size="240"
-      fill="none"
-      stroke="${accentColor}"
-      stroke-width="8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      letter-spacing="10"
-      text-anchor="start"
-      opacity="1.0"
-    >
-      ${mainWord.toUpperCase()}
-    </text>
-    
-    <!-- FILL LAYER (main text with glow) -->
+    <!-- CLEAN MAIN TITLE (Transparent, no border, no stroke) -->
     <text
       x="0"
       y="0"
@@ -503,25 +485,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
       stroke="none"
       letter-spacing="10"
       text-anchor="start"
-      opacity="0.95"
-      filter="url(#glowTitle)"
-    >
-      ${mainWord.toUpperCase()}
-    </text>
-    
-    <!-- SECONDARY OUTLINE (inner outline for dimension) -->
-    <text
-      x="0"
-      y="0"
-      font-family="'Anton', 'Bebas Neue', 'Impact', 'Montserrat', sans-serif"
-      font-weight="900"
-      font-size="240"
-      fill="none"
-      stroke="rgba(255,255,255,0.2)"
-      stroke-width="2"
-      letter-spacing="10"
-      text-anchor="start"
-      opacity="0.8"
+      opacity="1.0"
     >
       ${mainWord.toUpperCase()}
     </text>
@@ -529,18 +493,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
   
   <!-- ===== SCRIPT SUBTITLE (center-bottom) ===== -->
   <g opacity="0.92">
-    <!-- GLOW BACKGROUND for script -->
-    <rect
-      x="${width * 0.15}"
-      y="${height - 210}"
-      width="${width * 0.7}"
-      height="80"
-      fill="rgba(0,0,0,0.15)"
-      rx="10"
-      filter="url(#glowScript)"
-    />
-    
-    <!-- SCRIPT TEXT with drop shadow -->
+    <!-- SCRIPT TEXT with drop shadow (No background box) -->
     <text
       x="${width / 2}"
       y="${height - 150}"
