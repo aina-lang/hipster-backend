@@ -334,19 +334,19 @@ export class AiService implements OnModuleInit {
 
     // BACKGROUND TREATMENT
     const backgroundTreatment = `BACKGROUND TREATMENT:
-- Dark, moody, atmospheric background (charcoal #2a2a2a to near black #1a1a1a)
-- Professional studio environment with subtle texture or atmospheric depth
-- Gradient overlay: Black to transparent (dark top/right, lighter toward portrait)
-- NO visible text, NO watermarks, NO logos, NO floating elements
-- Background provides emotional context (luxury, sophistication, mystery)
-- Depth: Bokeh or atmospheric blur creating dimensional layering`;
+- ATMOSPHERE: Sophisticated smoky (fumée) and ethereal background.
+- GRADIENT TRANSITION: Masterful organic transition from DEEP DARK (edge) to ${colorPrincipale} (mid-zone) to a subtle, non-opaque WHITE GLOW (behind/around the subject).
+- Professional studio environment with physical volumetric depth.
+- NO visible text, NO watermarks, NO logos, NO floating elements.
+- Depth: Rich atmospheric blur creating dimensional layering. The white is light/smoky, NOT flat white.`;
 
     // TEXT RENDERING GUIDE - MANDATORY DALL-E EXECUTION
     const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
 - YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
-  1. MAIN TITLE: "${mainWord}"
-     - POSITION: LEFT margin, oriented VERTICALLY (90° rotation).
+  1. MAIN TITLE: "${mainWord.toUpperCase()}"
+     - POSITION: LEFT margin, oriented VERTICALLY (90° rotation, reading TOP-TO-BOTTOM from above).
      - STYLE: EXTRA BOLD high-impact font (like "Anton", "Bebas Neue", or "Impact"), filling 70-85% of total height.
+     - CASE: MANDATORY UPPERCASE.
      - COLOR: Use precisely ${colorPrincipale}.
   2. SCRIPT SUBTITLE: "${scriptPhrase}"
      - POSITION: CENTER-BOTTOM area.
@@ -357,7 +357,7 @@ export class AiService implements OnModuleInit {
      - STYLE: Small-caps, wide tracking, minimalist.
      - COLOR: White or light grey.
 - ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.
-- TYPOGRAPHY MANDATE: Use aggressive, heavy, and thick lettering for the Main Title. No thin fonts allowed.`;
+- TYPOGRAPHY MANDATE: Use aggressive, heavy, and thick lettering for the Main Title in ALL CAPS. The vertical title must read from top to bottom. No thin fonts allowed.`;
 
     // QUALITY & TECHNICAL SPECIFICATIONS
     const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
@@ -468,8 +468,8 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
   <!-- Background: solid transparent (will overlay on image) -->
   <rect width="${width}" height="${height}" fill="transparent"/>
   
-  <!-- ===== VERTICAL TITLE (90° rotation) ===== -->
-  <g transform="translate(70, ${height * 0.48}) rotate(-90)">
+  <!-- ===== VERTICAL TITLE (90° rotation, top-to-bottom) ===== -->
+  <g transform="translate(70, ${height * 0.48}) rotate(90)">
     <!-- STROKE LAYER (outline effect) -->
     <text
       x="0"
@@ -510,7 +510,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
     <text
       x="0"
       y="0"
-      font-family="Montserrat, sans-serif"
+      font-family="'Anton', 'Bebas Neue', 'Impact', 'Montserrat', sans-serif"
       font-weight="900"
       font-size="240"
       fill="none"
@@ -706,12 +706,24 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
 
     // CINEMATOGRAPHY & COMPOSITION RULES (from example flyers analysis)
     const cinematicDirectives = isFashion
-      ? `CINEMATOGRAPHY: Ultra-wide depth of field (f/1.8 equivalent), cinematic motion blur in background, editorial fashion lighting (side-key light, rim light), color grading with lifted blacks. COMPOSITION: Subject positioned off-center following rule of thirds, dynamic diagonal flow, negative space breathing.\nREFERENCES: Vogue USA, Harper's Bazaar, analogous to editorial spreads.`
+      ? `CINEMATOGRAPHY: Ultra-wide depth of field (f/1.8 equivalent), cinematic motion blur in background, editorial fashion lighting (side-key light, rim light), color grading with lifted blacks. 
+         ATMOSPHERE: Smoky (fumée) and ethereal. 
+         BACKGROUND GRADIENT: Transition from deep dark tones to ${brandingColor || 'vibrant accent'} to a soft, smoky white atmospheric glow.
+         COMPOSITION: Subject positioned off-center following rule of thirds, dynamic diagonal flow, negative space breathing.\nREFERENCES: Vogue USA, Harper's Bazaar, analogous to editorial spreads.`
       : isLuxury
-        ? `CINEMATOGRAPHY: Studio-controlled volumetric lights, high contrast dramatic lighting, absolute technical perfection. COMPOSITION: Center-weighted symmetry with subtle asymmetric elements, minimal negative space, maximum focus on detail quality.\nREFERENCES: Luxury magazine editorials, museum-grade presentation.`
+        ? `CINEMATOGRAPHY: Studio-controlled volumetric lights, high contrast dramatic lighting, absolute technical perfection. 
+           ATMOSPHERE: Premium smoky depth. 
+           BACKGROUND GRADIENT: Transition from obsidian dark to ${brandingColor || 'luxurious color'} to a subtle, non-opaque white backlight.
+           COMPOSITION: Center-weighted symmetry with subtle asymmetric elements, minimal negative space, maximum focus on detail quality.\nREFERENCES: Luxury magazine editorials, museum-grade presentation.`
         : isBusiness
-          ? `CINEMATOGRAPHY: Professional headshot lighting (3-point setup), sharp focus, minimal background bokeh, color-graded to luxury magazine standard. COMPOSITION: Confident centered presence, strategic negative space, typography-integrated layout.\nREFERENCES: Numéro magazine, luxury lifestyle publications.`
-          : `CINEMATOGRAPHY: Professional studio lighting, sharp focus, cinematic depth, color grading applied. COMPOSITION: Subject as focal point, balanced negative space, intentional layout design.\nREFERENCES: High-end brand campaigns.`;
+          ? `CINEMATOGRAPHY: Professional headshot lighting (3-point setup), sharp focus, minimal background bokeh, color-graded to luxury magazine standard. 
+             ATMOSPHERE: Clean smoky professional depth.
+             BACKGROUND GRADIENT: Dark to ${brandingColor || 'corporate color'} to white/light grey transition.
+             COMPOSITION: Confident centered presence, strategic negative space, typography-integrated layout.\nREFERENCES: Numéro magazine, luxury lifestyle publications.`
+          : `CINEMATOGRAPHY: Professional studio lighting, sharp focus, cinematic depth, color grading applied. 
+             ATMOSPHERE: Atmospheric smoky transition.
+             BACKGROUND GRADIENT: Dark to ${brandingColor || 'primary color'} to white smoky glow.
+             COMPOSITION: Subject as focal point, balanced negative space, intentional layout design.\nREFERENCES: High-end brand campaigns.`;
 
     // ARCHITECTURE-BASED RULES
     const architectureRules = architecture
@@ -726,13 +738,13 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
     // TYPOGRAPHY MASTER - MANDATORY TEXT RENDERING
     const typographyMastery = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
 - YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
-  1. MAIN TITLE: "${userQuery || modelName}"
+  1. MAIN TITLE: "${(userQuery || modelName).toUpperCase()}"
   2. SUPPORTING TEXT: "${job}"
 - Style for ${isFashion ? 'Fashion' : isLuxury ? 'Luxury' : 'Business'}:
   ${isFashion ? 'EXTRA BOLD high-impact sans-serif (use "Anton", "Bebas Neue", or "Impact"), positioned with graphic confidence. Tilted text 5-15°.' : isLuxury ? 'Fine serif or modern sans, elegant and refined. Centered or perfectly justified.' : 'Professional EXTRA BOLD sans-serif (Anton/Bebas Neue style), clean hierarchy.'}
 - Color: ${brandingColor || 'High contrast against background'}.
 - ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.
-- TYPOGRAPHY MANDATE: Typography must be HEAVY and IMPACTFUL. High design sophistication.`;
+- TYPOGRAPHY MANDATE: Typography must be HEAVY and IMPACTFUL. MANDATORY ALL CAPS for the main title. High design sophistication.`;
 
     // SUBJECT DESCRIPTION ENHANCEMENT (from user job)
     const subjectEnhancer = (() => {
