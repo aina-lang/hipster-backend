@@ -317,13 +317,19 @@ export class AiService implements OnModuleInit {
     colorPrincipale: string = '#17A2B8',
     colorSecondaire: string = '#FFFFFF',
   ): string {
+    const posturalVariations = [
+      'Identical 3/4 profile pose from reference. Back/shoulders oriented to the RIGHT, body facing mostly FRONT but turned slightly towards the LEFT. Head perfectly vertical. Zero extra tilt.',
+      'Reference pose with a near-imperceptible shoulder dip on the left side. Back/shoulders on the RIGHT, body turned slightly more front. Head remains natural and upright.',
+      'Reference pose with a micro-shift: body turned marginally more towards the title (LEFT). Back/shoulders stay oriented to the RIGHT. Professional, upright presence.',
+    ];
+    const selectedPosture =
+      posturalVariations[Math.floor(Math.random() * posturalVariations.length)];
     // VOGUE/NUMÉRO MAGAZINE REFERENCES
     const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
-    // PORTRAIT SUBJECT - CRITICAL FOR THIS LAYOUT
     const subjectCinematography = `CINEMATOGRAPHY - SUBJECT:
 - Subject Position: Slightly offset to the RIGHT, following the rule of thirds.
-- POSTURE: Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. Only a MINIMAL and elegant tilt (not extreme). The face/head must remain natural and upright. Precise, serious gaze directed slightly off-camera.
+- POSTURE: ${selectedPosture} Precise, serious gaze directed slightly off-camera.
 - Rim Light: Dramatic separation (bright cyan/blue edge on one side profile) using ${colorPrincipale}.`;
 
     // BACKGROUND TREATMENT
@@ -332,7 +338,7 @@ export class AiService implements OnModuleInit {
 - PLACEMENT: FULL_FRAME.
 - GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT.
 - COLOR DOMINANCE: Ensure the Primary Color (${colorPrincipale}) is dominant on the LEFT side of the frame.
-- TRANSITION: Sophisticated OPAQUE and SOLID background transitioning from dark to ${colorPrincipale} to a subtle white glow.
+- TRANSITION: Sophisticated OPAQUE and SOLID background transitioning from dark to ${colorPrincipale} to ${colorSecondaire}.
 - PROHIBITIONS: STRICTLY FORBID: ["motion_blur", "speed_trails", "busy_patterns"].
 - Depth: Sharp textures on solid surfaces. The white is crisp and OPAQUE. NO fog, NO smoke.`;
 
@@ -432,6 +438,13 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
     userQuery: string,
     brandingColor?: string,
   ): string {
+    const posturalVariations = [
+      'Identical 3/4 profile pose from reference. Back/shoulders oriented to the RIGHT, body facing mostly FRONT but turned slightly towards the LEFT. Head perfectly vertical. Zero extra tilt.',
+      'Reference pose with a near-imperceptible shoulder dip on the left side. Back/shoulders on the RIGHT, body turned slightly more front. Head remains natural and upright.',
+      'Reference pose with a micro-shift: body turned marginally more towards the title (LEFT). Back/shoulders stay oriented to the RIGHT. Professional, upright presence.',
+    ];
+    const selectedPosture =
+      posturalVariations[Math.floor(Math.random() * posturalVariations.length)];
     // Map model types to photography styles (referenced from example flyers)
     const fashionModels = ['FASHION', 'STYLE', 'VOGUE', 'COLLECTION', 'MODE'];
     const luxuryModels = ['LUXURY', 'PREMIUM', 'CLASSIQUE', 'ELEGANT'];
@@ -454,6 +467,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
     // CINEMATOGRAPHY & COMPOSITION RULES (from example flyers analysis)
     const cinematicDirectives = isFashion
       ? `CINEMATOGRAPHY: Ultra-wide depth of field (f/1.8 equivalent), minimal background blur, editorial fashion lighting. 
+         POSTURE: ${selectedPosture}
          ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK, OPAQUE and SOLID. 
          GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} dominant on the LEFT side.
          BACKGROUND TRANSITION: Dark to ${brandingColor || 'vibrant accent'} to a soft, OPAQUE white glow.
@@ -461,6 +475,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
          COMPOSITION: Subject positioned off-center following rule of thirds, dynamic diagonal flow, negative space breathing.\nREFERENCES: Vogue USA, Harper's Bazaar.`
       : isLuxury
         ? `CINEMATOGRAPHY: Studio-controlled volumetric lights, high contrast dramatic lighting. 
+           POSTURE: ${selectedPosture}
            ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK, Premium OPAQUE depth. 
            GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Luxurious Color'} dominant on the LEFT.
            BACKGROUND TRANSITION: Obsidian dark to ${brandingColor || 'luxurious color'} to a subtle, OPAQUE white backlight.
@@ -468,17 +483,19 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
            COMPOSITION: Center-weighted symmetry, minimal negative space, maximum focus on detail quality.`
         : isBusiness
           ? `CINEMATOGRAPHY: Professional headshot lighting, sharp focus. 
+             POSTURE: ${selectedPosture}
              ATMOSPHERE: MOODY_GRADIENT, OPAQUE professional depth.
              GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Corporate Color'} on the LEFT.
              BACKGROUND TRANSITION: Dark to ${brandingColor || 'corporate color'} to opaque white/light grey.
              PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
              COMPOSITION: Confident centered presence, strategic negative space, typography-integrated layout.`
           : `CINEMATOGRAPHY: Professional studio lighting, sharp focus, cinematic depth. 
+             POSTURE: ${selectedPosture}
              ATMOSPHERE: MOODY_GRADIENT, OPAQUE atmospheric transition.
              GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} on the LEFT.
              BACKGROUND TRANSITION: Dark to ${brandingColor || 'primary color'} to opaque white glow.
              PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
-            - COMPOSITION: Subject positioned slightly to the RIGHT in a subtle 3/4 profile (body turned mostly TOWARDS THE FRONT, shoulders slightly right). MINIMAL and elegant posture tilt. Face/head must remain natural and upright. Strategic negative space, typography-integrated layout.`;
+             COMPOSITION: Subject positioned slightly to the RIGHT in a professional pose. Face/head must remain natural and upright. Strategic negative space, typography-integrated layout.`;
 
     // ARCHITECTURE-BASED RULES
     const architectureRules = architecture
@@ -1843,7 +1860,16 @@ COMPOSITION ARCHITECTURE:
       }
 
       // 3. Build ELITE PROMPT using architecture rules
-      // Check if this is a FASHION_VERTICAL type that requires special text parameter handling
+      const posturalVariations = [
+        'Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. Minimal and elegant posture tilt. Natural, upright head.',
+        'Refined editorial stance. Shoulders shifted minimally to the right, body facing almost directly FRONT. No extreme tilt. Face/head remains perfectly vertical and natural.',
+        'Slightly dynamic front-facing pose. Back oriented marginally to the right, providing a professional depth, with a very subtle and natural shoulder dip.',
+      ];
+      const selectedPosture =
+        posturalVariations[
+          Math.floor(Math.random() * posturalVariations.length)
+        ];
+
       let magazineStyleDirective: string;
       const isFashionVertical =
         architecture?.layoutType === 'TYPE_FASHION_VERTICAL';
@@ -2000,7 +2026,7 @@ COMPOSITION ARCHITECTURE:
 
       const flyerTextRule = `ELITE GRAPHIC DESIGN & ART DIRECTION RULES: 
              - AESTHETIC: High-end "Vogue" or "Apple-style" minimalism. Absolute focus on REAL-WORLD materials and authentic lighting.
-             - COMPOSITION: Masterful use of Negative Space. Subject positioned slightly to the RIGHT in a subtle 3/4 profile (body turned mostly TOWARDS THE FRONT, shoulders slightly right). MINIMAL and elegant posture tilt. Face/head must remain natural and upright. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
+             - COMPOSITION: Masterful use of Negative Space. Subject positioned slightly to the RIGHT in a professional pose (${selectedPosture}). Face/head must remain natural and upright. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
              - TYPOGRAPHIC MASTERY: Typography is NOT just text; it's a design element. USE DYNAMIC HIERARCHY. You are ENCOURAGED to use sophisticated layouts: tilted/angled text, asymmetric balance, and overlapping elements that suggest a human designer's touch.
              - SAFE AREA & MARGINS: Maintain a strict 15% professional inner margin. No text should touch the edges.
              - FONTS: Emulate high-end foundry typefaces (Modern Serifs, Geometric Sans, or Editorial Scripts). 
