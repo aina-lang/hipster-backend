@@ -354,8 +354,8 @@ export class AiService implements OnModuleInit {
   1. MAIN TITLE: "${mainWord.toUpperCase()}"
      - POSITION: Vertically along FAR LEFT margin.
      - READING: TOP-TO-BOTTOM (first letter at the top). Rotate 90° clockwise.
-     - FOREGROUND: MUST overlap subject and background.
-     - STYLE: EXTRA BOLD, high-impact.
+     - ABSOLUTE PREMIER PLAN (FOREGROUND): The text MUST overlay and overlap the subject. It must be in the absolute foreground, never partially obscured.
+     - STYLE: ULTRA-BOLD and MASSIVE SCALE high-impact font (like "Anton", "Bebas Neue", or "Impact"), filling 85-95% of total height.
      - COLOR: ${colorPrincipale}, solid, opaque.
      - ALIGNMENT: Perfectly vertical (NO tilt).
   2. SCRIPT SUBTITLE: "${scriptPhrase}"
@@ -367,7 +367,8 @@ export class AiService implements OnModuleInit {
      - POSITION: ABSOLUTE BOTTOM.
      - STYLE: Small caps, wide tracking.
      - COLOR: White or light grey.
-- NO frames, NO boxes, NO transparency, NO backgrounds behind text.`;
+- BIG BOLD TYPOGRAPHY MANDATE: The Main Title must be HEAVY, THICK, and VISUALLY DOMINANT. 
+- NO frames, NO boxes, NO transparency, NO backgrounds behind text. Characters must be 100% OPAQUE.`;
 
     // TECH SPECS
     const technicalQuality = `TECHNICAL SPECIFICATIONS – VOGUE/NUMÉRO STANDARD:
@@ -514,10 +515,10 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
   1. MAIN TITLE: "${(userQuery || modelName).toUpperCase()}"
   2. SUPPORTING TEXT: "${job}"
 - Style for ${isFashion ? 'Fashion' : isLuxury ? 'Luxury' : 'Business'}:
-  ${isFashion ? 'EXTRA BOLD high-impact sans-serif (use "Anton", "Bebas Neue", or "Impact"), positioned with graphic confidence. NO tilted text, strictly vertical on left. MANDATORY FOREGROUND: The text must overlay/overlap the subject.' : isLuxury ? 'Fine serif or modern sans, elegant and refined. Centered or perfectly justified. MANDATORY FOREGROUND: The text must be in the absolute premier plan.' : 'Professional EXTRA BOLD sans-serif (Anton/Bebas Neue style), clean hierarchy. MANDATORY FOREGROUND: Clear text overlay.'}
+  ${isFashion ? 'ULTRA-BOLD and MASSIVE SCALE high-impact sans-serif (use "Anton", "Bebas Neue", or "Impact"). MUST BE EXTREMELY BIG AND DOMINANT. NO tilted text, strictly vertical on left. ABSOLUTE PREMIER PLAN (FOREGROUND): The text must overlay/overlap the subject.' : isLuxury ? 'Fine serif or modern sans, elegant and refined. Centered or perfectly justified. ABSOLUTE PREMIER PLAN (FOREGROUND): The text must be in the absolute foreground, over the subject.' : 'Professional ULTRA-BOLD and MASSIVE sans-serif (Anton/Bebas Neue style), extremely thick and thick. ABSOLUTE PREMIER PLAN (FOREGROUND): Clear text overlay on top of everything.'}
 - Color: ${brandingColor || 'High contrast against background'}.
 - ALL TEXT MUST BE LEGIBLE, 100% OPAQUE (strictly NO transparency), and INTEGRATED INTO THE DESIGN WITHOUT ANY BACKGROUND BOXES, FRAMES OR CONTAINERS.
-- TYPOGRAPHY MANDATE: Typography must be HEAVY, SOLID OPAQUE, and IMPACTFUL. MANDATORY ALL CAPS for the main title. High design sophistication.`;
+- TYPOGRAPHY MANDATE: main title must be REALLY BIG, ULTRA-BOLD, and MASSIVE. High design sophistication. Absolute premier plan focus.`;
 
     // SUBJECT DESCRIPTION ENHANCEMENT (from user job)
     const subjectEnhancer = (() => {
