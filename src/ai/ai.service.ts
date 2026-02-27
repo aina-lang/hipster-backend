@@ -317,19 +317,11 @@ export class AiService implements OnModuleInit {
     colorPrincipale: string = '#17A2B8',
     colorSecondaire: string = '#FFFFFF',
   ): string {
-    const posturalVariations = [
-      'Identical 3/4 profile pose from reference. Back/shoulders oriented to the RIGHT, body facing mostly FRONT but turned slightly towards the LEFT. Head perfectly vertical. Zero extra tilt.',
-      'Reference pose with a near-imperceptible shoulder dip on the left side. Back/shoulders on the RIGHT, body turned slightly more front. Head remains natural and upright.',
-      'Reference pose with a micro-shift: body turned marginally more towards the title (LEFT). Back/shoulders stay oriented to the RIGHT. Professional, upright presence.',
-    ];
-    const selectedPosture =
-      posturalVariations[Math.floor(Math.random() * posturalVariations.length)];
-    // VOGUE/NUMÉRO MAGAZINE REFERENCES
-    const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
+   const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
     const subjectCinematography = `CINEMATOGRAPHY - SUBJECT:
 - Subject Position: Slightly offset to the RIGHT, following the rule of thirds.
-- POSTURE: ${selectedPosture} Precise, serious gaze directed slightly off-camera.
+- 3/4 profile view
 - Rim Light: Dramatic separation (bright cyan/blue edge on one side profile) using ${colorPrincipale}.`;
 
     // BACKGROUND TREATMENT
@@ -438,13 +430,8 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
     userQuery: string,
     brandingColor?: string,
   ): string {
-    const posturalVariations = [
-      'Identical 3/4 profile pose from reference. Back/shoulders oriented to the RIGHT, body facing mostly FRONT but turned slightly towards the LEFT. Head perfectly vertical. Zero extra tilt.',
-      'Reference pose with a near-imperceptible shoulder dip on the left side. Back/shoulders on the RIGHT, body turned slightly more front. Head remains natural and upright.',
-      'Reference pose with a micro-shift: body turned marginally more towards the title (LEFT). Back/shoulders stay oriented to the RIGHT. Professional, upright presence.',
-    ];
     const selectedPosture =
-      posturalVariations[Math.floor(Math.random() * posturalVariations.length)];
+      'EXACT 1:1 POSTURE FROM REFERENCE: Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. ZERO TILT: The subject must have NO inclination to the left or right. PERFECT VERTICAL ALIGNMENT: The spine and head must be perfectly vertical, matching the original photo exactly. Natural, upright head and IDENTICAL GAZE FROM REFERENCE: Precise, serious gaze directed straight and vertical, following the original head position.';
     // Map model types to photography styles (referenced from example flyers)
     const fashionModels = ['FASHION', 'STYLE', 'VOGUE', 'COLLECTION', 'MODE'];
     const luxuryModels = ['LUXURY', 'PREMIUM', 'CLASSIQUE', 'ELEGANT'];
