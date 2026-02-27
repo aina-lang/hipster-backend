@@ -307,22 +307,20 @@ export class AiService implements OnModuleInit {
    * Supports text parameters: mainWord, scriptPhrase, infoLine, accentColor
    * Reference: Vogue, Numéro Magazine, Harper's Bazaar editorial quality
    */
-private buildFashionVerticalPrompt(
-  architecture: any,
-  job: string,
-  userQuery: string,
-  mainWord: string,
-  scriptPhrase: string,
-  infoLine: string,
-  colorPrincipale: string = '#17A2B8',
-  colorSecondaire: string = '#FFFFFF',
-): string {
+  private buildFashionVerticalPrompt(
+    architecture: any,
+    job: string,
+    userQuery: string,
+    mainWord: string,
+    scriptPhrase: string,
+    infoLine: string,
+    colorPrincipale: string = '#17A2B8',
+    colorSecondaire: string = '#FFFFFF',
+  ): string {
+    const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
-  const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
-
-
-  // 🔒 ABSOLUTE LOCKED POSE — AUCUN CHANGEMENT POSSIBLE
-  const subjectCinematography = `CINEMATOGRAPHY – SUBJECT (ABSOLUTE POSE LOCK – DO NOT MODIFY):
+    // 🔒 ABSOLUTE LOCKED POSE — AUCUN CHANGEMENT POSSIBLE
+    const subjectCinematography = `CINEMATOGRAPHY – SUBJECT (ABSOLUTE POSE LOCK – DO NOT MODIFY):
 - The subject’s ORIGINAL POSE, ORIGINAL ORIENTATION, and ORIGINAL HEAD + BODY DIRECTION must be REPRODUCED EXACTLY AS IN THE REFERENCE.
 - This includes:
   • Exact body rotation (left, right, front, back),
@@ -339,22 +337,19 @@ private buildFashionVerticalPrompt(
   • Any reinterpretation of orientation or inclination.
 - Whatever direction the subject faces or looks in the reference (left, right, up, down), DALL·E MUST REPRODUCE IT EXACTLY without ANY variation.`;
 
-
-
-  // BACKGROUND
-  const backgroundTreatment = `BACKGROUND TREATMENT:
+    // BACKGROUND
+    const backgroundTreatment = `BACKGROUND TREATMENT:
 - ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK.
+- BORDER AESTHETIC: NOIR SOMBRE AUTOUR (DEEP BLACK VIGNETTE). The extreme edges, corners, and perimeter of the image MUST be a solid, deep, moody black.
 - PLACEMENT: FULL_FRAME.
 - GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT.
 - COLOR DOMINANCE: Ensure the Primary Color (${colorPrincipale}) is dominant on the LEFT side of the frame.
-- TRANSITION: Sophisticated OPAQUE and SOLID background transitioning from dark to ${colorPrincipale} to ${colorSecondaire}.
+- TRANSITION: Sophisticated OPAQUE and SOLID background transitioning from deep black edges to ${colorPrincipale} to ${colorSecondaire}.
 - PROHIBITIONS: STRICTLY FORBID: ["motion_blur", "speed_trails", "busy_patterns"].
 - Depth: Sharp textures on solid surfaces. The white is crisp and OPAQUE. NO fog, NO smoke.`;
 
-
-
-  // TEXT
-  const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
+    // TEXT
+    const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
 - YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
   1. MAIN TITLE: "${mainWord.toUpperCase()}"
      - POSITION: Vertically along FAR LEFT margin.
@@ -374,30 +369,24 @@ private buildFashionVerticalPrompt(
      - COLOR: White or light grey.
 - NO frames, NO boxes, NO transparency, NO backgrounds behind text.`;
 
-
-
-  // TECH SPECS
-  const technicalQuality = `TECHNICAL SPECIFICATIONS – VOGUE/NUMÉRO STANDARD:
+    // TECH SPECS
+    const technicalQuality = `TECHNICAL SPECIFICATIONS – VOGUE/NUMÉRO STANDARD:
 - Resolution: Minimum 4K, conceptual 8K quality.
 - Style: Hyperrealistic fashion editorial photography.
 - Post-Processing: Subtle vignetting, saturated luxury color grading.
 - Composition: Rule-of-thirds, dramatic lighting ratios.
 - COLOR MANDATE: Full vivid color only (NO black and white).`;
 
-
-
-  // PROHIBITIONS
-  const prohibitions = `PROHIBITIONS – CRITICAL:
+    // PROHIBITIONS
+    const prohibitions = `PROHIBITIONS – CRITICAL:
 - NO pose change. NO orientation change. NO inclination change.
 - NO anatomy distortions or AI artifacts.
 - NO watermarks, NO signatures, NO metadata.
 - NO grayscale, NO desaturation.
 - NO stock-photo style. UNIQUE editorial aesthetic only.`;
 
-
-
-  // FINAL PROMPT
-  const finalPrompt = `${magazineReference}
+    // FINAL PROMPT
+    const finalPrompt = `${magazineReference}
 
 ${subjectCinematography}
 
@@ -412,11 +401,12 @@ ${prohibitions}
 EXECUTION MANDATE:
 Produce a high-end magazine cover with the subject’s pose, orientation, and inclination reproduced EXACTLY as in the reference. ABSOLUTELY NO CHANGES to body position, gaze direction, silhouette, or camera angle. Text must be rendered exactly as specified.`;
 
+    this.logger.log(
+      '[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E with ABSOLUTE pose lock',
+    );
 
-  this.logger.log('[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E with ABSOLUTE pose lock');
-
-  return finalPrompt;
-}
+    return finalPrompt;
+  }
   /**
    * 🎨 APPLY TYPOGRAPHIC COMPOSITION FOR FASHION VERTICAL
    * Adds text overlays with professional effects (stroke, glow, opacity, drop shadow, etc.)
@@ -476,31 +466,35 @@ Produce a high-end magazine cover with the subject’s pose, orientation, and in
       ? `CINEMATOGRAPHY: Ultra-wide depth of field (f/1.8 equivalent), minimal background blur, editorial fashion lighting. 
          POSTURE: ${selectedPosture}
          ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK, OPAQUE and SOLID. 
+         BORDER AESTHETIC: NOIR SOMBRE AUTOUR (DEEP BLACK VIGNETTE). The perimeter and corners are solid deep black.
          GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} dominant on the LEFT side.
-         BACKGROUND TRANSITION: Dark to ${brandingColor || 'vibrant accent'} to a soft, OPAQUE white glow.
+         BACKGROUND TRANSITION: Deep black borders to ${brandingColor || 'vibrant accent'} to a soft, OPAQUE white glow.
          PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
          COMPOSITION: Subject positioned off-center following rule of thirds, dynamic diagonal flow, negative space breathing.\nREFERENCES: Vogue USA, Harper's Bazaar.`
       : isLuxury
         ? `CINEMATOGRAPHY: Studio-controlled volumetric lights, high contrast dramatic lighting. 
            POSTURE: ${selectedPosture}
            ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK, Premium OPAQUE depth. 
+           BORDER AESTHETIC: NOIR SOMBRE AUTOUR (DEEP BLACK VIGNETTE). The perimeter and corners are solid deep black.
            GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Luxurious Color'} dominant on the LEFT.
-           BACKGROUND TRANSITION: Obsidian dark to ${brandingColor || 'luxurious color'} to a subtle, OPAQUE white backlight.
+           BACKGROUND TRANSITION: Deep black borders to obsidian dark to ${brandingColor || 'luxurious color'} to a subtle, OPAQUE white backlight.
            PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
            COMPOSITION: Center-weighted symmetry, minimal negative space, maximum focus on detail quality.`
         : isBusiness
           ? `CINEMATOGRAPHY: Professional headshot lighting, sharp focus. 
              POSTURE: ${selectedPosture}
              ATMOSPHERE: MOODY_GRADIENT, OPAQUE professional depth.
+             BORDER AESTHETIC: NOIR SOMBRE AUTOUR (DEEP BLACK VIGNETTE). The perimeter and corners are solid deep black.
              GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Corporate Color'} on the LEFT.
-             BACKGROUND TRANSITION: Dark to ${brandingColor || 'corporate color'} to opaque white/light grey.
+             BACKGROUND TRANSITION: Deep black borders to dark grey to ${brandingColor || 'corporate color'} to opaque white/light grey.
              PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
              COMPOSITION: Confident centered presence, strategic negative space, typography-integrated layout.`
           : `CINEMATOGRAPHY: Professional studio lighting, sharp focus, cinematic depth. 
              POSTURE: ${selectedPosture}
              ATMOSPHERE: MOODY_GRADIENT, OPAQUE atmospheric transition.
+             BORDER AESTHETIC: NOIR SOMBRE AUTOUR (DEEP BLACK VIGNETTE). The perimeter and corners are solid deep black.
              GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} on the LEFT.
-             BACKGROUND TRANSITION: Dark to ${brandingColor || 'primary color'} to opaque white glow.
+             BACKGROUND TRANSITION: Deep black borders to ${brandingColor || 'primary color'} to opaque white glow.
              PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
              COMPOSITION: Subject positioned slightly to the RIGHT in a professional pose. Face/head must remain natural and upright. Strategic negative space, typography-integrated layout.`;
 
