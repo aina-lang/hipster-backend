@@ -317,64 +317,58 @@ export class AiService implements OnModuleInit {
     const finalAccentColor = brandingColor || accentColor || '#17A2B8';
 
     // VOGUE/NUMÉRO MAGAZINE REFERENCES
-    const magazineReference = `MAGAZINE EDITORIAL REFERENCE: This image must look like it was published in Vogue USA, Numéro magazine, Harper's Bazaar, or Elle. Premium high-fashion editorial aesthetic. Covers quality, not advertorial.`;
+    const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
-    // PORTRAIT SUBJECT CINEMATOGRAPHY
+    // PORTRAIT SUBJECT - CRITICAL FOR THIS LAYOUT
     const subjectCinematography = `CINEMATOGRAPHY - SUBJECT:
-- Full-length portrait or upper-body high-fashion shot
-- Sophisticated subject styling, confident posture, authentic emotion
-- Depth of field: f/1.8 equivalent (strong background blur, sharp subject focus)
-- Rim lighting creating dimensional separation (light hair/shoulders against darker background)
-- Professional studio or atmospheric setting
-- Color-graded to luxury magazine standard (lifted blacks, warm shadows)
-- Subject positioned at 65% of frame for visual composition
-- Sharp focus on face, eyes, and styling details`;
+- FULL-LENGTH or UPPER-BODY high-fashion portrait (crop from chest/waist upward)
+- Sophisticated professional model or confident subject
+- Professional studio or atmospheric setting (dark, moody background)
+- Depth of field: f/1.8-f/2.8 equivalent (soft background blur, laser-sharp face/eyes)
+- Color Treatment: BLACK AND WHITE or DESATURATED BASE with selective color on accessory only
+- Accessory Detail: If present, accent color (${finalAccentColor} teal/cyan) appears ONLY on key accessory (glasses lens, necklace, watch, earpiece) - small stylized glow/reflection allowed
+- Lighting: Professional 3-point or dramatic key+rim lighting, no flat lighting
+- Rim Light: Creates dimensional separation (bright edge on shoulder/hair against dark background)
+- Subject Position: Offset from center following rule of thirds (65% frame for classic editorial)`;
 
     // BACKGROUND TREATMENT
     const backgroundTreatment = `BACKGROUND TREATMENT:
-- Full-frame photorealistic setting (studio, urban, or atmospheric environment)
-- Subtle directional lighting matching subject lighting
-- Dark gradient overlay (black to transparent) positioned top-right corner
-- Creates legibility space for vertical text overlay on left margin
-- NO text, NO watermarks, NO logos IN the background image itself
-- Background provides emotional context without competing with text`;
+- Dark, moody, atmospheric background (charcoal #2a2a2a to near black #1a1a1a)
+- Professional studio environment with subtle texture or atmospheric depth
+- Gradient overlay: Black to transparent (dark top/right, lighter toward portrait)
+- NO visible text, NO watermarks, NO logos, NO floating elements
+- Background provides emotional context (luxury, sophistication, mystery)
+- Depth: Bokeh or atmospheric blur creating dimensional layering`;
 
-    // TEXT POSITIONING (from architecture.rules)
-    const textPositioningGuide = `TEXT POSITIONING INSTRUCTIONS (for design system - NOT to render text):
-[DO NOT RENDER ANY TEXT - Image contains subject + background only. Text will be overlaid in post.]
-- Title (left vertical): ultra-bold font, 90° rotation, full height, color: ${finalAccentColor}
-- Script (center-bottom): elegant signature font, white 90% opacity, example: "${scriptPhrase}"
-- Info (bottom-center): small-caps, white, tracking-wide, example: "${infoLine}"
-Main word to accompany (for context only): "${mainWord}"`;
+    // TEXT POSITIONING GUIDE (for design system context)
+    const textContextGuide = `DESIGN SYSTEM CONTEXT (TEXT WILL BE ADDED IN POST-PRODUCTION):
+[IMAGE CONTENT: Subject + Background ONLY - NO rendered text in image]
+- Left margin: Will receive ultra-bold vertical word ("${mainWord}"), font ~90° rotation, teal ${finalAccentColor}, fills 70-85% of height
+- Center-bottom: Will receive elegant script phrase ("${scriptPhrase}"), white cursive, ~24px
+- Bottom baseline: Will receive small-caps info ("${infoLine}"), white, tracking-wide, ~14px
+Purpose: Clean editorial photograph ready for sophisticated design overlay.`;
 
     // QUALITY & TECHNICAL SPECIFICATIONS
-    const technicalQuality = `TECHNICAL SPECIFICATIONS:
-- Resolution: 4K minimum, 8K conceptual quality
-- Rendering: Hyperrealistic photographic (NOT illustration, NOT AI-obvious)
-- Lighting: Professional-grade, physically plausible, studio or natural window light
-- Color Grading: Sophisticated finish matching luxury magazine standards
-- Details: Sharp textures, authentic materials, realistic skin tones, true-to-life fabrics
-- Composition: Magazine editorial-worthy, intentional visual hierarchy
-- Depth: Cinematic depth of field, dimensional separation, professional bokeh`;
+    const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
+- Resolution: 4K minimum, conceptual 8K quality
+- Photography Style: Professional fashion editorial, hyperrealistic photographic rendering
+- Color Science: If color: rich, saturated, luxurious tones. If B&W: rich blacks, brilliant whites, smooth gray gradations
+- Lighting Quality: Professional studio-grade, physically plausible three-point setups, warm or cool gels applied intentionally
+- Details: Sharp, textured skin rendering, realistic hair texture, authentic fabric materials, professional makeup
+- Post-Processing: Subtle vignetting, color grading applied (lifted blacks for luxury feel), film-grain optional
+- Composition: Magazine-editorial worthy, intentional rule-of-thirds, dramatic lighting ratios`;
 
     // STRICT PROHIBITIONS
-    const prohibitions = `PROHIBITIONS - MUST AVOID:
-- NO text, NO letters, NO captions, NO watermarks, NO logos IN the image
-- NO floating overlays or design elements that look AI-rendered
-- NO plastic reflections, CGI-obvious lighting, impossible physics
-- NO poor anatomy, distorted proportions, warped hands/faces
-- NO AI hallucinations (extra fingers, morphed faces, color artifacts)
-- NO generic stock photo backgrounds - must be unique and atmospheric
-- NO cheap surfaces, costume-like materials, DIY appearance
-- NO watermarks, copyright marks, OpenAI signatures`;
-
-    // CONTEXT INJECTION
-    const contextInjection = `CONTEXT:
-- Model: Fashion Vertical Premium Event Poster (TYPE_FASHION_VERTICAL)
-- Job/Category: ${job || 'Fashion event'}
-- User Intent: ${userQuery || 'premium fashion flyer'}
-- Accent Color: ${finalAccentColor}
-- Language/Region: French (if applicable to styling)`;
+    const prohibitions = `PROHIBITIONS - CRITICAL AVOID:
+- NO text, NO letters, NO captions, NO overlays of any kind RENDERED IN IMAGE
+- NO floating design elements, badges, banners, or decorative graphics
+- NO cheap plastic reflections, obvious CGI, impossible lighting
+- NO distorted anatomy, warped proportions, wrong hand counts, AI hallucinations
+- NO generic stock photos - must be unique atmospheric setting
+- NO neon signs, LED displays, or artificial graphics (unless specifically styled)
+- NO AI watermarks, copyright symbols, OpenAI signatures, metadata
+- NO low-resolution areas, blur where detail expected
+- ABSOLUTELY NO AI ARTIFACTS: No melted faces, no weird hair physics, no impossible shadows`;
 
     // FINAL INTEGRATED PROMPT
     const finalPrompt = `${magazineReference}
@@ -383,15 +377,13 @@ ${subjectCinematography}
 
 ${backgroundTreatment}
 
-${textPositioningGuide}
+${textContextGuide}
 
 ${technicalQuality}
 
 ${prohibitions}
 
-${contextInjection}
-
-MANDATE: Create an editorial-quality fashion photograph that would be published in top-tier fashion magazines. Maximum professional sophistication. Zero AI artifacts. The image MUST be a clean subject + background composition ready for text overlay in post-production. NOT a finished poster (no text rendered), but a magazine-grade photograph.`;
+EXECUTION MANDATE: Create a magazine cover-quality fashion photograph. Zero text overlays. Pure subject + atmospheric background in professional editorial style. Must look like published Vogue/Numéro photography. Maximum sophistication, zero digital artifacting.`;
 
     this.logger.log(
       '[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E',

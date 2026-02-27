@@ -1223,4 +1223,66 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
       },
     ],
   },
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PREMIUM · MODE & FASHION VERTICAL POSTER
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    id: 'fashion',
+    label: 'MODE & FASHION',
+    icon: 'Sparkles',
+    image: 'https://hipster-api.fr/assets/fashion-flyer.jpeg',
+    models: [
+      {
+        label: 'Fashion Vertical',
+        variants: [
+          {
+            label: 'Fashion Vertical – Editorial',
+            structure: {
+              subject: 'full-portrait',
+              subjectSize: 'hero',
+              title: 'vertical-left',
+              banner: 'none',
+              particles: 'none',
+              decorations: ['gradient-overlay'],
+              background: 'studio-atmospheric',
+              colorFilter: 'duotone-accent',
+              typography: 'ultra-bold-vertical',
+              frame: 'borderless',
+            },
+          },
+          {
+            label: 'Fashion Vertical – Luxury',
+            structure: {
+              subject: 'full-portrait',
+              subjectSize: 'hero',
+              title: 'vertical-left',
+              banner: 'none',
+              particles: 'none',
+              decorations: ['gradient-overlay', 'accent-frame'],
+              background: 'studio-professional',
+              colorFilter: 'sophisticated',
+              typography: 'ultra-bold-vertical',
+              frame: 'borderless',
+            },
+          },
+          {
+            label: 'Fashion Vertical – Magazine',
+            structure: {
+              subject: 'full-portrait',
+              subjectSize: 'hero',
+              title: 'vertical-left',
+              banner: 'none',
+              particles: 'none',
+              decorations: ['gradient-dark-overlay'],
+              background: 'atmospheric-cinematic',
+              colorFilter: 'editorial',
+              typography: 'ultra-bold-vertical',
+              frame: 'borderless',
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];
+
