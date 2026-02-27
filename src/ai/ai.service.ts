@@ -323,7 +323,7 @@ export class AiService implements OnModuleInit {
     // PORTRAIT SUBJECT - CRITICAL FOR THIS LAYOUT
     const subjectCinematography = `CINEMATOGRAPHY - SUBJECT:
 - Subject Position: Slightly offset to the RIGHT, following the rule of thirds.
-- POSTURE: 3/4 profile view (shoulders rotated away, head slightly tilted toward camera). Intense, serious, and captivating editorial gaze.
+- POSTURE: 3/4 profile view (shoulders rotated to left, head slightly tilted toward camera). Intense, serious, and captivating editorial gaze.
 - Rim Light: Dramatic separation (bright cyan/blue edge on one side profile) using ${colorPrincipale}.`;
 
     // BACKGROUND TREATMENT
@@ -345,7 +345,7 @@ export class AiService implements OnModuleInit {
      - VISIBILITY: Absolute foreground (Premier plan). The text MUST overlay and overlap the subject and background. It should never be behind anything.
      - STYLE: EXTRA BOLD high-impact font (like "Anton", "Bebas Neue", or "Impact"), filling 70-85% of total height.
      - CASE: MANDATORY UPPERCASE.
-     - COLOR: Create a VIBRANT VERTICAL GRADIENT from ${colorPrincipale} (bottom) to a glowing electric cyan or bright white (top).
+     - COLOR: Use a solid OPAQUE and VIBRANT color (precisely ${colorPrincipale}). NO GRADIENT, NO TRANSPARENCY.
      - ALIGNMENT: Strictly vertical. NO tilting, NO slanting.
   2. SCRIPT SUBTITLE: "${scriptPhrase}"
      - POSITION: CENTER-BOTTOM area, over the subject or transition.
