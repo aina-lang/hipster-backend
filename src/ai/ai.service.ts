@@ -334,17 +334,17 @@ export class AiService implements OnModuleInit {
 
     // BACKGROUND TREATMENT
     const backgroundTreatment = `BACKGROUND TREATMENT:
-- ATMOSPHERE: Sophisticated smoky (fumée) and ethereal background.
-- GRADIENT TRANSITION: Masterful organic transition from DEEP DARK (edge) to ${colorPrincipale} (mid-zone) to a subtle, non-opaque WHITE GLOW (behind/around the subject).
+- ATMOSPHERE: Sophisticated OPAQUE and SOLID background.
+- GRADIENT TRANSITION: Masterful organic transition from DEEP DARK (edge) to ${colorPrincipale} (mid-zone) to a subtle, OPAQUE WHITE GLOW (behind/around the subject).
 - Professional studio environment with physical volumetric depth.
 - NO visible text, NO watermarks, NO logos, NO floating elements.
-- Depth: Rich atmospheric blur creating dimensional layering. The white is light/smoky, NOT flat white.`;
+- Depth: Rich focus on solid materials and sharp textures. The white is OPAQUE and crisp, NOT smoky or foggy.`;
 
     // TEXT RENDERING GUIDE - MANDATORY DALL-E EXECUTION
     const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
 - YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
   1. MAIN TITLE: "${mainWord.toUpperCase()}"
-     - POSITION: LEFT margin, oriented VERTICALLY (90° rotation, reading TOP-TO-BOTTOM from above).
+     - POSITION: LEFT margin, oriented VERTICALLY (90° rotation to the right, reading TOP-TO-BOTTOM from above).
      - STYLE: EXTRA BOLD high-impact font (like "Anton", "Bebas Neue", or "Impact"), filling 70-85% of total height.
      - CASE: MANDATORY UPPERCASE.
      - COLOR: Use precisely ${colorPrincipale}.
@@ -706,23 +706,23 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
 
     // CINEMATOGRAPHY & COMPOSITION RULES (from example flyers analysis)
     const cinematicDirectives = isFashion
-      ? `CINEMATOGRAPHY: Ultra-wide depth of field (f/1.8 equivalent), cinematic motion blur in background, editorial fashion lighting (side-key light, rim light), color grading with lifted blacks. 
-         ATMOSPHERE: Smoky (fumée) and ethereal. 
-         BACKGROUND GRADIENT: Transition from deep dark tones to ${brandingColor || 'vibrant accent'} to a soft, smoky white atmospheric glow.
+      ? `CINEMATOGRAPHY: Ultra-wide depth of field (f/1.8 equivalent), minimal background blur, editorial fashion lighting (side-key light, rim light), color grading with lifted blacks. 
+         ATMOSPHERE: OPAQUE and SOLID. 
+         BACKGROUND GRADIENT: Transition from deep dark tones to ${brandingColor || 'vibrant accent'} to a soft, OPAQUE white atmospheric glow.
          COMPOSITION: Subject positioned off-center following rule of thirds, dynamic diagonal flow, negative space breathing.\nREFERENCES: Vogue USA, Harper's Bazaar, analogous to editorial spreads.`
       : isLuxury
         ? `CINEMATOGRAPHY: Studio-controlled volumetric lights, high contrast dramatic lighting, absolute technical perfection. 
-           ATMOSPHERE: Premium smoky depth. 
-           BACKGROUND GRADIENT: Transition from obsidian dark to ${brandingColor || 'luxurious color'} to a subtle, non-opaque white backlight.
+           ATMOSPHERE: Premium OPAQUE depth. 
+           BACKGROUND GRADIENT: Transition from obsidian dark to ${brandingColor || 'luxurious color'} to a subtle, OPAQUE white backlight.
            COMPOSITION: Center-weighted symmetry with subtle asymmetric elements, minimal negative space, maximum focus on detail quality.\nREFERENCES: Luxury magazine editorials, museum-grade presentation.`
         : isBusiness
           ? `CINEMATOGRAPHY: Professional headshot lighting (3-point setup), sharp focus, minimal background bokeh, color-graded to luxury magazine standard. 
-             ATMOSPHERE: Clean smoky professional depth.
-             BACKGROUND GRADIENT: Dark to ${brandingColor || 'corporate color'} to white/light grey transition.
+             ATMOSPHERE: Clean OPAQUE professional depth.
+             BACKGROUND GRADIENT: Dark to ${brandingColor || 'corporate color'} to opaque white/light grey transition.
              COMPOSITION: Confident centered presence, strategic negative space, typography-integrated layout.\nREFERENCES: Numéro magazine, luxury lifestyle publications.`
           : `CINEMATOGRAPHY: Professional studio lighting, sharp focus, cinematic depth, color grading applied. 
-             ATMOSPHERE: Atmospheric smoky transition.
-             BACKGROUND GRADIENT: Dark to ${brandingColor || 'primary color'} to white smoky glow.
+             ATMOSPHERE: OPAQUE atmospheric transition.
+             BACKGROUND GRADIENT: Dark to ${brandingColor || 'primary color'} to opaque white glow.
              COMPOSITION: Subject as focal point, balanced negative space, intentional layout design.\nREFERENCES: High-end brand campaigns.`;
 
     // ARCHITECTURE-BASED RULES
