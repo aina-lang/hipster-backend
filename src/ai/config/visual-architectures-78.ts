@@ -36,21 +36,20 @@ export const FASHION_VERTICAL_IMPACT_ARCH: VisualArchitecture = {
 
 export const STREET_SALE_ARCH: VisualArchitecture = {
   name: 'Street Sale',
-  layoutType: 'TYPE_MAGAZINE',
+  layoutType: 'TYPE_EDITORIAL_COVER',
   colorPalette: 'Urban/Vibrant',
   rules: {
     subject:
-      'SUBJECT: Dynamic product or model in high-energy urban setting. High contrast.',
+      'SUBJECT: Centered professional portrait or hero product. Eye level. High-end lighting.',
     background:
-      'BACKGROUND: Concrete textures, city street, neon signs blurred.',
+      'BACKGROUND: Solid or ultra-soft gradient. Clean minimalist aesthetic. No textures.',
     title:
-      'RENDER TEXT - TITLE: Mega Bold Sans-Serif. Diagonal or tilted placement.',
-    subtitle:
-      'RENDER TEXT - SUBTITLE: Heavy block text (e.g., "SALE" or "OFFER").',
-    infoBlock: 'RENDER TEXT - INFO: Impactful typography at the bottom.',
-    upperZone: 'UPPER: Dynamic price stickers or badges.',
+      'RENDER TEXT - TITLE: Luxury Serif Masthead (top position, center-aligned).',
+    subtitle: 'RENDER TEXT - SUBTITLE: Large elegant serif, horizontal only.',
+    infoBlock: 'RENDER TEXT - INFO: Smaller serif, clean spacing.',
+    upperZone: 'UPPER: None.',
     constraints:
-      'LAYOUT: High energy, urban aesthetic. RENDER ALL TEXT BLOCKS DIRECTLY. Reference: Nike streetwear campaigns.',
+      'LAYOUT: Premium minimalist editorial cover. RENDER ALL TEXT BLOCKS DIRECTLY. No vertical typography. No italic.',
   },
 };
 

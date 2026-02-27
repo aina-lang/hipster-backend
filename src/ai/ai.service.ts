@@ -408,6 +408,166 @@ Produce a high-end magazine cover with the subject’s pose, orientation, and in
 
     return finalPrompt;
   }
+
+  private buildEditorialCoverPrompt(
+    architecture: any,
+    job: string,
+    userQuery: string,
+    mainWord: string,
+    scriptPhrase: string,
+    infoLine: string,
+    colorPrincipale: string = '#17A2B8',
+    colorSecondaire: string = '#FFFFFF',
+  ): string {
+    const magazineReference = `
+MAGAZINE EDITORIAL REFERENCE:
+Luxury high-fashion editorial cover inspired by Vogue, Numéro, Harper's Bazaar.
+Minimalist premium magazine cover.
+Studio photography only.
+NOT advertisement. NOT street poster. PURE editorial aesthetic.
+`;
+
+    // 🔒 SUBJECT — STRICT SINGLE CENTERED COMPOSITION
+    const subjectRules = `
+SUBJECT RULES (STRICT – NO EXCEPTION):
+- ONLY ONE MAIN SUBJECT related to: "${job}".
+- Interpret user intent from: "${userQuery}".
+- Single isolated subject only.
+- Subject perfectly CENTERED.
+- No secondary characters.
+- No props.
+- No accessories unless naturally part of subject.
+- No environment context.
+- Ultra realistic studio photography.
+- Clean silhouette.
+- Professional balanced lighting.
+`;
+
+    // 🎨 BACKGROUND — MINIMAL SOLID
+    const backgroundRules = `
+BACKGROUND TREATMENT:
+- Solid or ultra-soft gradient.
+- Primary background color: ${colorPrincipale}.
+- Secondary accent tone: ${colorSecondaire}.
+- Clean minimal aesthetic.
+- No textures.
+- No patterns.
+- No vignette.
+- No graphic overlays.
+- No depth effects.
+- Flat premium editorial background.
+`;
+
+    // ✍️ TYPOGRAPHY — LOCKED LAYOUT (NO VERTICAL / NO ITALIC)
+    const typographyRules = `
+TYPOGRAPHY & TEXT RENDERING (MANDATORY):
+
+You MUST render the following text exactly:
+
+1. TOP TITLE:
+"${mainWord.toUpperCase()}"
+- Position: Top center.
+- Luxury serif typography.
+- Uppercase.
+- No italic.
+- No rotation.
+- Refined spacing.
+
+2. MAIN HEADLINE:
+"${scriptPhrase}"
+- Position: Center area above or slightly overlapping subject torso.
+- Large elegant serif.
+- Horizontal alignment only.
+- No italic.
+- No distortion.
+- No script style.
+
+3. SUBLINE:
+"${infoLine}"
+- Position: Directly under main headline.
+- Smaller serif.
+- Clean spacing.
+- Horizontal only.
+
+4. FOOTER (FIXED – DO NOT MODIFY):
+"HIPSTERIA COLLECTION"
+- Position: Bottom center.
+- Small caps.
+- Wide letter spacing.
+- Minimal and refined.
+
+STRICT TEXT RULES:
+- Maximum 4 text blocks.
+- NO vertical text.
+- NO rotated text.
+- NO italic fonts.
+- NO script fonts.
+- NO bold condensed street fonts.
+- NO boxes behind text.
+- NO transparency.
+- Text must be crisp and 100% opaque.
+`;
+
+    // 📷 TECHNICAL QUALITY
+    const technicalQuality = `
+TECHNICAL SPECIFICATIONS – HIGH FASHION COVER STANDARD:
+- 4K resolution minimum.
+- Hyperrealistic studio photography.
+- Balanced editorial lighting.
+- Premium color grading.
+- Sharp focus.
+- Clean skin tones.
+- Full color only (NO black & white).
+- No dramatic cinematic shadows.
+- No heavy retouch look.
+`;
+
+    // 🚫 PROHIBITIONS
+    const prohibitions = `
+PROHIBITIONS – CRITICAL:
+- NO second subject.
+- NO background objects.
+- NO extra graphics.
+- NO decorative overlays.
+- NO magazine badges.
+- NO price stickers.
+- NO borders.
+- NO watermarks.
+- NO logos except fixed footer.
+- NO vertical typography.
+- NO italic text.
+- NO artistic reinterpretation.
+- NO busy layout.
+`;
+
+    const finalPrompt = `
+${magazineReference}
+
+${subjectRules}
+
+${backgroundRules}
+
+${typographyRules}
+
+${technicalQuality}
+
+${prohibitions}
+
+EXECUTION MANDATE:
+Produce a premium minimalist editorial magazine cover.
+Single centered subject.
+Clean background.
+Luxury serif typography.
+Strictly follow all layout and typography rules.
+`;
+
+    this.logger.log(
+      '[buildEditorialCoverPrompt] Generated premium minimalist editorial cover prompt (locked layout)',
+    );
+
+    return finalPrompt;
+  }
+
   /**
    * 🎨 APPLY TYPOGRAPHIC COMPOSITION FOR FASHION VERTICAL
    * Adds text overlays with professional effects (stroke, glow, opacity, drop shadow, etc.)
@@ -1894,6 +2054,31 @@ COMPOSITION ARCHITECTURE:
         );
 
         magazineStyleDirective = this.buildFashionVerticalPrompt(
+          architecture,
+          params.job,
+          params.userQuery || '',
+          mainWord,
+          scriptPhrase,
+          infoLine,
+          colorPrincipale,
+          colorSecondaire,
+        );
+      } else if (architecture?.layoutType === 'TYPE_EDITORIAL_COVER') {
+        const mainWord =
+          params.mainWord || params.modelName || model || 'COLLECTION';
+        const scriptPhrase =
+          params.scriptPhrase || params.subtitle || 'Premium Editorial';
+        const infoLine =
+          params.infoLine || params.infoBlock || 'Luxury • Style • Quality';
+        const colorPrincipale =
+          params.colorPrincipale || brandingColor || '#17A2B8';
+        const colorSecondaire = params.colorSecondaire || '#FFFFFF';
+
+        this.logger.log(
+          `[processFlyerBackground] Building EDITORIAL_COVER prompt: mainWord="${mainWord}"`,
+        );
+
+        magazineStyleDirective = this.buildEditorialCoverPrompt(
           architecture,
           params.job,
           params.userQuery || '',
