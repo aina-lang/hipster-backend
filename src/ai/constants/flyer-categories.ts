@@ -16,7 +16,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Noir & Or – Sobre & Raffiné',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'sparks',
@@ -30,7 +31,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Noir & Or – Festif & Brillant',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'sparks',
@@ -44,7 +46,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Noir & Or – Corporate',
             structure: {
-              subject: 'bleed-right', subjectSize: 'large',
+              subject: 'bleed-right',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'none',
@@ -58,7 +61,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Noir & Or – Romantique',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'petals',
@@ -77,7 +81,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minuit Premium – Sobre',
             structure: {
-              subject: 'bleed-right', subjectSize: 'large',
+              subject: 'bleed-right',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'bokeh',
@@ -91,7 +96,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minuit Premium – Festif',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'stars',
@@ -105,7 +111,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minuit Premium – Cérémoniel',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'sparks',
@@ -124,7 +131,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Élégance Sombre – Minimaliste',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'top-left',
               banner: 'none',
               particles: 'none',
@@ -138,7 +146,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Élégance Sombre – Texturé',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'dust',
@@ -152,7 +161,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Élégance Sombre – Floral',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'bottom-center',
               banner: 'badge-pill',
               particles: 'petals',
@@ -171,7 +181,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Néon Sombre – Rose & Noir',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'sparks',
@@ -185,7 +196,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Néon Sombre – Vert & Noir',
             structure: {
-              subject: 'bleed-left', subjectSize: 'large',
+              subject: 'bleed-left',
+              subjectSize: 'large',
               title: 'center-right',
               banner: 'strip-right',
               particles: 'sparks',
@@ -199,7 +211,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Néon Sombre – Multi-Néon',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'top-center',
               banner: 'badge-circle',
               particles: 'sparks',
@@ -213,7 +226,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Néon Sombre – Cyber Violet',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'sparks',
@@ -244,7 +258,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Blanc Pur – Ultra Minimaliste',
             structure: {
-              subject: 'center', subjectSize: 'medium',
+              subject: 'center',
+              subjectSize: 'medium',
               title: 'top-center',
               banner: 'none',
               particles: 'none',
@@ -258,7 +273,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Blanc Pur – Avec Accent Sombre',
             structure: {
-              subject: 'bleed-left', subjectSize: 'large',
+              subject: 'bleed-left',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'none',
@@ -272,7 +288,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Blanc Pur – Avec Accent Doré',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'sparks',
@@ -291,7 +308,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minimaliste Doux – Sobre',
             structure: {
-              subject: 'center', subjectSize: 'medium',
+              subject: 'center',
+              subjectSize: 'medium',
               title: 'top-left',
               banner: 'none',
               particles: 'none',
@@ -305,7 +323,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minimaliste Doux – Festif',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'confetti',
@@ -319,7 +338,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Minimaliste Doux – Poétique',
             structure: {
-              subject: 'center', subjectSize: 'medium',
+              subject: 'center',
+              subjectSize: 'medium',
               title: 'bottom-center',
               banner: 'badge-pill',
               particles: 'petals',
@@ -338,7 +358,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Pastel Tendre – Anniversaire',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'confetti',
@@ -352,7 +373,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Pastel Tendre – Baby Shower',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'bubbles',
@@ -366,7 +388,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Pastel Tendre – Romantique',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'petals',
@@ -397,7 +420,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Brutaliste – Brut & Cru',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'top-left',
               banner: 'strip-left',
               particles: 'dust',
@@ -411,7 +435,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Brutaliste – Sombre',
             structure: {
-              subject: 'bleed-left', subjectSize: 'large',
+              subject: 'bleed-left',
+              subjectSize: 'large',
               title: 'center-right',
               banner: 'strip-right',
               particles: 'dust',
@@ -425,7 +450,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Brutaliste – Néon Impact',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'sparks',
@@ -444,7 +470,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Rouge Total – Plein',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'none',
@@ -458,7 +485,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Rouge Total – Dégradé',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-top',
               particles: 'sparks',
@@ -472,7 +500,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Rouge Total – Brutal',
             structure: {
-              subject: 'bleed-right', subjectSize: 'large',
+              subject: 'bleed-right',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-left',
               particles: 'dust',
@@ -481,6 +510,26 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
               colorFilter: 'bw',
               typography: 'condensed-stack',
               frame: 'thick-border',
+            },
+          },
+        ],
+      },
+      {
+        label: 'Vertical Impact',
+        variants: [
+          {
+            label: 'Vertical Impact – High energy',
+            structure: {
+              subject: 'bleed-left',
+              subjectSize: 'hero',
+              title: 'vertical-left',
+              banner: 'none',
+              particles: 'sparks',
+              decorations: ['none'],
+              background: 'solid-dark',
+              colorFilter: 'vivid',
+              typography: 'oversized-display',
+              frame: 'none',
             },
           },
         ],
@@ -503,7 +552,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Confettis Pop – Enfant',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'confetti',
@@ -517,7 +567,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Confettis Pop – Luxe',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'sparks',
@@ -531,7 +582,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Confettis Pop – Disco',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'sparks',
@@ -550,7 +602,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Tropicale – Plage & Soleil',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'bokeh',
@@ -564,7 +617,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Tropicale – Néon',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'sparks',
@@ -578,7 +632,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Tropicale – Jungle',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'petals',
@@ -609,7 +664,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Corporate – Sobre & Professionnel',
             structure: {
-              subject: 'bleed-right', subjectSize: 'large',
+              subject: 'bleed-right',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'none',
@@ -623,7 +679,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Corporate – Moderne & Aéré',
             structure: {
-              subject: 'center', subjectSize: 'medium',
+              subject: 'center',
+              subjectSize: 'medium',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'none',
@@ -637,7 +694,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Corporate – Institutionnel',
             structure: {
-              subject: 'none', subjectSize: 'none',
+              subject: 'none',
+              subjectSize: 'none',
               title: 'center',
               banner: 'strip-top',
               particles: 'none',
@@ -656,7 +714,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Business – Marine & Or',
             structure: {
-              subject: 'bleed-left', subjectSize: 'large',
+              subject: 'bleed-left',
+              subjectSize: 'large',
               title: 'center-right',
               banner: 'strip-right',
               particles: 'none',
@@ -670,7 +729,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Business – Bleu & Blanc',
             structure: {
-              subject: 'bleed-right', subjectSize: 'large',
+              subject: 'bleed-right',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'none',
@@ -684,7 +744,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Business – Gris & Noir',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-left',
               banner: 'strip-bottom',
               particles: 'none',
@@ -703,7 +764,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Art Déco – Or & Noir',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'geometric-shapes',
@@ -717,7 +779,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Art Déco – Blanc & Or',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'geometric-shapes',
@@ -731,7 +794,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Art Déco – Coloré',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-top',
               particles: 'geometric-shapes',
@@ -750,7 +814,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Vintage 50s – Américain',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-circle',
               particles: 'stars',
@@ -764,7 +829,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Vintage 50s – Français',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'none',
@@ -778,7 +844,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Vintage 50s – Publicitaire',
             structure: {
-              subject: 'bleed-right', subjectSize: 'large',
+              subject: 'bleed-right',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-left',
               particles: 'stars',
@@ -797,7 +864,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Rétro 70s – Disco',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'top-center',
               banner: 'strip-top',
               particles: 'sparks',
@@ -811,7 +879,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Rétro 70s – Funk',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-circle',
               particles: 'geometric-shapes',
@@ -825,7 +894,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Rétro 70s – Chaud & Ocre',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'strip-bottom',
               particles: 'none',
@@ -856,7 +926,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Double Exposition – Sombre',
             structure: {
-              subject: 'full-bleed', subjectSize: 'hero',
+              subject: 'full-bleed',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'bokeh',
@@ -870,7 +941,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Double Exposition – Colorée',
             structure: {
-              subject: 'full-bleed', subjectSize: 'hero',
+              subject: 'full-bleed',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'bokeh',
@@ -884,7 +956,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Double Exposition – Lumineuse',
             structure: {
-              subject: 'full-bleed', subjectSize: 'hero',
+              subject: 'full-bleed',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-pill',
               particles: 'bokeh',
@@ -903,7 +976,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Verre Givré – Clair',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'bottom-center',
               banner: 'badge-pill',
               particles: 'bokeh',
@@ -917,7 +991,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Verre Givré – Sombre',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'bottom-center',
               banner: 'badge-pill',
               particles: 'bokeh',
@@ -931,7 +1006,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Verre Givré – Luxe',
             structure: {
-              subject: 'bleed-right', subjectSize: 'large',
+              subject: 'bleed-right',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'bokeh',
@@ -945,7 +1021,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Verre Givré – Coloré',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'bokeh',
@@ -964,7 +1041,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Illustration – Personnages',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-pill',
               particles: 'none',
@@ -978,7 +1056,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Illustration – Urbain',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-left',
               banner: 'strip-top',
               particles: 'dust',
@@ -992,7 +1071,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Illustration – Abstrait',
             structure: {
-              subject: 'none', subjectSize: 'none',
+              subject: 'none',
+              subjectSize: 'none',
               title: 'center',
               banner: 'strip-bottom',
               particles: 'geometric-shapes',
@@ -1006,7 +1086,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Illustration – Nature',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'petals',
@@ -1025,7 +1106,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Géométrique – Sobre',
             structure: {
-              subject: 'center', subjectSize: 'medium',
+              subject: 'center',
+              subjectSize: 'medium',
               title: 'top-left',
               banner: 'none',
               particles: 'geometric-shapes',
@@ -1039,7 +1121,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Géométrique – Coloré',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'badge-pill',
               particles: 'geometric-shapes',
@@ -1053,7 +1136,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Géométrique – Sombre',
             structure: {
-              subject: 'bleed-right', subjectSize: 'large',
+              subject: 'bleed-right',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'geometric-shapes',
@@ -1072,7 +1156,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Collage – Magazine',
             structure: {
-              subject: 'bleed-left', subjectSize: 'large',
+              subject: 'bleed-left',
+              subjectSize: 'large',
               title: 'center-right',
               banner: 'strip-top',
               particles: 'none',
@@ -1086,7 +1171,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Collage – Vintage',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'top-left',
               banner: 'tag-corner',
               particles: 'dust',
@@ -1100,7 +1186,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Collage – Moderne',
             structure: {
-              subject: 'bleed-right', subjectSize: 'large',
+              subject: 'bleed-right',
+              subjectSize: 'large',
               title: 'center-left',
               banner: 'strip-top',
               particles: 'geometric-shapes',
@@ -1119,7 +1206,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Abstraite – Aquarelle',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'bokeh',
@@ -1133,7 +1221,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Abstraite – Peinture',
             structure: {
-              subject: 'full-bleed', subjectSize: 'hero',
+              subject: 'full-bleed',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-bottom',
               particles: 'bokeh',
@@ -1147,7 +1236,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Abstraite – Ink & Encre',
             structure: {
-              subject: 'center', subjectSize: 'hero',
+              subject: 'center',
+              subjectSize: 'hero',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'dust',
@@ -1161,7 +1251,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Abstraite – Numérique',
             structure: {
-              subject: 'none', subjectSize: 'none',
+              subject: 'none',
+              subjectSize: 'none',
               title: 'center',
               banner: 'strip-bottom',
               particles: 'geometric-shapes',
@@ -1180,7 +1271,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Relief – Clair & Léger',
             structure: {
-              subject: 'center', subjectSize: 'medium',
+              subject: 'center',
+              subjectSize: 'medium',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'none',
@@ -1194,7 +1286,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Relief – Sombre & Profond',
             structure: {
-              subject: 'center', subjectSize: 'large',
+              subject: 'center',
+              subjectSize: 'large',
               title: 'bottom-center',
               banner: 'strip-top',
               particles: 'none',
@@ -1208,7 +1301,8 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           {
             label: 'Relief – Coloré',
             structure: {
-              subject: 'center-bottom', subjectSize: 'large',
+              subject: 'center-bottom',
+              subjectSize: 'large',
               title: 'top-center',
               banner: 'badge-pill',
               particles: 'bokeh',
@@ -1285,4 +1379,3 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
     ],
   },
 ];
-

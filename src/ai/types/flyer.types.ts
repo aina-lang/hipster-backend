@@ -4,6 +4,7 @@ export type SubjectPos =
   | 'bleed-left' // déborde sur la gauche
   | 'bleed-right' // déborde sur la droite
   | 'full-bleed' // remplit toute la surface
+  | 'full-portrait' // portrait plein cadre (Fashion Vertical)
   | 'top-center' // centré en haut
   | 'bottom-left' // coin bas gauche
   | 'bottom-right' // coin bas droit
@@ -20,7 +21,8 @@ export type TitlePos =
   | 'bottom-center'
   | 'bottom-right'
   | 'over-subject'
-  | 'split-vertical';
+  | 'split-vertical'
+  | 'vertical-left';
 
 export type BannerStyle =
   | 'strip-top' // bande pleine en haut
@@ -69,6 +71,9 @@ export type Decoration =
   | 'ribbon-seal'
   | 'noise-grain'
   | 'glitch-lines' // ruban / sceau
+  | 'gradient-overlay' // calque dégradé (Fashion Vertical)
+  | 'gradient-dark-overlay' // calque dégradé sombre (Fashion Vertical Magazine)
+  | 'accent-frame' // cadre accent (Fashion Vertical Luxury)
   | 'none';
 
 export type Background =
@@ -85,7 +90,10 @@ export type Background =
   | 'photo-blur' // photo floutée
   | 'photo-overlay' // photo avec calque coloré
   | 'pattern-geometric' // motif géométrique répété
-  | 'pattern-halftone'; // motif tramé
+  | 'pattern-halftone' // motif tramé
+  | 'studio-atmospheric' // studio atmosphérique (Fashion Vertical)
+  | 'studio-professional' // studio professionnel (Fashion Vertical Luxury)
+  | 'atmospheric-cinematic'; // fond atmosphérique cinématique (Fashion Vertical Magazine)
 
 export type ColorFilter =
   | 'none' // aucun filtre
@@ -96,7 +104,10 @@ export type ColorFilter =
   | 'color-pop' // couleurs ressortantes
   | 'matte' // mat / désaturé
   | 'vivid' // saturé / vif
-  | 'faded'; // passé / vintage
+  | 'faded' // passé / vintage
+  | 'duotone-accent' // bichromie avec accent couleur (Fashion Vertical)
+  | 'sophisticated' // sophistiqué haut de gamme (Fashion Vertical Luxury)
+  | 'editorial'; // style magazine éditorial (Fashion Vertical Magazine)
 
 export type Typography =
   | 'oversized-display' // énorme, déborde parfois du cadre
@@ -107,7 +118,8 @@ export type Typography =
   | 'mono-tech' // monospace technique
   | 'mixed-scale' // mix grandes et petites tailles
   | 'outlined' // lettres en contour uniquement
-  | 'minimal-label'; // petit, très discret
+  | 'minimal-label' // petit, très discret
+  | 'ultra-bold-vertical'; // texte vertical ultra-gras (Fashion Vertical)
 
 export type Frame =
   | 'none'
@@ -118,7 +130,8 @@ export type Frame =
   | 'full-arch' // arche complète en haut
   | 'diagonal-split' // split diagonal
   | 'circle-crop' // recadrage circulaire
-  | 'torn-edge'; // bord déchiré
+  | 'torn-edge' // bord déchiré
+  | 'borderless'; // sans cadre (Fashion Vertical)
 
 export interface VariantStructure {
   subject: SubjectPos;
