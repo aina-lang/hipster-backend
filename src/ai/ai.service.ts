@@ -323,7 +323,7 @@ export class AiService implements OnModuleInit {
     // PORTRAIT SUBJECT - CRITICAL FOR THIS LAYOUT
     const subjectCinematography = `CINEMATOGRAPHY - SUBJECT:
 - Subject Position: Slightly offset to the RIGHT, following the rule of thirds.
-- POSTURE: 3/4 profile view oriented from RIGHT to LEFT (shoulders turned toward the left side of the frame, head slightly tilted toward camera). Intense, serious, and captivating editorial gaze.
+- POSTURE: 3/4 profile view with the BACK/SHOULDERS on the RIGHT side of the subject's silhouette, facing towards the LEFT side of the frame (where the title is). Head slightly tilted toward camera, intense gaze.
 - Rim Light: Dramatic separation (bright cyan/blue edge on one side profile) using ${colorPrincipale}.`;
 
     // BACKGROUND TREATMENT
@@ -478,7 +478,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
              GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} on the LEFT.
              BACKGROUND TRANSITION: Dark to ${brandingColor || 'primary color'} to opaque white glow.
              PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
-            - COMPOSITION: Subject positioned slightly to the RIGHT in a sophisticated 3/4 profile view oriented from RIGHT to LEFT (shoulders turned toward the left side, head slightly tilted). Intense editorial gaze. ABSOLUTELY NO front-facing "identity photo" poses. Strategic negative space, typography-integrated layout.`;
+            - COMPOSITION: Subject positioned slightly to the RIGHT in a sophisticated 3/4 profile view (BACK/SHOULDERS on the RIGHT side, facing towards the LEFT side where the title is). Intense editorial gaze. ABSOLUTELY NO front-facing "identity photo" poses. Strategic negative space, typography-integrated layout.`;
 
     // ARCHITECTURE-BASED RULES
     const architectureRules = architecture
@@ -2000,7 +2000,7 @@ COMPOSITION ARCHITECTURE:
 
       const flyerTextRule = `ELITE GRAPHIC DESIGN & ART DIRECTION RULES: 
              - AESTHETIC: High-end "Vogue" or "Apple-style" minimalism. Absolute focus on REAL-WORLD materials and authentic lighting.
-             - COMPOSITION: Masterful use of Negative Space. Subject positioned slightly to the RIGHT in a professional 3/4 profile view oriented from RIGHT to LEFT (shoulders rotated toward the left side, head slightly tilted toward camera). Dynamic and professional posture. ABSOLUTELY NO front-facing "identity photo" or "passport photo" poses. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
+             - COMPOSITION: Masterful use of Negative Space. Subject positioned slightly to the RIGHT in a professional 3/4 profile view (BACK/SHOULDERS on the RIGHT side, facing towards the LEFT side where the title is). Dynamic and professional posture. ABSOLUTELY NO front-facing "identity photo" or "passport photo" poses. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
              - TYPOGRAPHIC MASTERY: Typography is NOT just text; it's a design element. USE DYNAMIC HIERARCHY. You are ENCOURAGED to use sophisticated layouts: tilted/angled text, asymmetric balance, and overlapping elements that suggest a human designer's touch.
              - SAFE AREA & MARGINS: Maintain a strict 15% professional inner margin. No text should touch the edges.
              - FONTS: Emulate high-end foundry typefaces (Modern Serifs, Geometric Sans, or Editorial Scripts). 
