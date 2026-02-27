@@ -341,13 +341,22 @@ export class AiService implements OnModuleInit {
 - Background provides emotional context (luxury, sophistication, mystery)
 - Depth: Bokeh or atmospheric blur creating dimensional layering`;
 
-    // TEXT POSITIONING GUIDE (for design system context)
-    const textContextGuide = `DESIGN SYSTEM CONTEXT (TEXT WILL BE ADDED IN POST-PRODUCTION):
-[IMAGE CONTENT: Subject + Background ONLY - NO rendered text in image]
-- Left margin: Will receive ultra-bold vertical word ("${mainWord}"), font ~90° rotation, COULEUR PRINCIPALE ${colorPrincipale}, fills 70-85% of height
-- Center-bottom: Will receive elegant script phrase ("${scriptPhrase}"), COULEUR SECONDAIRE ${colorSecondaire}, cursive ~24px
-- Bottom baseline: Will receive small-caps info ("${infoLine}"), white, tracking-wide, ~14px
-Purpose: Clean editorial photograph ready for sophisticated design overlay.`;
+    // TEXT RENDERING GUIDE - MANDATORY DALL-E EXECUTION
+    const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
+- YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
+  1. MAIN TITLE: "${mainWord}"
+     - POSITION: LEFT margin, oriented VERTICALLY (90° rotation).
+     - STYLE: Ultra-bold uppercase, filling 70-85% of total height.
+     - COLOR: Use precisely ${colorPrincipale}.
+  2. SCRIPT SUBTITLE: "${scriptPhrase}"
+     - POSITION: CENTER-BOTTOM area.
+     - STYLE: Elegant cursive/script font, signature-like.
+     - COLOR: Use precisely ${colorSecondaire}.
+  3. INFO BAR: "${infoLine}"
+     - POSITION: ABSOLUTE BOTTOM, centered.
+     - STYLE: Small-caps, wide tracking, minimalist.
+     - COLOR: White or light grey.
+- ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.`;
 
     // QUALITY & TECHNICAL SPECIFICATIONS
     const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
@@ -361,15 +370,11 @@ Purpose: Clean editorial photograph ready for sophisticated design overlay.`;
 
     // STRICT PROHIBITIONS
     const prohibitions = `PROHIBITIONS - CRITICAL AVOID:
-- NO text, NO letters, NO captions, NO overlays of any kind RENDERED IN IMAGE
-- NO floating design elements, badges, banners, or decorative graphics
-- NO cheap plastic reflections, obvious CGI, impossible lighting
-- NO distorted anatomy, warped proportions, wrong hand counts, AI hallucinations
-- NO generic stock photos - must be unique atmospheric setting
-- NO neon signs, LED displays, or artificial graphics (unless specifically styled)
-- NO AI watermarks, copyright symbols, OpenAI signatures, metadata
-- NO low-resolution areas, blur where detail expected
-- ABSOLUTELY NO AI ARTIFACTS: No melted faces, no weird hair physics, no impossible shadows`;
+- NO generic stock photos - must be unique atmospheric setting.
+- NO AI watermarks, copyright symbols, OpenAI signatures, or metadata.
+- NO distorted anatomy or AI hallucinations.
+- NO blurred faces or hands where detail is expected.
+- ABSOLUTELY NO AI ARTIFACTS: No melted faces, no weird hair physics, no impossible shadows.`;
 
     // FINAL INTEGRATED PROMPT
     const finalPrompt = `${magazineReference}
@@ -384,7 +389,7 @@ ${technicalQuality}
 
 ${prohibitions}
 
-EXECUTION MANDATE: Create a magazine cover-quality fashion photograph. Zero text overlays. Pure subject + atmospheric background in professional editorial style. Must look like published Vogue/Numéro photography. Maximum sophistication, zero digital artifacting.`;
+EXECUTION MANDATE: Create a high-end magazine cover including the specified typography. The text must be rendered as part of the visual layout. Must look like published Vogue/Numéro photography with professional graphic design integrated. Maximum sophistication, zero digital artifacting.`;
 
     this.logger.log(
       '[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E',
@@ -718,14 +723,15 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 - Additional Elements: ${architecture.rules.constraints}`
       : '';
 
-    // TYPOGRAPHY EMPHASIS (from example flyers - very specific)
-    const typographyMastery = isFashion
-      ? `TYPOGRAPHY: Bold sans-serif headlines (Montserrat Heavy 700+), positioned with graphic confidence. Tilted text 5-15° for design tension. Minimal supporting text, maximum visual impact. Color: High contrast against background.`
-      : isLuxury
-        ? `TYPOGRAPHY: Fine serif or modern sans, elegant and refined (Montserrat or equivalent). Centered or perfectly justified. Subtle color variations for hierarchy. Maximum negative space around text.`
-        : isBusiness
-          ? `TYPOGRAPHY: Professional sans-serif, corporate confidence (Montserrat/Open Sans family). Clean hierarchy, readable from all distances. Accent color integration (${brandingColor || 'brand color'}).`
-          : `TYPOGRAPHY: Modern clean typeface, clear hierarchy, design-forward positioning. Color: ${brandingColor || 'high contrast'}.`;
+    // TYPOGRAPHY MASTER - MANDATORY TEXT RENDERING
+    const typographyMastery = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
+- YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
+  1. MAIN TITLE: "${userQuery || modelName}"
+  2. SUPPORTING TEXT: "${job}"
+- Style for ${isFashion ? 'Fashion' : isLuxury ? 'Luxury' : 'Business'}:
+  ${isFashion ? 'Bold sans-serif headlines (Montserrat Heavy 700+), positioned with graphic confidence. Tilted text 5-15°.' : isLuxury ? 'Fine serif or modern sans, elegant and refined. Centered or perfectly justified.' : 'Professional sans-serif, clean hierarchy.'}
+- Color: ${brandingColor || 'High contrast against background'}.
+- ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.`;
 
     // SUBJECT DESCRIPTION ENHANCEMENT (from user job)
     const subjectEnhancer = (() => {
@@ -752,14 +758,13 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 
     // WHAT TO AVOID (critical)
     const prohibitions = `PROHIBITIONS - STRICTLY AVOID:
-- NO cheap plastic surfaces or CGI-obvious elements
-- NO floating text or logos that look ai-generated
-- NO poorly-rendered hands, distorted proportions, anatomy errors
-- NO generic stock photo backgrounds
-- NO AI hallucinations (extra fingers, morphed faces, etc.)
-- NO watermarks, copyright marks, or ai signatures
-- NO dramatic lighting that looks impossible
-- NO colors that don't exist in real materials`;
+- NO cheap plastic surfaces or CGI-obvious elements.
+- NO poorly-rendered hands, distorted proportions, or anatomy errors.
+- NO generic stock photo backgrounds.
+- NO AI hallucinations (extra fingers, morphed faces, etc.).
+- NO watermarks, copyright marks, or ai signatures.
+- NO dramatic lighting that looks impossible.
+- NO colors that don't exist in real materials.`;
 
     // FINAL INTEGRATED PROMPT
     const finalPrompt = `${subjectEnhancer}
@@ -2111,68 +2116,90 @@ COMPOSITION ARCHITECTURE:
         );
       }
 
-      // 4. Refine the query for visual richness (Moved to background)
-      const refinedRes = await this.refineQuery(
-        cleanedUserQuery || params.job,
-        params.job,
-        model,
-        flyerLanguage,
-        brandingColor,
-      );
+      // 4. Refine the query for visual richness (ONLY if no architecture)
+      let refinedRes: {
+        prompt: string;
+        isPostureChange: boolean;
+        accentColor?: string;
+        lighting?: string;
+        angle?: string;
+        background?: string;
+        primaryObject?: string;
+      } = {
+        prompt: cleanedUserQuery || params.job,
+        isPostureChange: false,
+        accentColor: brandingColor || undefined,
+        lighting: undefined,
+        angle: undefined,
+        background: undefined,
+        primaryObject: undefined,
+      };
 
-      // 4. Get specific model description
+      if (!architecture) {
+        refinedRes = await this.refineQuery(
+          cleanedUserQuery || params.job,
+          params.job,
+          model,
+          flyerLanguage,
+          brandingColor,
+        );
+      }
+
+      // 4. Get specific model description (Only needed if NOT using Magazine/Fashion architectures)
       let baseStylePrompt = '';
       let variantStructurePrompt = '';
 
-      // Try to find the variant in our centralized categories
-      let foundVariant = null;
-      let foundStructure = null;
+      if (!architecture) {
+        // Try to find the variant in our centralized categories
+        let foundVariant = null;
+        let foundStructure = null;
 
-      for (const cat of FLYER_CATEGORIES) {
-        for (const m of cat.models) {
-          // Case 1: Direct structure on model (e.g. Unified architectures)
-          if (m.label === model && m.structure) {
-            foundStructure = m.structure;
-            break;
-          }
-          // Case 2: In variants
-          if (m.variants) {
-            for (const v of m.variants) {
-              if (v.label === model) {
-                foundVariant = v;
-                foundStructure = v.structure;
-                break;
+        for (const cat of FLYER_CATEGORIES) {
+          for (const m of cat.models) {
+            // Case 1: Direct structure on model (e.g. Unified architectures)
+            if (m.label === model && m.structure) {
+              foundStructure = m.structure;
+              break;
+            }
+            // Case 2: In variants
+            if (m.variants) {
+              for (const v of m.variants) {
+                if (v.label === model) {
+                  foundVariant = v;
+                  foundStructure = v.structure;
+                  break;
+                }
               }
             }
+            if (foundStructure) break;
           }
           if (foundStructure) break;
         }
-        if (foundStructure) break;
-      }
 
-      if (foundStructure) {
-        this.logger.log(
-          `[processFlyerBackground] Found structure for: ${model}`,
-        );
-        variantStructurePrompt =
-          this.getPromptFromVariantStructure(foundStructure);
-        baseStylePrompt = this.getModelDescription(model, params.job, {
-          accentColor: brandingColor || refinedRes.accentColor,
-          lighting: refinedRes.lighting,
-          angle: refinedRes.angle,
-          background: refinedRes.background,
-          logoUrl,
-          noLogo: hasNoLogoRequest,
-        });
-      } else {
-        baseStylePrompt = this.getModelDescription(model, params.job, {
-          accentColor: brandingColor || refinedRes.accentColor,
-          lighting: refinedRes.lighting,
-          angle: refinedRes.angle,
-          background: refinedRes.background,
-          logoUrl,
-          noLogo: hasNoLogoRequest,
-        });
+        if (foundStructure) {
+          this.logger.log(
+            `[processFlyerBackground] Found structure for: ${model}`,
+          );
+          variantStructurePrompt =
+            this.getPromptFromVariantStructure(foundStructure);
+          baseStylePrompt = this.getModelDescription(model, params.job, {
+            accentColor: brandingColor || refinedRes.accentColor,
+            lighting: refinedRes.lighting,
+            angle: refinedRes.angle,
+            background: refinedRes.background,
+            logoUrl,
+            noLogo: hasNoLogoRequest,
+          });
+        } else {
+          baseStylePrompt = this.getModelDescription(model, params.job, {
+            accentColor: brandingColor || refinedRes.accentColor,
+            lighting: refinedRes.lighting,
+            angle: refinedRes.angle,
+            background: refinedRes.background,
+            logoUrl,
+            noLogo: hasNoLogoRequest,
+          });
+        }
       }
 
       let brandingInfoStr = '';
@@ -2223,10 +2250,12 @@ COMPOSITION ARCHITECTURE:
       const finalPrompt = imageBuffer
         ? `PROFESSIONAL FLYER RE-DESIGN: Transform this image into an elite magazine-quality flyer matching the "${model}" template.
 ${magazineStyleDirective}
+${flyerTextRule}
 USER CONTEXT: "${cleanedUserQuery || params.job || ''}"
 OUTPUT: Magazine-editorial quality (Vogue/Numéro/Harper's Bazaar standard). ZERO AI artifacts. Photorealistic authenticity.`
         : `ELITE MAGAZINE FLYER GENERATION: Create a professional, high-end flyer for the "${model}" model.
 ${magazineStyleDirective}
+${flyerTextRule}
 USER CONTEXT: "${cleanedUserQuery || params.job || ''}"
 OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. NO digital artifacts, NO cheap AI signatures.`;
 

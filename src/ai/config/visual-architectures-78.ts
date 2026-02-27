@@ -19,18 +19,18 @@ export const FASHION_VERTICAL_IMPACT_ARCH: VisualArchitecture = {
   colorPalette: 'Luxury/Neon',
   rules: {
     subject:
-      'SUBJECT: Portrait full-frame, offset left. Crop serré, profondeur de champ cinématique (f/1.4–f/1.8). Editorial quality. Kinetic energy, sharp focus on face, confident posture.',
+      'SUBJECT: High-fashion portrait, offset slightly. Crop from chest upward. Cinematic depth of field (f/1.8). Sharp focus on face, confident posture. Professional editorial photography.',
     background:
-      'BACKGROUND: Dark moody environment, atmospheric depth. Dégradé sombre overlay (noir → transparent) haut/droite. Éclairage teinté par la COULEUR PRINCIPALE (colorPrincipale).',
+      'BACKGROUND: Minimalist studio or atmospheric dark environment. Deep charcoal or black. Soft dramatic lighting.',
     title:
-      'TITLE_VERTICAL: Ultra Bold (Montserrat Black 900 / ExtraBold). Texte vertical SUR GAUCHE. Rotation 90°. Occupe 80–90% de la hauteur. Couleur = COULEUR PRINCIPALE (colorPrincipale). Contour léger ou lueur douce.',
+      'RENDER TEXT - MAIN TITLE: Vertically aligned on the LEFT margin. Ultra-bold sans-serif. Rotated 90 degrees. Large scale.',
     subtitle:
-      "SUBTITLE_SCRIPT: Font script (Allura / Great Vibes) au centre-bas. Couleur = COULEUR SECONDAIRE (colorSecondaire) ou blanc si non définie. Lueur subtile. Phrase fournie par l'utilisateur.",
+      'RENDER TEXT - SUBTITLE: Elegant script/cursive font at the CENTER-BOTTOM area.',
     infoBlock:
-      'INFO_BASELINE: Tout en bas centré. Petites caps / tracking large. Blanc. Contenu: contact / adresse.',
-    upperZone: 'UPPER: Absent.',
+      'RENDER TEXT - INFO: Small-caps, centered at the absolute BOTTOM.',
+    upperZone: 'UPPER: None.',
     constraints:
-      "LAYOUT: FASHION_VERTICAL_IMPACT strict. COULEUR PRINCIPALE = couleur du titre vertical. COULEUR SECONDAIRE = couleur du sous-titre script. Max 3 blocs texte. PAS d'icônes, PAS de stickers. 8K. Référence: Vogue / Harper's Bazaar. Zero AI artifacts.",
+      'LAYOUT: Strict magazine cover composition. YOU MUST RENDER ALL TEXT BLOCKS DIRECTLY ON THE IMAGE. Professional typography integration. No logos. Zero AI artifacts.',
   },
 };
 
@@ -40,18 +40,17 @@ export const STREET_SALE_ARCH: VisualArchitecture = {
   colorPalette: 'Urban/Vibrant',
   rules: {
     subject:
-      'SUBJECT: Dynamic product shot or model in urban setting. High contrast, sharp edges. Motion blur on background for speed feel.',
+      'SUBJECT: Dynamic product or model in high-energy urban setting. High contrast.',
     background:
-      'BACKGROUND: Urban street, concrete textures, neon signs blurred in background. High contrast lighting.',
+      'BACKGROUND: Concrete textures, city street, neon signs blurred.',
     title:
-      'TITLE: Mega Bold Sans-Serif. Diagonal placement or tilted. High energy. Color = colorPrincipale (Neon/Vibrant).',
+      'RENDER TEXT - TITLE: Mega Bold Sans-Serif. Diagonal or tilted placement.',
     subtitle:
-      'SUBTITLE: Heavy sans-serif block text. "SALE" or "OFFER" emphasis. High visibility.',
-    infoBlock:
-      'INFO: Impactful typography, heavy tracking. High contrast colors.',
-    upperZone: 'UPPER: Dynamic badges or price stickers.',
+      'RENDER TEXT - SUBTITLE: Heavy block text (e.g., "SALE" or "OFFER").',
+    infoBlock: 'RENDER TEXT - INFO: Impactful typography at the bottom.',
+    upperZone: 'UPPER: Dynamic price stickers or badges.',
     constraints:
-      'LAYOUT: High energy, non-grid, overlapping elements. Streetwear aesthetic. Reference: Nike/Adidas street campaigns.',
+      'LAYOUT: High energy, urban aesthetic. RENDER ALL TEXT BLOCKS DIRECTLY. Reference: Nike streetwear campaigns.',
   },
 };
 
@@ -61,18 +60,16 @@ export const MAGAZINE_COVER_ARCH: VisualArchitecture = {
   colorPalette: 'Classic/Editorial',
   rules: {
     subject:
-      'SUBJECT: Centered portrait, eye level. Subject interacts with the masthead (slight overlap). Studio lighting, clean crisp details.',
+      'SUBJECT: Centered professional portrait. Eye level. High-end lighting.',
     background:
-      'BACKGROUND: Minimalist studio background. Solid color or very subtle texture. Shadow depth to create 3D feel.',
+      'BACKGROUND: Minimalist studio background. Neutral color or subtle texture.',
     title:
-      'TITLE: Classic Serif Masthead (Didot/Bodoni style). Horizontal, top position. Large and authoritative.',
-    subtitle:
-      'SUBTITLE: Modern Sans-Serif overlays. "The Issue" or "Special Edition" typography.',
-    infoBlock:
-      'INFO: Side-aligned headlines, varied weights. Editorial grid layout.',
-    upperZone: 'UPPER: Barcode, date, and issue number.',
+      'RENDER TEXT - TITLE: Classic Serif Masthead (top position, authoritative).',
+    subtitle: 'RENDER TEXT - SUBTITLE: Modern sans-serif text overlays.',
+    infoBlock: 'RENDER TEXT - INFO: Side-aligned headlines in editorial grid.',
+    upperZone: 'UPPER: Minor details (date, issue number).',
     constraints:
-      'LAYOUT: Classic magazine cover hierarchy. High-end printing look. Clear text-over-image legibility.',
+      'LAYOUT: Classic magazine cover hierarchy. RENDER ALL TEXT BLOCKS DIRECTLY. Publication quality.',
   },
 };
 
@@ -82,18 +79,16 @@ export const EDITORIAL_MOTION_ARCH: VisualArchitecture = {
   colorPalette: 'Dreamy/Fluid',
   rules: {
     subject:
-      'SUBJECT: Subject in motion, fluid fabric, soft edges. Ethereal and artistic. High key lighting with soft shadows.',
+      'SUBJECT: Subject in motion or with fluid fabric. Soft Ethereal edges.',
     background:
-      'BACKGROUND: Abstract gradients, soft focus, dream-like atmosphere. Fluid shapes and light leaks.',
+      'BACKGROUND: Abstract gradients, soft focus, dream-like atmosphere. Light leaks.',
     title:
-      'TITLE: Thin, wide-spaced Sans-Serif. Minimalist and elegant. Sophisticated placement.',
-    subtitle:
-      'SUBTITLE: Artistic calligraphy or fine script. Intertwined with the subject.',
-    infoBlock:
-      'INFO: Transparent blocks or subtle overlays. Minimalist contact info.',
-    upperZone: 'UPPER: Minimalist logo or branding.',
+      'RENDER TEXT - TITLE: Thin, wide-spaced sans-serif. Minimalist and elegant.',
+    subtitle: 'RENDER TEXT - SUBTITLE: Artistic calligraphy or fine script.',
+    infoBlock: 'RENDER TEXT - INFO: Subtle overlays or transparent blocks.',
+    upperZone: 'UPPER: Minimalist branding elements.',
     constraints:
-      'LAYOUT: Breathable, lots of negative space. Artistic movement feel. Reference: Kinfolk or CEREAL magazine.',
+      'LAYOUT: Breathable, lots of negative space. RENDER ALL TEXT BLOCKS DIRECTLY. Reference: Kinfolk magazine.',
   },
 };
 
@@ -103,16 +98,16 @@ export const SPLIT_TYPO_ARCH: VisualArchitecture = {
   colorPalette: 'Minimalist/Block',
   rules: {
     subject:
-      'SUBJECT: Subject confined to one half of the layout. Sharp silhouette, high contrast.',
+      'SUBJECT: Subject confined to one half of the layout. Sharp silhouette.',
     background:
-      'BACKGROUND: Two-tone split. Solid color block on one side, photographic on the other.',
+      'BACKGROUND: Strict two-tone split. Solid color block vs photographic.',
     title:
-      'TITLE: Massive Typography filling the split zone. Vertically aligned or large block letters.',
-    subtitle: 'SUBTITLE: Horizontal contrast text. Small and precise.',
-    infoBlock: 'INFO: Bottom aligned, strict grid. Mono-spaced font style.',
+      'RENDER TEXT - TITLE: Massive typography filling the split zone. Bold block letters.',
+    subtitle: 'RENDER TEXT - SUBTITLE: Horizontal contrast text. Small.',
+    infoBlock: 'RENDER TEXT - INFO: Bottom-aligned strict grid.',
     upperZone: 'UPPER: Vertical branding lines.',
     constraints:
-      'LAYOUT: Strict 50/50 split. Modernist Swiss design influence. Precision and balance.',
+      'LAYOUT: Strict 50/50 split. Modernist Swiss design. RENDER ALL TEXT BLOCKS DIRECTLY.',
   },
 };
 
@@ -121,18 +116,17 @@ export const LUXURY_SERIE_ARCH: VisualArchitecture = {
   layoutType: 'TYPE_MAGAZINE',
   colorPalette: 'Gold/Black/White',
   rules: {
-    subject:
-      'SUBJECT: Floating product or macro detail. Extreme sharp focus, macro photography. Gold/Silver reflections.',
+    subject: 'SUBJECT: Floating product or macro detail. Extreme sharp focus.',
     background:
-      'BACKGROUND: Dark textured marble, silk, or premium paper texture. Low key lighting, dramatic spotlight.',
+      'BACKGROUND: Dark textured marble, silk, or premium paper texture.',
     title:
-      'TITLE: Luxury Serif with extremely thin accents. Gold or Metallic finish appearance.',
+      'RENDER TEXT - TITLE: Luxury Serif with thin accents (Gold or Silver appearance).',
     subtitle:
-      'SUBTITLE: "LIMITED EDITION" or "PREMIUM" label. Centered and small.',
-    infoBlock: 'INFO: Golden ratio placement. Discreet but premium typography.',
-    upperZone: 'UPPER: Thin ornamental borders or corners.',
+      'RENDER TEXT - SUBTITLE: "LIMITED EDITION" or "PREMIUM" label. Small.',
+    infoBlock: 'RENDER TEXT - INFO: Discreet premium typography.',
+    upperZone: 'UPPER: Thin ornamental borders.',
     constraints:
-      'LAYOUT: Golden ratio composition. Maximalist quality, minimalist content. Reference: Rolex/Patek Philippe ads.',
+      'LAYOUT: Golden ratio composition. RENDER ALL TEXT BLOCKS DIRECTLY. Reference: Rolex luxury ads.',
   },
 };
 
