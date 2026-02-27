@@ -154,7 +154,8 @@ export interface Variant {
 export interface FlyerModel {
   label: string;
   image?: string; // URL string for backend
-  variants: Variant[];
+  structure?: VariantStructure; // direct structure without variants
+  variants?: Variant[]; // optional sub-variants
 }
 
 export interface FlyerCategory {

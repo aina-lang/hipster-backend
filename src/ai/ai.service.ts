@@ -17,7 +17,10 @@ import {
 } from './entities/ai-generation.entity';
 import { deleteFile } from '../common/utils/file.utils';
 import { VISUAL_ARCHITECTURES } from './config/visual-architectures';
-import { getVisualArchitecture, VisualArchitecture } from './config/visual-architectures-78';
+import {
+  getVisualArchitecture,
+  VisualArchitecture,
+} from './config/visual-architectures-78';
 import { FlyerCategory, VariantStructure } from './types/flyer.types';
 import { FLYER_CATEGORIES } from './constants/flyer-categories';
 
@@ -311,11 +314,9 @@ export class AiService implements OnModuleInit {
     mainWord: string,
     scriptPhrase: string,
     infoLine: string,
-    accentColor: string = '#17A2B8',
-    brandingColor?: string,
+    colorPrincipale: string = '#17A2B8',
+    colorSecondaire: string = '#FFFFFF',
   ): string {
-    const finalAccentColor = brandingColor || accentColor || '#17A2B8';
-
     // VOGUE/NUMÉRO MAGAZINE REFERENCES
     const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
@@ -325,10 +326,10 @@ export class AiService implements OnModuleInit {
 - Sophisticated professional model or confident subject
 - Professional studio or atmospheric setting (dark, moody background)
 - Depth of field: f/1.8-f/2.8 equivalent (soft background blur, laser-sharp face/eyes)
-- Color Treatment: BLACK AND WHITE or DESATURATED BASE with selective color on accessory only
-- Accessory Detail: If present, accent color (${finalAccentColor} teal/cyan) appears ONLY on key accessory (glasses lens, necklace, watch, earpiece) - small stylized glow/reflection allowed
+- Color Treatment: BLACK AND WHITE or DESATURATED BASE with selective color on key accent
+- Accent lighting teinté par COULEUR PRINCIPALE: ${colorPrincipale} (applied as rim light or costume accent)
 - Lighting: Professional 3-point or dramatic key+rim lighting, no flat lighting
-- Rim Light: Creates dimensional separation (bright edge on shoulder/hair against dark background)
+- Rim Light: Creates dimensional separation (bright edge on shoulder/hair using ${colorPrincipale})
 - Subject Position: Offset from center following rule of thirds (65% frame for classic editorial)`;
 
     // BACKGROUND TREATMENT
@@ -343,8 +344,8 @@ export class AiService implements OnModuleInit {
     // TEXT POSITIONING GUIDE (for design system context)
     const textContextGuide = `DESIGN SYSTEM CONTEXT (TEXT WILL BE ADDED IN POST-PRODUCTION):
 [IMAGE CONTENT: Subject + Background ONLY - NO rendered text in image]
-- Left margin: Will receive ultra-bold vertical word ("${mainWord}"), font ~90° rotation, teal ${finalAccentColor}, fills 70-85% of height
-- Center-bottom: Will receive elegant script phrase ("${scriptPhrase}"), white cursive, ~24px
+- Left margin: Will receive ultra-bold vertical word ("${mainWord}"), font ~90° rotation, COULEUR PRINCIPALE ${colorPrincipale}, fills 70-85% of height
+- Center-bottom: Will receive elegant script phrase ("${scriptPhrase}"), COULEUR SECONDAIRE ${colorSecondaire}, cursive ~24px
 - Bottom baseline: Will receive small-caps info ("${infoLine}"), white, tracking-wide, ~14px
 Purpose: Clean editorial photograph ready for sophisticated design overlay.`;
 
@@ -625,14 +626,14 @@ EXECUTION MANDATE: Create a magazine cover-quality fashion photograph. Zero text
       // 2. Try to render SVG to PNG using Puppeteer (in production environment)
       // For now, we'll return the base image (graceful degradation)
       // In production, would convert SVG → PNG via Puppeteer, then composite
-      
+
       // TODO: Implement Puppeteer rendering for production:
       // const browser = await puppeteer.launch({ headless: 'new' });
       // const page = await browser.newPage();
       // await page.setViewport({ width, height });
       // await page.setContent(svgContent);
       // const screenshot = await page.screenshot({ type: 'png' });
-      // 
+      //
       // Then composite with Sharp:
       // const composed = await sharp(baseImageBuffer)
       //   .composite([{ input: screenshot, gravity: 'center' }])
@@ -667,7 +668,6 @@ EXECUTION MANDATE: Create a magazine cover-quality fashion photograph. Zero text
       : { r: 23, g: 162, b: 184 }; // Default teal
   }
 
-
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
    * Génère un prompt ultra-affiné pour produire des rendus Vogue/Numéro/Fashion
@@ -686,10 +686,18 @@ EXECUTION MANDATE: Create a magazine cover-quality fashion photograph. Zero text
     const sportsModels = ['NIKE', 'ADIDAS', 'SPORTS', 'FASHION_SHOW'];
     const businessModels = ['CORPORATE', 'NUMERO', 'HOMME', 'MAGAZINE'];
 
-    const isFashion = fashionModels.some((m) => modelName?.toUpperCase().includes(m));
-    const isLuxury = luxuryModels.some((m) => modelName?.toUpperCase().includes(m));
-    const isSports = sportsModels.some((m) => modelName?.toUpperCase().includes(m));
-    const isBusiness = businessModels.some((m) => modelName?.toUpperCase().includes(m));
+    const isFashion = fashionModels.some((m) =>
+      modelName?.toUpperCase().includes(m),
+    );
+    const isLuxury = luxuryModels.some((m) =>
+      modelName?.toUpperCase().includes(m),
+    );
+    const isSports = sportsModels.some((m) =>
+      modelName?.toUpperCase().includes(m),
+    );
+    const isBusiness = businessModels.some((m) =>
+      modelName?.toUpperCase().includes(m),
+    );
 
     // CINEMATOGRAPHY & COMPOSITION RULES (from example flyers analysis)
     const cinematicDirectives = isFashion
@@ -2048,7 +2056,7 @@ COMPOSITION ARCHITECTURE:
 
       // 2. RETRIEVE 78-ARCHITECTURE FOR THIS MODEL
       const architecture = getVisualArchitecture(model);
-      
+
       if (architecture) {
         this.logger.log(
           `[processFlyerBackground] Retrieved architecture for model: ${model} (Layout: ${architecture.layoutType})`,
@@ -2062,19 +2070,26 @@ COMPOSITION ARCHITECTURE:
       // 3. Build ELITE PROMPT using architecture rules
       // Check if this is a FASHION_VERTICAL type that requires special text parameter handling
       let magazineStyleDirective: string;
-      const isFashionVertical = architecture?.layoutType === 'TYPE_FASHION_VERTICAL';
-      
+      const isFashionVertical =
+        architecture?.layoutType === 'TYPE_FASHION_VERTICAL';
+
       if (isFashionVertical) {
-        // Extract fashion-vertical specific parameters
-        const mainWord = params.mainWord || params.modelName || model || 'FASHION';
-        const scriptPhrase = params.scriptPhrase || params.subtitle || 'Save the Date';
-        const infoLine = params.infoLine || params.infoBlock || 'RDV • Adresse • Téléphone';
-        const accentColor = params.accentColor || brandingColor || '#17A2B8';
-        
+        // Extract fashion-vertical specific parameters (matching frontend naming exactly)
+        const mainWord =
+          params.mainWord || params.modelName || model || 'FASHION';
+        const scriptPhrase =
+          params.scriptPhrase || params.subtitle || 'Save the Date';
+        const infoLine =
+          params.infoLine || params.infoBlock || 'RDV • Adresse • Téléphone';
+        // colorPrincipale = Couleur Principale (left), colorSecondaire = Couleur Secondaire (right)
+        const colorPrincipale =
+          params.colorPrincipale || brandingColor || '#17A2B8';
+        const colorSecondaire = params.colorSecondaire || '#FFFFFF';
+
         this.logger.log(
-          `[processFlyerBackground] Building FASHION_VERTICAL prompt with text parameters: mainWord="${mainWord}", scriptPhrase="${scriptPhrase}", accentColor="${accentColor}"`,
+          `[processFlyerBackground] Building FASHION_VERTICAL_IMPACT prompt: mainWord="${mainWord}", colorPrincipale="${colorPrincipale}", colorSecondaire="${colorSecondaire}"`,
         );
-        
+
         magazineStyleDirective = this.buildFashionVerticalPrompt(
           architecture,
           params.job,
@@ -2082,8 +2097,8 @@ COMPOSITION ARCHITECTURE:
           mainWord,
           scriptPhrase,
           infoLine,
-          accentColor,
-          brandingColor,
+          colorPrincipale,
+          colorSecondaire,
         );
       } else {
         // Standard magazine-style prompt for other architectures
@@ -2092,7 +2107,7 @@ COMPOSITION ARCHITECTURE:
           architecture,
           params.job,
           params.userQuery || '',
-          brandingColor
+          brandingColor,
         );
       }
 
@@ -2194,7 +2209,7 @@ COMPOSITION ARCHITECTURE:
 
       // 5. FINAL PROMPT CONSTRUCTION - ELITE MAGAZINE STYLE
       // Replace old complex system with the refined magazine-style directive
-      
+
       const finalPrompt = imageBuffer
         ? `PROFESSIONAL FLYER RE-DESIGN: Transform this image into an elite magazine-quality flyer matching the "${model}" template.
 ${magazineStyleDirective}
@@ -2227,15 +2242,18 @@ OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. N
 
       // Apply typographic composition for FASHION_VERTICAL models
       if (isFashionVertical) {
-        const mainWord = params.mainWord || params.modelName || model || 'FASHION';
-        const scriptPhrase = params.scriptPhrase || params.subtitle || 'Save the Date';
-        const infoLine = params.infoLine || params.infoBlock || 'RDV • Adresse • Téléphone';
+        const mainWord =
+          params.mainWord || params.modelName || model || 'FASHION';
+        const scriptPhrase =
+          params.scriptPhrase || params.subtitle || 'Save the Date';
+        const infoLine =
+          params.infoLine || params.infoBlock || 'RDV • Adresse • Téléphone';
         const accentColor = params.accentColor || brandingColor || '#17A2B8';
-        
+
         this.logger.log(
           `[processFlyerBackground] Applying typographic composition for FASHION_VERTICAL`,
         );
-        
+
         finalBuffer = await this.applyTypographicFashionVertical(
           finalBuffer,
           mainWord,
