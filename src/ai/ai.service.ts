@@ -326,7 +326,7 @@ export class AiService implements OnModuleInit {
 - Sophisticated professional model or confident subject
 - Professional studio or atmospheric setting (dark, moody background)
 - Depth of field: f/1.8-f/2.8 equivalent (soft background blur, laser-sharp face/eyes)
-- Color Treatment: BLACK AND WHITE or DESATURATED BASE with selective color on key accent
+- Color Treatment: RICH, VIBRANT VOGUE-STYLE COLOR PALETTE
 - Accent lighting teinté par COULEUR PRINCIPALE: ${colorPrincipale} (applied as rim light or costume accent)
 - Lighting: Professional 3-point or dramatic key+rim lighting, no flat lighting
 - Rim Light: Creates dimensional separation (bright edge on shoulder/hair using ${colorPrincipale})
@@ -362,11 +362,9 @@ export class AiService implements OnModuleInit {
     const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
 - Resolution: 4K minimum, conceptual 8K quality
 - Photography Style: Professional fashion editorial, hyperrealistic photographic rendering
-- Color Science: If color: rich, saturated, luxurious tones. If B&W: rich blacks, brilliant whites, smooth gray gradations
-- Lighting Quality: Professional studio-grade, physically plausible three-point setups, warm or cool gels applied intentionally
-- Details: Sharp, textured skin rendering, realistic hair texture, authentic fabric materials, professional makeup
-- Post-Processing: Subtle vignetting, color grading applied (lifted blacks for luxury feel), film-grain optional
-- Composition: Magazine-editorial worthy, intentional rule-of-thirds, dramatic lighting ratios`;
+- Post-Processing: Subtle vignetting, color grading applied (rich saturated tones for luxury feel), film-grain optional
+- Composition: Magazine-editorial worthy, intentional rule-of-thirds, dramatic lighting ratios
+- COLOR MANDATE: Full vivid color. NO black and white. NO grayscale. NO desaturation.`;
 
     // STRICT PROHIBITIONS
     const prohibitions = `PROHIBITIONS - CRITICAL AVOID:
@@ -374,6 +372,7 @@ export class AiService implements OnModuleInit {
 - NO AI watermarks, copyright symbols, OpenAI signatures, or metadata.
 - NO distorted anatomy or AI hallucinations.
 - NO blurred faces or hands where detail is expected.
+- ABSOLUTELY NO BLACK AND WHITE or GRAYSCALE generations.
 - ABSOLUTELY NO AI ARTIFACTS: No melted faces, no weird hair physics, no impossible shadows.`;
 
     // FINAL INTEGRATED PROMPT
@@ -754,6 +753,7 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 - Lighting: Professional studio-grade or natural window light, physically plausible
 - Color Grading: Sophisticated color grading with reference to luxury lifestyle magazines
 - Details: Sharp textures, realistic fabric, authentic materials, skin tone perfection
+- COLOR PERFORMANCE: Rich, vibrant, editorial-grade color. ABSOLUTELY NO BLACK AND WHITE.
 - NO AI ARTIFACTS: No plastic reflections, no impossible physics, no synthetic glows`;
 
     // WHAT TO AVOID (critical)
@@ -764,6 +764,7 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 - NO AI hallucinations (extra fingers, morphed faces, etc.).
 - NO watermarks, copyright marks, or ai signatures.
 - NO dramatic lighting that looks impossible.
+- NO BLACK AND WHITE, NO GRAYSCALE, NO MONOCHROME RENDERING.
 - NO colors that don't exist in real materials.`;
 
     // FINAL INTEGRATED PROMPT
