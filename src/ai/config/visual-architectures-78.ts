@@ -519,13 +519,13 @@ export const FASHION_VERTICAL_TYPE_FASHION_VERTICAL: VisualArchitecture = {
     layoutType: 'TYPE_FASHION_VERTICAL',
     colorPalette: 'Luxury',
     rules: {
-        subject: 'SUBJECT: Full-length portrait, high fashion editorial quality. Subject positioned at 65% of frame. Profound depth of field (f/1.8 equivalent). Strong rim-lighting creating dimensional separation from background. Sophisticated styling, confident posture. Sharp focus on face/eyes.',
-        background: 'BACKGROUND: Photorealistic studio or atmospheric setting. Full-frame image with subtle directional lighting. Dark gradient overlay (black to transparent) positioned top-right corner to create legibility space for overlaid text.',
-        title: 'TITLE_VERTICAL: Ultra-Bold font (Montserrat ExtraBold / Anton / Bebas Negro). Positioned vertically on LEFT margin. Rotation: 90 degrees. Font size: occupies 80-90% of canvas height. Color: accentColor (default teal #17A2B8). Letter-spacing: tight with subtle outline or soft drop-shadow (0.5-1px, rgba(0,0,0,0.3)). Example: "FASHION", "ZINFO", "NUMERO", "VOGUE".',
-        subtitle: 'SUBTITLE_SCRIPT: Signature script font (Allura / Great Vibes / SignPainter style). Positioned CENTER-BOTTOM. Font size: 24-32px. Color: white with 85-95% opacity. Content: user-provided phrase ("Save the Date", "Offre du Week-end"). Elegant flowing baseline, minimal tracking.',
-        infoBlock: 'INFO_BASELINE: All-caps body text, small-caps styling, wide tracking (letter-spacing). Positioned BOTTOM-CENTER. Font size: 12-14px. Color: white. Content: 3-line info block (contact/address/phone). Tight line-height for readability.',
-        upperZone: 'UPPER: Minimal or absent. If present: thin accent line (1-2px) or subtle brand mark in corner.',
-        constraints: 'LAYOUT: FASHION_VERTICAL strict. Portrait orientation enforced. Max 1 accent color (accentColor). Max 3 text blocks (title, script, info). NO icons, NO stickers, NO multi-colors, NO decorative elements, NO AI artifacts. 8K photorealistic. Magazine reference: Vogue, Numéro, Harper\'s Bazaar, Elle. Professional color grading. Cinematic depth of field. Clean typography hierarchy.'
+        subject: 'SUBJECT: Portrait full-frame. Crop serré, profondeur de champ cinématique. Editorial fashion quality. Sophisticated styling, confident posture, sharp eyes/face.',
+        background: 'BACKGROUND: Photo plein cadre, portrait, crop serré, profondeur de champ (f/1.8). Dégradé sombre overlay (noir → transparent) positionnée haut/droite pour créer espace pour texte overlay.',
+        title: 'TITLE_VERTICAL: Ultra Bold (Montserrat ExtraBold / Anton / Bebas Negro). Texte vertical SUR GAUCHE. Rotation 90°. Taille TRÈS GRANDE (occupe 80-90% hauteur). Couleur = accentColor (default teal #17A2B8). Contour léger ou ombre douce.',
+        subtitle: 'SUBTITLE_SCRIPT: Font script fin (Allura / Great Vibes / SignPainter-Like). Texte "signature" au centre-bas. Blanc, opacité 85-95%. User-provided phrase.',
+        infoBlock: 'INFO_BASELINE: Tout en bas centré. Petites caps / tracking large. Blanc, taille petite. Content: contact/adresse/téléphone.',
+        upperZone: 'UPPER: Minimal ou absent.',
+        constraints: 'LAYOUT: FASHION_VERTICAL strict LOCKED. Max 1 accentColor. Max 3 blocs texte (title/script/info). PAS d\'icônes, PAS de stickers, PAS de multi-couleurs. 8K. Vogue/Numéro/Harpers Bazaar reference. Editorial professional. Zero AI artifacts.'
     },
 };
 
