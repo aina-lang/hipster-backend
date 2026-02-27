@@ -320,16 +320,28 @@ private buildFashionVerticalPrompt(
 
   const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
-  // 🔒 LOCKED POSTURE – AUCUN CHANGEMENT PERMIS
-  const subjectCinematography = `CINEMATOGRAPHY - SUBJECT (LOCKED POSE - DO NOT ALTER):
-- FIXED POSITION: The subject MUST remain in the exact same posture, stance, and inclination as originally provided. NO CHANGES allowed.
-- NO ROTATION, NO TILTING, NO HEAD MOVEMENT, NO BODY REORIENTATION.
-- NO modification of limb position, weight distribution, or line-of-action.
-- CAMERA ANGLE: FIXED and UNCHANGED. Absolutely NO variation in focal length, perspective, tilt, or framing.
-- VIEW ANGLE: Mandatory 3/4 profile view — must NOT shift closer to profile or frontal view.
-- SUBJECT ORIENTATION: Slightly offset to the RIGHT following rule of thirds — this position is FIXED and must not vary.
-- LIGHTING: Rim light (cyan/blue edge light using ${colorPrincipale}) MUST remain consistent and unchanged. Do NOT modify intensity or direction.`;
 
+  // 🔒 ABSOLUTE LOCKED POSE — AUCUN CHANGEMENT POSSIBLE
+  const subjectCinematography = `CINEMATOGRAPHY – SUBJECT (ABSOLUTE POSE LOCK – DO NOT MODIFY):
+- The subject’s ORIGINAL POSE, ORIGINAL ORIENTATION, and ORIGINAL HEAD + BODY DIRECTION must be REPRODUCED EXACTLY AS IN THE REFERENCE.
+- This includes:
+  • Exact body rotation (left, right, front, back),
+  • Exact head turn and chin angle,
+  • Exact gaze direction (eyes looking left/right/up/down),
+  • Exact inclination and tilt of neck, torso, and head,
+  • Exact shoulder angle and arm position,
+  • Exact posture, stance, and weight distribution.
+- The silhouette must remain IDENTICAL to the reference: same limb flow, same contour, same line-of-action.
+- STRICTLY FORBIDDEN:
+  • Pose correction or beautification,
+  • Camera re-framing, new angles, tilt, rotation,
+  • Mirroring, flipping, or straightening the subject,
+  • Any reinterpretation of orientation or inclination.
+- Whatever direction the subject faces or looks in the reference (left, right, up, down), DALL·E MUST REPRODUCE IT EXACTLY without ANY variation.`;
+
+
+
+  // BACKGROUND
   const backgroundTreatment = `BACKGROUND TREATMENT:
 - ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK.
 - PLACEMENT: FULL_FRAME.
@@ -339,38 +351,52 @@ private buildFashionVerticalPrompt(
 - PROHIBITIONS: STRICTLY FORBID: ["motion_blur", "speed_trails", "busy_patterns"].
 - Depth: Sharp textures on solid surfaces. The white is crisp and OPAQUE. NO fog, NO smoke.`;
 
+
+
+  // TEXT
   const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
 - YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
   1. MAIN TITLE: "${mainWord.toUpperCase()}"
-     - POSITION: oriented VERTICALLY along the FAR LEFT margin.
-     - READING DIRECTION: TOP-TO-BOTTOM (first letter at the top). Rotate 90° clockwise.
-     - VISIBILITY: Foreground overlap over subject and background.
-     - STYLE: EXTRA BOLD high-impact font.
+     - POSITION: Vertically along FAR LEFT margin.
+     - READING: TOP-TO-BOTTOM (first letter at the top). Rotate 90° clockwise.
+     - FOREGROUND: MUST overlap subject and background.
+     - STYLE: EXTRA BOLD, high-impact.
      - COLOR: ${colorPrincipale}, solid, opaque.
-     - ALIGNMENT: Perfectly vertical. NO tilt.
+     - ALIGNMENT: Perfectly vertical (NO tilt).
   2. SCRIPT SUBTITLE: "${scriptPhrase}"
      - POSITION: CENTER-BOTTOM.
-     - STYLE: Elegant cursive/script.
-     - TILT: +20° to +25° upward to the right.
+     - STYLE: Elegant cursive.
+     - TILT: +20° to +25° upward right.
      - COLOR: ${colorSecondaire}.
   3. INFO BAR: "${infoLine}"
      - POSITION: ABSOLUTE BOTTOM.
+     - STYLE: Small caps, wide tracking.
      - COLOR: White or light grey.
-- NO frames, NO boxes, NO transparency, NO background elements behind text.`;
+- NO frames, NO boxes, NO transparency, NO backgrounds behind text.`;
 
-  const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
-- Resolution: 4K minimum, conceptual 8K quality
-- Style: Professional fashion editorial, hyperrealistic.
+
+
+  // TECH SPECS
+  const technicalQuality = `TECHNICAL SPECIFICATIONS – VOGUE/NUMÉRO STANDARD:
+- Resolution: Minimum 4K, conceptual 8K quality.
+- Style: Hyperrealistic fashion editorial photography.
 - Post-Processing: Subtle vignetting, saturated luxury color grading.
 - Composition: Rule-of-thirds, dramatic lighting ratios.
-- COLOR MANDATE: Full vivid color only.`;
+- COLOR MANDATE: Full vivid color only (NO black and white).`;
 
-  const prohibitions = `PROHIBITIONS - CRITICAL:
-- NO pose changes of any kind.
-- NO black and white.
-- NO distortions, no anatomy errors.
-- NO AI artifacts, NO watermark.`;
 
+
+  // PROHIBITIONS
+  const prohibitions = `PROHIBITIONS – CRITICAL:
+- NO pose change. NO orientation change. NO inclination change.
+- NO anatomy distortions or AI artifacts.
+- NO watermarks, NO signatures, NO metadata.
+- NO grayscale, NO desaturation.
+- NO stock-photo style. UNIQUE editorial aesthetic only.`;
+
+
+
+  // FINAL PROMPT
   const finalPrompt = `${magazineReference}
 
 ${subjectCinematography}
@@ -384,9 +410,10 @@ ${technicalQuality}
 ${prohibitions}
 
 EXECUTION MANDATE:
-Produce a high-end magazine cover with FIXED SUBJECT POSTURE. Do NOT alter pose, camera angle, inclination, or anatomy. Text must be integrated exactly as specified.`;
+Produce a high-end magazine cover with the subject’s pose, orientation, and inclination reproduced EXACTLY as in the reference. ABSOLUTELY NO CHANGES to body position, gaze direction, silhouette, or camera angle. Text must be rendered exactly as specified.`;
 
-  this.logger.log('[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E with locked posture');
+
+  this.logger.log('[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E with ABSOLUTE pose lock');
 
   return finalPrompt;
 }
