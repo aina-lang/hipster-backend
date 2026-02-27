@@ -322,15 +322,9 @@ export class AiService implements OnModuleInit {
 
     // PORTRAIT SUBJECT - CRITICAL FOR THIS LAYOUT
     const subjectCinematography = `CINEMATOGRAPHY - SUBJECT:
-- FULL-LENGTH or UPPER-BODY high-fashion portrait (crop from chest/waist upward)
-- Sophisticated professional model or confident subject
-- Professional studio or atmospheric setting (dark, moody background)
-- Depth of field: f/1.8-f/2.8 equivalent (soft background blur, laser-sharp face/eyes)
-- Color Treatment: RICH, VIBRANT VOGUE-STYLE COLOR PALETTE
-- Accent lighting teinté par COULEUR PRINCIPALE: ${colorPrincipale} (applied as rim light or costume accent)
-- Lighting: Professional 3-point or dramatic key+rim lighting, no flat lighting
-- Rim Light: Creates dimensional separation (bright edge on shoulder/hair using ${colorPrincipale})
-- Subject Position: Offset from center following rule of thirds (65% frame for classic editorial)`;
+- Subject Position: Slightly offset to the RIGHT, following the rule of thirds.
+- POSTURE: 3/4 profile view (shoulders rotated away, head slightly tilted toward camera). Intense, serious, and captivating editorial gaze.
+- Rim Light: Dramatic separation (bright cyan/blue edge on one side profile) using ${colorPrincipale}.`;
 
     // BACKGROUND TREATMENT
     const backgroundTreatment = `BACKGROUND TREATMENT:
@@ -351,13 +345,14 @@ export class AiService implements OnModuleInit {
      - VISIBILITY: Absolute foreground (Premier plan). The text MUST overlay and overlap the subject and background. It should never be behind anything.
      - STYLE: EXTRA BOLD high-impact font (like "Anton", "Bebas Neue", or "Impact"), filling 70-85% of total height.
      - CASE: MANDATORY UPPERCASE.
-     - COLOR: Use precisely ${colorPrincipale}.
+     - COLOR: Create a VIBRANT VERTICAL GRADIENT from ${colorPrincipale} (bottom) to a glowing electric cyan or bright white (top).
      - ALIGNMENT: Strictly vertical. NO tilting, NO slanting.
   2. SCRIPT SUBTITLE: "${scriptPhrase}"
-     - POSITION: CENTER-BOTTOM area.
-     - STYLE: Elegant cursive/script font, signature-like, SIGNIFICANTLY tilted to the LEFT (-10° to -15°) for a dynamic vibe.
-     - SIZE: PROMINENT and large relative to other elements (80px equivalent).
-     - COLOR: Use precisely ${colorSecondaire}.
+     - POSITION: CENTER-BOTTOM area, over the subject or transition.
+     - STYLE: Elegant cursive/script font, signature-like.
+     - DYNAMIC TILT: AGGRESSIVELY tilted UPWARD to the RIGHT (+20° to +25°) for a high-energy dynamic vibe.
+     - SIZE: PROMINENT and large relative to other elements (85px equivalent).
+     - COLOR: Bright White (#FFFFFF).
   3. INFO BAR: "${infoLine}"
      - POSITION: ABSOLUTE BOTTOM, centered.
      - STYLE: Small-caps, wide tracking, minimalist.
@@ -483,7 +478,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
              GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} on the LEFT.
              BACKGROUND TRANSITION: Dark to ${brandingColor || 'primary color'} to opaque white glow.
              PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
-             COMPOSITION: Subject as focal point, balanced negative space, intentional layout design.`;
+            - COMPOSITION: Subject positioned slightly to the RIGHT in a sophisticated 3/4 profile view (shoulders turned, head slightly tilted). Intense editorial gaze. ABSOLUTELY NO front-facing "identity photo" poses. Strategic negative space, typography-integrated layout.`;
 
     // ARCHITECTURE-BASED RULES
     const architectureRules = architecture
@@ -2005,7 +2000,7 @@ COMPOSITION ARCHITECTURE:
 
       const flyerTextRule = `ELITE GRAPHIC DESIGN & ART DIRECTION RULES: 
              - AESTHETIC: High-end "Vogue" or "Apple-style" minimalism. Absolute focus on REAL-WORLD materials and authentic lighting.
-             - COMPOSITION: Masterful use of Negative Space. The design must feel intentional and balanced. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
+             - COMPOSITION: Masterful use of Negative Space. Subject positioned slightly to the RIGHT in a professional 3/4 profile view (shoulders rotated, head slightly tilted). Dynamic and professional posture. ABSOLUTELY NO front-facing "identity photo" or "passport photo" poses. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
              - TYPOGRAPHIC MASTERY: Typography is NOT just text; it's a design element. USE DYNAMIC HIERARCHY. You are ENCOURAGED to use sophisticated layouts: tilted/angled text, asymmetric balance, and overlapping elements that suggest a human designer's touch.
              - SAFE AREA & MARGINS: Maintain a strict 15% professional inner margin. No text should touch the edges.
              - FONTS: Emulate high-end foundry typefaces (Modern Serifs, Geometric Sans, or Editorial Scripts). 
