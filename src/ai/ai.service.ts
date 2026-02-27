@@ -353,7 +353,7 @@ export class AiService implements OnModuleInit {
      - COLOR: Use precisely ${colorPrincipale}.
   2. SCRIPT SUBTITLE: "${scriptPhrase}"
      - POSITION: CENTER-BOTTOM area.
-     - STYLE: Elegant cursive/script font, signature-like.
+     - STYLE: Elegant cursive/script font, signature-like, tilted slightly to the LEFT (-5° to -10°).
      - COLOR: Use precisely ${colorSecondaire}.
   3. INFO BAR: "${infoLine}"
      - POSITION: ABSOLUTE BOTTOM, centered.
@@ -492,7 +492,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
   </g>
   
   <!-- ===== SCRIPT SUBTITLE (center-bottom) ===== -->
-  <g opacity="0.92">
+  <g opacity="0.92" transform="rotate(-5, ${width / 2}, ${height - 150})">
     <!-- SCRIPT TEXT with drop shadow (No background box) -->
     <text
       x="${width / 2}"
