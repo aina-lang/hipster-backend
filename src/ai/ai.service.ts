@@ -334,11 +334,13 @@ export class AiService implements OnModuleInit {
 
     // BACKGROUND TREATMENT
     const backgroundTreatment = `BACKGROUND TREATMENT:
-- ATMOSPHERE: Sophisticated OPAQUE and SOLID background.
-- GRADIENT TRANSITION: Masterful organic transition from DEEP DARK (edge) to ${colorPrincipale} (mid-zone) to a subtle, OPAQUE WHITE GLOW (behind/around the subject).
-- Professional studio environment with physical volumetric depth.
-- NO visible text, NO watermarks, NO logos, NO floating elements.
-- Depth: Rich focus on solid materials and sharp textures. The white is OPAQUE and crisp, NOT smoky or foggy.`;
+- ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK.
+- PLACEMENT: FULL_FRAME.
+- GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT.
+- COLOR DOMINANCE: Ensure the Primary Color (${colorPrincipale}) is dominant on the LEFT side of the frame.
+- TRANSITION: Sophisticated OPAQUE and SOLID background transitioning from dark to ${colorPrincipale} to a subtle white glow.
+- PROHIBITIONS: STRICTLY FORBID: ["motion_blur", "speed_trails", "busy_patterns"].
+- Depth: Sharp textures on solid surfaces. The white is crisp and OPAQUE. NO fog, NO smoke.`;
 
     // TEXT RENDERING GUIDE - MANDATORY DALL-E EXECUTION
     const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
@@ -706,24 +708,32 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
 
     // CINEMATOGRAPHY & COMPOSITION RULES (from example flyers analysis)
     const cinematicDirectives = isFashion
-      ? `CINEMATOGRAPHY: Ultra-wide depth of field (f/1.8 equivalent), minimal background blur, editorial fashion lighting (side-key light, rim light), color grading with lifted blacks. 
-         ATMOSPHERE: OPAQUE and SOLID. 
-         BACKGROUND GRADIENT: Transition from deep dark tones to ${brandingColor || 'vibrant accent'} to a soft, OPAQUE white atmospheric glow.
-         COMPOSITION: Subject positioned off-center following rule of thirds, dynamic diagonal flow, negative space breathing.\nREFERENCES: Vogue USA, Harper's Bazaar, analogous to editorial spreads.`
+      ? `CINEMATOGRAPHY: Ultra-wide depth of field (f/1.8 equivalent), minimal background blur, editorial fashion lighting. 
+         ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK, OPAQUE and SOLID. 
+         GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} dominant on the LEFT side.
+         BACKGROUND TRANSITION: Dark to ${brandingColor || 'vibrant accent'} to a soft, OPAQUE white glow.
+         PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
+         COMPOSITION: Subject positioned off-center following rule of thirds, dynamic diagonal flow, negative space breathing.\nREFERENCES: Vogue USA, Harper's Bazaar.`
       : isLuxury
-        ? `CINEMATOGRAPHY: Studio-controlled volumetric lights, high contrast dramatic lighting, absolute technical perfection. 
-           ATMOSPHERE: Premium OPAQUE depth. 
-           BACKGROUND GRADIENT: Transition from obsidian dark to ${brandingColor || 'luxurious color'} to a subtle, OPAQUE white backlight.
-           COMPOSITION: Center-weighted symmetry with subtle asymmetric elements, minimal negative space, maximum focus on detail quality.\nREFERENCES: Luxury magazine editorials, museum-grade presentation.`
+        ? `CINEMATOGRAPHY: Studio-controlled volumetric lights, high contrast dramatic lighting. 
+           ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK, Premium OPAQUE depth. 
+           GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Luxurious Color'} dominant on the LEFT.
+           BACKGROUND TRANSITION: Obsidian dark to ${brandingColor || 'luxurious color'} to a subtle, OPAQUE white backlight.
+           PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
+           COMPOSITION: Center-weighted symmetry, minimal negative space, maximum focus on detail quality.`
         : isBusiness
-          ? `CINEMATOGRAPHY: Professional headshot lighting (3-point setup), sharp focus, minimal background bokeh, color-graded to luxury magazine standard. 
-             ATMOSPHERE: Clean OPAQUE professional depth.
-             BACKGROUND GRADIENT: Dark to ${brandingColor || 'corporate color'} to opaque white/light grey transition.
-             COMPOSITION: Confident centered presence, strategic negative space, typography-integrated layout.\nREFERENCES: Numéro magazine, luxury lifestyle publications.`
-          : `CINEMATOGRAPHY: Professional studio lighting, sharp focus, cinematic depth, color grading applied. 
-             ATMOSPHERE: OPAQUE atmospheric transition.
-             BACKGROUND GRADIENT: Dark to ${brandingColor || 'primary color'} to opaque white glow.
-             COMPOSITION: Subject as focal point, balanced negative space, intentional layout design.\nREFERENCES: High-end brand campaigns.`;
+          ? `CINEMATOGRAPHY: Professional headshot lighting, sharp focus. 
+             ATMOSPHERE: MOODY_GRADIENT, OPAQUE professional depth.
+             GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Corporate Color'} on the LEFT.
+             BACKGROUND TRANSITION: Dark to ${brandingColor || 'corporate color'} to opaque white/light grey.
+             PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
+             COMPOSITION: Confident centered presence, strategic negative space, typography-integrated layout.`
+          : `CINEMATOGRAPHY: Professional studio lighting, sharp focus, cinematic depth. 
+             ATMOSPHERE: MOODY_GRADIENT, OPAQUE atmospheric transition.
+             GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} on the LEFT.
+             BACKGROUND TRANSITION: Dark to ${brandingColor || 'primary color'} to opaque white glow.
+             PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
+             COMPOSITION: Subject as focal point, balanced negative space, intentional layout design.`;
 
     // ARCHITECTURE-BASED RULES
     const architectureRules = architecture
