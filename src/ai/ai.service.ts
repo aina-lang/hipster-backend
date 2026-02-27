@@ -351,6 +351,7 @@ export class AiService implements OnModuleInit {
      - STYLE: EXTRA BOLD high-impact font (like "Anton", "Bebas Neue", or "Impact"), filling 70-85% of total height.
      - CASE: MANDATORY UPPERCASE.
      - COLOR: Use precisely ${colorPrincipale}.
+     - ALIGNMENT: Strictly vertical. NO tilting, NO slanting.
   2. SCRIPT SUBTITLE: "${scriptPhrase}"
      - POSITION: CENTER-BOTTOM area.
      - STYLE: Elegant cursive/script font, signature-like, tilted slightly to the LEFT (-5° to -10°).
@@ -705,7 +706,7 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
   1. MAIN TITLE: "${(userQuery || modelName).toUpperCase()}"
   2. SUPPORTING TEXT: "${job}"
 - Style for ${isFashion ? 'Fashion' : isLuxury ? 'Luxury' : 'Business'}:
-  ${isFashion ? 'EXTRA BOLD high-impact sans-serif (use "Anton", "Bebas Neue", or "Impact"), positioned with graphic confidence. Tilted text 5-15°.' : isLuxury ? 'Fine serif or modern sans, elegant and refined. Centered or perfectly justified.' : 'Professional EXTRA BOLD sans-serif (Anton/Bebas Neue style), clean hierarchy.'}
+  ${isFashion ? 'EXTRA BOLD high-impact sans-serif (use "Anton", "Bebas Neue", or "Impact"), positioned with graphic confidence. NO tilted text, strictly vertical on left.' : isLuxury ? 'Fine serif or modern sans, elegant and refined. Centered or perfectly justified.' : 'Professional EXTRA BOLD sans-serif (Anton/Bebas Neue style), clean hierarchy.'}
 - Color: ${brandingColor || 'High contrast against background'}.
 - ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.
 - TYPOGRAPHY MANDATE: Typography must be HEAVY and IMPACTFUL. MANDATORY ALL CAPS for the main title. High design sophistication.`;
