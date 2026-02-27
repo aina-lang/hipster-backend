@@ -17,6 +17,7 @@ import {
 } from './entities/ai-generation.entity';
 import { deleteFile } from '../common/utils/file.utils';
 import { VISUAL_ARCHITECTURES } from './config/visual-architectures';
+import { getVisualArchitecture, VisualArchitecture } from './config/visual-architectures-78';
 import { FlyerCategory, VariantStructure } from './types/flyer.types';
 import { FLYER_CATEGORIES } from './constants/flyer-categories';
 
@@ -295,6 +296,216 @@ export class AiService implements OnModuleInit {
 
   private getRandomItem(pool: string[]): string {
     return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  /**
+   * 🎨 BUILD FASHION VERTICAL PREMIUM PROMPT FOR DALL-E
+   * Generates ultra-refined DALL-E prompt for TYPE_FASHION_VERTICAL posters
+   * Supports text parameters: mainWord, scriptPhrase, infoLine, accentColor
+   * Reference: Vogue, Numéro Magazine, Harper's Bazaar editorial quality
+   */
+  private buildFashionVerticalPrompt(
+    architecture: any,
+    job: string,
+    userQuery: string,
+    mainWord: string,
+    scriptPhrase: string,
+    infoLine: string,
+    accentColor: string = '#17A2B8',
+    brandingColor?: string,
+  ): string {
+    const finalAccentColor = brandingColor || accentColor || '#17A2B8';
+
+    // VOGUE/NUMÉRO MAGAZINE REFERENCES
+    const magazineReference = `MAGAZINE EDITORIAL REFERENCE: This image must look like it was published in Vogue USA, Numéro magazine, Harper's Bazaar, or Elle. Premium high-fashion editorial aesthetic. Covers quality, not advertorial.`;
+
+    // PORTRAIT SUBJECT CINEMATOGRAPHY
+    const subjectCinematography = `CINEMATOGRAPHY - SUBJECT:
+- Full-length portrait or upper-body high-fashion shot
+- Sophisticated subject styling, confident posture, authentic emotion
+- Depth of field: f/1.8 equivalent (strong background blur, sharp subject focus)
+- Rim lighting creating dimensional separation (light hair/shoulders against darker background)
+- Professional studio or atmospheric setting
+- Color-graded to luxury magazine standard (lifted blacks, warm shadows)
+- Subject positioned at 65% of frame for visual composition
+- Sharp focus on face, eyes, and styling details`;
+
+    // BACKGROUND TREATMENT
+    const backgroundTreatment = `BACKGROUND TREATMENT:
+- Full-frame photorealistic setting (studio, urban, or atmospheric environment)
+- Subtle directional lighting matching subject lighting
+- Dark gradient overlay (black to transparent) positioned top-right corner
+- Creates legibility space for vertical text overlay on left margin
+- NO text, NO watermarks, NO logos IN the background image itself
+- Background provides emotional context without competing with text`;
+
+    // TEXT POSITIONING (from architecture.rules)
+    const textPositioningGuide = `TEXT POSITIONING INSTRUCTIONS (for design system - NOT to render text):
+[DO NOT RENDER ANY TEXT - Image contains subject + background only. Text will be overlaid in post.]
+- Title (left vertical): ultra-bold font, 90° rotation, full height, color: ${finalAccentColor}
+- Script (center-bottom): elegant signature font, white 90% opacity, example: "${scriptPhrase}"
+- Info (bottom-center): small-caps, white, tracking-wide, example: "${infoLine}"
+Main word to accompany (for context only): "${mainWord}"`;
+
+    // QUALITY & TECHNICAL SPECIFICATIONS
+    const technicalQuality = `TECHNICAL SPECIFICATIONS:
+- Resolution: 4K minimum, 8K conceptual quality
+- Rendering: Hyperrealistic photographic (NOT illustration, NOT AI-obvious)
+- Lighting: Professional-grade, physically plausible, studio or natural window light
+- Color Grading: Sophisticated finish matching luxury magazine standards
+- Details: Sharp textures, authentic materials, realistic skin tones, true-to-life fabrics
+- Composition: Magazine editorial-worthy, intentional visual hierarchy
+- Depth: Cinematic depth of field, dimensional separation, professional bokeh`;
+
+    // STRICT PROHIBITIONS
+    const prohibitions = `PROHIBITIONS - MUST AVOID:
+- NO text, NO letters, NO captions, NO watermarks, NO logos IN the image
+- NO floating overlays or design elements that look AI-rendered
+- NO plastic reflections, CGI-obvious lighting, impossible physics
+- NO poor anatomy, distorted proportions, warped hands/faces
+- NO AI hallucinations (extra fingers, morphed faces, color artifacts)
+- NO generic stock photo backgrounds - must be unique and atmospheric
+- NO cheap surfaces, costume-like materials, DIY appearance
+- NO watermarks, copyright marks, OpenAI signatures`;
+
+    // CONTEXT INJECTION
+    const contextInjection = `CONTEXT:
+- Model: Fashion Vertical Premium Event Poster (TYPE_FASHION_VERTICAL)
+- Job/Category: ${job || 'Fashion event'}
+- User Intent: ${userQuery || 'premium fashion flyer'}
+- Accent Color: ${finalAccentColor}
+- Language/Region: French (if applicable to styling)`;
+
+    // FINAL INTEGRATED PROMPT
+    const finalPrompt = `${magazineReference}
+
+${subjectCinematography}
+
+${backgroundTreatment}
+
+${textPositioningGuide}
+
+${technicalQuality}
+
+${prohibitions}
+
+${contextInjection}
+
+MANDATE: Create an editorial-quality fashion photograph that would be published in top-tier fashion magazines. Maximum professional sophistication. Zero AI artifacts. The image MUST be a clean subject + background composition ready for text overlay in post-production. NOT a finished poster (no text rendered), but a magazine-grade photograph.`;
+
+    this.logger.log(
+      '[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E',
+    );
+    return finalPrompt;
+  }
+
+  /**
+   * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
+   * Génère un prompt ultra-affiné pour produire des rendus Vogue/Numéro/Fashion
+   * Utilise les règles de l'architecture + directives cinématographiques
+   */
+  private buildMagazineStylePrompt(
+    modelName: string,
+    architecture: any,
+    job: string,
+    userQuery: string,
+    brandingColor?: string,
+  ): string {
+    // Map model types to photography styles (referenced from example flyers)
+    const fashionModels = ['FASHION', 'STYLE', 'VOGUE', 'COLLECTION', 'MODE'];
+    const luxuryModels = ['LUXURY', 'PREMIUM', 'CLASSIQUE', 'ELEGANT'];
+    const sportsModels = ['NIKE', 'ADIDAS', 'SPORTS', 'FASHION_SHOW'];
+    const businessModels = ['CORPORATE', 'NUMERO', 'HOMME', 'MAGAZINE'];
+
+    const isFashion = fashionModels.some((m) => modelName?.toUpperCase().includes(m));
+    const isLuxury = luxuryModels.some((m) => modelName?.toUpperCase().includes(m));
+    const isSports = sportsModels.some((m) => modelName?.toUpperCase().includes(m));
+    const isBusiness = businessModels.some((m) => modelName?.toUpperCase().includes(m));
+
+    // CINEMATOGRAPHY & COMPOSITION RULES (from example flyers analysis)
+    const cinematicDirectives = isFashion
+      ? `CINEMATOGRAPHY: Ultra-wide depth of field (f/1.8 equivalent), cinematic motion blur in background, editorial fashion lighting (side-key light, rim light), color grading with lifted blacks. COMPOSITION: Subject positioned off-center following rule of thirds, dynamic diagonal flow, negative space breathing.\nREFERENCES: Vogue USA, Harper's Bazaar, analogous to editorial spreads.`
+      : isLuxury
+        ? `CINEMATOGRAPHY: Studio-controlled volumetric lights, high contrast dramatic lighting, absolute technical perfection. COMPOSITION: Center-weighted symmetry with subtle asymmetric elements, minimal negative space, maximum focus on detail quality.\nREFERENCES: Luxury magazine editorials, museum-grade presentation.`
+        : isBusiness
+          ? `CINEMATOGRAPHY: Professional headshot lighting (3-point setup), sharp focus, minimal background bokeh, color-graded to luxury magazine standard. COMPOSITION: Confident centered presence, strategic negative space, typography-integrated layout.\nREFERENCES: Numéro magazine, luxury lifestyle publications.`
+          : `CINEMATOGRAPHY: Professional studio lighting, sharp focus, cinematic depth, color grading applied. COMPOSITION: Subject as focal point, balanced negative space, intentional layout design.\nREFERENCES: High-end brand campaigns.`;
+
+    // ARCHITECTURE-BASED RULES
+    const architectureRules = architecture
+      ? `
+ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
+- Subject Positioning: ${architecture.rules.subject}
+- Background Treatment: ${architecture.rules.background}
+- Typography Style: ${architecture.rules.title}
+- Additional Elements: ${architecture.rules.constraints}`
+      : '';
+
+    // TYPOGRAPHY EMPHASIS (from example flyers - very specific)
+    const typographyMastery = isFashion
+      ? `TYPOGRAPHY: Bold sans-serif headlines (Montserrat Heavy 700+), positioned with graphic confidence. Tilted text 5-15° for design tension. Minimal supporting text, maximum visual impact. Color: High contrast against background.`
+      : isLuxury
+        ? `TYPOGRAPHY: Fine serif or modern sans, elegant and refined (Montserrat or equivalent). Centered or perfectly justified. Subtle color variations for hierarchy. Maximum negative space around text.`
+        : isBusiness
+          ? `TYPOGRAPHY: Professional sans-serif, corporate confidence (Montserrat/Open Sans family). Clean hierarchy, readable from all distances. Accent color integration (${brandingColor || 'brand color'}).`
+          : `TYPOGRAPHY: Modern clean typeface, clear hierarchy, design-forward positioning. Color: ${brandingColor || 'high contrast'}.`;
+
+    // SUBJECT DESCRIPTION ENHANCEMENT (from user job)
+    const subjectEnhancer = (() => {
+      const jobLower = job?.toLowerCase() || '';
+      if (jobLower.includes('femme') || jobLower.includes('woman'))
+        return 'SUBJECT: Confident professional woman, diverse ethnicity, 25-45 years old, sleek styling, direct gaze, sharp professional presence';
+      if (jobLower.includes('homme') || jobLower.includes('man'))
+        return 'SUBJECT: Confident professional man, diverse ethnicity, 25-45 years old, sharp tailoring, composed presence, executive confidence';
+      if (jobLower.includes('fashion') || jobLower.includes('mode'))
+        return `SUBJECT: High-fashion model in elevated clothing, perfect posture, editorial presence, authentic emotion, ${brandingColor ? `color-coordinated with ${brandingColor}` : 'color harmony'}`;
+      if (jobLower.includes('produit') || jobLower.includes('product'))
+        return 'SUBJECT: Hero product photography, centered, pristine condition, expertly styled, luxury presentation, shadow definition';
+      return `SUBJECT: Professional subject for ${job}, editorial quality, authentic lighting, confident presence, 4K clarity`;
+    })();
+
+    // QUALITY & TECHNICAL SPECIFICATIONS (reference magazine standards)
+    const technicalSpecs = `TECHNICAL QUALITY:
+- Resolution: 4K minimum (1024x1536 base, upscaled to 8K conceptually)
+- Photography: Hyperrealistic photographic rendering, NOT illustration
+- Lighting: Professional studio-grade or natural window light, physically plausible
+- Color Grading: Sophisticated color grading with reference to luxury lifestyle magazines
+- Details: Sharp textures, realistic fabric, authentic materials, skin tone perfection
+- NO AI ARTIFACTS: No plastic reflections, no impossible physics, no synthetic glows`;
+
+    // WHAT TO AVOID (critical)
+    const prohibitions = `PROHIBITIONS - STRICTLY AVOID:
+- NO cheap plastic surfaces or CGI-obvious elements
+- NO floating text or logos that look ai-generated
+- NO poorly-rendered hands, distorted proportions, anatomy errors
+- NO generic stock photo backgrounds
+- NO AI hallucinations (extra fingers, morphed faces, etc.)
+- NO watermarks, copyright marks, or ai signatures
+- NO dramatic lighting that looks impossible
+- NO colors that don't exist in real materials`;
+
+    // FINAL INTEGRATED PROMPT
+    const finalPrompt = `${subjectEnhancer}
+
+${cinematicDirectives}
+
+${typographyMastery}
+
+${architectureRules}
+
+CONTEXT & BRAND: Model="${modelName}", Job="${job}", User intent: "${userQuery || 'professional flyer'}"
+${brandingColor ? `Brand accent color: ${brandingColor}` : ''}
+
+${technicalSpecs}
+
+${prohibitions}
+
+MANDATE: Create a VOGUE/NUMÉRO magazine editorial-quality flyer that would ACTUALLY be published. Maximum professional sophistication. ZERO compromise on authenticity.`;
+
+    this.logger.log(
+      `[buildMagazineStylePrompt] Generated elite prompt for model: ${modelName}`,
+    );
+    return finalPrompt;
   }
 
   private async refinePromptForOpenAiEdit(prompt: string): Promise<string> {
@@ -1521,7 +1732,7 @@ COMPOSITION ARCHITECTURE:
     imageBuffer?: Buffer,
   ) {
     this.logger.log(
-      `[processFlyerBackground] START for Gen: ${generationId}. (Background Refinement active)`,
+      `[processFlyerBackground] START for Gen: ${generationId}. Model: ${model}. (Background Refinement with 78-Architecture system)`,
     );
 
     try {
@@ -1566,7 +1777,57 @@ COMPOSITION ARCHITECTURE:
 
       const flyerLanguage = params.language || 'French';
 
-      // 2. Refine the query for visual richness (Moved to background)
+      // 2. RETRIEVE 78-ARCHITECTURE FOR THIS MODEL
+      const architecture = getVisualArchitecture(model);
+      
+      if (architecture) {
+        this.logger.log(
+          `[processFlyerBackground] Retrieved architecture for model: ${model} (Layout: ${architecture.layoutType})`,
+        );
+      } else {
+        this.logger.warn(
+          `[processFlyerBackground] No architecture found for model: ${model}. Falling back to generic refinement.`,
+        );
+      }
+
+      // 3. Build ELITE PROMPT using architecture rules
+      // Check if this is a FASHION_VERTICAL type that requires special text parameter handling
+      let magazineStyleDirective: string;
+      const isFashionVertical = architecture?.layoutType === 'TYPE_FASHION_VERTICAL';
+      
+      if (isFashionVertical) {
+        // Extract fashion-vertical specific parameters
+        const mainWord = params.mainWord || params.modelName || model || 'FASHION';
+        const scriptPhrase = params.scriptPhrase || params.subtitle || 'Save the Date';
+        const infoLine = params.infoLine || params.infoBlock || 'RDV • Adresse • Téléphone';
+        const accentColor = params.accentColor || brandingColor || '#17A2B8';
+        
+        this.logger.log(
+          `[processFlyerBackground] Building FASHION_VERTICAL prompt with text parameters: mainWord="${mainWord}", scriptPhrase="${scriptPhrase}", accentColor="${accentColor}"`,
+        );
+        
+        magazineStyleDirective = this.buildFashionVerticalPrompt(
+          architecture,
+          params.job,
+          params.userQuery || '',
+          mainWord,
+          scriptPhrase,
+          infoLine,
+          accentColor,
+          brandingColor,
+        );
+      } else {
+        // Standard magazine-style prompt for other architectures
+        magazineStyleDirective = this.buildMagazineStylePrompt(
+          model,
+          architecture,
+          params.job,
+          params.userQuery || '',
+          brandingColor
+        );
+      }
+
+      // 4. Refine the query for visual richness (Moved to background)
       const refinedRes = await this.refineQuery(
         cleanedUserQuery || params.job,
         params.job,
@@ -1575,7 +1836,7 @@ COMPOSITION ARCHITECTURE:
         brandingColor,
       );
 
-      // 3. Get specific model description
+      // 4. Get specific model description
       let baseStylePrompt = '';
       let variantStructurePrompt = '';
 
@@ -1601,8 +1862,6 @@ COMPOSITION ARCHITECTURE:
         variantStructurePrompt = this.getPromptFromVariantStructure(
           foundVariant.structure,
         );
-        // We still use getModelDescription for general mood/directives if needed,
-        // but the architecture instructions will be more precise.
         baseStylePrompt = this.getModelDescription(model, params.job, {
           accentColor: brandingColor || refinedRes.accentColor,
           lighting: refinedRes.lighting,
@@ -1634,6 +1893,20 @@ COMPOSITION ARCHITECTURE:
         brandingInfoStr = parts.join(' | ');
       }
 
+      // 5. ARCHITECTURE-AWARE FLYER TEXT RULES (Enhanced from 78-architecture data)
+      const architectureRules = architecture
+        ? `
+  ARCHITECTURE DIRECTIVES:
+  - SUBJECT POSITIONING: ${architecture.rules.subject}
+  - BACKGROUND STYLING: ${architecture.rules.background}
+  - TITLE FORMATTING: ${architecture.rules.title}
+  - SUBTITLE STYLING: ${architecture.rules.subtitle}
+  - INFO BLOCK PLACEMENT: ${architecture.rules.infoBlock}
+  - UPPER ZONE ELEMENTS: ${architecture.rules.upperZone}
+  - TECHNICAL CONSTRAINTS: ${architecture.rules.constraints}
+        `
+        : '';
+
       const flyerTextRule = `ELITE GRAPHIC DESIGN & ART DIRECTION RULES: 
              - AESTHETIC: High-end "Vogue" or "Apple-style" minimalism. Absolute focus on REAL-WORLD materials and authentic lighting.
              - COMPOSITION: Masterful use of Negative Space. The design must feel intentional and balanced. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
@@ -1644,22 +1917,24 @@ COMPOSITION ARCHITECTURE:
              - CONTENT EVOCATION: Improvise professional French "accroches" (taglines) that feel like real marketing copy: "${params.userQuery || params.job || model}". Translate the vibe of the "${params.job || ''}" into a sophisticated design language.
                ${brandingInfoStr ? `MANDATORY ATTACHMENT: Include this verified contact detail block subtly but clearly: "${brandingInfoStr}".` : ''}
              - MINIMALISM & CLARITY: AVOID CLUTTER. Limit the scene to ONE main focal object/subject. No unnecessary background items, no crowded compositions. The "Negative Space" must be vast and breathing.
-             - LOGO POLICY: STRICTLY PROHIBITED. Do NOT include any logos, company emblems, or brand icons. The design must remain clean, focusing only on typography and photography.
+             - LOGO POLICY: STRICTLY PROHIBITED. Do NOT include any logos, company emblems, or brand icons unless explicitly shown in architecture. The design must remain clean, focusing only on typography and photography.
              - REALISM PROTECTOR: NO generic AI banners, NO floating plastic ribbons, NO synthetic glows. Every light source must be physically plausible.
              - LANGUAGE: All visible messaging MUST be in ${flyerLanguage}.
-             - COPYWRITING: High-level improvisation required. Create evocative, professional hooks that sound like a luxury agency produced them.`;
+             - COPYWRITING: High-level improvisation required. Create evocative, professional hooks that sound like a luxury agency produced them.
+             ${architectureRules}`;
 
-      const qualityTags =
-        'authentic photography, ultra-sharp details, raw texture, 8k resolution, cinematic studio lighting, professional color grading, realistic fabric/skin/metal textures';
-      const subjectDirectives = cleanedUserQuery
-        ? `FOCAL SUBJECT: Focus on "${cleanedUserQuery}" with absolute photographic clarity. Subject MUST be a real-world entity. No digital artifacts.`
-        : '';
-
-      const modePrefix = imageBuffer
-        ? `PROFESSIONAL GRADE RE-DESIGN: Re-imagine this image using elite graphic design principles for a ${model} context.`
-        : `MASTERPIECE GENERATION: Craft a high-end, professional graphic design flyer from scratch for a ${model}.`;
-
-      const finalPrompt = `${modePrefix} ${subjectDirectives} ART DIRECTION: ${baseStylePrompt}. ${variantStructurePrompt ? `DESIGN ARCHITECTURE: ${variantStructurePrompt}.` : ''} CONCEPT: ${refinedRes.prompt || cleanedUserQuery || ''}. ${flyerTextRule}. THEME: Authentic Minimalist Studio, Single Subject, Absolute Clarity. QUALITY: ${qualityTags}. NO LOGOS, NO BRAND ICONS, NO CLUTTER, NO EXTRA OBJECTS. Displayed text must be in ${flyerLanguage}.`;
+      // 5. FINAL PROMPT CONSTRUCTION - ELITE MAGAZINE STYLE
+      // Replace old complex system with the refined magazine-style directive
+      
+      const finalPrompt = imageBuffer
+        ? `PROFESSIONAL FLYER RE-DESIGN: Transform this image into an elite magazine-quality flyer matching the "${model}" template.
+${magazineStyleDirective}
+USER CONTEXT: "${cleanedUserQuery || params.job || ''}"
+OUTPUT: Magazine-editorial quality (Vogue/Numéro/Harper's Bazaar standard). ZERO AI artifacts. Photorealistic authenticity.`
+        : `ELITE MAGAZINE FLYER GENERATION: Create a professional, high-end flyer for the "${model}" model.
+${magazineStyleDirective}
+USER CONTEXT: "${cleanedUserQuery || params.job || ''}"
+OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. NO digital artifacts, NO cheap AI signatures.`;
 
       let finalBuffer: Buffer;
       const finalSize = '1024x1536';
@@ -1699,6 +1974,8 @@ COMPOSITION ARCHITECTURE:
           style: model,
           async: true,
           hasSourceImage: !!imageBuffer,
+          architectureUsed: architecture?.name || 'GENERIC',
+          layoutType: architecture?.layoutType || 'UNKNOWN',
           completedAt: new Date().toISOString(),
           refinementDuration:
             ((Date.now() - startTime) / 1000).toFixed(1) + 's',
@@ -1707,7 +1984,7 @@ COMPOSITION ARCHITECTURE:
       } as any);
 
       this.logger.log(
-        `[processFlyerBackground] SUCCESS - Gen: ${generationId}, URL: ${imageUrl}`,
+        `[processFlyerBackground] SUCCESS - Gen: ${generationId}, URL: ${imageUrl}, Architecture: ${architecture?.name || 'GENERIC'}`,
       );
     } catch (error) {
       this.logger.error(
