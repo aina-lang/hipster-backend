@@ -364,7 +364,7 @@ export class AiService implements OnModuleInit {
      - COLOR: White or light grey.
 - ALL TEXT MUST BE LEGIBLE AND INTEGRATED DIRECTLY INTO THE IMAGE.
 - TYPOGRAPHY MANDATE: Use aggressive, heavy, and thick lettering for the Main Title in ALL CAPS. The vertical title must read from top to bottom.
-- ABSOLUTELY NO background boxes, NO border around letters, NO frames, NO containers. Characters must be totally transparent against the image. No thin fonts allowed.`;
+- ABSOLUTELY NO background boxes, NO border around letters, NO frames, NO containers. Characters must be 100% OPAQUE and SOLID (strictly NO transparency) and rendered WITHOUT any background boxes or containers. No thin fonts allowed.`;
 
     // QUALITY & TECHNICAL SPECIFICATIONS
     const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
@@ -503,8 +503,8 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 - Style for ${isFashion ? 'Fashion' : isLuxury ? 'Luxury' : 'Business'}:
   ${isFashion ? 'EXTRA BOLD high-impact sans-serif (use "Anton", "Bebas Neue", or "Impact"), positioned with graphic confidence. NO tilted text, strictly vertical on left. MANDATORY FOREGROUND: The text must overlay/overlap the subject.' : isLuxury ? 'Fine serif or modern sans, elegant and refined. Centered or perfectly justified. MANDATORY FOREGROUND: The text must be in the absolute premier plan.' : 'Professional EXTRA BOLD sans-serif (Anton/Bebas Neue style), clean hierarchy. MANDATORY FOREGROUND: Clear text overlay.'}
 - Color: ${brandingColor || 'High contrast against background'}.
-- ALL TEXT MUST BE LEGIBLE AND INTEGRATED INTO THE DESIGN.
-- TYPOGRAPHY MANDATE: Typography must be HEAVY and IMPACTFUL. MANDATORY ALL CAPS for the main title. High design sophistication.`;
+- ALL TEXT MUST BE LEGIBLE, 100% OPAQUE (strictly NO transparency), and INTEGRATED INTO THE DESIGN WITHOUT ANY BACKGROUND BOXES, FRAMES OR CONTAINERS.
+- TYPOGRAPHY MANDATE: Typography must be HEAVY, SOLID OPAQUE, and IMPACTFUL. MANDATORY ALL CAPS for the main title. High design sophistication.`;
 
     // SUBJECT DESCRIPTION ENHANCEMENT (from user job)
     const subjectEnhancer = (() => {
@@ -2013,7 +2013,7 @@ COMPOSITION ARCHITECTURE:
              - CONTENT EVOCATION: Improvise professional French "accroches" (taglines) that feel like real marketing copy: "${params.userQuery || params.job || model}". Translate the vibe of the "${params.job || ''}" into a sophisticated design language.
                ${brandingInfoStr ? `MANDATORY ATTACHMENT: Include this verified contact detail block subtly but clearly: "${brandingInfoStr}".` : ''}
              - MINIMALISM & CLARITY: AVOID CLUTTER. Limit the scene to ONE main focal object/subject. No unnecessary background items, no crowded compositions. The "Negative Space" must be vast and breathing.
-             - LOGO POLICY: STRICTLY PROHIBITED. Do NOT include any logos, company emblems, or brand icons unless explicitly shown in architecture. The design must remain clean, focusing only on typography and photography.
+             - LOGO POLICY: STRICTLY PROHIBITED. Do NOT include any logos, company emblems, or brand icons unless explicitly shown in architecture. The design must remain clean, focusing only on typography and photography. The typography must be 100% OPAQUE and SOLID, with ABSOLUTELY NO background boxes, frames, or containers.
              - REALISM PROTECTOR: NO generic AI banners, NO floating plastic ribbons, NO synthetic glows. Every light source must be physically plausible.
              - LANGUAGE: All visible messaging MUST be in ${flyerLanguage}.
              - COPYWRITING: High-level improvisation required. Create evocative, professional hooks that sound like a luxury agency produced them.
