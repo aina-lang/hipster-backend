@@ -346,7 +346,8 @@ export class AiService implements OnModuleInit {
     const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
 - YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
   1. MAIN TITLE: "${mainWord.toUpperCase()}"
-     - POSITION: LEFT margin, oriented VERTICALLY (90° rotation to the right, reading TOP-TO-BOTTOM from above).
+     - POSITION: oriented VERTICALLY along the FAR LEFT margin.
+     - READING DIRECTION: MANDATORY TOP-TO-BOTTOM (the first letter must be at the very top of the image). Achieve this with a 90° clockwise rotation.
      - STYLE: EXTRA BOLD high-impact font (like "Anton", "Bebas Neue", or "Impact"), filling 70-85% of total height.
      - CASE: MANDATORY UPPERCASE.
      - COLOR: Use precisely ${colorPrincipale}.
@@ -470,8 +471,8 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
   <!-- Background: solid transparent (will overlay on image) -->
   <rect width="${width}" height="${height}" fill="transparent"/>
   
-  <!-- ===== VERTICAL TITLE (90° rotation, top-to-bottom) ===== -->
-  <g transform="translate(70, ${height * 0.48}) rotate(90)">
+  <!-- ===== VERTICAL TITLE (90° clockwise rotation, top-to-bottom) ===== -->
+  <g transform="translate(70, 100) rotate(90)">
     <!-- STROKE LAYER (outline effect) -->
     <text
       x="0"
@@ -485,7 +486,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
       stroke-linecap="round"
       stroke-linejoin="round"
       letter-spacing="10"
-      text-anchor="middle"
+      text-anchor="start"
       opacity="1.0"
     >
       ${mainWord.toUpperCase()}
@@ -501,7 +502,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
       fill="${accentColor}"
       stroke="none"
       letter-spacing="10"
-      text-anchor="middle"
+      text-anchor="start"
       opacity="0.95"
       filter="url(#glowTitle)"
     >
@@ -519,7 +520,7 @@ EXECUTION MANDATE: Create a high-end magazine cover including the specified typo
       stroke="rgba(255,255,255,0.2)"
       stroke-width="2"
       letter-spacing="10"
-      text-anchor="middle"
+      text-anchor="start"
       opacity="0.8"
     >
       ${mainWord.toUpperCase()}
