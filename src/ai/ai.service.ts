@@ -307,25 +307,30 @@ export class AiService implements OnModuleInit {
    * Supports text parameters: mainWord, scriptPhrase, infoLine, accentColor
    * Reference: Vogue, Numéro Magazine, Harper's Bazaar editorial quality
    */
-  private buildFashionVerticalPrompt(
-    architecture: any,
-    job: string,
-    userQuery: string,
-    mainWord: string,
-    scriptPhrase: string,
-    infoLine: string,
-    colorPrincipale: string = '#17A2B8',
-    colorSecondaire: string = '#FFFFFF',
-  ): string {
-   const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
+private buildFashionVerticalPrompt(
+  architecture: any,
+  job: string,
+  userQuery: string,
+  mainWord: string,
+  scriptPhrase: string,
+  infoLine: string,
+  colorPrincipale: string = '#17A2B8',
+  colorSecondaire: string = '#FFFFFF',
+): string {
 
-    const subjectCinematography = `CINEMATOGRAPHY - SUBJECT:
-- Subject Position: Slightly offset to the RIGHT, following the rule of thirds.
-- 3/4 profile view
-- Rim Light: Dramatic separation (bright cyan/blue edge on one side profile) using ${colorPrincipale}.`;
+  const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
-    // BACKGROUND TREATMENT
-    const backgroundTreatment = `BACKGROUND TREATMENT:
+  // 🔒 LOCKED POSTURE – AUCUN CHANGEMENT PERMIS
+  const subjectCinematography = `CINEMATOGRAPHY - SUBJECT (LOCKED POSE - DO NOT ALTER):
+- FIXED POSITION: The subject MUST remain in the exact same posture, stance, and inclination as originally provided. NO CHANGES allowed.
+- NO ROTATION, NO TILTING, NO HEAD MOVEMENT, NO BODY REORIENTATION.
+- NO modification of limb position, weight distribution, or line-of-action.
+- CAMERA ANGLE: FIXED and UNCHANGED. Absolutely NO variation in focal length, perspective, tilt, or framing.
+- VIEW ANGLE: Mandatory 3/4 profile view — must NOT shift closer to profile or frontal view.
+- SUBJECT ORIENTATION: Slightly offset to the RIGHT following rule of thirds — this position is FIXED and must not vary.
+- LIGHTING: Rim light (cyan/blue edge light using ${colorPrincipale}) MUST remain consistent and unchanged. Do NOT modify intensity or direction.`;
+
+  const backgroundTreatment = `BACKGROUND TREATMENT:
 - ATMOSPHERE: MOODY_GRADIENT, intensity: MEDIUM_DARK.
 - PLACEMENT: FULL_FRAME.
 - GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT.
@@ -334,50 +339,39 @@ export class AiService implements OnModuleInit {
 - PROHIBITIONS: STRICTLY FORBID: ["motion_blur", "speed_trails", "busy_patterns"].
 - Depth: Sharp textures on solid surfaces. The white is crisp and OPAQUE. NO fog, NO smoke.`;
 
-    // TEXT RENDERING GUIDE - MANDATORY DALL-E EXECUTION
-    const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
+  const textContextGuide = `TYPOGRAPHY & TEXT RENDERING (MANDATORY):
 - YOU MUST RENDER THE FOLLOWING TEXT DIRECTLY ON THE IMAGE:
   1. MAIN TITLE: "${mainWord.toUpperCase()}"
      - POSITION: oriented VERTICALLY along the FAR LEFT margin.
-     - READING DIRECTION: MANDATORY TOP-TO-BOTTOM (the first letter must be at the very top of the image). Achieve this with a 90° clockwise rotation.
-     - VISIBILITY: Absolute foreground (Premier plan). The text MUST overlay and overlap the subject and background. It should never be behind anything.
-     - STYLE: EXTRA BOLD high-impact font (like "Anton", "Bebas Neue", or "Impact"), filling 70-85% of total height.
-     - CASE: MANDATORY UPPERCASE.
-     - COLOR: Use a solid OPAQUE and VIBRANT color (precisely ${colorPrincipale}). NO GRADIENT, NO TRANSPARENCY.
-     - ALIGNMENT: Strictly vertical. NO tilting, NO slanting.
+     - READING DIRECTION: TOP-TO-BOTTOM (first letter at the top). Rotate 90° clockwise.
+     - VISIBILITY: Foreground overlap over subject and background.
+     - STYLE: EXTRA BOLD high-impact font.
+     - COLOR: ${colorPrincipale}, solid, opaque.
+     - ALIGNMENT: Perfectly vertical. NO tilt.
   2. SCRIPT SUBTITLE: "${scriptPhrase}"
-     - POSITION: CENTER-BOTTOM area, over the subject or transition.
-     - STYLE: Elegant cursive/script font, signature-like.
-     - DYNAMIC TILT: AGGRESSIVELY tilted UPWARD to the RIGHT (+20° to +25°) for a high-energy dynamic vibe.
-     - SIZE: PROMINENT and large relative to other elements (85px equivalent).
+     - POSITION: CENTER-BOTTOM.
+     - STYLE: Elegant cursive/script.
+     - TILT: +20° to +25° upward to the right.
      - COLOR: ${colorSecondaire}.
   3. INFO BAR: "${infoLine}"
-     - POSITION: ABSOLUTE BOTTOM, centered.
-     - STYLE: Small-caps, wide tracking, minimalist.
+     - POSITION: ABSOLUTE BOTTOM.
      - COLOR: White or light grey.
-- ALL TEXT MUST BE LEGIBLE AND INTEGRATED DIRECTLY INTO THE IMAGE.
-- TYPOGRAPHY MANDATE: Use aggressive, heavy, and thick lettering for the Main Title in ALL CAPS. The vertical title must read from top to bottom.
-- ABSOLUTELY NO background boxes, NO border around letters, NO frames, NO containers. Characters must be 100% OPAQUE and SOLID (strictly NO transparency) and rendered WITHOUT any background boxes or containers. No thin fonts allowed.`;
+- NO frames, NO boxes, NO transparency, NO background elements behind text.`;
 
-    // QUALITY & TECHNICAL SPECIFICATIONS
-    const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
+  const technicalQuality = `TECHNICAL SPECIFICATIONS - VOGUE/NUMÉRO STANDARD:
 - Resolution: 4K minimum, conceptual 8K quality
-- Photography Style: Professional fashion editorial, hyperrealistic photographic rendering
-- Post-Processing: Subtle vignetting, color grading applied (rich saturated tones for luxury feel), film-grain optional
-- Composition: Magazine-editorial worthy, intentional rule-of-thirds, dramatic lighting ratios
-- COLOR MANDATE: Full vivid color. NO black and white. NO grayscale. NO desaturation.`;
+- Style: Professional fashion editorial, hyperrealistic.
+- Post-Processing: Subtle vignetting, saturated luxury color grading.
+- Composition: Rule-of-thirds, dramatic lighting ratios.
+- COLOR MANDATE: Full vivid color only.`;
 
-    // STRICT PROHIBITIONS
-    const prohibitions = `PROHIBITIONS - CRITICAL AVOID:
-- NO generic stock photos - must be unique atmospheric setting.
-- NO AI watermarks, copyright symbols, OpenAI signatures, or metadata.
-- NO distorted anatomy or AI hallucinations.
-- NO blurred faces or hands where detail is expected.
-- ABSOLUTELY NO BLACK AND WHITE or GRAYSCALE generations.
-- ABSOLUTELY NO AI ARTIFACTS: No melted faces, no weird hair physics, no impossible shadows.`;
+  const prohibitions = `PROHIBITIONS - CRITICAL:
+- NO pose changes of any kind.
+- NO black and white.
+- NO distortions, no anatomy errors.
+- NO AI artifacts, NO watermark.`;
 
-    // FINAL INTEGRATED PROMPT
-    const finalPrompt = `${magazineReference}
+  const finalPrompt = `${magazineReference}
 
 ${subjectCinematography}
 
@@ -389,14 +383,13 @@ ${technicalQuality}
 
 ${prohibitions}
 
-EXECUTION MANDATE: Create a high-end magazine cover including the specified typography. The text must be rendered as part of the visual layout. Must look like published Vogue/Numéro photography with professional graphic design integrated. Maximum sophistication, zero digital artifacting.`;
+EXECUTION MANDATE:
+Produce a high-end magazine cover with FIXED SUBJECT POSTURE. Do NOT alter pose, camera angle, inclination, or anatomy. Text must be integrated exactly as specified.`;
 
-    this.logger.log(
-      '[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E',
-    );
-    return finalPrompt;
-  }
+  this.logger.log('[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E with locked posture');
 
+  return finalPrompt;
+}
   /**
    * 🎨 APPLY TYPOGRAPHIC COMPOSITION FOR FASHION VERTICAL
    * Adds text overlays with professional effects (stroke, glow, opacity, drop shadow, etc.)
