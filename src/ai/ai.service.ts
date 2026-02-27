@@ -2124,28 +2124,38 @@ COMPOSITION ARCHITECTURE:
       let baseStylePrompt = '';
       let variantStructurePrompt = '';
 
-      // Try to find the variant in our new centralized categories
+      // Try to find the variant in our centralized categories
       let foundVariant = null;
+      let foundStructure = null;
+
       for (const cat of FLYER_CATEGORIES) {
         for (const m of cat.models) {
-          for (const v of m.variants) {
-            if (v.label === model) {
-              foundVariant = v;
-              break;
+          // Case 1: Direct structure on model (e.g. Unified architectures)
+          if (m.label === model && m.structure) {
+            foundStructure = m.structure;
+            break;
+          }
+          // Case 2: In variants
+          if (m.variants) {
+            for (const v of m.variants) {
+              if (v.label === model) {
+                foundVariant = v;
+                foundStructure = v.structure;
+                break;
+              }
             }
           }
-          if (foundVariant) break;
+          if (foundStructure) break;
         }
-        if (foundVariant) break;
+        if (foundStructure) break;
       }
 
-      if (foundVariant) {
+      if (foundStructure) {
         this.logger.log(
-          `[processFlyerBackground] Found variant structure for: ${model}`,
+          `[processFlyerBackground] Found structure for: ${model}`,
         );
-        variantStructurePrompt = this.getPromptFromVariantStructure(
-          foundVariant.structure,
-        );
+        variantStructurePrompt =
+          this.getPromptFromVariantStructure(foundStructure);
         baseStylePrompt = this.getModelDescription(model, params.job, {
           accentColor: brandingColor || refinedRes.accentColor,
           lighting: refinedRes.lighting,

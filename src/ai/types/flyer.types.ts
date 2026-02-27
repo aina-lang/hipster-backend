@@ -8,6 +8,11 @@ export type SubjectPos =
   | 'top-center' // centré en haut
   | 'bottom-left' // coin bas gauche
   | 'bottom-right' // coin bas droit
+  | 'centered-portrait' // portrait centré
+  | 'product-center' // produit au centre
+  | 'half-side' // d'un seul côté
+  | 'floating-product' // produit flottant
+  | 'dynamic-action' // action dynamique
   | 'none'; // pas de sujet
 
 export type TitlePos =
@@ -22,7 +27,12 @@ export type TitlePos =
   | 'bottom-right'
   | 'over-subject'
   | 'split-vertical'
-  | 'vertical-left';
+  | 'vertical-left'
+  | 'top-overlay'
+  | 'bold-diagonal'
+  | 'split-screen'
+  | 'elegant-serif'
+  | 'kinetic-text';
 
 export type BannerStyle =
   | 'strip-top' // bande pleine en haut
@@ -34,6 +44,7 @@ export type BannerStyle =
   | 'tag-corner' // étiquette coin haut-gauche
   | 'block-solid' // bloc rectangulaire
   | 'diagonal-cut' // découpe diagonale
+  | 'dynamic-ribbon' // ruban dynamique
   | 'none';
 
 export type Particle =
@@ -50,6 +61,10 @@ export type Particle =
   | 'snowflakes' // flocons
   | 'glitch-lines' // lignes de glitch
   | 'noise-grain' // grain photographique
+  | 'subtle-dust' // poussière subtile
+  | 'urban-grit' // grain urbain
+  | 'motion-blur' // flou de mouvement
+  | 'gold-dust' // poussière dorée
   | 'none';
 
 export type Decoration =
@@ -74,6 +89,11 @@ export type Decoration =
   | 'gradient-overlay' // calque dégradé (Fashion Vertical)
   | 'gradient-dark-overlay' // calque dégradé sombre (Fashion Vertical Magazine)
   | 'accent-frame' // cadre accent (Fashion Vertical Luxury)
+  | 'magazine-grid' // grille magazine
+  | 'sticker-bombed' // stickers partout
+  | 'color-block' // blocs de couleur
+  | 'golden-ratio-lines' // lignes nombre d'or
+  | 'cinematic-bars' // bandes cinéma
   | 'none';
 
 export type Background =
@@ -93,7 +113,12 @@ export type Background =
   | 'pattern-halftone' // motif tramé
   | 'studio-atmospheric' // studio atmosphérique (Fashion Vertical)
   | 'studio-professional' // studio professionnel (Fashion Vertical Luxury)
-  | 'atmospheric-cinematic'; // fond atmosphérique cinématique (Fashion Vertical Magazine)
+  | 'atmospheric-cinematic' // fond atmosphérique cinématique (Fashion Vertical Magazine)
+  | 'minimalist-studio' // studio minimaliste
+  | 'street-urban' // urbain street
+  | 'solid-flat' // aplat de couleur
+  | 'black-marble' // marbre noir
+  | 'abstract-gradient'; // dégradé abstrait
 
 export type ColorFilter =
   | 'none' // aucun filtre
@@ -107,7 +132,11 @@ export type ColorFilter =
   | 'faded' // passé / vintage
   | 'duotone-accent' // bichromie avec accent couleur (Fashion Vertical)
   | 'sophisticated' // sophistiqué haut de gamme (Fashion Vertical Luxury)
-  | 'editorial'; // style magazine éditorial (Fashion Vertical Magazine)
+  | 'editorial' // style magazine éditorial (Fashion Vertical Magazine)
+  | 'vogue' // style Vogue
+  | 'high-contrast' // contraste élevé
+  | 'gold-tint' // teinte dorée
+  | 'soft-dreamy'; // doux et rêveur
 
 export type Typography =
   | 'oversized-display' // énorme, déborde parfois du cadre
@@ -119,7 +148,12 @@ export type Typography =
   | 'mixed-scale' // mix grandes et petites tailles
   | 'outlined' // lettres en contour uniquement
   | 'minimal-label' // petit, très discret
-  | 'ultra-bold-vertical'; // texte vertical ultra-gras (Fashion Vertical)
+  | 'ultra-bold-vertical' // texte vertical ultra-gras (Fashion Vertical)
+  | 'didone-serif' // serif style Didone
+  | 'heavy-display' // police impact
+  | 'extra-bold-condensed' // extra gras condensé
+  | 'luxury-serif' // serif de luxe
+  | 'modern-sans'; // sans-serif moderne
 
 export type Frame =
   | 'none'
@@ -131,11 +165,15 @@ export type Frame =
   | 'diagonal-split' // split diagonal
   | 'circle-crop' // recadrage circulaire
   | 'torn-edge' // bord déchiré
-  | 'borderless'; // sans cadre (Fashion Vertical)
+  | 'borderless' // sans cadre (Fashion Vertical)
+  | 'thin-white' // fine bordure blanche
+  | 'rough-edge' // bord rugueux
+  | 'clean-border' // bord net
+  | 'gold-inner'; // bordure intérieure dorée
 
 export interface VariantStructure {
   subject: SubjectPos;
-  subjectSize: 'hero' | 'large' | 'medium' | 'small' | 'none';
+  subjectSize: 'hero' | 'large' | 'medium' | 'small' | 'none' | 'full';
   title: TitlePos;
   banner: BannerStyle;
   particles: Particle;
