@@ -55,20 +55,22 @@ export const MAGAZINE_COVER_POSTER_ARCH: VisualArchitecture = {
 
 export const IMPACT_COMMERCIAL_ARCH: VisualArchitecture = {
   name: 'Impact Commercial',
-  layoutType: 'TYPE_MAGAZINE',
-  colorPalette: 'Classic/Editorial',
+  layoutType: 'TYPE_IMPACT_COMMERCIAL',
+  colorPalette: 'Monochromatic/Single',
   rules: {
     subject:
-      'SUBJECT: Centered professional portrait. Eye level. High-end lighting.',
+      'SUBJECT: Centered, slightly levitating with soft drop shadow. Premium and clean.',
     background:
-      'BACKGROUND: Minimalist studio background. Neutral color or subtle texture.',
+      'BACKGROUND: Flat solid single color. NO textures, NO patterns.',
     title:
-      'RENDER TEXT - TITLE: Classic Serif Masthead (top position, authoritative).',
-    subtitle: 'RENDER TEXT - SUBTITLE: Modern sans-serif text overlays.',
-    infoBlock: 'RENDER TEXT - INFO: Side-aligned headlines in editorial grid.',
-    upperZone: 'UPPER: Minor details (date, issue number).',
+      'RENDER TEXT - BACKGROUND WORD: Very large, tone-on-tone, partially behind subject.',
+    subtitle:
+      'RENDER TEXT - PROMO BADGE: Small black rectangle top-right with white text.',
+    infoBlock:
+      'RENDER TEXT - CTA BUTTON: Rounded black button bottom-center with white text.',
+    upperZone: 'UPPER: Promo badge only.',
     constraints:
-      'LAYOUT: Classic magazine cover hierarchy. RENDER ALL TEXT BLOCKS DIRECTLY. Publication quality.',
+      'LAYOUT: Modern minimalist ad poster. 3 text elements only. Instagram premium aesthetic.',
   },
 };
 
@@ -91,72 +93,11 @@ export const EDITORIAL_MOTION_ARCH: VisualArchitecture = {
   },
 };
 
-export const SPLIT_TYPO_ARCH: VisualArchitecture = {
-  name: 'Split Typo',
-  layoutType: 'TYPE_MAGAZINE',
-  colorPalette: 'Minimalist/Block',
-  rules: {
-    subject:
-      'SUBJECT: Subject confined to one half of the layout. Sharp silhouette.',
-    background:
-      'BACKGROUND: Strict two-tone split. Solid color block vs photographic.',
-    title:
-      'RENDER TEXT - TITLE: Massive typography filling the split zone. Bold block letters.',
-    subtitle: 'RENDER TEXT - SUBTITLE: Horizontal contrast text. Small.',
-    infoBlock: 'RENDER TEXT - INFO: Bottom-aligned strict grid.',
-    upperZone: 'UPPER: Vertical branding lines.',
-    constraints:
-      'LAYOUT: Strict 50/50 split. Modernist Swiss design. RENDER ALL TEXT BLOCKS DIRECTLY.',
-  },
-};
-
-export const LUXURY_SERIE_ARCH: VisualArchitecture = {
-  name: 'Luxury Serie',
-  layoutType: 'TYPE_MAGAZINE',
-  colorPalette: 'Gold/Black/White',
-  rules: {
-    subject: 'SUBJECT: Floating product or macro detail. Extreme sharp focus.',
-    background:
-      'BACKGROUND: Dark textured marble, silk, or premium paper texture.',
-    title:
-      'RENDER TEXT - TITLE: Luxury Serif with thin accents (Gold or Silver appearance).',
-    subtitle:
-      'RENDER TEXT - SUBTITLE: "LIMITED EDITION" or "PREMIUM" label. Small.',
-    infoBlock: 'RENDER TEXT - INFO: Discreet premium typography.',
-    upperZone: 'UPPER: Thin ornamental borders.',
-    constraints:
-      'LAYOUT: Golden ratio composition. RENDER ALL TEXT BLOCKS DIRECTLY. Reference: Rolex luxury ads.',
-  },
-};
-
-export const VERTICAL_POSTER_ARCH: VisualArchitecture = {
-  name: 'Vertical Poster',
-  layoutType: 'TYPE_VERTICAL_POSTER',
-  colorPalette: 'Monochromatic/Single',
-  rules: {
-    subject:
-      'SUBJECT: Centered editorial portrait or full-body, strong presence, natural styling.',
-    background:
-      'BACKGROUND: Single solid color background with subtle paper/wall texture. Gentle vignette. NO secondary colors.',
-    title:
-      'RENDER TEXT - TOP TITLE: Very large display serif, centered, bright tint of background color.',
-    subtitle:
-      'RENDER TEXT - BOTTOM TEXT: Smaller elegant serif, centered, same color tint as title.',
-    infoBlock: 'INFO: None.',
-    upperZone: 'UPPER: Large clear negative space for top title.',
-    constraints:
-      'LAYOUT: Vertical 4:5 or 3:4. Exactly 2 text elements only. RENDER ALL TEXT DIRECTLY. No logos, no extra elements.',
-  },
-};
-
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
   IMPACT_COMMERCIAL: IMPACT_COMMERCIAL_ARCH,
   EDITORIAL_MOTION: EDITORIAL_MOTION_ARCH,
-  SPLIT_TYPO: SPLIT_TYPO_ARCH,
-  LUXURY_SERIE: LUXURY_SERIE_ARCH,
-  VERTICAL_POSTER: VERTICAL_POSTER_ARCH,
 };
 
 export function getVisualArchitecture(
