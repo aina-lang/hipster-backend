@@ -584,6 +584,121 @@ ${prohibitions}
   }
 
   /**
+   * 🎨 BUILD VERTICAL EDITORIAL POSTER PROMPT FOR DALL-E
+   * Generates a premium vertical poster / magazine-cover layout (4:5 or 3:4 ratio)
+   * Single-color background, centered subject, exactly 2 text elements.
+   * Background is strictly monochromatic; outfit colors follow wardrobe directive.
+   */
+  private buildVerticalPosterPrompt(
+    job: string,
+    userQuery: string,
+    topTitle: string,
+    bottomText: string,
+    colorBackground: string = '#17A2B8',
+  ): string {
+    // ─── LAYOUT ───────────────────────────────────────────────────────────────
+    const layout = `
+FORMAT & LAYOUT:
+- Vertical editorial poster. Aspect ratio: 4:5 or 3:4.
+- Clean, premium, magazine-cover aesthetic.
+- ONE main subject, centered, full-body or 3/4 framing. Strong confident presence.
+- Clear negative space ABOVE the subject (for top title) and BELOW (for bottom text).
+- No extra elements, no logos, no brand names, no stickers, no side text, no watermarks.
+`;
+
+    // ─── BACKGROUND ────────────────────────────────────────────────────────────
+    const background = `
+BACKGROUND:
+- Single solid color background: ${colorBackground}.
+- Add ONLY a very subtle material texture to the background for depth: paper grain, or painted wall, or soft studio backdrop. Keep it minimal.
+- Gentle vignette around the edges (darker border, lighter center) for premium editorial look.
+- Soft gradient variation strictly within shades of ${colorBackground} — NO secondary colors.
+- NO patterns, NO decorative overlays, NO graphic elements.
+`;
+
+    // ─── SUBJECT ───────────────────────────────────────────────────────────────
+    const subject = `
+SUBJECT:
+- Context / job: "${job}".
+- User intent: "${userQuery}".
+- Single isolated subject only. No secondary characters.
+- Subject perfectly CENTERED horizontally. Strong, natural, editorial posture.
+- High-end photorealistic rendering. Sharp focus on face and body.
+- Outfit and accessories: keep original styling — only the background is monochromatic.
+`;
+
+    // ─── LIGHTING ──────────────────────────────────────────────────────────────
+    const lighting = `
+LIGHTING & PHOTOGRAPHY:
+- High-end fashion/editorial photography. Photorealistic, sharp details.
+- Soft key light from slightly above and to the front. Subtle rim light for definition.
+- Cinematic contrast. No heavy shadows. No dramatic moody dark lighting.
+- Skin tones natural and balanced. Fabric textures crisp.
+`;
+
+    // ─── TYPOGRAPHY ────────────────────────────────────────────────────────────
+    const typography = `
+TYPOGRAPHY (VERY IMPORTANT — EXACTLY 2 TEXT ELEMENTS ONLY):
+
+1. TOP TITLE (above subject):
+   "${topTitle.toUpperCase()}"
+   - Position: Top area, centered horizontally.
+   - Font: Clean elegant display serif (editorial magazine style — Didot, Bodoni, or Playfair Display).
+   - Size: VERY LARGE — dominant, filling the top negative space.
+   - Color: Bright light tint of ${colorBackground} — clearly lighter/more luminous than the background, same hue family.
+   - WORD WRAPPING: If multiple words, stack each word on its own line, scaled down slightly per line.
+   - Uppercase. Perfect letter spacing. 100% opaque. No centering offset — purely centered.
+
+2. BOTTOM TEXT (below subject or at very bottom):
+   "${bottomText.toUpperCase()}"
+   - Position: Bottom area, centered horizontally.
+   - Font: Same editorial serif family but smaller. Lighter weight.
+   - Size: Readable but secondary — smaller than top title.
+   - Color: Same bright light tint of ${colorBackground} as top title.
+   - Uppercase. Clean spacing. 100% opaque.
+
+STRICT RULES:
+- ONLY THESE TWO text elements. NO other words, numbers, captions, or labels.
+- No vertical text. No italic. No bold condensed street fonts. No boxes behind text.
+- Perfect spelling. All text crisp and 100% opaque and immediately readable.
+`;
+
+    // ─── PROHIBITIONS ──────────────────────────────────────────────────────────
+    const prohibitions = `
+PROHIBITIONS – CRITICAL:
+- NO secondary subjects or extra people.
+- NO background objects or props outside the subject.
+- NO logos, watermarks, brand stickers, or AI signatures.
+- NO pattern or decoration on the background.
+- NO extra text beyond the two specified.
+- NO black & white. Full color only.
+- NO heavy post-processing artifacts or CGI plastic look.
+`;
+
+    const finalPrompt = `
+${layout}
+
+${background}
+
+${subject}
+
+${lighting}
+
+${typography}
+
+${prohibitions}
+
+MANDATE: Generate a PHOTOREALISTIC vertical editorial poster. Background is strictly ${colorBackground}. Exactly two text elements as specified. Subject centered with clean negative space for typography above and below.
+`;
+
+    this.logger.log(
+      `[buildVerticalPosterPrompt] Generated vertical editorial poster prompt — color: ${colorBackground}, topTitle: "${topTitle}", bottomText: "${bottomText}"`,
+    );
+
+    return finalPrompt;
+  }
+
+  /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
    * Génère un prompt ultra-affiné pour produire des rendus Vogue/Numéro/Fashion
    * Utilise les règles de l'architecture + directives cinématographiques
@@ -2079,6 +2194,28 @@ COMPOSITION ARCHITECTURE:
           scriptPhrase,
           infoLine,
           colorPrincipale,
+        );
+      } else if (architecture?.layoutType === 'TYPE_VERTICAL_POSTER') {
+        const topTitle =
+          params.mainWord || params.modelName || model || 'COLLECTION';
+        const bottomText =
+          params.scriptPhrase ||
+          params.subtitle ||
+          params.infoLine ||
+          'Premium Style';
+        const colorBackground =
+          params.colorPrincipale || brandingColor || '#17A2B8';
+
+        this.logger.log(
+          `[processFlyerBackground] Building VERTICAL_POSTER prompt: topTitle="${topTitle}", color="${colorBackground}"`,
+        );
+
+        magazineStyleDirective = this.buildVerticalPosterPrompt(
+          params.job,
+          params.userQuery || '',
+          topTitle,
+          bottomText,
+          colorBackground,
         );
       } else {
         // Standard magazine-style prompt for other architectures

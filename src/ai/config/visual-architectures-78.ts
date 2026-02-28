@@ -129,6 +129,26 @@ export const LUXURY_SERIE_ARCH: VisualArchitecture = {
   },
 };
 
+export const VERTICAL_POSTER_ARCH: VisualArchitecture = {
+  name: 'Vertical Poster',
+  layoutType: 'TYPE_VERTICAL_POSTER',
+  colorPalette: 'Monochromatic/Single',
+  rules: {
+    subject:
+      'SUBJECT: Centered editorial portrait or full-body, strong presence, natural styling.',
+    background:
+      'BACKGROUND: Single solid color background with subtle paper/wall texture. Gentle vignette. NO secondary colors.',
+    title:
+      'RENDER TEXT - TOP TITLE: Very large display serif, centered, bright tint of background color.',
+    subtitle:
+      'RENDER TEXT - BOTTOM TEXT: Smaller elegant serif, centered, same color tint as title.',
+    infoBlock: 'INFO: None.',
+    upperZone: 'UPPER: Large clear negative space for top title.',
+    constraints:
+      'LAYOUT: Vertical 4:5 or 3:4. Exactly 2 text elements only. RENDER ALL TEXT DIRECTLY. No logos, no extra elements.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   STREET_SALE: STREET_SALE_ARCH,
@@ -136,6 +156,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   EDITORIAL_MOTION: EDITORIAL_MOTION_ARCH,
   SPLIT_TYPO: SPLIT_TYPO_ARCH,
   LUXURY_SERIE: LUXURY_SERIE_ARCH,
+  VERTICAL_POSTER: VERTICAL_POSTER_ARCH,
 };
 
 export function getVisualArchitecture(
