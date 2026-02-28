@@ -434,12 +434,17 @@ SUBJECT RULES (STRICT – NO EXCEPTION):
 - Single isolated subject only.
 - Subject perfectly CENTERED.
 - No secondary characters.
-- No props.
-- No accessories unless naturally part of subject.
 - No environment context.
 - Ultra realistic studio photography.
 - Clean silhouette.
 - Professional balanced lighting.
+
+WARDROBE & ACCESSORIES – MONOCHROMATIC ENFORCEMENT:
+- ALL clothing (jacket, shirt, pants, dress, coat, etc.) MUST be in shades of ${colorPrincipale} ONLY.
+- ALL accessories (hat, cap, glasses, sunglasses, scarf, jewelry, bag, etc.) MUST be in shades of ${colorPrincipale} ONLY.
+- NO contrasting colors on any part of the outfit or accessories.
+- Use variations in lightness/saturation of ${colorPrincipale} for natural depth (e.g. lighter collar, darker jacket).
+- The entire look must feel cohesive and monochromatic from head to toe.
 `;
 
     // 🎨 BACKGROUND — MONOCHROMATIC SOLID
