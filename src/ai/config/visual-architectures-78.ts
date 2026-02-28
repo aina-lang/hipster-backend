@@ -34,8 +34,8 @@ export const FASHION_VERTICAL_IMPACT_ARCH: VisualArchitecture = {
   },
 };
 
-export const STREET_SALE_ARCH: VisualArchitecture = {
-  name: 'Street Sale',
+export const MAGAZINE_COVER_POSTER_ARCH: VisualArchitecture = {
+  name: 'Magazine Cover Poster',
   layoutType: 'TYPE_EDITORIAL_COVER',
   colorPalette: 'Urban/Vibrant',
   rules: {
@@ -53,8 +53,8 @@ export const STREET_SALE_ARCH: VisualArchitecture = {
   },
 };
 
-export const MAGAZINE_COVER_ARCH: VisualArchitecture = {
-  name: 'Magazine Cover',
+export const IMPACT_COMMERCIAL_ARCH: VisualArchitecture = {
+  name: 'Impact Commercial',
   layoutType: 'TYPE_MAGAZINE',
   colorPalette: 'Classic/Editorial',
   rules: {
@@ -151,8 +151,8 @@ export const VERTICAL_POSTER_ARCH: VisualArchitecture = {
 
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
-  STREET_SALE: STREET_SALE_ARCH,
-  MAGAZINE_COVER: MAGAZINE_COVER_ARCH,
+  MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
+  IMPACT_COMMERCIAL: IMPACT_COMMERCIAL_ARCH,
   EDITORIAL_MOTION: EDITORIAL_MOTION_ARCH,
   SPLIT_TYPO: SPLIT_TYPO_ARCH,
   LUXURY_SERIE: LUXURY_SERIE_ARCH,

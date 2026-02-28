@@ -23,7 +23,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
         },
       },
       {
-        label: 'Magazine Cover',
+        label: 'Impact Commercial',
         structure: {
           subject: 'centered-portrait',
           subjectSize: 'full',
@@ -46,7 +46,7 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
     image: 'https://hipster-api.fr/assets/impact-flyer.jpeg',
     models: [
       {
-        label: 'Street Sale',
+        label: 'Magazine Cover Poster',
         structure: {
           subject: 'product-center',
           subjectSize: 'large',
