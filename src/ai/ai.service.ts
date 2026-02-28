@@ -385,6 +385,7 @@ export class AiService implements OnModuleInit {
     // PROHIBITIONS
     const prohibitions = customSubject && !isPersonRequested
       ? `PROHIBITIONS – CRITICAL:
+- NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.
 - NO anatomy distortions or AI artifacts.
 - NO watermarks, NO signatures, NO metadata.
 - NO grayscale, NO desaturation.
@@ -538,7 +539,25 @@ TECHNICAL SPECIFICATIONS – HIGH FASHION COVER STANDARD:
 `;
 
     // 🚫 PROHIBITIONS
-    const prohibitions = `
+    const prohibitions = customSubject && !isPersonRequested
+      ? `
+PROHIBITIONS – CRITICAL:
+- NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.
+- NO second subject.
+- NO background objects.
+- NO extra graphics.
+- NO decorative overlays.
+- NO magazine badges.
+- NO price stickers.
+- NO borders.
+- NO watermarks.
+- NO logos except fixed footer.
+- NO vertical typography.
+- NO italic text.
+- NO artistic reinterpretation.
+- NO busy layout.
+`
+      : `
 PROHIBITIONS – CRITICAL:
 - NO second subject.
 - NO background objects.
@@ -623,6 +642,7 @@ Style :
 - Aucune marque
 - Pas d’icônes réseaux sociaux
 - Peu de texte
+${customSubject && !isPersonRequested ? '- Aucun humain, aucune personne, aucun mannequin (focus unique sur l\'objet)' : ''}
 `;
 
     this.logger.log(
@@ -676,7 +696,7 @@ Style :
          BORDER AESTHETIC: NOIR SOMBRE AUTOUR (DEEP BLACK VIGNETTE). The perimeter and corners are solid deep black.
          GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} dominant on the LEFT side.
          BACKGROUND TRANSITION: Deep black borders to ${brandingColor || 'vibrant accent'} to a soft, OPAQUE white glow.
-         PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
+         PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"]${customSubject && !isPersonRequested ? ', NO humans, NO people, NO mannequins' : ''}.
          COMPOSITION: Subject positioned off-center following rule of thirds, dynamic diagonal flow, negative space breathing.\nREFERENCES: Vogue USA, Harper's Bazaar.`
       : isLuxury
         ? `CINEMATOGRAPHY: Studio-controlled volumetric lights, high contrast dramatic lighting. 
@@ -685,7 +705,7 @@ Style :
            BORDER AESTHETIC: NOIR SOMBRE AUTOUR (DEEP BLACK VIGNETTE). The perimeter and corners are solid deep black.
            GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Luxurious Color'} dominant on the LEFT.
            BACKGROUND TRANSITION: Deep black borders to obsidian dark to ${brandingColor || 'luxurious color'} to a subtle, OPAQUE white backlight.
-           PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
+           PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"]${customSubject && !isPersonRequested ? ', NO humans, NO people, NO mannequins' : ''}.
            COMPOSITION: Center-weighted symmetry, minimal negative space, maximum focus on detail quality.`
         : isBusiness
           ? `CINEMATOGRAPHY: Professional headshot lighting, sharp focus. 
@@ -694,7 +714,7 @@ Style :
              BORDER AESTHETIC: NOIR SOMBRE AUTOUR (DEEP BLACK VIGNETTE). The perimeter and corners are solid deep black.
              GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Corporate Color'} on the LEFT.
              BACKGROUND TRANSITION: Deep black borders to dark grey to ${brandingColor || 'corporate color'} to opaque white/light grey.
-             PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
+             PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"]${customSubject && !isPersonRequested ? ', NO humans, NO people, NO mannequins' : ''}.
              COMPOSITION: Confident centered presence, strategic negative space, typography-integrated layout.`
           : `CINEMATOGRAPHY: Professional studio lighting, sharp focus, cinematic depth. 
              POSTURE: ${selectedPosture}
@@ -702,7 +722,7 @@ Style :
              BORDER AESTHETIC: NOIR SOMBRE AUTOUR (DEEP BLACK VIGNETTE). The perimeter and corners are solid deep black.
              GRADIENT DIRECTION: TOP_RIGHT_TO_BOTTOM_LEFT, with ${brandingColor || 'Primary Color'} on the LEFT.
              BACKGROUND TRANSITION: Deep black borders to ${brandingColor || 'primary color'} to opaque white glow.
-             PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"].
+             PROHIBITIONS: NO ["motion_blur", "speed_trails", "busy_patterns"]${customSubject && !isPersonRequested ? ', NO humans, NO people, NO mannequins' : ''}.
              COMPOSITION: Subject positioned slightly to the RIGHT in a professional pose. Face/head must remain natural and upright. Strategic negative space, typography-integrated layout.`;
 
     // ARCHITECTURE-BASED RULES
