@@ -382,7 +382,13 @@ export class AiService implements OnModuleInit {
 - COLOR MANDATE: Full vivid color only (NO black and white).`;
 
     // PROHIBITIONS
-    const prohibitions = `PROHIBITIONS – CRITICAL:
+    const prohibitions = customSubject
+      ? `PROHIBITIONS – CRITICAL:
+- NO anatomy distortions or AI artifacts.
+- NO watermarks, NO signatures, NO metadata.
+- NO grayscale, NO desaturation.
+- NO stock-photo style. UNIQUE editorial aesthetic only.`
+      : `PROHIBITIONS – CRITICAL:
 - NO pose change. NO orientation change. NO inclination change.
 - NO anatomy distortions or AI artifacts.
 - NO watermarks, NO signatures, NO metadata.
@@ -403,7 +409,9 @@ ${technicalQuality}
 ${prohibitions}
 
 EXECUTION MANDATE:
-Produce a high-end magazine cover with the subject’s pose, orientation, and inclination reproduced EXACTLY as in the reference. ABSOLUTELY NO CHANGES to body position, gaze direction, silhouette, or camera angle. Text must be rendered exactly as specified.`;
+${customSubject
+        ? `Produce a high-end magazine cover featuring the specified subject perfectly integrated into the editorial aesthetic. Text must be rendered exactly as specified.`
+        : `Produce a high-end magazine cover with the subject’s pose, orientation, and inclination reproduced EXACTLY as in the reference. ABSOLUTELY NO CHANGES to body position, gaze direction, silhouette, or camera angle. Text must be rendered exactly as specified.`}`;
 
     this.logger.log(
       '[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E with ABSOLUTE pose lock',
@@ -633,8 +641,9 @@ Style :
     brandingColor?: string,
     customSubject: string = '',
   ): string {
-    const selectedPosture =
-      'EXACT 1:1 POSTURE FROM REFERENCE: Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. ZERO TILT: The subject must have NO inclination to the left or right. PERFECT VERTICAL ALIGNMENT: The spine and head must be perfectly vertical, matching the original photo exactly. Natural, upright head and IDENTICAL GAZE FROM REFERENCE: Precise, serious gaze directed straight and vertical, following the original head position.';
+    const selectedPosture = customSubject
+      ? 'POSTURE & PLACEMENT: Place the subject perfectly in the frame, highlighting its finest details and ensuring an editorial standard.'
+      : 'EXACT 1:1 POSTURE FROM REFERENCE: Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. ZERO TILT: The subject must have NO inclination to the left or right. PERFECT VERTICAL ALIGNMENT: The spine and head must be perfectly vertical, matching the original photo exactly. Natural, upright head and IDENTICAL GAZE FROM REFERENCE: Precise, serious gaze directed straight and vertical, following the original head position.';
     // Map model types to photography styles (referenced from example flyers)
     const fashionModels = ['FASHION', 'STYLE', 'VOGUE', 'COLLECTION', 'MODE'];
     const luxuryModels = ['LUXURY', 'PREMIUM', 'CLASSIQUE', 'ELEGANT'];
@@ -2241,7 +2250,7 @@ COMPOSITION ARCHITECTURE:
       const architectureRules = architecture
         ? `
   ARCHITECTURE DIRECTIVES:
-  - SUBJECT POSITIONING: ${architecture.rules.subject}
+  - SUBJECT POSITIONING: ${params.subject ? `Center the custom subject: "${params.subject}"` : architecture.rules.subject}
   - BACKGROUND STYLING: ${architecture.rules.background}
   - TITLE FORMATTING: ${architecture.rules.title}
   - SUBTITLE STYLING: ${architecture.rules.subtitle}
@@ -2253,7 +2262,7 @@ COMPOSITION ARCHITECTURE:
 
       const flyerTextRule = `ELITE GRAPHIC DESIGN & ART DIRECTION RULES: 
              - AESTHETIC: High-end "Vogue" or "Apple-style" minimalism. Absolute focus on REAL-WORLD materials and authentic lighting.
-             - COMPOSITION: Masterful use of Negative Space. Subject centered or slightly offset for balance. Face/head must remain natural and upright. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
+             - COMPOSITION: Masterful use of Negative Space. Subject centered or slightly offset for balance. ${params.subject ? `Ensure the custom subject "${params.subject}" is the hero.` : `Face/head must remain natural and upright. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).`}
              - TYPOGRAPHIC MASTERY: Typography is NOT just text; it's a design element. USE DYNAMIC HIERARCHY. You are ENCOURAGED to use sophisticated layouts: tilted/angled text, asymmetric balance, and overlapping elements that suggest a human designer's touch.
              - SAFE AREA & MARGINS: Maintain a strict 15% professional inner margin. No text should touch the edges.
              - FONTS: Emulate high-end foundry typefaces (Modern Serifs, Geometric Sans, or Editorial Scripts). 
