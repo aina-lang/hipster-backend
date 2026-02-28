@@ -417,7 +417,6 @@ Produce a high-end magazine cover with the subject’s pose, orientation, and in
     scriptPhrase: string,
     infoLine: string,
     colorPrincipale: string = '#17A2B8',
-    colorSecondaire: string = '#FFFFFF',
   ): string {
     const magazineReference = `
 MAGAZINE EDITORIAL REFERENCE:
@@ -443,12 +442,12 @@ SUBJECT RULES (STRICT – NO EXCEPTION):
 - Professional balanced lighting.
 `;
 
-    // 🎨 BACKGROUND — MINIMAL SOLID
+    // 🎨 BACKGROUND — MONOCHROMATIC SOLID
     const backgroundRules = `
 BACKGROUND TREATMENT:
-- Solid or ultra-soft gradient.
-- Primary background color: ${colorPrincipale}.
-- Secondary accent tone: ${colorSecondaire}.
+- Solid or ultra-soft gradient using ONLY shades of ${colorPrincipale}.
+- Single dominant color: ${colorPrincipale}.
+- Use variations in brightness/saturation for subtle depth, but NO secondary accent colors.
 - Clean minimal aesthetic.
 - No textures.
 - No patterns.
@@ -466,7 +465,7 @@ You MUST render the following text exactly:
 
 1. TOP TITLE:
 "${mainWord.toUpperCase()}"
-- Position: Top center.
+- Position: Top left wrapped.
 - Luxury serif typography.
 - Uppercase.
 - No italic.
@@ -475,7 +474,7 @@ You MUST render the following text exactly:
 
 2. MAIN HEADLINE:
 "${scriptPhrase}"
-- Position: Center area above or slightly overlapping subject torso.
+- Position: Bottom Center 30% of the bottom area above or slightly overlapping subject torso.
 - Large elegant serif.
 - Horizontal alignment only.
 - No italic.
@@ -489,12 +488,6 @@ You MUST render the following text exactly:
 - Clean spacing.
 - Horizontal only.
 
-4. FOOTER (FIXED – DO NOT MODIFY):
-"HIPSTERIA COLLECTION"
-- Position: Bottom center.
-- Small caps.
-- Wide letter spacing.
-- Minimal and refined.
 
 STRICT TEXT RULES:
 - Maximum 4 text blocks.
@@ -540,6 +533,12 @@ PROHIBITIONS – CRITICAL:
 - NO busy layout.
 `;
 
+    const monochromaticDirective = `
+MONOCHROMATIC ENFORCEMENT:
+- All background elements and typography must use shades of THE SAME COLOR: ${colorPrincipale}.
+- Strictly NO secondary accent colors.
+- Use variety in saturation and brightness for depth, but maintain strict hue consistency.`;
+
     const finalPrompt = `
 ${magazineReference}
 
@@ -548,17 +547,11 @@ ${subjectRules}
 ${backgroundRules}
 
 ${typographyRules}
+${monochromaticDirective}
 
 ${technicalQuality}
 
 ${prohibitions}
-
-EXECUTION MANDATE:
-Produce a premium minimalist editorial magazine cover.
-Single centered subject.
-Clean background.
-Luxury serif typography.
-Strictly follow all layout and typography rules.
 `;
 
     this.logger.log(
@@ -2072,10 +2065,9 @@ COMPOSITION ARCHITECTURE:
           params.infoLine || params.infoBlock || 'Luxury • Style • Quality';
         const colorPrincipale =
           params.colorPrincipale || brandingColor || '#17A2B8';
-        const colorSecondaire = params.colorSecondaire || '#FFFFFF';
 
         this.logger.log(
-          `[processFlyerBackground] Building EDITORIAL_COVER prompt: mainWord="${mainWord}"`,
+          `[processFlyerBackground] Building EDITORIAL_COVER prompt (monochromatic): mainWord="${mainWord}", color="${colorPrincipale}"`,
         );
 
         magazineStyleDirective = this.buildEditorialCoverPrompt(
@@ -2086,7 +2078,6 @@ COMPOSITION ARCHITECTURE:
           scriptPhrase,
           infoLine,
           colorPrincipale,
-          colorSecondaire,
         );
       } else {
         // Standard magazine-style prompt for other architectures

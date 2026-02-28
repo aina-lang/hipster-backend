@@ -141,7 +141,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
 export function getVisualArchitecture(
   modelName: string,
 ): VisualArchitecture | undefined {
-  const normalized = modelName?.toUpperCase()?.replace(/\s+/g, '_');
+  const normalized = modelName?.toUpperCase()?.replace(/[\s-]+/g, '_');
   return (
     VISUAL_ARCHITECTURES_MAP[normalized] ||
     VISUAL_ARCHITECTURES_MAP[modelName?.toUpperCase()]
