@@ -2279,13 +2279,20 @@ COMPOSITION ARCHITECTURE:
       // 5. FINAL PROMPT CONSTRUCTION - ELITE MAGAZINE STYLE
       // Replace old complex system with the refined magazine-style directive
 
+      const customSubjectText = params.subject || cleanedUserQuery || params.job || '';
+      const subjectSourceDirective = imageBuffer
+        ? `USE_UPLOADED_IMAGE_AS_MAIN_SUBJECT: The primary subject of the final generated image MUST be the exact subject, person, or object found in the uploaded reference photo.`
+        : `USE_TEXT_AS_MAIN_SUBJECT: The primary subject MUST exactly be: "${customSubjectText}".`;
+
       const finalPrompt = imageBuffer
         ? `PROFESSIONAL FLYER RE-DESIGN: Transform this image into an elite magazine-quality flyer matching the "${model}" template.
+${subjectSourceDirective}
 ${magazineStyleDirective}
 ${flyerTextRule}
 USER CONTEXT: "${cleanedUserQuery || params.job || ''}"
 OUTPUT: Magazine-editorial quality (Vogue/Numéro/Harper's Bazaar standard). ZERO AI artifacts. Photorealistic authenticity.`
         : `ELITE MAGAZINE FLYER GENERATION: Create a professional, high-end flyer for the "${model}" model.
+${subjectSourceDirective}
 ${magazineStyleDirective}
 ${flyerTextRule}
 USER CONTEXT: "${cleanedUserQuery || params.job || ''}"
