@@ -2030,97 +2030,84 @@ COMPOSITION ARCHITECTURE:
 
       // 2. RETRIEVE 78-ARCHITECTURE FOR THIS MODEL
       const architecture = getVisualArchitecture(model);
+      let magazineStyleDirective: string;
 
       if (architecture) {
         this.logger.log(
           `[processFlyerBackground] Retrieved architecture for model: ${model} (Layout: ${architecture.layoutType})`,
         );
-      } else {
-        this.logger.warn(
-          `[processFlyerBackground] No architecture found for model: ${model}. Falling back to generic refinement.`,
-        );
-      }
 
-      // 3. Build ELITE PROMPT using architecture rules
-      const posturalVariations = [
-        'Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. Minimal and elegant posture tilt. Natural, upright head.',
-        'Refined editorial stance. Shoulders shifted minimally to the right, body facing almost directly FRONT. No extreme tilt. Face/head remains perfectly vertical and natural.',
-        'Slightly dynamic front-facing pose. Back oriented marginally to the right, providing a professional depth, with a very subtle and natural shoulder dip.',
-      ];
-      const selectedPosture =
-        posturalVariations[
-          Math.floor(Math.random() * posturalVariations.length)
-        ];
-
-      let magazineStyleDirective: string;
-      const isFashionVertical =
-        architecture?.layoutType === 'TYPE_FASHION_VERTICAL';
-
-      if (isFashionVertical) {
-        // Extract fashion-vertical specific parameters (matching frontend naming exactly)
+        // Unify parameter extraction for all 78-architectures
         const mainWord =
-          params.mainWord || params.modelName || model || 'FASHION';
+          params.mainWord || params.modelName || model || 'HIPSTER';
         const scriptPhrase =
           params.scriptPhrase || params.subtitle || 'Save the Date';
         const infoLine =
           params.infoLine || params.infoBlock || 'RDV • Adresse • Téléphone';
-        // colorPrincipale = Couleur Principale (left), colorSecondaire = Couleur Secondaire (right)
         const colorPrincipale =
           params.colorPrincipale || brandingColor || '#17A2B8';
         const colorSecondaire = params.colorSecondaire || '#FFFFFF';
+        const textPromo = params.textPromo || '';
 
-        this.logger.log(
-          `[processFlyerBackground] Building FASHION_VERTICAL_IMPACT prompt: mainWord="${mainWord}", colorPrincipale="${colorPrincipale}", colorSecondaire="${colorSecondaire}"`,
-        );
+        if (architecture.layoutType === 'TYPE_FASHION_VERTICAL') {
+          this.logger.log(
+            `[processFlyerBackground] Building FASHION_VERTICAL_IMPACT prompt: mainWord="${mainWord}", colorPrincipale="${colorPrincipale}", colorSecondaire="${colorSecondaire}"`,
+          );
 
-        magazineStyleDirective = this.buildFashionVerticalPrompt(
-          architecture,
-          params.job,
-          params.userQuery || '',
-          mainWord,
-          scriptPhrase,
-          infoLine,
-          colorPrincipale,
-          colorSecondaire,
-        );
-      } else if (architecture?.layoutType === 'TYPE_EDITORIAL_COVER') {
-        const colorPrincipale =
-          params.colorPrincipale || brandingColor || '#17A2B8';
+          magazineStyleDirective = this.buildFashionVerticalPrompt(
+            architecture,
+            params.job,
+            params.userQuery || '',
+            mainWord,
+            scriptPhrase,
+            infoLine,
+            colorPrincipale,
+            colorSecondaire,
+          );
+        } else if (architecture.layoutType === 'TYPE_EDITORIAL_COVER') {
+          this.logger.log(
+            `[processFlyerBackground] Building EDITORIAL_COVER prompt (monochromatic): color="${colorPrincipale}"`,
+          );
 
-        this.logger.log(
-          `[processFlyerBackground] Building EDITORIAL_COVER prompt (monochromatic): color="${colorPrincipale}"`,
-        );
+          magazineStyleDirective = this.buildEditorialCoverPrompt(
+            architecture,
+            params.job,
+            params.userQuery || '',
+            mainWord,
+            scriptPhrase,
+            infoLine,
+            colorPrincipale,
+          );
+        } else if (architecture.layoutType === 'TYPE_IMPACT_COMMERCIAL') {
+          this.logger.log(
+            `[processFlyerBackground] Building IMPACT_COMMERCIAL prompt: color="${colorPrincipale}", textPromo="${textPromo}"`,
+          );
 
-        magazineStyleDirective = this.buildEditorialCoverPrompt(
-          architecture,
-          params.job,
-          params.userQuery || '',
-          params.mainWord || '',
-          params.scriptPhrase || '',
-          params.infoLine || '',
-          colorPrincipale,
-        );
-      } else if (architecture?.layoutType === 'TYPE_IMPACT_COMMERCIAL') {
-        const colorPrincipale =
-          params.colorPrincipale || brandingColor || '#17A2B8';
-        const colorSecondaire = params.colorSecondaire || '#FFFFFF';
-
-        this.logger.log(
-          `[processFlyerBackground] Building IMPACT_COMMERCIAL prompt: color="${colorPrincipale}"`,
-        );
-
-        magazineStyleDirective = this.buildImpactCommercialPrompt(
-          architecture,
-          params.job,
-          params.userQuery || '',
-          params.mainWord || '',
-          params.scriptPhrase || '',
-          params.infoLine || '',
-          params.textPromo || '',
-          colorPrincipale,
-          colorSecondaire,
-        );
+          magazineStyleDirective = this.buildImpactCommercialPrompt(
+            architecture,
+            params.job,
+            params.userQuery || '',
+            mainWord,
+            scriptPhrase,
+            infoLine,
+            textPromo,
+            colorPrincipale,
+            colorSecondaire,
+          );
+        } else {
+          // Standard magazine-style prompt for other architectures
+          magazineStyleDirective = this.buildMagazineStylePrompt(
+            model,
+            architecture,
+            params.job,
+            params.userQuery || '',
+            brandingColor,
+          );
+        }
       } else {
+        this.logger.warn(
+          `[processFlyerBackground] No architecture found for model: ${model}. Falling back to generic refinement.`,
+        );
         // Standard magazine-style prompt for other architectures
         magazineStyleDirective = this.buildMagazineStylePrompt(
           model,
@@ -2245,12 +2232,12 @@ COMPOSITION ARCHITECTURE:
 
       const flyerTextRule = `ELITE GRAPHIC DESIGN & ART DIRECTION RULES: 
              - AESTHETIC: High-end "Vogue" or "Apple-style" minimalism. Absolute focus on REAL-WORLD materials and authentic lighting.
-             - COMPOSITION: Masterful use of Negative Space. Subject positioned slightly to the RIGHT in a professional pose (${selectedPosture}). Face/head must remain natural and upright. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
+             - COMPOSITION: Masterful use of Negative Space. Subject centered or slightly offset for balance. Face/head must remain natural and upright. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).
              - TYPOGRAPHIC MASTERY: Typography is NOT just text; it's a design element. USE DYNAMIC HIERARCHY. You are ENCOURAGED to use sophisticated layouts: tilted/angled text, asymmetric balance, and overlapping elements that suggest a human designer's touch.
              - SAFE AREA & MARGINS: Maintain a strict 15% professional inner margin. No text should touch the edges.
              - FONTS: Emulate high-end foundry typefaces (Modern Serifs, Geometric Sans, or Editorial Scripts). 
-             - VISUAL HIERARCHY: High-impact Headline (Subject Name: "${user?.name || ''}") must be the focal point. Use professional kerning and leading.
-             - CONTENT EVOCATION: Improvise professional French "accroches" (taglines) that feel like real marketing copy: "${params.userQuery || params.job || model}". Translate the vibe of the "${params.job || ''}" into a sophisticated design language.
+             - VISUAL HIERARCHY: High-impact Headline must be the focal point. Use professional kerning and leading.
+             - CONTENT EVOCATION: Improvise professional French "accroches" (taglines) that feel like real marketing copy based on the job: "${params.job || ''}". Translate the vibe of the "${params.job || ''}" into a sophisticated design language.
                ${brandingInfoStr ? `MANDATORY ATTACHMENT: Include this verified contact detail block subtly but clearly: "${brandingInfoStr}".` : ''}
              - MINIMALISM & CLARITY: AVOID CLUTTER. Limit the scene to ONE main focal object/subject. No unnecessary background items, no crowded compositions. The "Negative Space" must be vast and breathing.
              - LOGO POLICY: STRICTLY PROHIBITED. Do NOT include any logos, company emblems, or brand icons unless explicitly shown in architecture. The design must remain clean, focusing only on typography and photography. The typography must be 100% OPAQUE and SOLID, with ABSOLUTELY NO background boxes, frames, or containers.
