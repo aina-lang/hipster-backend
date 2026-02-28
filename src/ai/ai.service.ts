@@ -439,12 +439,14 @@ SUBJECT RULES (STRICT – NO EXCEPTION):
 - Clean silhouette.
 - Professional balanced lighting.
 
-WARDROBE & ACCESSORIES – MONOCHROMATIC ENFORCEMENT:
-- ALL clothing (jacket, shirt, pants, dress, coat, etc.) MUST be in shades of ${colorPrincipale} ONLY.
-- ALL accessories (hat, cap, glasses, sunglasses, scarf, jewelry, bag, etc.) MUST be in shades of ${colorPrincipale} ONLY.
-- NO contrasting colors on any part of the outfit or accessories.
-- Use variations in lightness/saturation of ${colorPrincipale} for natural depth (e.g. lighter collar, darker jacket).
-- The entire look must feel cohesive and monochromatic from head to toe.
+WARDROBE & ACCESSORIES – COLOR ONLY CHANGE (STYLE PRESERVED):
+- PRESERVE the original outfit EXACTLY: same cut, same style, same silhouette, same accessories.
+- DO NOT change any piece of clothing or accessory — only RECOLOR them.
+- ALL clothing items (jacket, shirt, pants, dress, coat, etc.) must be rendered in shades of ${colorPrincipale} ONLY.
+- ALL accessories (hat, cap, glasses, sunglasses, scarf, jewelry, bag, etc.) must be rendered in shades of ${colorPrincipale} ONLY.
+- STRICTLY NO contrasting colors anywhere on the outfit.
+- Subtle lightness/saturation variation of ${colorPrincipale} is allowed for natural fabric depth.
+- The overall look must be a cohesive, monochromatic outfit from head to toe.
 `;
 
     // 🎨 BACKGROUND — MONOCHROMATIC SOLID
@@ -462,48 +464,42 @@ BACKGROUND TREATMENT:
 - Flat premium editorial background.
 `;
 
-    // ✍️ TYPOGRAPHY — LOCKED LAYOUT (NO VERTICAL / NO ITALIC)
+    // ✍️ TYPOGRAPHY — HIGH VISIBILITY
     const typographyRules = `
 TYPOGRAPHY & TEXT RENDERING (MANDATORY):
 
-You MUST render the following text exactly:
+You MUST render the following text exactly. TEXT MUST BE LARGE, BOLD, AND IMMEDIATELY READABLE.
 
 1. TOP TITLE:
 "${mainWord.toUpperCase()}"
-- Position: Top left wrapped.
-- Luxury serif typography.
-- Uppercase.
-- No italic.
-- No rotation.
-- Refined spacing.
+- Position: Top left, large block.
+- Font: Ultra-bold sans-serif (Anton, Bebas Neue, or Impact).
+- Size: VERY LARGE — at least 20% of image height.
+- Color: PURE WHITE (#FFFFFF), 100% opaque.
+- Add a subtle dark drop shadow or a semi-transparent dark bar behind for contrast.
+- Uppercase. No italic. No rotation.
 
 2. MAIN HEADLINE:
 "${scriptPhrase}"
-- Position: Bottom Center 30% of the bottom area above or slightly overlapping subject torso.
-- Large elegant serif.
-- Horizontal alignment only.
-- No italic.
-- No distortion.
-- No script style.
+- Position: Bottom 30% of image, center-aligned.
+- Font: Large bold serif or heavy sans-serif.
+- Size: LARGE and DOMINANT.
+- Color: PURE WHITE (#FFFFFF), 100% opaque.
+- Add a subtle dark shadow behind for contrast if background is light.
+- Horizontal alignment only. No italic.
 
 3. SUBLINE:
 "${infoLine}"
 - Position: Directly under main headline.
-- Smaller serif.
-- Clean spacing.
+- Font: Bold serif, smaller than headline but still clearly readable.
+- Color: White or very light tint, 100% opaque.
 - Horizontal only.
-
 
 STRICT TEXT RULES:
 - Maximum 4 text blocks.
-- NO vertical text.
-- NO rotated text.
-- NO italic fonts.
-- NO script fonts.
-- NO bold condensed street fonts.
-- NO boxes behind text.
-- NO transparency.
-- Text must be crisp and 100% opaque.
+- NO vertical text. NO rotated text. NO italic. NO script. NO box behind text.
+- All text 100% opaque and fully legible. NO faded or transparent type.
+- TEXT MUST CONTRAST SHARPLY against the background — use white text on dark/moody areas.
 `;
 
     // 📷 TECHNICAL QUALITY
