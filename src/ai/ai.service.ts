@@ -472,11 +472,12 @@ You MUST render the following text exactly. Text must be elegant, legible, and p
 
 1. TOP TITLE:
 "${mainWord.toUpperCase()}"
-- Position: Top left, clearly visible block.
+- Position: STRICTLY flush to the LEFT edge of the image. Absolutely no centering.
 - Font: Fine luxury serif (Didot, Bodoni, or Playfair Display). Semi-bold weight — NOT ultra heavy.
-- Size: Large — approximately 15-18% of image height.
-- Color: Bright light tint of ${colorPrincipale} — significantly lighter/more luminous than the background, but still in the same hue family. NOT pure white.
-- Uppercase. Refined letter spacing. No italic. No rotation.
+- Size: Approximately 12-15% of image height per line. Slightly smaller than before to stay elegant.
+- WORD WRAPPING: If the title contains multiple words, place EACH WORD on its own line, stacked top-to-bottom. Scale down font size slightly per line to ensure all words fit without overflow.
+- Color: Bright light tint of ${colorPrincipale} — significantly lighter/more luminous than the background, same hue family. NOT pure white.
+- Uppercase. Refined letter spacing. No italic. No rotation. No centering.
 
 2. MAIN HEADLINE:
 "${scriptPhrase}"
