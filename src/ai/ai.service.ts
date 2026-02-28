@@ -317,11 +317,12 @@ export class AiService implements OnModuleInit {
     colorPrincipale: string = '#17A2B8',
     colorSecondaire: string = '#FFFFFF',
     customSubject: string = '',
+    isPersonRequested: boolean = false,
   ): string {
     const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
     // 🔒 ABSOLUTE LOCKED POSE OR CUSTOM SUBJECT
-    const subjectCinematography = customSubject
+    const subjectCinematography = customSubject && !isPersonRequested
       ? `SUBJECT: ${customSubject}. Ensure editorial quality and professional lighting.`
       : `CINEMATOGRAPHY – SUBJECT (ABSOLUTE POSE LOCK – DO NOT MODIFY):
 - The subject’s ORIGINAL POSE, ORIGINAL ORIENTATION, and ORIGINAL HEAD + BODY DIRECTION must be REPRODUCED EXACTLY AS IN THE REFERENCE.
@@ -382,7 +383,7 @@ export class AiService implements OnModuleInit {
 - COLOR MANDATE: Full vivid color only (NO black and white).`;
 
     // PROHIBITIONS
-    const prohibitions = customSubject
+    const prohibitions = customSubject && !isPersonRequested
       ? `PROHIBITIONS – CRITICAL:
 - NO anatomy distortions or AI artifacts.
 - NO watermarks, NO signatures, NO metadata.
@@ -428,7 +429,9 @@ ${customSubject
     scriptPhrase: string,
     infoLine: string,
     colorPrincipale: string = '#17A2B8',
+    colorSecondaire: string = '#FFFFFF',
     customSubject: string = '',
+    isPersonRequested: boolean = false,
   ): string {
     const magazineReference = `
 MAGAZINE EDITORIAL REFERENCE:
@@ -439,7 +442,7 @@ NOT advertisement. NOT street poster. PURE editorial aesthetic.
 `;
 
     // 🔒 SUBJECT — STRICT SINGLE CENTERED COMPOSITION
-    const subjectRules = customSubject
+    const subjectRules = customSubject && !isPersonRequested
       ? `
 SUBJECT RULES (STRICT – NO EXCEPTION):
 - ONLY ONE MAIN SUBJECT: "${customSubject}".
@@ -590,6 +593,7 @@ ${prohibitions}
     colorPrincipale: string = '#17A2B8',
     colorSecondaire: string = '#FFFFFF',
     customSubject: string = '',
+    isPersonRequested: boolean = false,
   ): string {
     const texteFond = mainWord || '';
     const texteBadge = textPromo || '';
@@ -640,8 +644,9 @@ Style :
     userQuery: string,
     brandingColor?: string,
     customSubject: string = '',
+    isPersonRequested: boolean = false,
   ): string {
-    const selectedPosture = customSubject
+    const selectedPosture = customSubject && !isPersonRequested
       ? 'POSTURE & PLACEMENT: Place the subject perfectly in the frame, highlighting its finest details and ensuring an editorial standard.'
       : 'EXACT 1:1 POSTURE FROM REFERENCE: Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. ZERO TILT: The subject must have NO inclination to the left or right. PERFECT VERTICAL ALIGNMENT: The spine and head must be perfectly vertical, matching the original photo exactly. Natural, upright head and IDENTICAL GAZE FROM REFERENCE: Precise, serious gaze directed straight and vertical, following the original head position.';
     // Map model types to photography styles (referenced from example flyers)
@@ -723,8 +728,10 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 
     // SUBJECT DESCRIPTION ENHANCEMENT (from user job or custom)
     const subjectEnhancer = (() => {
-      if (customSubject) {
+      if (customSubject && !isPersonRequested) {
         return `SUBJECT: ${customSubject}, professional editorial lighting, cinematic presence, high-quality focus`;
+      } else if (customSubject && isPersonRequested) {
+        return `SUBJECT: ${customSubject}, featuring a professional person/model matching the description, diverse ethnicity, 25-45 years old, sleek styling, sharp professional presence`;
       }
       const jobLower = job?.toLowerCase() || '';
       if (jobLower.includes('femme') || jobLower.includes('woman'))
@@ -2074,6 +2081,11 @@ COMPOSITION ARCHITECTURE:
         const textPromo = params.textPromo || '';
         const customSubject = params.subject || '';
 
+        // Detect if the custom subject explicitly asks for a person
+        const isPersonRequested = customSubject
+          ? !!customSubject.match(/personne|femme|homme|mannequin|fille|garçon|modèle|model|man|woman|girl|boy|person/i)
+          : false;
+
         if (architecture.layoutType === 'TYPE_FASHION_VERTICAL') {
           this.logger.log(
             `[processFlyerBackground] Building FASHION_VERTICAL_IMPACT prompt: mainWord="${mainWord}", colorPrincipale="${colorPrincipale}", colorSecondaire="${colorSecondaire}"`,
@@ -2089,6 +2101,7 @@ COMPOSITION ARCHITECTURE:
             colorPrincipale,
             colorSecondaire,
             customSubject,
+            isPersonRequested,
           );
         } else if (architecture.layoutType === 'TYPE_EDITORIAL_COVER') {
           this.logger.log(
@@ -2103,7 +2116,9 @@ COMPOSITION ARCHITECTURE:
             scriptPhrase,
             infoLine,
             colorPrincipale,
+            colorSecondaire,
             customSubject,
+            isPersonRequested,
           );
         } else if (architecture.layoutType === 'TYPE_IMPACT_COMMERCIAL') {
           this.logger.log(
@@ -2121,6 +2136,7 @@ COMPOSITION ARCHITECTURE:
             colorPrincipale,
             colorSecondaire,
             customSubject,
+            isPersonRequested,
           );
         } else {
           // Standard magazine-style prompt for other architectures
@@ -2131,12 +2147,18 @@ COMPOSITION ARCHITECTURE:
             params.userQuery || '',
             brandingColor,
             customSubject,
+            isPersonRequested,
           );
         }
       } else {
         this.logger.warn(
           `[processFlyerBackground] No architecture found for model: ${model}. Falling back to generic refinement.`,
         );
+        // Detect if the custom subject explicitly asks for a person
+        const isPersonRequestedFallback = params.subject
+          ? !!params.subject.match(/personne|femme|homme|mannequin|fille|garçon|modèle|model|man|woman|girl|boy|person/i)
+          : false;
+
         // Standard magazine-style prompt for other architectures
         magazineStyleDirective = this.buildMagazineStylePrompt(
           model,
@@ -2145,6 +2167,7 @@ COMPOSITION ARCHITECTURE:
           params.userQuery || '',
           brandingColor,
           params.subject || '',
+          isPersonRequestedFallback,
         );
       }
 
