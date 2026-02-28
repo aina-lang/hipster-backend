@@ -464,42 +464,41 @@ BACKGROUND TREATMENT:
 - Flat premium editorial background.
 `;
 
-    // ✍️ TYPOGRAPHY — HIGH VISIBILITY
+    // ✍️ TYPOGRAPHY — FINE LUXURY SERIF
     const typographyRules = `
 TYPOGRAPHY & TEXT RENDERING (MANDATORY):
 
-You MUST render the following text exactly. TEXT MUST BE LARGE, BOLD, AND IMMEDIATELY READABLE.
+You MUST render the following text exactly. Text must be elegant, legible, and premium.
 
 1. TOP TITLE:
 "${mainWord.toUpperCase()}"
-- Position: Top left, large block.
-- Font: Ultra-bold sans-serif (Anton, Bebas Neue, or Impact).
-- Size: VERY LARGE — at least 20% of image height.
-- Color: PURE WHITE (#FFFFFF), 100% opaque.
-- Add a subtle dark drop shadow or a semi-transparent dark bar behind for contrast.
-- Uppercase. No italic. No rotation.
+- Position: Top left, clearly visible block.
+- Font: Fine luxury serif (Didot, Bodoni, or Playfair Display). Semi-bold weight — NOT ultra heavy.
+- Size: Large — approximately 15-18% of image height.
+- Color: Bright light tint of ${colorPrincipale} — significantly lighter/more luminous than the background, but still in the same hue family. NOT pure white.
+- Uppercase. Refined letter spacing. No italic. No rotation.
 
 2. MAIN HEADLINE:
 "${scriptPhrase}"
 - Position: Bottom 30% of image, center-aligned.
-- Font: Large bold serif or heavy sans-serif.
-- Size: LARGE and DOMINANT.
-- Color: PURE WHITE (#FFFFFF), 100% opaque.
-- Add a subtle dark shadow behind for contrast if background is light.
+- Font: Elegant serif (Didot, Times New Roman, or Garamond). Regular to semi-bold weight.
+- Size: Prominent and readable. NOT oversized.
+- Color: Bright light tint of ${colorPrincipale} — clearly visible against the monochromatic background.
 - Horizontal alignment only. No italic.
 
 3. SUBLINE:
 "${infoLine}"
 - Position: Directly under main headline.
-- Font: Bold serif, smaller than headline but still clearly readable.
-- Color: White or very light tint, 100% opaque.
+- Font: Light serif, smaller than headline. Airy and refined.
+- Color: Light tint of ${colorPrincipale}, 100% opaque.
 - Horizontal only.
 
 STRICT TEXT RULES:
 - Maximum 4 text blocks.
 - NO vertical text. NO rotated text. NO italic. NO script. NO box behind text.
-- All text 100% opaque and fully legible. NO faded or transparent type.
-- TEXT MUST CONTRAST SHARPLY against the background — use white text on dark/moody areas.
+- All text 100% opaque and fully legible.
+- Text color must be a clearly lighter/brighter value of ${colorPrincipale} — enough contrast to read instantly.
+- TEXT MUST STAND OUT against the background while staying in the same color family.
 `;
 
     // 📷 TECHNICAL QUALITY
