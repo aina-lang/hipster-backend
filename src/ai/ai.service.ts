@@ -316,11 +316,14 @@ export class AiService implements OnModuleInit {
     infoLine: string,
     colorPrincipale: string = '#17A2B8',
     colorSecondaire: string = '#FFFFFF',
+    customSubject: string = '',
   ): string {
     const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
-    // 🔒 ABSOLUTE LOCKED POSE — AUCUN CHANGEMENT POSSIBLE
-    const subjectCinematography = `CINEMATOGRAPHY – SUBJECT (ABSOLUTE POSE LOCK – DO NOT MODIFY):
+    // 🔒 ABSOLUTE LOCKED POSE OR CUSTOM SUBJECT
+    const subjectCinematography = customSubject
+      ? `SUBJECT: ${customSubject}. Ensure editorial quality and professional lighting.`
+      : `CINEMATOGRAPHY – SUBJECT (ABSOLUTE POSE LOCK – DO NOT MODIFY):
 - The subject’s ORIGINAL POSE, ORIGINAL ORIENTATION, and ORIGINAL HEAD + BODY DIRECTION must be REPRODUCED EXACTLY AS IN THE REFERENCE.
 - This includes:
   • Exact body rotation (left, right, front, back),
@@ -417,6 +420,7 @@ Produce a high-end magazine cover with the subject’s pose, orientation, and in
     scriptPhrase: string,
     infoLine: string,
     colorPrincipale: string = '#17A2B8',
+    customSubject: string = '',
   ): string {
     const magazineReference = `
 MAGAZINE EDITORIAL REFERENCE:
@@ -427,7 +431,13 @@ NOT advertisement. NOT street poster. PURE editorial aesthetic.
 `;
 
     // 🔒 SUBJECT — STRICT SINGLE CENTERED COMPOSITION
-    const subjectRules = `
+    const subjectRules = customSubject
+      ? `
+SUBJECT RULES (STRICT – NO EXCEPTION):
+- ONLY ONE MAIN SUBJECT: "${customSubject}".
+- Interpret additional user intent from: "${userQuery}".
+- Single isolated subject only. Subject perfectly CENTERED.`
+      : `
 SUBJECT RULES (STRICT – NO EXCEPTION):
 - ONLY ONE MAIN SUBJECT related to: "${job}".
 - Interpret user intent from: "${userQuery}".
@@ -571,6 +581,7 @@ ${prohibitions}
     textPromo: string = '',
     colorPrincipale: string = '#17A2B8',
     colorSecondaire: string = '#FFFFFF',
+    customSubject: string = '',
   ): string {
     const texteFond = mainWord || '';
     const texteBadge = textPromo || '';
@@ -579,7 +590,7 @@ ${prohibitions}
     const finalPrompt = `
 Créer une affiche publicitaire moderne et minimaliste.
 
-Sujet principal : ${job}
+Sujet principal : ${customSubject || job}
 Couleur du sujet : ${colorSecondaire}
 Couleur de fond : ${colorPrincipale}
 
@@ -620,6 +631,7 @@ Style :
     job: string,
     userQuery: string,
     brandingColor?: string,
+    customSubject: string = '',
   ): string {
     const selectedPosture =
       'EXACT 1:1 POSTURE FROM REFERENCE: Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. ZERO TILT: The subject must have NO inclination to the left or right. PERFECT VERTICAL ALIGNMENT: The spine and head must be perfectly vertical, matching the original photo exactly. Natural, upright head and IDENTICAL GAZE FROM REFERENCE: Precise, serious gaze directed straight and vertical, following the original head position.';
@@ -700,8 +712,11 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 - ALL TEXT MUST BE LEGIBLE, 100% OPAQUE (strictly NO transparency), and INTEGRATED INTO THE DESIGN WITHOUT ANY BACKGROUND BOXES, FRAMES OR CONTAINERS.
 - TYPOGRAPHY MANDATE: main title must be REALLY BIG, ULTRA-BOLD, and MASSIVE. High design sophistication. Absolute premier plan focus.`;
 
-    // SUBJECT DESCRIPTION ENHANCEMENT (from user job)
+    // SUBJECT DESCRIPTION ENHANCEMENT (from user job or custom)
     const subjectEnhancer = (() => {
+      if (customSubject) {
+        return `SUBJECT: ${customSubject}, professional editorial lighting, cinematic presence, high-quality focus`;
+      }
       const jobLower = job?.toLowerCase() || '';
       if (jobLower.includes('femme') || jobLower.includes('woman'))
         return 'SUBJECT: Confident professional woman, diverse ethnicity, 25-45 years old, sleek styling, direct gaze, sharp professional presence';
@@ -2048,6 +2063,7 @@ COMPOSITION ARCHITECTURE:
           params.colorPrincipale || brandingColor || '#17A2B8';
         const colorSecondaire = params.colorSecondaire || '#FFFFFF';
         const textPromo = params.textPromo || '';
+        const customSubject = params.subject || '';
 
         if (architecture.layoutType === 'TYPE_FASHION_VERTICAL') {
           this.logger.log(
@@ -2063,6 +2079,7 @@ COMPOSITION ARCHITECTURE:
             infoLine,
             colorPrincipale,
             colorSecondaire,
+            customSubject,
           );
         } else if (architecture.layoutType === 'TYPE_EDITORIAL_COVER') {
           this.logger.log(
@@ -2077,6 +2094,7 @@ COMPOSITION ARCHITECTURE:
             scriptPhrase,
             infoLine,
             colorPrincipale,
+            customSubject,
           );
         } else if (architecture.layoutType === 'TYPE_IMPACT_COMMERCIAL') {
           this.logger.log(
@@ -2093,6 +2111,7 @@ COMPOSITION ARCHITECTURE:
             textPromo,
             colorPrincipale,
             colorSecondaire,
+            customSubject,
           );
         } else {
           // Standard magazine-style prompt for other architectures
@@ -2102,6 +2121,7 @@ COMPOSITION ARCHITECTURE:
             params.job,
             params.userQuery || '',
             brandingColor,
+            customSubject,
           );
         }
       } else {
@@ -2115,6 +2135,7 @@ COMPOSITION ARCHITECTURE:
           params.job,
           params.userQuery || '',
           brandingColor,
+          params.subject || '',
         );
       }
 
