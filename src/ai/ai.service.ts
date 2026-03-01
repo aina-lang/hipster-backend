@@ -1910,6 +1910,31 @@ COMPOSITION ARCHITECTURE:
         );
       });
     } catch (error) {
+      if (error.response?.data) {
+        // Axios error response might be a stream if responseType was 'stream'
+        if (error.response.data.on) {
+          try {
+            const errorBody = await new Promise((resolve) => {
+              let body = '';
+              error.response.data.on('data', (chunk) => {
+                body += chunk;
+              });
+              error.response.data.on('end', () => resolve(body));
+            });
+            this.logger.error(
+              `[callOpenAiToolImage] 400 Error Body: ${errorBody}`,
+            );
+          } catch (e) {
+            this.logger.error(
+              `[callOpenAiToolImage] Could not parse error stream: ${e.message}`,
+            );
+          }
+        } else {
+          this.logger.error(
+            `[callOpenAiToolImage] Error Data: ${JSON.stringify(error.response.data)}`,
+          );
+        }
+      }
       this.logger.error(`[callOpenAiToolImage] Error: ${error.message}`);
       throw error;
     }
