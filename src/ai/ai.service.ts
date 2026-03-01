@@ -687,9 +687,9 @@ SCENE: ${environnement}. MAIN SUBJECT: ${subject} (${descriptionSujet}).
 COMPOSITION (ULTRA-STRICT):
 - Centered sharp subject, 8K detail, high contrast.
 - MANDATORY CLEARANCE: Clean space around subject before blur starts.
-- MASSIVE RADIAL MOTION BLUR: Strictly peripheral, speed vortex effect from edges inward.
-- Background: Abstract light trails, 90% blur, unrecognizable.
-- Depth of Field: f/1.2 look, strong bokeh.
+- MASSIVE CONVERGING SPEED STREAKS: Strictly peripheral, sharp pointed lines pointing inward towards the center.
+- Background: Dynamic linear zoom trails, 90% blur, unrecognizable.
+- Depth of Field: f/1.2 look, strong bokeh, subject POPPING out of streaks.
 
 TYPOGRAPHY (MANDATORY):
 - RULES: NO lines, NO highlights, NO boxes, NO ribbons. Text directly on image.
@@ -699,7 +699,7 @@ TYPOGRAPHY (MANDATORY):
 
 PALETTE: Dominant ${colorPrincipale}, Accent ${colorSecondaire}.
 FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
-KEYWORDS: radial blur, speed vortex, zoom blur, cinematic, ultra sharp subject, negative space.
+KEYWORDS: converging streaks, pointed motion, zoom blur, cinematic, ultra sharp subject, negative space.
 ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object only.' : ''}
 `;
 
