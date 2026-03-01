@@ -2485,7 +2485,7 @@ USER CONTEXT: "${cleanedUserQuery || params.job || ''}"
 OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. NO digital artifacts, NO cheap AI signatures.`;
 
       let finalBuffer: Buffer;
-      const finalSize = '1024x1792';
+      const finalSize = '1024x1536';
 
       if (imageBuffer) {
         this.logger.log(
