@@ -664,35 +664,29 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
   }
 
   private buildEditorialMotionPrompt(
-    architecture: any,
-    job: string,
-    userQuery: string,
-    mainWord: string,
-    scriptPhrase: string,
-    infoLine: string,
-    textPromo: string = '',
-    colorPrincipale: string = '#17A2B8',
-    colorSecondaire: string = '#FFFFFF',
-    customSubject: string = '',
-    isPersonRequested: boolean = false,
-  ): string {
-    const subject = customSubject || job || 'Professional Subject';
-    const environnement =
-      userQuery || 'High-end studio or atmospheric location';
-    const descriptionSujet =
-      userQuery || `A professional representation of ${job}`;
-    const titre = mainWord || 'STYLE';
-    const sousTitre = scriptPhrase || '';
-    const cta = textPromo || infoLine || '';
-    const palette = `Dominant: ${colorPrincipale}, Accent: ${colorSecondaire}`;
+  architecture: any,
+  job: string,
+  userQuery: string,
+  mainWord: string,
+  scriptPhrase: string,
+  infoLine: string,
+  textPromo: string = '',
+  colorPrincipale: string = '#17A2B8',
+  colorSecondaire: string = '#FFFFFF',
+  customSubject: string = '',
+  isPersonRequested: boolean = false,
+): string {
+  const subject = customSubject || job;
+  const texteTop = mainWord || 'STYLE';
+  const texteMiddle = scriptPhrase || 'Révélez votre personnalité';
 
-    const finalPrompt = `
-Affiche publicitaire verticale, style cinématographique dynamique.
+  const finalPrompt = `
+Affiche publicitaire verticale, style cinématographique dynamique
 
-Scène : ${environnement}
+Scène : {{ENVIRONNEMENT}}
 
-Sujet principal : ${subject}
-Description détaillée : ${descriptionSujet}
+Sujet principal : {{SUJET}}
+Description détaillée : {{DESCRIPTION_SUJET}}
 
 Composition (ULTRA STRICT) :
 - One single main subject in razor sharp focus, perfectly centered
@@ -716,53 +710,45 @@ Style visuel :
 Typographie intégrée dans l’image :
 
 En haut :
-"${titre.toUpperCase()}"
+“${texteTop.toUpperCase()}”
 - Very large
 - All caps
 - Wide tracking
 - Bold impactful font
 - Centered
 
-${
-  sousTitre
-    ? `Au centre (optionnel) :
-"${sousTitre}"
+Au centre (optionnel) :
+“${texteMiddle}”
 - Elegant italic
-- Placed above the subject or slightly overlapping`
-    : ''
-}
+- Placed above the subject or slightly overlapping
 
-${
-  cta
-    ? `En bas :
-"${cta.toUpperCase()}"
+En bas :
+${textPromo ? `"${textPromo.toUpperCase()}"` : '"CALL TO ACTION"'}
 - Impactful
-- High-contrast color (using ${colorSecondaire})
+- High-contrast color
 - Centered
-- Positioned just above the bottom edge`
-    : ''
-}
+- Positioned just above the bottom edge
 
 Palette :
-${palette}
+- Main: ${colorPrincipale}, Secondary: ${colorSecondaire}
 
 Format :
-Vertical 4:5 ou 9:16 (High-quality portrait aspect ratio)
+Vertical 4:5 ou 9:16
 
 Qualité :
 Ultra HD, photoréaliste, rendu professionnel
 
 Keywords :
-radial motion blur, dynamic speed effect, speed vortex, zoom blur, motion streaks, ultra shallow depth of field, ultra sharp subject, cinematic lighting, high contrast, professional advertising photography, zero AI artifacts, high-end editorial production.
+radial motion blur, dynamic speed effect, speed vortex, zoom blur, motion streaks, ultra shallow depth of field, ultra sharp subject, cinematic lighting, high contrast, professional advertising photography
 ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.' : ''}
 `;
 
-    this.logger.log(
-      `[buildEditorialMotionPrompt] Generated editorial motion prompt for subject: ${subject}`,
-    );
+  this.logger.log(
+    `[buildEditorialMotionPrompt] Generated dynamic cinematic vertical poster prompt for subject: ${subject}`,
+  );
 
-    return finalPrompt;
-  }
+  return finalPrompt;
+}
 
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
