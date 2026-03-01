@@ -694,14 +694,15 @@ COMPOSITION (ULTRA-STRICT):
 TYPOGRAPHY (MANDATORY):
 - RULES: ABSOLUTELY NO underlines, NO curved lines, NO dividers, NO highlights, NO boxes, NO ornaments.
 - FONT: Bebas Neue, Tracking +120, Alignment Center.
-- TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: high contrast ${colorPrincipale}). Positioned at the very top.
-- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, positioned in the LOWER HALF of the frame, but separated from the bottom text by a LARGE VERTICAL GAP). NO underline, NO curved ornaments.
-- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast ${colorSecondaire}, Centered, at the absolute bottom margin, ALL CAPS).
+- TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: ultra-high contrast shade of ${colorPrincipale}). Positioned at the very top.
+- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, positioned in the LOWER HALF of the frame, but separated from the bottom text by a LARGE VERTICAL GAP, Color: high contrast shade of ${colorSecondaire} or ${colorPrincipale}). NO underline, NO curved ornaments.
+- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast shade of ${colorSecondaire}, Centered, at the absolute bottom margin, ALL CAPS).
 - VAST NEGATIVE SPACE: Strategic breathing room between each block.
+- LEGIBILITY: All text MUST use contrasting shades to be perfectly readable against speed streaks.
 
-PALETTE: Dominant ${colorPrincipale}, Accent ${colorSecondaire}.
+PALETTE: Dominant ${colorPrincipale} with its various light/dark shades, Accent ${colorSecondaire} with its various light/dark shades.
 FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
-KEYWORDS: converging streaks, pointed motion, zoom blur, cinematic, ultra sharp subject, negative space.
+KEYWORDS: converging streaks, pointed motion, zoom blur, cinematic, ultra sharp subject, negative space, high contrast typography.
 ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object only.' : ''}
 `;
 
