@@ -663,7 +663,7 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
     return finalPrompt;
   }
 
-  private buildEditorialMotionPrompt(
+ private buildEditorialMotionPrompt(
     architecture: any,
     job: string,
     userQuery: string,
@@ -695,8 +695,8 @@ TYPOGRAPHY (MANDATORY):
 - RULES: NO lines, NO highlights, NO boxes, NO ribbons. Text directly on image.
 - FONT: Bebas Neue, Tracking +120, Alignment Center.
 - TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: high contrast ${colorPrincipale}).
-- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, just above bottom text, NO background or bars ,60px from the bottom text).
-- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast ${colorSecondaire}, Centered, Above edge, ALL CAPS,NO background or bars ,).
+- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, just above bottom text, ~60px above, NO background, NO bars, NO dividers).
+- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast ${colorSecondaire}, Centered, Small margin above bottom edge, ALL CAPS, NO background, NO bars, NO dividers).
 
 PALETTE: Dominant ${colorPrincipale}, Accent ${colorSecondaire}.
 FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
