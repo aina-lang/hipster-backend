@@ -652,6 +652,60 @@ ${customSubject && !isPersonRequested ? '- Aucun humain, aucune personne, aucun 
     return finalPrompt;
   }
 
+  private buildEditorialMotionPrompt(
+    architecture: any,
+    job: string,
+    userQuery: string,
+    mainWord: string,
+    scriptPhrase: string,
+    infoLine: string,
+    textPromo: string = '',
+    colorPrincipale: string = '#17A2B8',
+    colorSecondaire: string = '#FFFFFF',
+    customSubject: string = '',
+    isPersonRequested: boolean = false,
+  ): string {
+    const subject = customSubject || job;
+    const texteTop = mainWord || 'STYLE';
+    const texteMiddle = scriptPhrase || 'Révélez votre personnalité';
+    const texteLower = infoLine || 'COIFFURE & ESTHÉTIQUE';
+    const texteCTA = textPromo || 'PRENEZ RENDEZ-VOUS';
+
+    const finalPrompt = `
+Ultra realistic cinematic advertising poster, ${subject}, subject extremely sharp and hyper detailed, razor sharp focus, dramatic warm backlight creating strong halo glow, powerful directional lighting, volumetric light rays
+
+EXTREME radial motion blur from the center outward, aggressive dynamic speed effect on the sides only, background streaking light trails, strong peripheral blur while subject remains perfectly sharp, cinematic depth of field, intense contrast, luxury commercial photography, shot on 85mm lens, f1.4, high-end advertising campaign style, powerful centered composition
+
+Color grading: dark tones mixed with ${colorPrincipale} and ${colorSecondaire} highlights, dramatic atmosphere, premium magazine cover look
+
+Typography layout integrated:
+
+Top bold elegant serif:
+"${texteTop.toUpperCase()}"
+
+Middle refined italic:
+"${texteMiddle}"
+
+Lower bold uppercase:
+"${texteLower.toUpperCase()}"
+
+CTA bold uppercase:
+"${texteCTA.toUpperCase()}"
+
+Footer:
+"Votre société"
+
+Perfectly centered luxury poster design, strong hierarchy, professional graphic design composition
+${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.' : ''}
+`;
+
+    this.logger.log(
+      `[buildEditorialMotionPrompt] Generated editorial motion prompt for subject: ${subject}`,
+    );
+
+    return finalPrompt;
+  }
+
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
    * Génère un prompt ultra-affiné pour produire des rendus Vogue/Numéro/Fashion
@@ -2157,6 +2211,24 @@ COMPOSITION ARCHITECTURE:
           );
 
           magazineStyleDirective = this.buildImpactCommercialPrompt(
+            architecture,
+            params.job,
+            params.userQuery || '',
+            mainWord,
+            scriptPhrase,
+            infoLine,
+            textPromo,
+            colorPrincipale,
+            colorSecondaire,
+            customSubject,
+            isPersonRequested,
+          );
+        } else if (architecture.layoutType === 'TYPE_EDITORIAL') {
+          this.logger.log(
+            `[processFlyerBackground] Building EDITORIAL_MOTION prompt: color="${colorPrincipale}", textPromo="${textPromo}"`,
+          );
+
+          magazineStyleDirective = this.buildEditorialMotionPrompt(
             architecture,
             params.job,
             params.userQuery || '',
