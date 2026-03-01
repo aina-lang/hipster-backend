@@ -692,11 +692,12 @@ COMPOSITION (ULTRA-STRICT):
 - Depth of Field: f/1.2 look, strong bokeh, subject POPPING out of streaks.
 
 TYPOGRAPHY (MANDATORY):
-- RULES: NO lines, NO highlights, NO boxes, NO ribbons. Text directly on image.
+- RULES: ABSOLUTELY NO underlines, NO curved lines, NO dividers, NO highlights, NO boxes, NO ornaments.
 - FONT: Bebas Neue, Tracking +120, Alignment Center.
-- TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: high contrast ${colorPrincipale}).
-- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, just above bottom text, ~60px above, NO background, NO bars, NO dividers).
-- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast ${colorSecondaire}, Centered, Small margin above bottom edge, ALL CAPS, NO background, NO bars, NO dividers).
+- TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: high contrast ${colorPrincipale}). Positioned at the very top.
+- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, HIGH VERTICAL CLEARANCE from other text, NO underline, NO curved ornaments).
+- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast ${colorSecondaire}, Centered, at the absolute bottom margin, ALL CAPS, NO dividers, NO bars).
+- VAST NEGATIVE SPACE between each text element for a premium breathable look.
 
 PALETTE: Dominant ${colorPrincipale}, Accent ${colorSecondaire}.
 FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
