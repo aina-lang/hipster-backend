@@ -640,9 +640,14 @@ Style :
 - Haute résolution
 - Aucun logo
 - Aucune marque
-- Pas d’icônes réseaux sociaux
-- Peu de texte
-${customSubject && !isPersonRequested ? '- Aucun humain, aucune personne, aucun mannequin (focus unique sur l\'objet)' : ''}
+- Chaque élément textuel mentionné doit être rendu PARFAITEMENT sur l'image.
+
+STRICT TYPOGRAPHY RULE:
+- VOUS NE POUVEZ REPRODUIRE QUE LE TEXTE EXACT PRÉVU CI-DESSUS.
+- N'AJOUTEZ AUCUN TEXTE SUPPLÉMENTAIRE, SOUS-TITRE, TITRE DE MÉTIER. AUCUNE IMPROVISATION.
+- LE TEXTE DOIT ÊTRE LISIBLE, SANS FAUTE ET 100% OPAQUE.
+
+${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.' : ''}
 `;
 
     this.logger.log(
@@ -678,22 +683,23 @@ EXTREME radial motion blur from the center outward, aggressive dynamic speed eff
 
 Color grading: dark tones mixed with ${colorPrincipale} and ${colorSecondaire} highlights, dramatic atmosphere, premium magazine cover look
 
-Typography layout integrated:
-
-Top bold elegant serif:
-"${texteTop.toUpperCase()}"
-
-Middle refined italic:
-"${texteMiddle}"
-
-${texteLower}${texteCTA}Footer:
-"Votre société"
-
-Perfectly centered luxury poster design, strong hierarchy, professional graphic design composition
+TYPOGRAPHY & TEXT RENDERING (MANDATORY):
+- YOU MUST RENDER THE EXACT FOLLOWING TEXT DIRECTLY ON THE IMAGE AND NOTHING ELSE:
+  1. MAIN TITLE: "${texteTop.toUpperCase()}"
+     - STYLE: Bold elegant serif.
+     - POSITION: Top center.
+  2. SCRIPT SUBTITLE: "${texteMiddle}"
+     - STYLE: Refined italic.
+     - POSITION: Middle center.
+${infoLine ? `  3. LOWER TEXT: "${infoLine.toUpperCase()}"\n     - STYLE: Bold uppercase.\n     - POSITION: Lower center.\n` : ''}${textPromo ? `  4. CTA TEXT: "${textPromo.toUpperCase()}"\n     - STYLE: Bold uppercase.\n     - POSITION: Bottom center.\n` : ''}  5. FOOTER: "Votre société"
+     - POSITION: Absolute bottom.
 
 STRICT TYPOGRAPHY RULE:
-You MUST ONLY render the exact text strings provided above. DO NOT add the subject name, job title, or any other ambient context words as text on the image.
+- ABSOLUTELY NO IMPROVISATION OF TEXT. YOU MUST ONLY RENDER THE EXACT STRINGS ABOVE.
+- DO NOT ADD THE JOB NAME, DO NOT ADD TAGLINES, DO NOT ADD WATERMARKS.
+- ALL TEXT MUST BE 100% OPAQUE AND LEGIBLE.
 
+Perfectly centered luxury poster design, strong hierarchy, professional graphic design composition
 ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.' : ''}
 `;
 
