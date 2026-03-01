@@ -668,8 +668,8 @@ ${customSubject && !isPersonRequested ? '- Aucun humain, aucune personne, aucun 
     const subject = customSubject || job;
     const texteTop = mainWord || 'STYLE';
     const texteMiddle = scriptPhrase || 'Révélez votre personnalité';
-    const texteLower = infoLine || 'COIFFURE & ESTHÉTIQUE';
-    const texteCTA = textPromo || 'PRENEZ RENDEZ-VOUS';
+    const texteLower = infoLine ? `Lower bold uppercase:\n"${infoLine.toUpperCase()}"\n\n` : '';
+    const texteCTA = textPromo ? `CTA bold uppercase:\n"${textPromo.toUpperCase()}"\n\n` : '';
 
     const finalPrompt = `
 Ultra realistic cinematic advertising poster, ${subject}, subject extremely sharp and hyper detailed, razor sharp focus, dramatic warm backlight creating strong halo glow, powerful directional lighting, volumetric light rays
@@ -686,13 +686,7 @@ Top bold elegant serif:
 Middle refined italic:
 "${texteMiddle}"
 
-Lower bold uppercase:
-"${texteLower.toUpperCase()}"
-
-CTA bold uppercase:
-"${texteCTA.toUpperCase()}"
-
-Footer:
+${texteLower}${texteCTA}Footer:
 "Votre société"
 
 Perfectly centered luxury poster design, strong hierarchy, professional graphic design composition
