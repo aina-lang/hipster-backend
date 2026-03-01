@@ -690,6 +690,10 @@ ${texteLower}${texteCTA}Footer:
 "Votre société"
 
 Perfectly centered luxury poster design, strong hierarchy, professional graphic design composition
+
+STRICT TYPOGRAPHY RULE:
+You MUST ONLY render the exact text strings provided above. DO NOT add the subject name, job title, or any other ambient context words as text on the image.
+
 ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.' : ''}
 `;
 
