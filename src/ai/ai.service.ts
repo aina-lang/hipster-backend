@@ -1836,11 +1836,7 @@ COMPOSITION ARCHITECTURE:
     options?: { size?: string; quality?: string },
   ): Promise<Buffer> {
     try {
-      this.logger.log(
-        `[callOpenAiToolImage] Generating with gpt-image-1.5 (streaming)...`,
-      );
       const startTime = Date.now();
-
       const containsArchitecture =
         prompt.includes('COMPOSITION ARCHITECTURE') || prompt.includes('FLYER');
       const textConstraint = containsArchitecture
@@ -1851,6 +1847,10 @@ COMPOSITION ARCHITECTURE:
         `${prompt} REALISM:Hyper-realistic-photo,natural-skin-texture,visible-pores,correct-anatomy,natural-light. ${textConstraint}`
           .replace(/\s+/g, ' ')
           .trim();
+
+      this.logger.log(
+        `[callOpenAiToolImage] Generating with gpt-image-1.5. Prompt Length: ${realismEnhancedPrompt.length}. Size: ${options?.size || '1024x1024'}`,
+      );
 
       const response = await axios.post(
         'https://api.openai.com/v1/images/generations',
@@ -2462,7 +2462,17 @@ COMPOSITION ARCHITECTURE:
         `
         : '';
 
-      const flyerTextRule = `ELITE GRAPHIC DESIGN & ART DIRECTION RULES: 
+      // Skip heavy generic rules if architecture prompt builder was used
+      const isSpecializedArch = [
+        'TYPE_FASHION_VERTICAL',
+        'TYPE_EDITORIAL_COVER',
+        'TYPE_IMPACT_COMMERCIAL',
+        'TYPE_EDITORIAL',
+      ].includes(architecture?.layoutType);
+
+      const flyerTextRule = isSpecializedArch
+        ? `STRICT DESIGN RULES: 15% inner margin. No text touching edges. High-end typography ONLY. NO logos, NO background boxes for text. French language. ${architectureRules}`
+        : `ELITE GRAPHIC DESIGN & ART DIRECTION RULES: 
              - AESTHETIC: High-end "Vogue" or "Apple-style" minimalism. Absolute focus on REAL-WORLD materials and authentic lighting.
              - COMPOSITION: Masterful use of Negative Space. Subject centered or slightly offset for balance. ${params.subject ? `Ensure the custom subject "${params.subject}" is the hero.` : `Face/head must remain natural and upright. Ensure the person/subject is the hero, with sharp focus and professional depth of field (bokeh).`}
              - TYPOGRAPHIC MASTERY: Typography is NOT just text; it's a design element. USE DYNAMIC HIERARCHY. You are ENCOURAGED to use sophisticated layouts: tilted/angled text, asymmetric balance, and overlapping elements that suggest a human designer's touch.
@@ -2479,8 +2489,6 @@ COMPOSITION ARCHITECTURE:
              ${architectureRules}`;
 
       // 5. FINAL PROMPT CONSTRUCTION - ELITE MAGAZINE STYLE
-      // Replace old complex system with the refined magazine-style directive
-
       const customSubjectText =
         params.subject || cleanedUserQuery || params.job || '';
       const subjectSourceDirective = imageBuffer
@@ -2502,22 +2510,24 @@ USER CONTEXT: "${cleanedUserQuery || params.job || ''}"
 OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. NO digital artifacts, NO cheap AI signatures.`;
 
       let finalBuffer: Buffer;
-      const finalSize = '1024x1536';
+      const finalSize = '1024x1792';
 
       if (imageBuffer) {
         this.logger.log(
-          `[processFlyerBackground] Strategy: Image Edit with FLYER prompt`,
+          `[processFlyerBackground] Strategy: Image Edit with FLYER prompt. Size: ${finalSize}`,
         );
         finalBuffer = await this.callOpenAiImageEdit(imageBuffer, finalPrompt, {
           size: finalSize,
-          quality: 'medium', // Faster for better responsiveness
+          quality: 'medium',
           skipRefinement: true,
         });
       } else {
-        this.logger.log(`[processFlyerBackground] Strategy: Text-to-Image`);
+        this.logger.log(
+          `[processFlyerBackground] Strategy: Text-to-Image. Size: ${finalSize}`,
+        );
         finalBuffer = await this.callOpenAiToolImage(finalPrompt, {
           size: finalSize,
-          quality: 'medium', // Faster
+          quality: 'medium',
         });
       }
 
