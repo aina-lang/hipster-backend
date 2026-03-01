@@ -679,22 +679,27 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
     const subject = customSubject || job;
     const texteTop = mainWord || 'STYLE';
     const texteMiddle = scriptPhrase || 'Révélez votre personnalité';
+    const environnement =
+      userQuery || 'High-end studio or atmospheric location';
+    const descriptionSujet =
+      userQuery || `A professional representation of ${job}`;
 
     const finalPrompt = `
 Affiche publicitaire verticale, style cinématographique dynamique
 
-Scène : {{ENVIRONNEMENT}}
+Scène : ${environnement}
 
-Sujet principal : {{SUJET}}
-Description détaillée : {{DESCRIPTION_SUJET}}
+Sujet principal : ${subject}
+Description détaillée : ${descriptionSujet}
 
 Composition (ULTRA STRICT) :
 - One single main subject in razor sharp focus, perfectly centered
+- CLEARANCE ZONE (MANDATORY): There MUST be a clean, non-blurred padding area around the central subject. The subject must be breathing.
 - Subject ultra sharp, crisp edges, high detail, 8K sharpness, high contrast
 - Ultra shallow depth of field (f/1.2 look), strong bokeh
 - Background must be COMPLETELY unrecognizable (90% blur minimum)
-- Extremely strong radial motion blur around the subject (powerful speed vortex effect)
-- Dynamic zoom blur + motion streaks around the subject
+- Extremely strong radial motion blur STRICTLY PERIPHERAL, starting from the edges of the image inward to the clearance zone. The speed vortex must NOT touch or overlap the subject's face/body.
+- Dynamic zoom blur + motion streaks around the subject, separated by the clearance zone.
 - Background dissolved into abstract color streaks and light trails
 - Strong foreground/background separation, subject popping out of the image
 - No secondary sharp elements anywhere in the image
@@ -709,6 +714,8 @@ Style visuel :
 
 Typographie intégrée dans l’image :
 
+STRICT RULE: NO horizontal lines, NO separators, NO ribbons, NO background boxes, NO highlighting. All text MUST be placed directly on the image with NO containers.
+
 En haut :
 “${texteTop.toUpperCase()}”
 - Very large
@@ -716,11 +723,13 @@ En haut :
 - Wide tracking
 - Bold impactful font
 - Centered
+- NO horizontal line under the text.
 
 Au centre (optionnel) :
 “${texteMiddle}”
 - Elegant italic
 - Placed above the subject or slightly overlapping
+- NO underline, NO horizontal bars.
 
 En bas :
 ${textPromo ? `"${textPromo.toUpperCase()}"` : '"CALL TO ACTION"'}
@@ -728,6 +737,7 @@ ${textPromo ? `"${textPromo.toUpperCase()}"` : '"CALL TO ACTION"'}
 - High-contrast color
 - Centered
 - Positioned just above the bottom edge
+- NO background glow, NO background bar, NO highlight box.
 
 Palette :
 - Main: ${colorPrincipale}, Secondary: ${colorSecondaire}
@@ -739,7 +749,7 @@ Qualité :
 Ultra HD, photoréaliste, rendu professionnel
 
 Keywords :
-radial motion blur, dynamic speed effect, speed vortex, zoom blur, motion streaks, ultra shallow depth of field, ultra sharp subject, cinematic lighting, high contrast, professional advertising photography
+radial motion blur, dynamic speed effect, speed vortex, zoom blur, motion streaks, ultra shallow depth of field, ultra sharp subject, cinematic lighting, high contrast, professional advertising photography, negative space
 ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.' : ''}
 `;
 
