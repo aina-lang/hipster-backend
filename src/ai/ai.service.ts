@@ -322,9 +322,10 @@ export class AiService implements OnModuleInit {
     const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
     // 🔒 ABSOLUTE LOCKED POSE OR CUSTOM SUBJECT
-    const subjectCinematography = customSubject && !isPersonRequested
-      ? `SUBJECT: ${customSubject}. Ensure editorial quality and professional lighting.`
-      : `CINEMATOGRAPHY – SUBJECT (ABSOLUTE POSE LOCK – DO NOT MODIFY):
+    const subjectCinematography =
+      customSubject && !isPersonRequested
+        ? `SUBJECT: ${customSubject}. Ensure editorial quality and professional lighting.`
+        : `CINEMATOGRAPHY – SUBJECT (ABSOLUTE POSE LOCK – DO NOT MODIFY):
 - The subject’s ORIGINAL POSE, ORIGINAL ORIENTATION, and ORIGINAL HEAD + BODY DIRECTION must be REPRODUCED EXACTLY AS IN THE REFERENCE.
 - This includes:
   • Exact body rotation (left, right, front, back),
@@ -383,14 +384,15 @@ export class AiService implements OnModuleInit {
 - COLOR MANDATE: Full vivid color only (NO black and white).`;
 
     // PROHIBITIONS
-    const prohibitions = customSubject && !isPersonRequested
-      ? `PROHIBITIONS – CRITICAL:
+    const prohibitions =
+      customSubject && !isPersonRequested
+        ? `PROHIBITIONS – CRITICAL:
 - NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.
 - NO anatomy distortions or AI artifacts.
 - NO watermarks, NO signatures, NO metadata.
 - NO grayscale, NO desaturation.
 - NO stock-photo style. UNIQUE editorial aesthetic only.`
-      : `PROHIBITIONS – CRITICAL:
+        : `PROHIBITIONS – CRITICAL:
 - NO pose change. NO orientation change. NO inclination change.
 - NO anatomy distortions or AI artifacts.
 - NO watermarks, NO signatures, NO metadata.
@@ -411,9 +413,11 @@ ${technicalQuality}
 ${prohibitions}
 
 EXECUTION MANDATE:
-${customSubject
-        ? `Produce a high-end magazine cover featuring the specified subject perfectly integrated into the editorial aesthetic. Text must be rendered exactly as specified.`
-        : `Produce a high-end magazine cover with the subject’s pose, orientation, and inclination reproduced EXACTLY as in the reference. ABSOLUTELY NO CHANGES to body position, gaze direction, silhouette, or camera angle. Text must be rendered exactly as specified.`}`;
+${
+  customSubject
+    ? `Produce a high-end magazine cover featuring the specified subject perfectly integrated into the editorial aesthetic. Text must be rendered exactly as specified.`
+    : `Produce a high-end magazine cover with the subject’s pose, orientation, and inclination reproduced EXACTLY as in the reference. ABSOLUTELY NO CHANGES to body position, gaze direction, silhouette, or camera angle. Text must be rendered exactly as specified.`
+}`;
 
     this.logger.log(
       '[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E with ABSOLUTE pose lock',
@@ -443,13 +447,14 @@ NOT advertisement. NOT street poster. PURE editorial aesthetic.
 `;
 
     // 🔒 SUBJECT — STRICT SINGLE CENTERED COMPOSITION
-    const subjectRules = customSubject && !isPersonRequested
-      ? `
+    const subjectRules =
+      customSubject && !isPersonRequested
+        ? `
 SUBJECT RULES (STRICT – NO EXCEPTION):
 - ONLY ONE MAIN SUBJECT: "${customSubject}".
 - Interpret additional user intent from: "${userQuery}".
 - Single isolated subject only. Subject perfectly CENTERED.`
-      : `
+        : `
 SUBJECT RULES (STRICT – NO EXCEPTION):
 - ONLY ONE MAIN SUBJECT related to: "${job}".
 - Interpret user intent from: "${userQuery}".
@@ -539,8 +544,9 @@ TECHNICAL SPECIFICATIONS – HIGH FASHION COVER STANDARD:
 `;
 
     // 🚫 PROHIBITIONS
-    const prohibitions = customSubject && !isPersonRequested
-      ? `
+    const prohibitions =
+      customSubject && !isPersonRequested
+        ? `
 PROHIBITIONS – CRITICAL:
 - NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.
 - NO second subject.
@@ -557,7 +563,7 @@ PROHIBITIONS – CRITICAL:
 - NO artistic reinterpretation.
 - NO busy layout.
 `
-      : `
+        : `
 PROHIBITIONS – CRITICAL:
 - NO second subject.
 - NO background objects.
@@ -670,36 +676,84 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
-    const subject = customSubject || job;
-    const texteTop = mainWord || 'STYLE';
-    const texteMiddle = scriptPhrase || 'Révélez votre personnalité';
-    const texteLower = infoLine ? `Lower bold uppercase:\n"${infoLine.toUpperCase()}"\n\n` : '';
-    const texteCTA = textPromo ? `CTA bold uppercase:\n"${textPromo.toUpperCase()}"\n\n` : '';
+    const subject = customSubject || job || 'Professional Subject';
+    const environnement =
+      userQuery || 'High-end studio or atmospheric location';
+    const descriptionSujet =
+      userQuery || `A professional representation of ${job}`;
+    const titre = mainWord || 'STYLE';
+    const sousTitre = scriptPhrase || '';
+    const cta = textPromo || infoLine || '';
+    const palette = `Dominant: ${colorPrincipale}, Accent: ${colorSecondaire}`;
 
     const finalPrompt = `
-Ultra realistic cinematic advertising poster, ${subject}, subject extremely sharp and hyper detailed, razor sharp focus, dramatic warm backlight creating strong halo glow, powerful directional lighting, volumetric light rays
+Affiche publicitaire verticale, style cinématographique dynamique.
 
-EXTREME radial motion blur from the center outward, aggressive dynamic speed effect on the sides only, background streaking light trails, strong peripheral blur while subject remains perfectly sharp, cinematic depth of field, intense contrast, luxury commercial photography, shot on 85mm lens, f1.4, high-end advertising campaign style, powerful centered composition
+Scène : ${environnement}
 
-Color grading: dark tones mixed with ${colorPrincipale} and ${colorSecondaire} highlights, dramatic atmosphere, premium magazine cover look
+Sujet principal : ${subject}
+Description détaillée : ${descriptionSujet}
 
-TYPOGRAPHY & TEXT RENDERING (MANDATORY):
-- YOU MUST RENDER THE EXACT FOLLOWING TEXT DIRECTLY ON THE IMAGE AND NOTHING ELSE:
-  1. MAIN TITLE: "${texteTop.toUpperCase()}"
-     - STYLE: Bold elegant serif.
-     - POSITION: Top center.
-  2. SCRIPT SUBTITLE: "${texteMiddle}"
-     - STYLE: Refined italic.
-     - POSITION: Middle center.
-${infoLine ? `  3. LOWER TEXT: "${infoLine.toUpperCase()}"\n     - STYLE: Bold uppercase.\n     - POSITION: Lower center.\n` : ''}${textPromo ? `  4. CTA TEXT: "${textPromo.toUpperCase()}"\n     - STYLE: Bold uppercase.\n     - POSITION: Bottom center.\n` : ''}  5. FOOTER: "Votre société"
-     - POSITION: Absolute bottom.
+Composition (ULTRA STRICT) :
+- One single main subject in razor sharp focus, perfectly centered
+- Subject ultra sharp, crisp edges, high detail, 8K sharpness, high contrast
+- Ultra shallow depth of field (f/1.2 look), strong bokeh
+- Background must be COMPLETELY unrecognizable (90% blur minimum)
+- Extremely strong radial motion blur around the subject (powerful speed vortex effect)
+- Dynamic zoom blur + motion streaks around the subject
+- Background dissolved into abstract color streaks and light trails
+- Strong foreground/background separation, subject popping out of the image
+- No secondary sharp elements anywhere in the image
+- No readable background details, no clear objects in the background
 
-STRICT TYPOGRAPHY RULE:
-- ABSOLUTELY NO IMPROVISATION OF TEXT. YOU MUST ONLY RENDER THE EXACT STRINGS ABOVE.
-- DO NOT ADD THE JOB NAME, DO NOT ADD TAGLINES, DO NOT ADD WATERMARKS.
-- ALL TEXT MUST BE 100% OPAQUE AND LEGIBLE.
+Style visuel :
+- Dramatic cinematic lighting
+- Intense premium atmosphere
+- Strong contrast, deep shadows, glossy highlights
+- Professional advertising photography look
+- Abstract dynamic background
 
-Perfectly centered luxury poster design, strong hierarchy, professional graphic design composition
+Typographie intégrée dans l’image :
+
+En haut :
+"${titre.toUpperCase()}"
+- Very large
+- All caps
+- Wide tracking
+- Bold impactful font
+- Centered
+
+${
+  sousTitre
+    ? `Au centre (optionnel) :
+"${sousTitre}"
+- Elegant italic
+- Placed above the subject or slightly overlapping`
+    : ''
+}
+
+${
+  cta
+    ? `En bas :
+"${cta.toUpperCase()}"
+- Impactful
+- High-contrast color (using ${colorSecondaire})
+- Centered
+- Positioned just above the bottom edge`
+    : ''
+}
+
+Palette :
+${palette}
+
+Format :
+Vertical 4:5 ou 9:16 (High-quality portrait aspect ratio)
+
+Qualité :
+Ultra HD, photoréaliste, rendu professionnel
+
+Keywords :
+radial motion blur, dynamic speed effect, speed vortex, zoom blur, motion streaks, ultra shallow depth of field, ultra sharp subject, cinematic lighting, high contrast, professional advertising photography, zero AI artifacts, high-end editorial production.
 ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.' : ''}
 `;
 
@@ -724,9 +778,10 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
-    const selectedPosture = customSubject && !isPersonRequested
-      ? 'POSTURE & PLACEMENT: Place the subject perfectly in the frame, highlighting its finest details and ensuring an editorial standard.'
-      : 'EXACT 1:1 POSTURE FROM REFERENCE: Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. ZERO TILT: The subject must have NO inclination to the left or right. PERFECT VERTICAL ALIGNMENT: The spine and head must be perfectly vertical, matching the original photo exactly. Natural, upright head and IDENTICAL GAZE FROM REFERENCE: Precise, serious gaze directed straight and vertical, following the original head position.';
+    const selectedPosture =
+      customSubject && !isPersonRequested
+        ? 'POSTURE & PLACEMENT: Place the subject perfectly in the frame, highlighting its finest details and ensuring an editorial standard.'
+        : 'EXACT 1:1 POSTURE FROM REFERENCE: Subtle 3/4 profile view. The back/shoulders are positioned slightly to the RIGHT, but the body is turned mostly TOWARDS THE FRONT. ZERO TILT: The subject must have NO inclination to the left or right. PERFECT VERTICAL ALIGNMENT: The spine and head must be perfectly vertical, matching the original photo exactly. Natural, upright head and IDENTICAL GAZE FROM REFERENCE: Precise, serious gaze directed straight and vertical, following the original head position.';
     // Map model types to photography styles (referenced from example flyers)
     const fashionModels = ['FASHION', 'STYLE', 'VOGUE', 'COLLECTION', 'MODE'];
     const luxuryModels = ['LUXURY', 'PREMIUM', 'CLASSIQUE', 'ELEGANT'];
@@ -834,8 +889,9 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 - NO AI ARTIFACTS: No plastic reflections, no impossible physics, no synthetic glows`;
 
     // WHAT TO AVOID (critical)
-    const prohibitions = customSubject && !isPersonRequested
-      ? `PROHIBITIONS - STRICTLY AVOID:
+    const prohibitions =
+      customSubject && !isPersonRequested
+        ? `PROHIBITIONS - STRICTLY AVOID:
 - NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.
 - NO cheap plastic surfaces or CGI-obvious elements.
 - NO poorly-rendered hands, distorted proportions, or anatomy errors.
@@ -845,7 +901,7 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 - NO dramatic lighting that looks impossible.
 - NO BLACK AND WHITE, NO GRAYSCALE, NO MONOCHROME RENDERING.
 - NO colors that don't exist in real materials.`
-      : `PROHIBITIONS - STRICTLY AVOID:
+        : `PROHIBITIONS - STRICTLY AVOID:
 - NO cheap plastic surfaces or CGI-obvious elements.
 - NO poorly-rendered hands, distorted proportions, or anatomy errors.
 - NO generic stock photo backgrounds.
@@ -2172,7 +2228,9 @@ COMPOSITION ARCHITECTURE:
 
         // Detect if the custom subject explicitly asks for a person
         const isPersonRequested = customSubject
-          ? !!customSubject.match(/personne|femme|homme|mannequin|fille|garçon|modèle|model|man|woman|girl|boy|person/i)
+          ? !!customSubject.match(
+              /personne|femme|homme|mannequin|fille|garçon|modèle|model|man|woman|girl|boy|person/i,
+            )
           : false;
 
         if (architecture.layoutType === 'TYPE_FASHION_VERTICAL') {
@@ -2263,7 +2321,9 @@ COMPOSITION ARCHITECTURE:
         );
         // Detect if the custom subject explicitly asks for a person
         const isPersonRequestedFallback = params.subject
-          ? !!params.subject.match(/personne|femme|homme|mannequin|fille|garçon|modèle|model|man|woman|girl|boy|person/i)
+          ? !!params.subject.match(
+              /personne|femme|homme|mannequin|fille|garçon|modèle|model|man|woman|girl|boy|person/i,
+            )
           : false;
 
         // Standard magazine-style prompt for other architectures
@@ -2409,7 +2469,8 @@ COMPOSITION ARCHITECTURE:
       // 5. FINAL PROMPT CONSTRUCTION - ELITE MAGAZINE STYLE
       // Replace old complex system with the refined magazine-style directive
 
-      const customSubjectText = params.subject || cleanedUserQuery || params.job || '';
+      const customSubjectText =
+        params.subject || cleanedUserQuery || params.job || '';
       const subjectSourceDirective = imageBuffer
         ? `USE_UPLOADED_IMAGE_AS_MAIN_SUBJECT: The primary subject of the final generated image MUST be the exact subject, person, or object found in the uploaded reference photo.`
         : `USE_TEXT_AS_MAIN_SUBJECT: The primary subject MUST exactly be: "${customSubjectText}".`;
