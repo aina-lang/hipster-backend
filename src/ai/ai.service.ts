@@ -694,9 +694,8 @@ COMPOSITION (ULTRA-STRICT):
 TYPOGRAPHY (MANDATORY):
 - RULES: NO lines, NO highlights, NO boxes, NO ribbons. Text directly on image.
 - TOP: "${mainWord.toUpperCase()}" (Extra-large, All caps, Centered, Bold).
-- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, above subject).
-- BOTTOM: "${textPromo || 'OFFRE LIMITÉE'}" (High contrast, Centered, above edge).
-
+- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, just above bottom text).
+- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast, Centered, above edge).
 PALETTE: Dominant ${colorPrincipale}, Accent ${colorSecondaire}.
 FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
 KEYWORDS: converging streaks, pointed motion, zoom blur, cinematic, ultra sharp subject, negative space.
