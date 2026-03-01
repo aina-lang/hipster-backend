@@ -776,7 +776,18 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 - NO AI ARTIFACTS: No plastic reflections, no impossible physics, no synthetic glows`;
 
     // WHAT TO AVOID (critical)
-    const prohibitions = `PROHIBITIONS - STRICTLY AVOID:
+    const prohibitions = customSubject && !isPersonRequested
+      ? `PROHIBITIONS - STRICTLY AVOID:
+- NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.
+- NO cheap plastic surfaces or CGI-obvious elements.
+- NO poorly-rendered hands, distorted proportions, or anatomy errors.
+- NO generic stock photo backgrounds.
+- NO AI hallucinations (extra fingers, morphed faces, etc.).
+- NO watermarks, copyright marks, or ai signatures.
+- NO dramatic lighting that looks impossible.
+- NO BLACK AND WHITE, NO GRAYSCALE, NO MONOCHROME RENDERING.
+- NO colors that don't exist in real materials.`
+      : `PROHIBITIONS - STRICTLY AVOID:
 - NO cheap plastic surfaces or CGI-obvious elements.
 - NO poorly-rendered hands, distorted proportions, or anatomy errors.
 - NO generic stock photo backgrounds.
