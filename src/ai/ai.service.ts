@@ -664,23 +664,23 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
   }
 
   private buildEditorialMotionPrompt(
-  architecture: any,
-  job: string,
-  userQuery: string,
-  mainWord: string,
-  scriptPhrase: string,
-  infoLine: string,
-  textPromo: string = '',
-  colorPrincipale: string = '#17A2B8',
-  colorSecondaire: string = '#FFFFFF',
-  customSubject: string = '',
-  isPersonRequested: boolean = false,
-): string {
-  const subject = customSubject || job;
-  const texteTop = mainWord || 'STYLE';
-  const texteMiddle = scriptPhrase || 'Révélez votre personnalité';
+    architecture: any,
+    job: string,
+    userQuery: string,
+    mainWord: string,
+    scriptPhrase: string,
+    infoLine: string,
+    textPromo: string = '',
+    colorPrincipale: string = '#17A2B8',
+    colorSecondaire: string = '#FFFFFF',
+    customSubject: string = '',
+    isPersonRequested: boolean = false,
+  ): string {
+    const subject = customSubject || job;
+    const texteTop = mainWord || 'STYLE';
+    const texteMiddle = scriptPhrase || 'Révélez votre personnalité';
 
-  const finalPrompt = `
+    const finalPrompt = `
 Affiche publicitaire verticale, style cinématographique dynamique
 
 Scène : {{ENVIRONNEMENT}}
@@ -743,12 +743,12 @@ radial motion blur, dynamic speed effect, speed vortex, zoom blur, motion streak
 ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.' : ''}
 `;
 
-  this.logger.log(
-    `[buildEditorialMotionPrompt] Generated dynamic cinematic vertical poster prompt for subject: ${subject}`,
-  );
+    this.logger.log(
+      `[buildEditorialMotionPrompt] Generated dynamic cinematic vertical poster prompt for subject: ${subject}`,
+    );
 
-  return finalPrompt;
-}
+    return finalPrompt;
+  }
 
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
@@ -764,6 +764,22 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
+    if (modelName?.toUpperCase() === 'EDITORIAL MOTION') {
+      return this.buildEditorialMotionPrompt(
+        architecture,
+        job,
+        userQuery,
+        '', // mainWord
+        '', // scriptPhrase
+        '', // infoLine
+        '', // textPromo
+        brandingColor,
+        '#FFFFFF',
+        customSubject,
+        isPersonRequested,
+      );
+    }
+
     const selectedPosture =
       customSubject && !isPersonRequested
         ? 'POSTURE & PLACEMENT: Place the subject perfectly in the frame, highlighting its finest details and ensuring an editorial standard.'

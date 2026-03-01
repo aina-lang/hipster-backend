@@ -76,7 +76,7 @@ export const IMPACT_COMMERCIAL_ARCH: VisualArchitecture = {
 
 export const EDITORIAL_MOTION_ARCH: VisualArchitecture = {
   name: 'Editorial Motion',
-  layoutType: 'TYPE_MAGAZINE',
+  layoutType: 'TYPE_EDITORIAL',
   colorPalette: 'Dreamy/Fluid',
   rules: {
     subject:
