@@ -786,12 +786,12 @@ COMPOSITION:
 --ar 2:3 --style raw
 `;
 
-  this.logger.log(
-    `[buildLuxuryBWPosterPrompt] Generated clean white luxury poster prompt for subject: ${subject}`,
-  );
+    this.logger.log(
+      `[buildLuxuryBWPosterPrompt] Generated clean white luxury poster prompt for subject: ${subject}`,
+    );
 
-  return finalPrompt;
-}
+    return finalPrompt;
+  }
 
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
