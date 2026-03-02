@@ -684,16 +684,18 @@ private buildEditorialMotionPrompt(
 VERTICAL AD POSTER: Dynamic Cinematic Style.
 SCENE: ${environnement}. MAIN SUBJECT: ${subject} (${descriptionSujet}).
 
-COMPOSITION (ULTRA-STRICT – SIDE MOTION, PADDING, CRISP BOTTOM):
+COMPOSITION (ULTRA-STRICT – SIDE MOTION, INWARD FLOW, PADDING, CRISP BOTTOM):
 - Subject perfectly sharp, 8K detail, ZERO motion blur touching the subject.
-- CLEAN PADDING: Mandatory clean buffer zone (10–15%) around the subject with no streaks.
-- CRISP BOTTOM: Entire bottom 15% of the frame must remain perfectly sharp with NO blur.
-- MOTION EFFECT: Horizontal motion blur ONLY on far left AND far right edges.
-- Motion blur begins ONLY AFTER the padding zone and increases gradually toward edges.
-- Streaks must be straight, horizontal, never radial or diagonal.
-- No streaks or blur are allowed to touch the bottom horizontal line.
-- Background behind subject may have soft bokeh but never merges with motion trails.
-- Subject must POP with strong contour separation and a clean base line.
+- CLEAN PADDING: Mandatory clean buffer zone (10–15%) around subject with no streaks.
+- CRISP BOTTOM: Full bottom 15% of frame stays perfectly sharp with NO blur.
+- MOTION EFFECT: Motion streaks ONLY on far left AND far right sides.
+- DIRECTION RULE: ALL streaks MUST flow strictly TOWARD the center of the frame.
+- No outward movement. No reversed motion. Always inward convergence.
+- Motion trails start ONLY after the padding zone and intensify toward edges.
+- Streaks must be straight horizontal/diagonal lines converging into the center zone, never radial, never random.
+- NO blur behind subject, NO blur in front, NO blur at the bottom.
+- Background behind subject may include soft bokeh but never merges with motion trails.
+- Subject must POP with clean contour separation and a crisp base line.
 
 TYPOGRAPHY (MANDATORY):
 - RULES: ABSOLUTELY NO underlines, NO curved lines, NO dividers, NO highlights, NO boxes, NO ornaments.
@@ -706,7 +708,7 @@ TYPOGRAPHY (MANDATORY):
 
 PALETTE: Dominant ${colorPrincipale} with its light/dark shades, Accent ${colorSecondaire} with its light/dark shades.
 FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
-KEYWORDS: lateral motion blur, controlled streaks, crisp bottom line, sharp central zone, luxury cinematic.
+KEYWORDS: inward motion blur, converging streaks, lateral speed lines, crisp bottom, sharp center.
 
 ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object only.' : ''}
 `;
