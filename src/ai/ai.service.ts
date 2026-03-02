@@ -726,7 +726,7 @@ ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object o
 ): string {
   const finalPrompt = `
 ULTRA MINIMALIST BLACK & WHITE LUXURY ADVERTISING POSTER.
-SUBJECT: ${subject}, front-facing hero shot, perfectly centered, symmetrical composition, slightly low angle.
+SUBJECT: ${titleText}, front-facing hero shot, perfectly centered, symmetrical composition, slightly low angle.
 
 BACKGROUND:
 - Pure solid white background in the upper 70% (clean #FFFFFF).
@@ -789,7 +789,73 @@ COMPOSITION:
 `;
 
     this.logger.log(
-      `[buildLuxuryBWPosterPrompt] Generated clean white luxury poster prompt for subject: ${subject}`,
+      `[buildLuxuryBWPosterPrompt] Generated clean white luxury poster prompt for subject: ${titleText}`,
+    );
+
+    return finalPrompt;
+  }
+
+  /**
+   * 🎨 BUILD SIGNATURE SPLASH PROMPT FOR DALL-E
+   * Creates ultra-realistic splash effect advertising posters
+   * Features dynamic splash effects (liquid, powder, fire, etc.)
+   */
+  private buildSignatureSplashPrompt(
+    subject: string,
+    titleText: string,
+    subtitleText: string = '',
+  ): string {
+    const finalPrompt = `Create an ultra realistic advertising poster.
+
+MAIN SUBJECT:
+${subject}
+(The subject can be one object or one person only. No packaging. No multiple main subjects.)
+
+COMPOSITION RULES (STRICT):
+- One single centered main subject.
+- One dynamic splash effect automatically adapted to the subject 
+  (liquid, powder, sauce, oil, water, fire, dust, petals, etc. depending on the subject).
+- Maximum two secondary elements related to the subject.
+- No extra objects.
+- No background clutter.
+- Clean composition.
+- Subject must remain dominant.
+
+VISUAL STYLE:
+- Ultra realistic studio photography.
+- Real textures.
+- Natural shadows.
+- High detail.
+- Professional advertising photography.
+- Cinematic lighting.
+- Depth of field.
+- Not CGI.
+- Not 3D render look.
+- Natural imperfections allowed.
+
+BACKGROUND:
+- Solid or soft gradient background adapted to the subject.
+- Background color coherent with the subject theme.
+- Clean and minimal.
+
+TYPOGRAPHY LAYOUT:
+Top: Large bold uppercase serif headline: "${titleText.toUpperCase()}"
+${subtitleText ? `Center (over subject): Elegant italic handwritten subtitle: "${subtitleText}"` : 'Center (over subject): No subtitle.'}
+No other text.
+No decorative overlays.
+No logos.
+No badges.
+- Typography must be 100% OPAQUE and SOLID, with ABSOLUTELY NO background boxes or containers.
+
+STYLE MOOD:
+Premium.
+Impactful.
+Modern advertising.
+Minimal but powerful.
+`;
+
+    this.logger.log(
+      `[buildSignatureSplashPrompt] Generated signature splash prompt for subject: ${subject}`,
     );
 
     return finalPrompt;
@@ -2383,6 +2449,16 @@ COMPOSITION ARCHITECTURE:
             colorSecondaire,
             customSubject,
             isPersonRequested,
+          );
+        } else if (architecture.layoutType === 'TYPE_SIGNATURE_SPLASH') {
+          this.logger.log(
+            `[processFlyerBackground] Building SIGNATURE_SPLASH prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+          );
+
+          magazineStyleDirective = this.buildSignatureSplashPrompt(
+            customSubject || params.job || 'A premium subject',
+            mainWord,
+            scriptPhrase,
           );
         } else {
           // Standard magazine-style prompt for other architectures
