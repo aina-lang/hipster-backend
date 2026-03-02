@@ -839,13 +839,12 @@ BACKGROUND:
 - Clean and minimal.
 
 TYPOGRAPHY LAYOUT:
-Top: Large bold uppercase serif headline: "${titleText.toUpperCase()}"
-${subtitleText ? `Center (over subject): Elegant italic handwritten subtitle: "${subtitleText}"` : 'Center (over subject): No subtitle.'}
+Top: Large bold uppercase serif headline.
+Center (over subject): Elegant italic handwritten subtitle.
 No other text.
 No decorative overlays.
 No logos.
 No badges.
-- Typography must be 100% OPAQUE and SOLID, with ABSOLUTELY NO background boxes or containers.
 
 STYLE MOOD:
 Premium.
