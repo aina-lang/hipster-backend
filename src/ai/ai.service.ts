@@ -729,13 +729,15 @@ ULTRA MINIMALIST BLACK & WHITE LUXURY ADVERTISING POSTER.
 SUBJECT: ${subject}, front-facing hero shot, perfectly centered, symmetrical composition, slightly low angle.
 
 BACKGROUND:
-- Pure solid white background (clean #FFFFFF).
+- Pure solid white background in the upper 70% (clean #FFFFFF).
+- Smooth GRADIENT TRANSITION: Gradient from white (#FFFFFF) at the top to deep black (#000000) at the bottom.
+- Gradient direction: TOP to BOTTOM (vertical).
 - No smoke.
 - No fog.
 - No texture.
-- No gradient.
-- No shadows on background.
-- Absolute studio white seamless backdrop.
+- No hard lines.
+- No shadows on white area.
+- Absolute studio white seamless backdrop in upper portion.
 
 LIGHTING:
 - High-end studio lighting.
@@ -745,12 +747,14 @@ LIGHTING:
 - No atmospheric effects.
 
 FLOOR:
-- Solid matte black base at the very bottom of the poster.
-- Flat black surface (no gloss).
-- No reflections.
-- No water.
-- No shine.
-- Pure graphic black area.
+- Solid pure black base (#000000) at the very bottom 20-30% of the poster.
+- Completely opaque matte black surface (no gloss).
+- NO reflections.
+- NO water.
+- NO shine.
+- NO highlights.
+- Pure graphic black area - completely flat and featureless.
+- The gradient smoothly transitions from white to this solid black.
 
 VISUAL STYLE:
 - Ultra sharp details.
