@@ -800,65 +800,83 @@ COMPOSITION:
    * Creates ultra-realistic splash effect advertising posters
    * Features dynamic splash effects (liquid, powder, fire, etc.)
    */
-  private buildSignatureSplashPrompt(
-    subject: string,
-    titleText: string,
-    subtitleText: string = '',
-  ): string {
-    const finalPrompt = `Create an ultra realistic advertising poster.
+private buildSignatureSplashPrompt(
+  subject: string,
+  titleText: string,
+  subtitleText: string = '',
+): string {
+  const finalPrompt = `Create an ultra realistic premium advertising poster.
 
 MAIN SUBJECT:
 ${subject}
-(The subject can be one object or one person only. No packaging. No multiple main subjects.)
+(Single object or single person only. No packaging. No multiple subjects. Full focus on the main subject.)
 
 COMPOSITION RULES (STRICT):
-- One single centered main subject.
-- One dynamic splash effect automatically adapted to the subject 
-  (liquid, powder, sauce, oil, water, fire, dust, petals, etc. depending on the subject).
-- Maximum two secondary elements related to the subject.
-- No extra objects.
-- No background clutter.
-- Clean composition.
-- Subject must remain dominant.
+- One single centered main subject, perfectly framed
+- One cinematic dynamic splash effect physically interacting with the subject 
+  (liquid, sauce, oil, water, powder, fire, dust, petals, steam, depending on subject nature)
+- Splash must look realistic, frozen in motion, high-speed photography style
+- Maximum two secondary elements strictly related to the subject
+- No extra objects
+- No background clutter
+- Clean composition
+- Subject remains dominant and visually powerful
 
 VISUAL STYLE:
-- Ultra realistic studio photography.
-- Real textures.
-- Natural shadows.
-- High detail.
-- Professional advertising photography.
-- Cinematic lighting.
-- Depth of field.
-- Not CGI.
-- Not 3D render look.
-- Natural imperfections allowed.
+- Ultra realistic studio photography
+- Hyper-detailed textures
+- Real materials and surfaces
+- Natural shadows and reflections
+- Professional commercial advertising photography
+- Cinematic lighting setup (rim light + soft key light + ambient fill)
+- Shallow depth of field
+- High contrast
+- Optical realism
+- Not CGI
+- Not 3D render
+- Not illustration
+- Natural imperfections allowed
+- Photographic realism only
 
 BACKGROUND:
-- Solid or soft gradient background adapted to the subject.
-- Background color coherent with the subject theme.
-- Clean and minimal.
+- Solid or soft cinematic gradient background
+- Color palette adapted to subject theme
+- Dark premium tones preferred
+- Clean, minimal, luxury studio look
+- No patterns
+- No textures
+- No objects
 
 TYPOGRAPHY LAYOUT:
-Top: Large bold uppercase serif headline.
-Center (over subject): Elegant italic handwritten subtitle.
-No other text.
-No decorative overlays.
-No logos.
-No badges.
+Top: Large bold uppercase serif headline → "${titleText}"
+Center (over subject): Elegant italic handwritten subtitle → "${subtitleText}"
+No other text
+No decorative overlays
+No frames
+No logos
+No badges
+No UI elements
+No watermarks
 
 STYLE MOOD:
-Premium.
-Impactful.
-Modern advertising.
-Minimal but powerful.
+Premium
+Luxury
+High-end brand identity
+Impactful
+Modern advertising
+Minimal
+Powerful
+Cinematic
+High visual impact
+Professional commercial poster
 `;
 
-    this.logger.log(
-      `[buildSignatureSplashPrompt] Generated signature splash prompt for subject: ${subject}`,
-    );
+  this.logger.log(
+    `[buildSignatureSplashPrompt] Generated cinematic signature splash prompt for subject: ${subject}`,
+  );
 
-    return finalPrompt;
-  }
+  return finalPrompt;
+}
 
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
