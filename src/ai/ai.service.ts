@@ -805,7 +805,7 @@ private buildSignatureSplashPrompt(
   titleText: string,
   subtitleText: string = '',
 ): string {
-  const finalPrompt = `Create an ultra realistic premium advertising poster.
+  const finalPrompt = `Create an ultra realistic premium food advertising poster.
 
 MAIN SUBJECT:
 ${subject}
@@ -813,36 +813,40 @@ ${subject}
 
 COMPOSITION RULES (STRICT):
 - One single centered main subject, perfectly framed
-- One subtle and aesthetic dynamic effect adapted to the food
-  (light sauce motion, soft oil droplets, gentle steam, fine particles, soft crumbs, delicate vapor)
-- No aggressive splashes
-- No chaotic liquid motion
-- No heavy dripping
-- No messy effects
-- Motion must be cinematic, controlled, elegant and visually balanced
+- One dynamic cinematic food effect adapted to the subject:
+  (stylized sauce drips, controlled cheese melt, glossy oil flow, slow liquid motion, fine steam, aromatic vapor)
+- Dripping effects must be aesthetic, premium and visually controlled
+- No chaotic splashes
+- No aggressive explosions
+- No messy scattering
+- Motion must look slow, cinematic, sensual and elegant
 - Maximum two secondary elements strictly related to the subject
 - No extra objects
 - No background clutter
 - Clean composition
 - Subject remains dominant and visually powerful
 
-FOOD STYLE BALANCE:
-- Appetizing but clean
-- Stylized but natural
-- Dynamic but controlled
-- Premium but modern
-- Cinematic but realistic
-- Aesthetic motion, not chaos
-- Visual elegance over exaggeration
-- Controlled textures
-- No overflow effects
-- No explosion effects
-- No “food disaster” look
+FOOD DRIP STYLE:
+- Elegant dripping
+- Controlled flow
+- Slow-motion liquid movement
+- Glossy textures
+- Premium visual sensuality
+- Appetizing aesthetic
+- Cinematic motion
+- Stylized but realistic
+- No dirty look
+- No trash food style
+- No kitchen chaos
+- No random splatter
+- Controlled visual drama
+- Visual luxury
 
 VISUAL STYLE:
 - Ultra realistic studio photography
 - Professional food advertising photography
-- Real textures
+- Hyper-detailed textures
+- Real food materials
 - Natural shadows
 - High detail
 - Cinematic lighting
@@ -857,11 +861,11 @@ VISUAL STYLE:
 
 BACKGROUND:
 - Soft cinematic gradient background
-- Premium dark/warm tones
+- Premium warm/dark tones
 - Clean studio backdrop
 - Minimal
-- Modern
 - Elegant
+- Modern
 - No textures
 - No patterns
 - No objects
@@ -879,24 +883,23 @@ No watermarks
 
 STYLE MOOD:
 Premium
-Modern
 Stylish
 Cinematic
 Impactful
-Elegant
+Modern advertising
+Luxury food branding
+Sensual
 Appetizing
-High-end advertising
+High-end visual identity
 Minimal but powerful
-Balanced visual identity
 `;
 
   this.logger.log(
-    `[buildSignatureSplashPrompt] Generated BALANCED food cinematic prompt for subject: ${subject}`,
+    `[buildSignatureSplashPrompt] Generated FOOD DRIP cinematic prompt for subject: ${subject}`,
   );
 
   return finalPrompt;
 }
-
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
    * Génère un prompt ultra-affiné pour produire des rendus Vogue/Numéro/Fashion
