@@ -663,46 +663,51 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
     return finalPrompt;
   }
 
-  private buildEditorialMotionPrompt(
-    architecture: any,
-    job: string,
-    userQuery: string,
-    mainWord: string,
-    scriptPhrase: string,
-    infoLine: string,
-    textPromo: string = '',
-    colorPrincipale: string = '#17A2B8',
-    colorSecondaire: string = '#FFFFFF',
-    customSubject: string = '',
-    isPersonRequested: boolean = false,
-  ): string {
-    const subject = customSubject || job;
-    const environnement = userQuery || 'High-end studio';
-    const descriptionSujet = userQuery || job;
+private buildEditorialMotionPrompt(
+  architecture: any,
+  job: string,
+  userQuery: string,
+  mainWord: string,
+  scriptPhrase: string,
+  infoLine: string,
+  textPromo: string = '',
+  colorPrincipale: string = '#17A2B8',
+  colorSecondaire: string = '#FFFFFF',
+  customSubject: string = '',
+  isPersonRequested: boolean = false,
+): string {
+  const subject = customSubject || job;
+  const environnement = userQuery || 'High-end studio';
+  const descriptionSujet = userQuery || job;
 
-    const finalPrompt = `
+  const finalPrompt = `
 VERTICAL AD POSTER: Dynamic Cinematic Style.
 SCENE: ${environnement}. MAIN SUBJECT: ${subject} (${descriptionSujet}).
 
-COMPOSITION (ULTRA-STRICT):
-- Centered sharp subject, 8K detail, high contrast.
-- MANDATORY CLEARANCE: Clean space around subject before blur starts.
-- MASSIVE CONVERGING SPEED STREAKS: Strictly peripheral, sharp pointed lines pointing inward towards the center.
-- Background: Dynamic linear zoom trails, 90% blur, unrecognizable.
-- Depth of Field: f/1.2 look, strong bokeh, subject POPPING out of streaks.
+COMPOSITION (ULTRA-STRICT – FIXED MOTION BLUR BEHAVIOR):
+- Subject perfectly sharp, 8K detail, ZERO motion blur on or around the subject.
+- SHARP CENTRAL ZONE: Minimum 25–30% of frame width must remain crisp, no streaks.
+- MOTION EFFECT: Linear directional motion blur ONLY on the far left AND far right of the frame.
+- Motion trails begin OUTSIDE the central sharp zone and intensify toward edges.
+- NO radial blur, NO zoom blur, NO full-frame motion. ONLY lateral motion streaks.
+- Background: Cinematic speed lines, but peripheral and never touching the subject.
+- Depth of field: f/1.2 optics, soft bokeh behind subject without merging into motion trails.
+- Subject must POP with perfect contour separation from background.
+- Massive converging linear streaks ONLY at the sides, NOT behind or in front of the subject.
 
 TYPOGRAPHY (MANDATORY):
 - RULES: ABSOLUTELY NO underlines, NO curved lines, NO dividers, NO highlights, NO boxes, NO ornaments.
 - FONT: Bebas Neue, Tracking +120, Alignment Center.
 - TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: ultra-high contrast shade of ${colorPrincipale}). Positioned at the very top.
-- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, positioned in the LOWER HALF of the frame, but separated from the bottom text by a LARGE VERTICAL GAP, Color: high contrast shade of ${colorSecondaire} or ${colorPrincipale}). NO underline, NO curved ornaments.
-- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast shade of ${colorSecondaire}, Centered, at the absolute bottom margin, ALL CAPS).
-- VAST NEGATIVE SPACE: Strategic breathing room between each block.
-- LEGIBILITY: All text MUST use contrasting shades to be perfectly readable against speed streaks.
+- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, positioned in the LOWER HALF of the frame with a LARGE VERTICAL GAP from bottom text, Color: high contrast shade of ${colorSecondaire} or ${colorPrincipale}). NO underline.
+- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast shade of ${colorSecondaire}, Centered, absolute bottom, ALL CAPS).
+- VAST NEGATIVE SPACE: Strategic breathing room between text blocks.
+- LEGIBILITY: All text MUST use contrasting shades to ensure perfect readability over motion streaks.
 
-PALETTE: Dominant ${colorPrincipale} with its various light/dark shades, Accent ${colorSecondaire} with its various light/dark shades.
+PALETTE: Dominant ${colorPrincipale}, accent ${colorSecondaire}, multiple shade variations.
 FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
-KEYWORDS: converging streaks, pointed motion, zoom blur, cinematic, ultra sharp subject, negative space, high contrast typography.
+KEYWORDS: lateral motion blur, controlled streaks, cinematic, ultra sharp subject, negative space, luxury ad.
+
 ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object only.' : ''}
 `;
 
