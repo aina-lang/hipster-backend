@@ -805,69 +805,66 @@ private buildSignatureSplashPrompt(
   titleText: string,
   subtitleText: string = '',
 ): string {
-  const finalPrompt = `Create an ultra realistic premium food advertising poster.
+  const finalPrompt = `Create an ultra realistic premium advertising poster.
 
 MAIN SUBJECT:
 ${subject}
-(Single food item or single dish only. No packaging. No multiple subjects.)
+(Single food item or single dish only. No packaging. No multiple subjects. Full focus on the main subject.)
 
 COMPOSITION RULES (STRICT):
 - One single centered main subject, perfectly framed
-- One dynamic cinematic food effect adapted to the subject:
-  (stylized sauce drips, controlled cheese melt, glossy oil flow, slow liquid motion, fine steam, aromatic vapor)
-- Dripping effects must be aesthetic, premium and visually controlled
-- No chaotic splashes
-- No aggressive explosions
-- No messy scattering
-- Motion must look slow, cinematic, sensual and elegant
+- The dish/food must remain clean, sharp, untouched, and visually perfect
+- One cinematic dynamic splash effect physically interacting AROUND the subject
+- Splash must surround the subject, not cover it
+- Splash must not obscure the main subject
+- Splash must not dirty the food
+- Effects must stay in the surrounding space (foreground/background motion)
+- Dynamic effects allowed:
+  (stylized sauce drips, glossy oil flow, slow liquid motion, fine steam, vapor, aromatic particles, soft droplets)
+- Splash must look realistic, frozen in motion, high-speed photography style
 - Maximum two secondary elements strictly related to the subject
 - No extra objects
 - No background clutter
 - Clean composition
 - Subject remains dominant and visually powerful
+- Visual hierarchy: subject first, effects second
 
-FOOD DRIP STYLE:
-- Elegant dripping
-- Controlled flow
-- Slow-motion liquid movement
-- Glossy textures
-- Premium visual sensuality
-- Appetizing aesthetic
-- Cinematic motion
-- Stylized but realistic
-- No dirty look
-- No trash food style
-- No kitchen chaos
-- No random splatter
-- Controlled visual drama
-- Visual luxury
+FOOD VISUAL RULES:
+- Food must look clean, fresh, appetizing, premium
+- No messy textures on the food
+- No sauce covering the dish
+- No dripping on the dish surface
+- No chaotic liquids touching the food
+- No dirty effects
+- No overflow on the plate
+- No “food disaster” look
+- No exaggerated melting
+- Controlled aesthetic only
+- High visual hygiene
 
 VISUAL STYLE:
 - Ultra realistic studio photography
-- Professional food advertising photography
-- Hyper-detailed textures
-- Real food materials
-- Natural shadows
-- High detail
-- Cinematic lighting
+- Hyper-detailed food textures
+- Real materials and surfaces
+- Natural shadows and reflections
+- Professional commercial food advertising photography
+- Cinematic lighting setup (rim light + soft key light + ambient fill)
 - Shallow depth of field
-- Soft contrast
+- High contrast
 - Optical realism
 - Not CGI
 - Not 3D render
 - Not illustration
 - Natural imperfections allowed
-- Real photography look
+- Photographic realism only
 
 BACKGROUND:
-- Soft cinematic gradient background
-- Premium warm/dark tones
-- Clean studio backdrop
-- Minimal
-- Elegant
-- Modern
-- No textures
+- Solid or soft cinematic gradient background
+- Color palette adapted to subject theme
+- Dark premium tones preferred
+- Clean, minimal, luxury studio look
 - No patterns
+- No textures
 - No objects
 
 TYPOGRAPHY LAYOUT:
@@ -883,19 +880,22 @@ No watermarks
 
 STYLE MOOD:
 Premium
-Stylish
-Cinematic
+Luxury
+High-end brand identity
 Impactful
 Modern advertising
-Luxury food branding
-Sensual
+Minimal
+Powerful
+Cinematic
+High visual impact
+Professional commercial poster
+Stylish
+Elegant
 Appetizing
-High-end visual identity
-Minimal but powerful
 `;
 
   this.logger.log(
-    `[buildSignatureSplashPrompt] Generated FOOD DRIP cinematic prompt for subject: ${subject}`,
+    `[buildSignatureSplashPrompt] Generated CLEAN SUBJECT + CINEMATIC SPLASH AROUND prompt for subject: ${subject}`,
   );
 
   return finalPrompt;
