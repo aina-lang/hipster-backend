@@ -770,8 +770,10 @@ TYPOGRAPHY (MANDATORY):
 - Centered alignment.
 - Positioned inside the black bottom area.
 - Clean kerning.
-- EXACT TEXT:
+- EXACT TEXT TO DISPLAY:
 "${titleText.toUpperCase()}"
+- This text is a message/slogan, NOT a company or brand name.
+- Render it exactly as provided.
 - No distortion.
 - No extra words.
 - No additional typography.
