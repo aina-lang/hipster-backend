@@ -73,7 +73,6 @@ export const IMPACT_COMMERCIAL_ARCH: VisualArchitecture = {
       'LAYOUT: Modern minimalist ad poster. 3 text elements only. Instagram premium aesthetic.',
   },
 };
-
 export const EDITORIAL_MOTION_ARCH: VisualArchitecture = {
   name: 'Editorial Motion',
   layoutType: 'TYPE_EDITORIAL',
@@ -93,11 +92,27 @@ export const EDITORIAL_MOTION_ARCH: VisualArchitecture = {
   },
 };
 
+export const PRESTIGE_ARCH: VisualArchitecture = {
+  name: 'Prestige',
+  layoutType: 'TYPE_PRESTIGE_BW',
+  colorPalette: 'Black & White',
+  rules: {
+    subject: 'Centered hero shot, luxury B&W photography.',
+    background: 'Deep black with mist and halo backlight.',
+    title: 'Large elegant serif at the bottom.',
+    subtitle: 'None.',
+    infoBlock: 'None.',
+    upperZone: 'None.',
+    constraints: 'Black and white only. Luxury aesthetic. Minimalist.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
   IMPACT_COMMERCIAL: IMPACT_COMMERCIAL_ARCH,
   EDITORIAL_MOTION: EDITORIAL_MOTION_ARCH,
+  PRESTIGE: PRESTIGE_ARCH,
 };
 
 export function getVisualArchitecture(

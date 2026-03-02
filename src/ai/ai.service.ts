@@ -663,24 +663,24 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
     return finalPrompt;
   }
 
-private buildEditorialMotionPrompt(
-  architecture: any,
-  job: string,
-  userQuery: string,
-  mainWord: string,
-  scriptPhrase: string,
-  infoLine: string,
-  textPromo: string = '',
-  colorPrincipale: string = '#17A2B8',
-  colorSecondaire: string = '#FFFFFF',
-  customSubject: string = '',
-  isPersonRequested: boolean = false,
-): string {
-  const subject = customSubject || job;
-  const environnement = userQuery || 'High-end studio';
-  const descriptionSujet = userQuery || job;
+  private buildEditorialMotionPrompt(
+    architecture: any,
+    job: string,
+    userQuery: string,
+    mainWord: string,
+    scriptPhrase: string,
+    infoLine: string,
+    textPromo: string = '',
+    colorPrincipale: string = '#17A2B8',
+    colorSecondaire: string = '#FFFFFF',
+    customSubject: string = '',
+    isPersonRequested: boolean = false,
+  ): string {
+    const subject = customSubject || job;
+    const environnement = userQuery || 'High-end studio';
+    const descriptionSujet = userQuery || job;
 
-  const finalPrompt = `
+    const finalPrompt = `
 VERTICAL AD POSTER: Dynamic Cinematic Style.
 SCENE: ${environnement}. MAIN SUBJECT: ${subject} (${descriptionSujet}).
 
@@ -713,12 +713,61 @@ KEYWORDS: inward motion blur, converging streaks, lateral speed lines, crisp bot
 ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object only.' : ''}
 `;
 
-  this.logger.log(
-    `[buildEditorialMotionPrompt] Generated dynamic cinematic vertical poster prompt for subject: ${subject}`,
-  );
+    this.logger.log(
+      `[buildEditorialMotionPrompt] Generated dynamic cinematic vertical poster prompt for subject: ${subject}`,
+    );
 
-  return finalPrompt;
-}
+    return finalPrompt;
+  }
+
+  private buildPrestigeBWPosterPrompt(
+    subject: string,
+    titleText: string,
+  ): string {
+    const finalPrompt = `
+ULTRA CINEMATIC BLACK & white LUXURY ADVERTISING POSTER.
+SUBJECT: ${subject}, front-facing hero shot, perfectly centered, symmetrical composition, low angle perspective.
+
+ENVIRONMENT & LIGHTING:
+- Dark premium studio.
+- Subtle mist and atmospheric fog.
+- Strong backlight creating a glowing halo behind the subject.
+- Dramatic rim lighting outlining the silhouette.
+- High contrast lighting with deep blacks and crisp highlights.
+- Glossy wet floor with soft reflections.
+- Minimalist gradient background fading from bright white (top) to deep black (bottom).
+
+VISUAL STYLE:
+- Ultra sharp details, photorealistic, 8K resolution.
+- Fine art photography aesthetic.
+- High dynamic range.
+- Subtle cinematic grain.
+- Subject isolated, dominant presence, iconic mood.
+
+TYPOGRAPHY (MANDATORY):
+- Large elegant serif typography (Didot / Bodoni inspired).
+- White uppercase text.
+- Centered alignment.
+- Bottom placement.
+- Clean, sharp, refined kerning.
+- EXACT TEXT:
+"${titleText.toUpperCase()}"
+- No distortion, no extra words, no additional typography.
+
+COMPOSITION:
+- Minimal and luxury-focused.
+- Zero distractions.
+- Pure professional luxury campaign poster aesthetic.
+
+--ar 2:3 --style raw
+`;
+
+    this.logger.log(
+      `[buildLuxuryBWPosterPrompt] Generated luxury black & white poster prompt for subject: ${subject}`,
+    );
+
+    return finalPrompt;
+  }
 
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
@@ -2281,6 +2330,15 @@ COMPOSITION ARCHITECTURE:
             colorSecondaire,
             customSubject,
             isPersonRequested,
+          );
+        } else if (architecture.layoutType === 'TYPE_PRESTIGE_BW') {
+          this.logger.log(
+            `[processFlyerBackground] Building PRESTIGE_BW prompt: mainWord="${mainWord}"`,
+          );
+
+          magazineStyleDirective = this.buildPrestigeBWPosterPrompt(
+            customSubject || params.job || 'A luxury object',
+            mainWord,
           );
         } else if (architecture.layoutType === 'TYPE_EDITORIAL') {
           this.logger.log(
