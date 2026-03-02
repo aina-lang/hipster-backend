@@ -684,39 +684,39 @@ private buildEditorialMotionPrompt(
 VERTICAL AD POSTER: Dynamic Cinematic Style.
 SCENE: ${environnement}. MAIN SUBJECT: ${subject} (${descriptionSujet}).
 
-COMPOSITION (ULTRA-STRICT – FIXED MOTION BLUR BEHAVIOR):
+COMPOSITION (ULTRA-STRICT – MOTION BLUR WITH PADDING & CLEAN BASE LINE):
 - Subject perfectly sharp, 8K detail, ZERO motion blur on or around the subject.
-- SHARP CENTRAL ZONE: Minimum 25–30% of frame width must remain crisp, no streaks.
-- MOTION EFFECT: Linear directional motion blur ONLY on the far left AND far right of the frame.
-- Motion trails begin OUTSIDE the central sharp zone and intensify toward edges.
-- NO radial blur, NO zoom blur, NO full-frame motion. ONLY lateral motion streaks.
-- Background: Cinematic speed lines, but peripheral and never touching the subject.
-- Depth of field: f/1.2 optics, soft bokeh behind subject without merging into motion trails.
-- Subject must POP with perfect contour separation from background.
-- Massive converging linear streaks ONLY at the sides, NOT behind or in front of the subject.
+- PADDING ZONE: A clean buffer zone of 10–15% around the subject with NO streaks.
+- SHARP LOWER EDGE: The full bottom 15% of the frame must stay 100% crisp with NO motion blur.
+- MOTION EFFECT: Horizontal motion blur ONLY on far left AND far right edges.
+- Blur begins ONLY after the padding zone and intensifies toward the edges.
+- NONE of the streaks may touch the bottom horizontal line.
+- NO radial blur, NO zoom blur, NO full-frame motion.
+- Background: Luxury-style straight motion lines limited to lateral sides.
+- Bokeh only behind the subject, never mixing with motion trails.
+- Subject must POP with perfect contour isolation and a clean base line.
 
 TYPOGRAPHY (MANDATORY):
 - RULES: ABSOLUTELY NO underlines, NO curved lines, NO dividers, NO highlights, NO boxes, NO ornaments.
 - FONT: Bebas Neue, Tracking +120, Alignment Center.
-- TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: ultra-high contrast shade of ${colorPrincipale}). Positioned at the very top.
-- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, positioned in the LOWER HALF of the frame with a LARGE VERTICAL GAP from bottom text, Color: high contrast shade of ${colorSecondaire} or ${colorPrincipale}). NO underline.
-- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast shade of ${colorSecondaire}, Centered, absolute bottom, ALL CAPS).
-- VAST NEGATIVE SPACE: Strategic breathing room between text blocks.
-- LEGIBILITY: All text MUST use contrasting shades to ensure perfect readability over motion streaks.
+- TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: ultra-high contrast shade of ${colorPrincipale}).
+- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, large gap before bottom text, Color: high contrast shade of ${colorSecondaire} or ${colorPrincipale}).
+- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast shade of ${colorSecondaire}, Centered, ALL CAPS).
+- VAST NEGATIVE SPACE between text blocks.
 
-PALETTE: Dominant ${colorPrincipale}, accent ${colorSecondaire}, multiple shade variations.
-FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
-KEYWORDS: lateral motion blur, controlled streaks, cinematic, ultra sharp subject, negative space, luxury ad.
+PALETTE: Dominant ${colorPrincipale}, accent ${colorSecondaire}.
+FORMAT: Vertical 9:16. QUALITY: Professional editorial, photorealistic.
+KEYWORDS: lateral motion blur, controlled side streaks, crisp bottom line, luxury product shot.
 
 ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object only.' : ''}
 `;
 
-    this.logger.log(
-      `[buildEditorialMotionPrompt] Generated dynamic cinematic vertical poster prompt for subject: ${subject}`,
-    );
+  this.logger.log(
+    `[buildEditorialMotionPrompt] Generated dynamic cinematic vertical poster prompt for subject: ${subject}`,
+  );
 
-    return finalPrompt;
-  }
+  return finalPrompt;
+}
 
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
