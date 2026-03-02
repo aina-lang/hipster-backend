@@ -2508,7 +2508,6 @@ COMPOSITION ARCHITECTURE:
       let brandingInfoStr = '';
       if (user) {
         const parts = [];
-        if (user.name) parts.push(user.name);
         if (user.professionalPhone)
           parts.push(`Tel: ${user.professionalPhone}`);
         if (user.professionalAddress)
@@ -2830,7 +2829,6 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     const user = await this.getAiUserWithProfile(userId);
     if (user) {
       const parts = [];
-      if (user.name) parts.push(user.name);
       if (user.professionalPhone) parts.push(`Tel: ${user.professionalPhone}`);
       if (user.professionalAddress)
         parts.push(`Adresse: ${user.professionalAddress}`);
