@@ -721,73 +721,41 @@ ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object o
   }
 
   private buildPrestigeBWPosterPrompt(
-  subject: string,
-  titleText: string,
-): string {
-  const finalPrompt = `
-ULTRA MINIMALIST BLACK & WHITE LUXURY ADVERTISING POSTER.
-SUBJECT: ${subject}, front-facing hero shot, perfectly centered, symmetrical composition, slightly low angle.
+    subject: string,
+    titleText: string,
+  ): string {
+    const finalPrompt = `
+Ultra cinematic black and white luxury fashion poster of ${subject}, front-facing hero shot, perfectly centered, strict symmetrical composition, low angle perspective.
 
-BACKGROUND:
-- Pure solid white background (clean #FFFFFF).
-- No smoke.
-- No fog.
-- No texture.
-- No gradient.
-- No shadows on background.
-- Absolute studio white seamless backdrop.
+Pure white studio background, seamless white backdrop, high-key lighting environment.
 
-LIGHTING:
-- High-end studio lighting.
-- Soft but high-contrast lighting on subject.
-- Clean rim light for subtle separation.
-- Deep blacks and crisp whites.
-- No atmospheric effects.
+Strong soft backlight creating a subtle halo behind the head, clean rim lighting outlining the silhouette.
 
-FLOOR:
-- Solid matte black base at the very bottom of the poster.
-- Flat black surface (no gloss).
-- No reflections.
-- No water.
-- No shine.
-- Pure graphic black area.
+Extreme high contrast black and white, deep blacks on subject, bright clean whites in background.
 
-VISUAL STYLE:
-- Ultra sharp details.
-- Fine art photography aesthetic.
-- Luxury fashion campaign mood.
-- Photorealistic.
-- Clean, bold, iconic presence.
-- Extreme minimalism.
+Matte floor, no reflections, no water, no glossy surface.
 
-TYPOGRAPHY (MANDATORY):
-- Large elegant serif typography (Didot / Bodoni inspired).
-- White uppercase text.
-- Centered alignment.
-- Positioned inside the black bottom area.
-- Clean kerning.
-- EXACT TEXT:
-"${titleText.toUpperCase()}"
-- No distortion.
-- No extra words.
-- No additional typography.
+Minimal composition, subject isolated, powerful iconic presence.
 
-COMPOSITION:
-- Minimal.
-- Premium.
-- Editorial luxury campaign.
-- Zero distractions.
-- High-end brand aesthetic.
+Ultra sharp details, photorealistic texture, fine art photography, high dynamic range, subtle cinematic grain.
 
---ar 2:3 --style raw
+Large elegant serif typography at the bottom:
+
+${titleText.toUpperCase()}
+
+Didot / Bodoni inspired font, uppercase, centered, white or black text depending on contrast, refined kerning, perfectly sharp, no distortion, no extra words.
+
+Professional luxury fashion campaign poster.
+
+–ar 2:3 –style raw –v 6 –quality 2 et pas dinvention de etx a part le titletext
 `;
 
-  this.logger.log(
-    `[buildLuxuryBWPosterPrompt] Generated clean white luxury poster prompt for subject: ${subject}`,
-  );
+    this.logger.log(
+      `[buildLuxuryBWPosterPrompt] Generated clean white luxury poster prompt for subject: ${subject}`,
+    );
 
-  return finalPrompt;
-}
+    return finalPrompt;
+  }
 
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
