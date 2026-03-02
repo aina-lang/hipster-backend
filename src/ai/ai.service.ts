@@ -684,29 +684,29 @@ private buildEditorialMotionPrompt(
 VERTICAL AD POSTER: Dynamic Cinematic Style.
 SCENE: ${environnement}. MAIN SUBJECT: ${subject} (${descriptionSujet}).
 
-COMPOSITION (ULTRA-STRICT – MOTION BLUR WITH PADDING & CLEAN BASE LINE):
-- Subject perfectly sharp, 8K detail, ZERO motion blur on or around the subject.
-- PADDING ZONE: A clean buffer zone of 10–15% around the subject with NO streaks.
-- SHARP LOWER EDGE: The full bottom 15% of the frame must stay 100% crisp with NO motion blur.
+COMPOSITION (ULTRA-STRICT – SIDE MOTION, PADDING, CRISP BOTTOM):
+- Subject perfectly sharp, 8K detail, ZERO motion blur touching the subject.
+- CLEAN PADDING: Mandatory clean buffer zone (10–15%) around the subject with no streaks.
+- CRISP BOTTOM: Entire bottom 15% of the frame must remain perfectly sharp with NO blur.
 - MOTION EFFECT: Horizontal motion blur ONLY on far left AND far right edges.
-- Blur begins ONLY after the padding zone and intensifies toward the edges.
-- NONE of the streaks may touch the bottom horizontal line.
-- NO radial blur, NO zoom blur, NO full-frame motion.
-- Background: Luxury-style straight motion lines limited to lateral sides.
-- Bokeh only behind the subject, never mixing with motion trails.
-- Subject must POP with perfect contour isolation and a clean base line.
+- Motion blur begins ONLY AFTER the padding zone and increases gradually toward edges.
+- Streaks must be straight, horizontal, never radial or diagonal.
+- No streaks or blur are allowed to touch the bottom horizontal line.
+- Background behind subject may have soft bokeh but never merges with motion trails.
+- Subject must POP with strong contour separation and a clean base line.
 
 TYPOGRAPHY (MANDATORY):
 - RULES: ABSOLUTELY NO underlines, NO curved lines, NO dividers, NO highlights, NO boxes, NO ornaments.
 - FONT: Bebas Neue, Tracking +120, Alignment Center.
-- TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: ultra-high contrast shade of ${colorPrincipale}).
-- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, large gap before bottom text, Color: high contrast shade of ${colorSecondaire} or ${colorPrincipale}).
-- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast shade of ${colorSecondaire}, Centered, ALL CAPS).
-- VAST NEGATIVE SPACE between text blocks.
+- TOP: "${mainWord.toUpperCase()}" (Extra-large, ALL CAPS, Bold, Color: ultra-high contrast shade of ${colorPrincipale}). Positioned at the very top.
+- MIDDLE: "${scriptPhrase}" (Elegant italic, Centered, positioned in the LOWER HALF of the frame, but separated from the bottom text by a LARGE VERTICAL GAP, Color: high contrast shade of ${colorSecondaire} or ${colorPrincipale}). NO underline, NO curved ornaments.
+- BOTTOM: "${infoLine || 'OFFRE LIMITÉE'}" (High contrast shade of ${colorSecondaire}, Centered, at the absolute bottom margin, ALL CAPS).
+- VAST NEGATIVE SPACE: Strategic breathing room between each block.
+- LEGIBILITY: All text MUST use contrasting shades to be perfectly readable against speed streaks.
 
-PALETTE: Dominant ${colorPrincipale}, accent ${colorSecondaire}.
-FORMAT: Vertical 9:16. QUALITY: Professional editorial, photorealistic.
-KEYWORDS: lateral motion blur, controlled side streaks, crisp bottom line, luxury product shot.
+PALETTE: Dominant ${colorPrincipale} with its light/dark shades, Accent ${colorSecondaire} with its light/dark shades.
+FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
+KEYWORDS: lateral motion blur, controlled streaks, crisp bottom line, sharp central zone, luxury cinematic.
 
 ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object only.' : ''}
 `;
