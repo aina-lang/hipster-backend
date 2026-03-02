@@ -805,46 +805,74 @@ private buildSignatureSplashPrompt(
   titleText: string,
   subtitleText: string = '',
 ): string {
-  const finalPrompt = `Create an ultra realistic premium advertising poster.
+  const finalPrompt = `Create an ultra realistic premium food advertising poster.
 
 MAIN SUBJECT:
 ${subject}
-(Single object or single person only. No packaging. No multiple subjects. Full focus on the main subject.)
+(Single food item or single dish only. No packaging. No multiple subjects.)
 
 COMPOSITION RULES (STRICT):
 - One single centered main subject, perfectly framed
-- One cinematic dynamic splash effect physically interacting with the subject 
-  (liquid, sauce, oil, water, powder, fire, dust, petals, steam, depending on subject nature)
-- Splash must look realistic, frozen in motion, high-speed photography style
-- Maximum two secondary elements strictly related to the subject
+- No aggressive splash effects
+- No liquid explosion
+- No sauce splashing
+- No dripping effects
+- No messy visuals
+- No chaotic motion
+- No food scattering
+- Only subtle atmospheric elements allowed:
+  (light steam, soft aroma vapor, delicate oil sheen, fine herb particles, minimal crumb dust, gentle heat waves)
+- Maximum two secondary elements strictly related to the food
 - No extra objects
 - No background clutter
 - Clean composition
-- Subject remains dominant and visually powerful
+- Subject remains dominant
+- Perfect balance and symmetry
+- Visual calmness and harmony
+
+FOOD AESTHETIC RULES:
+- Clean gourmet presentation
+- Restaurant premium plating style
+- Appetizing, elegant, refined look
+- No exaggerated textures
+- No overflows
+- No stretch effects
+- No “melting everywhere”
+- No “cheese pull”
+- No grease overflow
+- No oily mess
+- No sticky visuals
+- No chaotic ingredients
+- Controlled visual composition
+- Minimal motion
+- Visual hygiene
+- High visual elegance
 
 VISUAL STYLE:
 - Ultra realistic studio photography
-- Hyper-detailed textures
-- Real materials and surfaces
-- Natural shadows and reflections
-- Professional commercial advertising photography
-- Cinematic lighting setup (rim light + soft key light + ambient fill)
+- Professional culinary photography
+- Real food textures
+- Natural soft shadows
+- High detail
+- Soft cinematic lighting
 - Shallow depth of field
-- High contrast
+- Balanced contrast
 - Optical realism
 - Not CGI
 - Not 3D render
 - Not illustration
-- Natural imperfections allowed
-- Photographic realism only
+- Real photography look
+- Premium commercial food style
 
 BACKGROUND:
-- Solid or soft cinematic gradient background
-- Color palette adapted to subject theme
-- Dark premium tones preferred
-- Clean, minimal, luxury studio look
-- No patterns
+- Soft premium gradient background
+- Warm neutral tones
+- Elegant studio backdrop
+- Clean
+- Minimal
+- Luxury atmosphere
 - No textures
+- No patterns
 - No objects
 
 TYPOGRAPHY LAYOUT:
@@ -861,18 +889,20 @@ No watermarks
 STYLE MOOD:
 Premium
 Luxury
-High-end brand identity
-Impactful
+Gourmet
+Refined
+Elegant
+High-end restaurant branding
 Modern advertising
 Minimal
-Powerful
-Cinematic
-High visual impact
-Professional commercial poster
+Clean visual identity
+Appetizing
+Sophisticated
+Professional culinary campaign
 `;
 
   this.logger.log(
-    `[buildSignatureSplashPrompt] Generated cinematic signature splash prompt for subject: ${subject}`,
+    `[buildSignatureSplashPrompt] Generated ULTRA CLEAN food aesthetic prompt for subject: ${subject}`,
   );
 
   return finalPrompt;
