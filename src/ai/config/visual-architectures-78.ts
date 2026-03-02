@@ -107,12 +107,31 @@ export const PRESTIGE_ARCH: VisualArchitecture = {
   },
 };
 
+export const SIGNATURE_SPLASH_ARCH: VisualArchitecture = {
+  name: 'Signature Splash',
+  layoutType: 'TYPE_SIGNATURE_SPLASH',
+  colorPalette: 'Adaptive/Multi',
+  rules: {
+    subject:
+      'One single centered main subject. One dynamic splash effect automatically adapted (liquid, powder, sauce, oil, water, fire, dust, petals).',
+    background:
+      'Solid or soft gradient background adapted to subject. Clean and minimal.',
+    title: 'Top: Large bold uppercase serif headline.',
+    subtitle: 'Center (over subject): Elegant italic handwritten subtitle.',
+    infoBlock: 'None.',
+    upperZone: 'None.',
+    constraints:
+      'Ultra realistic advertising poster. Studio photography aesthetic. Maximum two secondary elements. No background clutter. No logos. No badges. Professional typography. No decorative overlays.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
   IMPACT_COMMERCIAL: IMPACT_COMMERCIAL_ARCH,
   EDITORIAL_MOTION: EDITORIAL_MOTION_ARCH,
   PRESTIGE: PRESTIGE_ARCH,
+  SIGNATURE_SPLASH: SIGNATURE_SPLASH_ARCH,
 };
 
 export function getVisualArchitecture(
