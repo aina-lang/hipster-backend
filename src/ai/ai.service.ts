@@ -805,7 +805,7 @@ private buildSignatureSplashPrompt(
   titleText: string,
   subtitleText: string = '',
 ): string {
-  const finalPrompt = `Create an ultra realistic premium food advertising poster.
+  const finalPrompt = `Create an ultra realistic premium advertising poster.
 
 MAIN SUBJECT:
 ${subject}
@@ -813,64 +813,55 @@ ${subject}
 
 COMPOSITION RULES (STRICT):
 - One single centered main subject, perfectly framed
-- No aggressive splash effects
-- No liquid explosion
-- No sauce splashing
-- No dripping effects
-- No messy visuals
-- No chaotic motion
-- No food scattering
-- Only subtle atmospheric elements allowed:
-  (light steam, soft aroma vapor, delicate oil sheen, fine herb particles, minimal crumb dust, gentle heat waves)
-- Maximum two secondary elements strictly related to the food
+- One subtle and aesthetic dynamic effect adapted to the food
+  (light sauce motion, soft oil droplets, gentle steam, fine particles, soft crumbs, delicate vapor)
+- No aggressive splashes
+- No chaotic liquid motion
+- No heavy dripping
+- No messy effects
+- Motion must be cinematic, controlled, elegant and visually balanced
+- Maximum two secondary elements strictly related to the subject
 - No extra objects
 - No background clutter
 - Clean composition
-- Subject remains dominant
-- Perfect balance and symmetry
-- Visual calmness and harmony
+- Subject remains dominant and visually powerful
 
-FOOD AESTHETIC RULES:
-- Clean gourmet presentation
-- Restaurant premium plating style
-- Appetizing, elegant, refined look
-- No exaggerated textures
-- No overflows
-- No stretch effects
-- No “melting everywhere”
-- No “cheese pull”
-- No grease overflow
-- No oily mess
-- No sticky visuals
-- No chaotic ingredients
-- Controlled visual composition
-- Minimal motion
-- Visual hygiene
-- High visual elegance
+FOOD STYLE BALANCE:
+- Appetizing but clean
+- Stylized but natural
+- Dynamic but controlled
+- Premium but modern
+- Cinematic but realistic
+- Aesthetic motion, not chaos
+- Visual elegance over exaggeration
+- Controlled textures
+- No overflow effects
+- No explosion effects
+- No “food disaster” look
 
 VISUAL STYLE:
 - Ultra realistic studio photography
-- Professional culinary photography
-- Real food textures
-- Natural soft shadows
+- Professional food advertising photography
+- Real textures
+- Natural shadows
 - High detail
-- Soft cinematic lighting
+- Cinematic lighting
 - Shallow depth of field
-- Balanced contrast
+- Soft contrast
 - Optical realism
 - Not CGI
 - Not 3D render
 - Not illustration
+- Natural imperfections allowed
 - Real photography look
-- Premium commercial food style
 
 BACKGROUND:
-- Soft premium gradient background
-- Warm neutral tones
-- Elegant studio backdrop
-- Clean
+- Soft cinematic gradient background
+- Premium dark/warm tones
+- Clean studio backdrop
 - Minimal
-- Luxury atmosphere
+- Modern
+- Elegant
 - No textures
 - No patterns
 - No objects
@@ -888,21 +879,19 @@ No watermarks
 
 STYLE MOOD:
 Premium
-Luxury
-Gourmet
-Refined
+Modern
+Stylish
+Cinematic
+Impactful
 Elegant
-High-end restaurant branding
-Modern advertising
-Minimal
-Clean visual identity
 Appetizing
-Sophisticated
-Professional culinary campaign
+High-end advertising
+Minimal but powerful
+Balanced visual identity
 `;
 
   this.logger.log(
-    `[buildSignatureSplashPrompt] Generated ULTRA CLEAN food aesthetic prompt for subject: ${subject}`,
+    `[buildSignatureSplashPrompt] Generated BALANCED food cinematic prompt for subject: ${subject}`,
   );
 
   return finalPrompt;
