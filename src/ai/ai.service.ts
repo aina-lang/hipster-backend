@@ -903,83 +903,59 @@ Appetizing
 
   /**
    * 🎨 BUILD EDITORIAL GRID PROMPT FOR DALL-E
-   * Crée une affiche de luxe premium avec layout en grille symétrique 3 panneaux
+   * Crée une affiche de luxe premium avec layout asymétrique 3 panneaux
    */
 private buildEditorialGridPrompt(
   titleText: string,
   subtitleText: string = '',
 ): string {
 
-  const finalPrompt = `
-Create an ultra-premium luxury real estate promotional poster.
+  const finalPrompt = `Create a high-end luxury promotional poster with an elegant asymmetrical editorial layout.
 
-IMPORTANT:
-Do NOT display any real estate building, villa, apartment or architectural subject.
-No visible property image.
-No house.
-No building.
-No interior.
-No exterior.
+STRUCTURE:
 
-This design must be purely conceptual and branding-focused.
+– The main subject image must be divided into 3 separate vertical panels.
+– Equal width.
+– Equal spacing.
+– Clean straight edges.
+– The panels must NOT be perfectly aligned vertically.
+– The center panel slightly higher.
+– The left panel slightly lower.
+– The right panel slightly lower or slightly higher (subtle vertical offset).
+– The offset must be subtle and elegant (not extreme).
+– Visible background between panels.
+– No black divider lines.
+– No perspective distortion.
 
-COMPOSITION:
-
-– Full screen vertical layout
-– A tall, slightly offset rectangular frame in the center
-– The frame must NOT be centered perfectly
-– Slight horizontal shift (editorial asymmetry)
-– The frame fills 70–80% of height
-– Clean straight edges
-– Inside the frame: abstract luxury light gradient (no subject)
+SUBJECT:
+Luxury real estate villa at sunset with pool reflection (realistic photography).
 
 BACKGROUND:
+– Smooth luxury gradient.
+– Primary color: deep finance blue.
+– Secondary color: dark navy or steel grey.
+– Elegant soft blend.
+– Subtle light grid texture overlay.
+– Premium minimal aesthetic.
 
-– Deep finance blue primary color
-– Dark navy gradient blend
-– Very subtle grid texture overlay
-– Soft vignette
-– High-end minimal branding aesthetic
-– Smooth cinematic lighting
-– Premium depth
-
-FRAME STYLE:
-
-– Floating vertical window look
-– Clean geometric crop
-– Elegant spacing around it
-– Modern architectural branding feel
-– No heavy borders
-– No black lines
-– Just visual separation by contrast
-
-TYPOGRAPHY (on background only):
+TYPOGRAPHY (PLACED ON BACKGROUND ONLY, NOT ON PHOTO):
 
 Bottom centered:
 
-${titleText.toUpperCase()} 
-(very large bold serif, luxury style similar to Didot, high contrast strokes)
+PRESTIGE (very large bold serif, uppercase, luxury style similar to Didot or Playfair Display)
 
-${subtitleText}
-(elegant italic script below the main title)
+Immobilier (refined italic script below)
 
-VISITER MAINTENANT
-(small spaced uppercase sans-serif)
+VISITER MAINTENANT (small spaced uppercase sans-serif)
 
-STYLE & QUALITY:
-
-– Ultra realistic lighting
-– Luxury real estate branding aesthetic
-– Instagram ready
-– Editorial magazine cover style
-– Premium advertising campaign look
-– Clean composition
-– High resolution
-– 4K
-– Professional color grading
-– No clutter
-– No distortion
-– No extra objects
+STYLE:
+– Premium editorial layout.
+– Modern luxury branding.
+– Clean.
+– Balanced but dynamic.
+– High-end magazine feel.
+– Ultra sharp.
+– High resolution.
 `;
 
   return finalPrompt;
