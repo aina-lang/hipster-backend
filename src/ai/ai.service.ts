@@ -900,6 +900,80 @@ Appetizing
 
   return finalPrompt;
 }
+
+  /**
+   * 🎨 BUILD EDITORIAL GRID PROMPT FOR DALL-E
+   * Crée une affiche de luxe premium avec layout en grille symétrique 3 panneaux
+   */
+  private buildEditorialGridPrompt(
+    subject: string,
+    titleText: string,
+    subtitleText: string = '',
+    colorLeft: string = '#000000',
+    colorRight: string = '#FFFFFF',
+  ): string {
+    const finalPrompt = `Create a high-end luxury promotional poster with a perfectly symmetrical layout.
+
+SUBJECT:
+The main subject can be ANY object, place or person (for example: equestrian center, coffee cup, restaurant interior, modern building, bouquet, fashion model, product, etc.).
+The same single photograph of the subject must be cleanly split across 3 perfectly aligned vertical panels.
+
+LAYOUT:
+– 3 vertical panels
+– Equal width
+– Equal spacing
+– Perfect alignment
+– No perspective distortion
+– No angled panels
+– Straight clean edges
+– Same image divided across all 3 panels
+– Centered composition
+– No side decorative elements
+– No extra objects
+
+BACKGROUND:
+– Smooth luxury gradient background
+– Use PRIMARY COLOR and SECONDARY COLOR (user can change both dynamically)
+– Elegant prestige gradient (soft blend, subtle depth)
+– Very light grid texture overlay
+– Clean premium aesthetic
+
+LIGHTING:
+– Professional photography
+– Cinematic soft lighting
+– High contrast but realistic
+– Ultra sharp details
+
+TYPOGRAPHY (PLACED AT THE BOTTOM ONLY):
+
+1) Main Title (VERY LARGE, bold serif, luxury style similar to Didot or Playfair Display, uppercase):
+"PRESTIGE"
+
+2) Subtitle (Elegant italic script font, refined, positioned just below main title):
+"Équestre" 
+(Note: subtitle must adapt to the subject. Example: Restaurant, Coffee, Immobilier, Mode, etc.)
+
+3) Call to action (Small spaced uppercase sans-serif, centered at bottom):
+"VISITER MAINTENANT"
+
+STYLE:
+– Premium editorial poster
+– Luxury branding
+– Clean
+– Modern
+– Balanced
+– No distortion
+– No clutter
+– Instagram / advertising ready
+– High resolution
+`;
+
+    this.logger.log(
+      `[buildEditorialGridPrompt] Generated luxury grid layout prompt for subject: ${subject}`,
+    );
+
+    return finalPrompt;
+  }
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
    * Génère un prompt ultra-affiné pour produire des rendus Vogue/Numéro/Fashion
@@ -2498,6 +2572,18 @@ COMPOSITION ARCHITECTURE:
             customSubject || params.job || 'A premium subject',
             mainWord,
             scriptPhrase,
+          );
+        } else if (architecture.layoutType === 'TYPE_EDITORIAL_GRID') {
+          this.logger.log(
+            `[processFlyerBackground] Building EDITORIAL_GRID prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+          );
+
+          magazineStyleDirective = this.buildEditorialGridPrompt(
+            customSubject || params.job || 'A luxury subject',
+            mainWord,
+            scriptPhrase,
+            colorPrincipale,
+            colorSecondaire,
           );
         } else {
           // Standard magazine-style prompt for other architectures

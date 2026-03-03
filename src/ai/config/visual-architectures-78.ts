@@ -125,6 +125,27 @@ export const SIGNATURE_SPLASH_ARCH: VisualArchitecture = {
   },
 };
 
+export const EDITORIAL_GRID_ARCH: VisualArchitecture = {
+  name: 'Editorial Grid',
+  layoutType: 'TYPE_EDITORIAL_GRID',
+  colorPalette: 'Luxury/Gradient',
+  rules: {
+    subject:
+      'Same single photograph cleanly split across 3 perfectly aligned vertical panels. Equal width, equal spacing, perfect alignment.',
+    background:
+      'Smooth luxury gradient background. Elegant prestige gradient with very light grid texture overlay. Clean premium aesthetic.',
+    title:
+      'Bottom: Very large bold serif headline (Didot or Playfair Display style), uppercase.',
+    subtitle:
+      'Bottom: Elegant italic script font, refined, positioned below main title.',
+    infoBlock:
+      'Bottom: Small spaced uppercase sans-serif call to action, centered.',
+    upperZone: 'None.',
+    constraints:
+      'Premium editorial poster with 3-panel symmetrical layout. Luxury branding. No distortion. No clutter. Professional photography. High resolution advertising ready.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
@@ -132,6 +153,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   EDITORIAL_MOTION: EDITORIAL_MOTION_ARCH,
   PRESTIGE: PRESTIGE_ARCH,
   SIGNATURE_SPLASH: SIGNATURE_SPLASH_ARCH,
+  EDITORIAL_GRID: EDITORIAL_GRID_ARCH,
 };
 
 export function getVisualArchitecture(
