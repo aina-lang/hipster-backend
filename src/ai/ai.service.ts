@@ -926,12 +926,14 @@ STRUCTURE:
 – Visible background between panels.
 – No black divider lines.
 – No perspective distortion.
-– The subject must NOT be clearly visible or recognizable in the final image.
-– Use the subject only as a base for lighting, color tones, and reflections.
-– The panels should appear abstract, blurred, or heavily cropped so no building is identifiable.
+– The subject must remain ultra sharp, perfectly clear and highly detailed.
+– No blur.
+– No abstraction.
+– The villa must look luxurious, premium and realistic.
+– Each panel shows a different cropped vertical portion of the SAME photo.
 
-SUBJECT (used only for generation reference, not for visible display):
-Luxury real estate villa at sunset with pool reflection (realistic photography).
+SUBJECT:
+Luxury real estate villa at sunset with pool reflection (realistic photography, ultra sharp, professional lighting).
 
 BACKGROUND:
 – Smooth luxury gradient.
@@ -959,6 +961,8 @@ STYLE:
 – High-end magazine feel.
 – Ultra sharp.
 – High resolution.
+– 4K quality.
+– Professional architectural photography look.
 `;
 
   return finalPrompt;
