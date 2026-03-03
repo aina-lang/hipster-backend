@@ -905,70 +905,85 @@ Appetizing
    * 🎨 BUILD EDITORIAL GRID PROMPT FOR DALL-E
    * Crée une affiche de luxe premium avec layout en grille symétrique 3 panneaux
    */
-  private buildEditorialGridPrompt(
-    subject: string,
-    titleText: string,
-    subtitleText: string = '',
-    colorLeft: string = '#000000',
-    colorRight: string = '#FFFFFF',
-  ): string {
-    const finalPrompt = `Create a high-end luxury promotional poster with a perfectly symmetrical layout.
+private buildEditorialGridPrompt(
+  titleText: string,
+  subtitleText: string = '',
+): string {
 
-IMPORTANT STRUCTURE:
+  const finalPrompt = `
+Create an ultra-premium luxury real estate promotional poster.
 
-The subject image must be physically divided into 3 separate vertical panels,
-with visible spacing between them (empty background space visible between panels).
-Do NOT draw black lines.
-Do NOT overlay simple dividers.
-The panels must look like three cropped photo slices floating over the background.
+IMPORTANT:
+Do NOT display any real estate building, villa, apartment or architectural subject.
+No visible property image.
+No house.
+No building.
+No interior.
+No exterior.
 
-SUBJECT:
-Luxury real estate villa at sunset with pool reflection (realistic photography).
+This design must be purely conceptual and branding-focused.
 
-LAYOUT:
-– 3 separate vertical panels
-– Equal width
-– Equal spacing
-– Perfect alignment
-– Panels centered
+COMPOSITION:
+
+– Full screen vertical layout
+– A tall, slightly offset rectangular frame in the center
+– The frame must NOT be centered perfectly
+– Slight horizontal shift (editorial asymmetry)
+– The frame fills 70–80% of height
 – Clean straight edges
-– The same single photograph split into 3 slices
-– Visible background between panels
+– Inside the frame: abstract luxury light gradient (no subject)
 
 BACKGROUND:
-– Smooth luxury gradient
-– Finance blue primary color
-– Deep navy secondary color
-– Subtle elegant gradient blend
-– Very light grid texture overlay
-– Premium minimal aesthetic
 
-TYPOGRAPHY (ON BACKGROUND, NOT ON PHOTO):
+– Deep finance blue primary color
+– Dark navy gradient blend
+– Very subtle grid texture overlay
+– Soft vignette
+– High-end minimal branding aesthetic
+– Smooth cinematic lighting
+– Premium depth
 
-At the bottom:
+FRAME STYLE:
 
-PRESTIGE (very large bold serif, uppercase, luxury style similar to Didot)
+– Floating vertical window look
+– Clean geometric crop
+– Elegant spacing around it
+– Modern architectural branding feel
+– No heavy borders
+– No black lines
+– Just visual separation by contrast
 
-Immobilier (elegant italic script below)
+TYPOGRAPHY (on background only):
 
-VISITER MAINTENANT (small spaced uppercase sans-serif)
+Bottom centered:
 
-STYLE:
-– Premium editorial
-– Clean luxury branding
-– No distortion
-– No clutter
+${titleText.toUpperCase()} 
+(very large bold serif, luxury style similar to Didot, high contrast strokes)
+
+${subtitleText}
+(elegant italic script below the main title)
+
+VISITER MAINTENANT
+(small spaced uppercase sans-serif)
+
+STYLE & QUALITY:
+
+– Ultra realistic lighting
+– Luxury real estate branding aesthetic
 – Instagram ready
+– Editorial magazine cover style
+– Premium advertising campaign look
+– Clean composition
 – High resolution
-– Professional photography look
+– 4K
+– Professional color grading
+– No clutter
+– No distortion
+– No extra objects
 `;
 
-    this.logger.log(
-      `[buildEditorialGridPrompt] Generated luxury 3-panel grid layout prompt with visible spacing`,
-    );
-
-    return finalPrompt;
-  }
+  return finalPrompt;
+}
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
    * Génère un prompt ultra-affiné pour produire des rendus Vogue/Numéro/Fashion
