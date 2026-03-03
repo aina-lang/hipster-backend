@@ -914,62 +914,57 @@ Appetizing
   ): string {
     const finalPrompt = `Create a high-end luxury promotional poster with a perfectly symmetrical layout.
 
+IMPORTANT STRUCTURE:
+
+The subject image must be physically divided into 3 separate vertical panels,
+with visible spacing between them (empty background space visible between panels).
+Do NOT draw black lines.
+Do NOT overlay simple dividers.
+The panels must look like three cropped photo slices floating over the background.
+
 SUBJECT:
-The main subject can be ANY object, place or person (for example: equestrian center, coffee cup, restaurant interior, modern building, bouquet, fashion model, product, etc.).
-The same single photograph of the subject must be cleanly split across 3 perfectly aligned vertical panels.
+Luxury real estate villa at sunset with pool reflection (realistic photography).
 
 LAYOUT:
-– 3 vertical panels
+– 3 separate vertical panels
 – Equal width
 – Equal spacing
 – Perfect alignment
-– No perspective distortion
-– No angled panels
-– Straight clean edges
-– Same image divided across all 3 panels
-– Centered composition
-– No side decorative elements
-– No extra objects
+– Panels centered
+– Clean straight edges
+– The same single photograph split into 3 slices
+– Visible background between panels
 
 BACKGROUND:
-– Smooth luxury gradient background
-– Use PRIMARY COLOR and SECONDARY COLOR (user can change both dynamically)
-– Elegant prestige gradient (soft blend, subtle depth)
+– Smooth luxury gradient
+– Finance blue primary color
+– Deep navy secondary color
+– Subtle elegant gradient blend
 – Very light grid texture overlay
-– Clean premium aesthetic
+– Premium minimal aesthetic
 
-LIGHTING:
-– Professional photography
-– Cinematic soft lighting
-– High contrast but realistic
-– Ultra sharp details
+TYPOGRAPHY (ON BACKGROUND, NOT ON PHOTO):
 
-TYPOGRAPHY (PLACED AT THE BOTTOM ONLY):
+At the bottom:
 
-1) Main Title (VERY LARGE, bold serif, luxury style similar to Didot or Playfair Display, uppercase):
-"PRESTIGE"
+PRESTIGE (very large bold serif, uppercase, luxury style similar to Didot)
 
-2) Subtitle (Elegant italic script font, refined, positioned just below main title):
-"Équestre" 
-(Note: subtitle must adapt to the subject. Example: Restaurant, Coffee, Immobilier, Mode, etc.)
+Immobilier (elegant italic script below)
 
-3) Call to action (Small spaced uppercase sans-serif, centered at bottom):
-"VISITER MAINTENANT"
+VISITER MAINTENANT (small spaced uppercase sans-serif)
 
 STYLE:
-– Premium editorial poster
-– Luxury branding
-– Clean
-– Modern
-– Balanced
+– Premium editorial
+– Clean luxury branding
 – No distortion
 – No clutter
-– Instagram / advertising ready
+– Instagram ready
 – High resolution
+– Professional photography look
 `;
 
     this.logger.log(
-      `[buildEditorialGridPrompt] Generated luxury grid layout prompt for subject: ${subject}`,
+      `[buildEditorialGridPrompt] Generated luxury 3-panel grid layout prompt with visible spacing`,
     );
 
     return finalPrompt;
