@@ -926,16 +926,23 @@ STRUCTURE:
 – Visible background between panels.
 – No black divider lines.
 – No perspective distortion.
-– The subject must NOT be clearly visible or recognizable in the final image.
-– Use the subject only as a base for lighting, color tones, and reflections.
-– The panels should appear heavily cropped so no building is fully identifiable.
-– The image must remain ultra sharp, crystal clear, highly detailed.
+– The villa must be clearly visible, luxurious and realistic.
+– Ultra sharp image.
+– Crystal clear details.
 – No blur.
 – No soft focus.
-– No abstraction.
 – Professional architectural photography quality.
 
-SUBJECT (used only for generation reference, not for visible display):
+TEXT RESTRICTION:
+
+– Do NOT generate any automatic text describing the subject.
+– No captions.
+– No labels.
+– No watermarks.
+– No extra words.
+– The only visible text allowed is defined in the typography section below.
+
+SUBJECT:
 Luxury real estate villa at sunset with pool reflection (realistic photography).
 
 BACKGROUND:
