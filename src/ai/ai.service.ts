@@ -912,15 +912,9 @@ private buildEditorialGridPrompt(
 
   const finalPrompt = `Create a high-end luxury promotional poster with an elegant asymmetrical editorial layout.
 
-IMPORTANT:
-Do NOT display any real estate building, villa, apartment or architectural subject.
-No visible property image.
-No subject inside the panels.
-This design must be purely conceptual and branding-focused.
-
 STRUCTURE:
 
-– The design consists of 3 separate vertical panels.
+– The main subject image must be divided into 3 separate vertical panels.
 – Equal width.
 – Equal spacing.
 – Clean straight edges.
@@ -931,7 +925,10 @@ STRUCTURE:
 – The offset must be subtle and elegant (not extreme).
 – Visible background between panels.
 – No black divider lines.
-– NO CONTENT INSIDE THE PANELS - they are empty or show soft abstract gradients only.
+– No perspective distortion.
+
+SUBJECT:
+Luxury real estate villa at sunset with pool reflection (realistic photography).
 
 BACKGROUND:
 – Smooth luxury gradient.
@@ -941,7 +938,7 @@ BACKGROUND:
 – Subtle light grid texture overlay.
 – Premium minimal aesthetic.
 
-TYPOGRAPHY (PLACED ON BACKGROUND ONLY, NOT ON PANELS):
+TYPOGRAPHY (PLACED ON BACKGROUND ONLY, NOT ON PHOTO):
 
 Bottom centered:
 
@@ -2568,8 +2565,11 @@ COMPOSITION ARCHITECTURE:
           );
 
           magazineStyleDirective = this.buildEditorialGridPrompt(
+            customSubject || params.job || 'A luxury subject',
             mainWord,
             scriptPhrase,
+            colorPrincipale,
+            colorSecondaire,
           );
         } else {
           // Standard magazine-style prompt for other architectures
