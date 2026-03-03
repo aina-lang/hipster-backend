@@ -910,11 +910,19 @@ private buildEditorialGridPrompt(
   subtitleText: string = '',
 ): string {
 
-  const finalPrompt = `Create a high-end luxury promotional poster with an elegant asymmetrical editorial layout.
+  const finalPrompt = `Create a high-end luxury promotional poster featuring a realistic luxury real estate villa at sunset with pool reflection.
+
+IMPORTANT:
+The villa must appear as a real photographic scene.
+Do NOT display the words describing the villa anywhere in the image.
+Do NOT generate any automatic captions or labels.
+No watermarks.
+No extra text.
+Only the typography defined below is allowed.
 
 STRUCTURE:
 
-– The main subject image must be divided into 3 separate vertical panels.
+– Divide the villa image into 3 separate vertical panels.
 – Equal width.
 – Equal spacing.
 – Clean straight edges.
@@ -922,28 +930,13 @@ STRUCTURE:
 – The center panel slightly higher.
 – The left panel slightly lower.
 – The right panel slightly lower or slightly higher (subtle vertical offset).
-– The offset must be subtle and elegant (not extreme).
 – Visible background between panels.
 – No black divider lines.
 – No perspective distortion.
-– The villa must be clearly visible, luxurious and realistic.
-– Ultra sharp image.
-– Crystal clear details.
+– Ultra sharp.
+– Crystal clear.
 – No blur.
-– No soft focus.
 – Professional architectural photography quality.
-
-TEXT RESTRICTION:
-
-– Do NOT generate any automatic text describing the subject.
-– No captions.
-– No labels.
-– No watermarks.
-– No extra words.
-– The only visible text allowed is defined in the typography section below.
-
-SUBJECT:
-Luxury real estate villa at sunset with pool reflection (realistic photography).
 
 BACKGROUND:
 – Smooth luxury gradient.
