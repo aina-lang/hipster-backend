@@ -906,15 +906,18 @@ Appetizing
    * Crée une affiche de luxe premium avec layout asymétrique 3 panneaux
    */
 private buildEditorialGridPrompt(
-  titleText: string,
+  subject: string = 'luxury subject',
+  titleText: string = '',
   subtitleText: string = '',
+  colorPrincipale: string = '#1a3a52',
+  colorSecondaire: string = '#ffffff',
 ): string {
 
-  const finalPrompt = `Create a high-end luxury promotional poster with a bold asymmetrical editorial layout featuring a realistic luxury real estate villa at sunset with pool reflection.
+  const finalPrompt = `Create a high-end luxury promotional poster with a bold asymmetrical editorial layout featuring a realistic ${subject} at sunset with elegant reflection.
 
 IMPORTANT STRUCTURE:
 
-– Divide the villa image into 3 separate vertical panels.
+– Divide the main subject image into 3 separate vertical panels.
 – Equal width.
 – Equal spacing.
 – Clean straight edges.
@@ -935,7 +938,7 @@ The panels must have a strong vertical offset:
 
 TEXT RESTRICTION:
 
-– Do NOT generate any automatic text describing the villa.
+– Do NOT generate any automatic text describing the subject.
 – No captions, labels, or watermarks.
 – No extra words or phrases.
 – Only the following text is allowed in the image:
@@ -944,8 +947,8 @@ TEXT RESTRICTION:
 
 BACKGROUND:
 – Smooth luxury gradient.
-– Primary color: deep finance blue.
-– Secondary color: dark navy or steel grey.
+– Primary color: ${colorPrincipale}.
+– Secondary color: ${colorSecondaire}.
 – Strong elegant gradient blend.
 – Subtle grid texture overlay.
 – Premium minimal aesthetic.
