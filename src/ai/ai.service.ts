@@ -910,58 +910,56 @@ private buildEditorialGridPrompt(
   subtitleText: string = '',
 ): string {
 
-  const finalPrompt = `Create a high-end luxury promotional poster featuring a realistic luxury real estate villa at sunset with pool reflection.
+  const finalPrompt = `Create a high-end luxury promotional poster with a bold asymmetrical editorial layout.
 
-IMPORTANT:
-The villa must appear as a real photographic scene.
-Do NOT display the words describing the villa anywhere in the image.
-Do NOT generate any automatic captions or labels.
-No watermarks.
-No extra text.
-Only the typography defined below is allowed.
+IMPORTANT STRUCTURE:
 
-STRUCTURE:
-
-– Divide the villa image into 3 separate vertical panels.
+– The main subject image must be divided into 3 separate vertical panels.
 – Equal width.
 – Equal spacing.
 – Clean straight edges.
-– The panels must NOT be perfectly aligned vertically.
-– The center panel slightly higher.
-– The left panel slightly lower.
-– The right panel slightly lower or slightly higher (subtle vertical offset).
 – Visible background between panels.
-– No black divider lines.
-– No perspective distortion.
-– Ultra sharp.
-– Crystal clear.
-– No blur.
-– Professional architectural photography quality.
+– NO black divider lines.
+– NO perspective distortion.
+
+VERY IMPORTANT:
+
+The panels must have a strong vertical offset:
+
+– The center panel must be significantly higher.
+– The left panel must be clearly lower.
+– The right panel must be clearly higher or lower than the left.
+– The vertical difference must be obvious and intentional.
+– The layout must feel dynamic and editorial, not symmetrical.
+– The offset should look like a modern luxury magazine composition.
+
+SUBJECT:
+Luxury real estate villa at sunset with pool reflection (realistic photography).
 
 BACKGROUND:
 – Smooth luxury gradient.
 – Primary color: deep finance blue.
 – Secondary color: dark navy or steel grey.
-– Elegant soft blend.
-– Subtle light grid texture overlay.
+– Strong elegant gradient blend.
+– Subtle grid texture overlay.
 – Premium minimal aesthetic.
 
-TYPOGRAPHY (PLACED ON BACKGROUND ONLY, NOT ON PHOTO):
+TYPOGRAPHY (PLACED ON BACKGROUND ONLY):
 
-Bottom centered:
+At the bottom:
 
-PRESTIGE (very large bold serif, uppercase, luxury style similar to Didot or Playfair Display)
+PRESTIGE (very large bold serif, uppercase, luxury style similar to Didot)
 
-Immobilier (refined italic script below)
+Immobilier (elegant italic script below)
 
 VISITER MAINTENANT (small spaced uppercase sans-serif)
 
 STYLE:
-– Premium editorial layout.
-– Modern luxury branding.
+– High-end editorial magazine.
+– Luxury branding.
+– Dynamic composition.
 – Clean.
-– Balanced but dynamic.
-– High-end magazine feel.
+– Bold.
 – Ultra sharp.
 – High resolution.
 `;
