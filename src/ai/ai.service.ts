@@ -910,11 +910,11 @@ private buildEditorialGridPrompt(
   subtitleText: string = '',
 ): string {
 
-  const finalPrompt = `Create a high-end luxury promotional poster with a bold asymmetrical editorial layout.
+  const finalPrompt = `Create a high-end luxury promotional poster with a bold asymmetrical editorial layout featuring a realistic luxury real estate villa at sunset with pool reflection.
 
 IMPORTANT STRUCTURE:
 
-– The main subject image must be divided into 3 separate vertical panels.
+– Divide the villa image into 3 separate vertical panels.
 – Equal width.
 – Equal spacing.
 – Clean straight edges.
@@ -933,8 +933,14 @@ The panels must have a strong vertical offset:
 – The layout must feel dynamic and editorial, not symmetrical.
 – The offset should look like a modern luxury magazine composition.
 
-SUBJECT:
-Luxury real estate villa at sunset with pool reflection (realistic photography).
+TEXT RESTRICTION:
+
+– Do NOT generate any automatic text describing the villa.
+– No captions, labels, or watermarks.
+– No extra words or phrases.
+– Only the following text is allowed in the image:
+  ${titleText.toUpperCase()}
+  ${subtitleText}
 
 BACKGROUND:
 – Smooth luxury gradient.
@@ -946,13 +952,11 @@ BACKGROUND:
 
 TYPOGRAPHY (PLACED ON BACKGROUND ONLY):
 
-At the bottom:
+Bottom centered:
 
-PRESTIGE (very large bold serif, uppercase, luxury style similar to Didot)
+${titleText.toUpperCase()} (very large bold serif, uppercase, luxury style similar to Didot)
 
-Immobilier (elegant italic script below)
-
-VISITER MAINTENANT (small spaced uppercase sans-serif)
+${subtitleText} (elegant italic script below)
 
 STYLE:
 – High-end editorial magazine.
