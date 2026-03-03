@@ -2568,11 +2568,8 @@ COMPOSITION ARCHITECTURE:
           );
 
           magazineStyleDirective = this.buildEditorialGridPrompt(
-            customSubject || params.job || 'A luxury subject',
             mainWord,
             scriptPhrase,
-            colorPrincipale,
-            colorSecondaire,
           );
         } else {
           // Standard magazine-style prompt for other architectures
