@@ -1265,9 +1265,9 @@ The vertical line must NEVER cut through typography.
     // Diameter = 42% of width.
     const diameter = Math.round(W * 0.42);
     const radius = Math.floor(diameter / 2);
-    // Center of circle: centered horizontally, positioned at 40% from top (higher up)
+    // Center of circle: centered horizontally, positioned at 30% from top (higher up)
     const cx = Math.round(W / 2);
-    const cy = Math.round(H * 0.4);
+    const cy = Math.round(H * 0.3);
 
     // 1. Create a full B&W version of the image
     const bwBuffer = await sharp(inputBuffer)
