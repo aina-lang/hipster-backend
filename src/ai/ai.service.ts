@@ -991,7 +991,7 @@ STYLE:
       textSections += `
 5. MAIN TITLE:
    Text: "${titleText}"
-   Position: EXACT CENTER of the poster.
+   Position: ABSOLUTE BOTTOM (at approximately 85% of total height).
    Typography: Very large bold modern sans-serif.
    Color: ${colorSecondaire}.
 `;
@@ -1001,7 +1001,7 @@ STYLE:
       textSections += `
 6. SUBTITLE:
    Text: "${subtitleText}"
-   Position: Directly below the main title.
+   Position: Directly above the main title (around 80% of total height).
    Typography: Medium sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
 `;
@@ -1011,9 +1011,9 @@ STYLE:
       textSections += `
 7. INFO LINE:
    Text: "${infoLine}"
-   Position: Bottom center.
+   Position: Bottom center (around 92% of total height, below main title).
    Typography: Minimalist small sans-serif.
-   Color: ${colorSecondaire} at 85% opacity.
+   Color: ${colorSecondaire} at 75% opacity.
 `;
     }
 
@@ -1069,12 +1069,13 @@ IMPORTANT: Generate ONE complete coherent image. NO duplication of subject. NO c
     const W = meta.width || 1024;
     const H = meta.height || 1536;
 
-    // Circle parameters: top-left area, diameter = 38% of width
-    const diameter = Math.round(W * 0.38);
+    // Circle parameters: Adjust coordinates to better overlap with centered subjects
+    // New: Diameter = 45% of width (larger), cx and cy shifted more towards center
+    const diameter = Math.round(W * 0.45);
     const radius = Math.floor(diameter / 2);
-    // Center of circle: left=10% from left, top=12% from top
-    const cx = Math.round(W * 0.1) + radius;
-    const cy = Math.round(H * 0.12) + radius;
+    // Center of circle: shifted more to center-left (approx 40% from left, 35% from top)
+    const cx = Math.round(W * 0.18) + radius;
+    const cy = Math.round(H * 0.15) + radius;
 
     // 1. Create a full B&W version of the image
     const bwBuffer = await sharp(inputBuffer)

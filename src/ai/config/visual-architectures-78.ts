@@ -156,8 +156,9 @@ export const FOCUS_CIRCLE_ARCH: VisualArchitecture = {
     background:
       'MONOCHROMATIC BACKDROP: The background MUST use shades of the PRIMARY COLOR only. Clean minimalist aesthetic.',
     title:
-      'MAIN TITLE: Very large bold modern sans-serif in the exact center. Color: White or high contrast.',
-    subtitle: 'None.',
+      'MAIN TITLE: Very large bold modern sans-serif at the BOTTOM. Color: White or high contrast.',
+    subtitle:
+      'SUBTITLE: Elegant sans-serif positioned directly above the main title.',
     infoBlock: 'None.',
     upperZone: 'None.',
     constraints:
