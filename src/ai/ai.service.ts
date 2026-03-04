@@ -994,7 +994,7 @@ private buildFocusCirclePrompt(
    Position: ABSOLUTE BOTTOM (around 78% of total height).
    Typography: Very large bold modern sans-serif.
    Color: ${colorPrincipale}.
-   NO UNDERLINE. NO decorative line beneath text. Text stands alone.
+   Spacing: Generous white space above and below.
 `;
   }
 
@@ -1005,7 +1005,7 @@ private buildFocusCirclePrompt(
    Position: Directly above the main title (around 70% of total height).
    Typography: Medium sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
-   NO UNDERLINE. NO decorative line beneath text. Text stands alone.
+   Spacing: Clean white space above and below.
 `;
   }
 
@@ -1016,7 +1016,7 @@ private buildFocusCirclePrompt(
    Position: Centered below the main title (around 86% of total height).
    Typography: Minimalist small sans-serif.
    Color: ${colorSecondaire} at 75% opacity.
-   NO UNDERLINE. NO decorative line beneath text. Text stands alone.
+   Spacing: Ample breathing room around this element.
 `;
   }
 
@@ -1025,38 +1025,28 @@ private buildFocusCirclePrompt(
     : '';
 
   const finalPrompt = `
-⚠️ CRITICAL INSTRUCTION: ABSOLUTELY NO UNDERLINES, NO RULES, NO LINES UNDER TEXT ⚠️
-
 CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER WITH A TWO-PART HORIZONTAL SPLIT.
 
 THE HERO IMAGE & COMPOSITION:
 - VISUAL STRUCTURE: Divide the layout into two equal horizontal halves (TOP and BOTTOM).
-- NO BORDERS: ABSOLUTELY NO visible line, border, stroke, separator, or divider between the top and bottom halves.
 - SYMMETRIC COLORS: Both halves must use the EXACT SAME BASE COLOR (${colorPrincipale}), with slightly different shades.
 - THE SUBJECT: Position the primary subject ("${subject}") strictly in the TOP-RIGHT quadrant.
 - CROPPING: The subject must appear cropped by the horizontal center divider line.
 - COLOR PALETTE: Entire image must use a rich monochromatic palette based on ${colorPrincipale}.
 
 THE GRAPHIC LAYOUT:
-1. TEXT PLACEMENT & STYLING (ULTRA-STRICT):
+1. TEXT PLACEMENT & STYLING (MINIMAL, CLEAN, TYPOGRAPHIC ONLY):
    - MAIN TITLE: "${titleText.toUpperCase()}" centered in the bottom half.
    ${badgeSection}
    - SUBTITLE: "${subtitleText}" above the main title.
    - INFO LINE: "${infoLine}" below the main title.
 
-   TYPOGRAPHY RULES (EXTREMELY STRICT):
-   ⚠️ ZERO UNDERLINES - This is mandatory. DO NOT render any line under the title, subtitle, or any text.
-   ABSOLUTELY NO underlines beneath any text element.
-   ABSOLUTELY NO horizontal lines anywhere near text.
-   ABSOLUTELY NO decorative lines.
-   ABSOLUTELY NO title separator lines.
-   ABSOLUTELY NO magazine rules.
-   ABSOLUTELY NO strokes on text.
-   ABSOLUTELY NO highlight bars.
-   ABSOLUTELY NO text decorations of any kind.
-   ABSOLUTELY NOTHING drawn above or below ANY text element.
-   Text must float freely with clean spacing.
-   Each text element stands alone - isolated from any lines or decorations.
+   TYPOGRAPHY RULES (CLEAN MINIMAL APPROACH):
+   Pure typography. Text is the only graphic element in the text area.
+   Each text element floats independently in white space.
+   Text spacing is achieved through white space only - no rules, no borders, no structural devices needed.
+   Generous breathing room around all text elements.
+   Clean, floating typography with ample negative space.
    Primary color (${colorPrincipale}) is used for the main title.
    Secondary color (${colorSecondaire}) is used for subtitle and info line.
 
@@ -1066,7 +1056,7 @@ ${textSections}
 2. VERTICAL CENTER LINE:
    - A thin 2px vertical divider running from top to bottom center.
 
-STYLE: High-end luxury podcast advertising style. Clean Swiss-inspired layout but WITHOUT any decorative title lines.
+STYLE: High-end luxury podcast advertising style. Clean Swiss minimalist layout. Pure typography without structural decoration.
 IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breathable.
 `;
 
