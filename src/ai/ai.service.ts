@@ -976,52 +976,52 @@ STYLE:
    * 🎨 BUILD FOCUS CIRCLE PROMPT FOR DALL-E
    * Modern editorial layout with symmetrical split and circular focus zone.
    */
-  private buildFocusCirclePrompt(
-    subject: string = 'modern subject',
-    titleText: string = '',
-    subtitleText: string = '',
-    infoLine: string = '',
-    colorPrincipale: string = '#FF9800',
-    colorSecondaire: string = '#FFFFFF',
-    brandingName: string = '',
-  ): string {
-    let textSections = '';
+private buildFocusCirclePrompt(
+  subject: string = 'modern subject',
+  titleText: string = '',
+  subtitleText: string = '',
+  infoLine: string = '',
+  colorPrincipale: string = '#FF9800',
+  colorSecondaire: string = '#FFFFFF',
+  brandingName: string = '',
+): string {
+  let textSections = '';
 
-    if (titleText) {
-      textSections += `
+  if (titleText) {
+    textSections += `
 5. MAIN TITLE:
    Text: "${titleText}"
    Position: ABSOLUTE BOTTOM (at approximately 85% of total height).
    Typography: Very large bold modern sans-serif.
    Color: ${colorSecondaire}.
 `;
-    }
+  }
 
-    if (subtitleText) {
-      textSections += `
+  if (subtitleText) {
+    textSections += `
 6. SUBTITLE:
    Text: "${subtitleText}"
    Position: Directly above the main title (around 80% of total height).
    Typography: Medium sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
 `;
-    }
+  }
 
-    if (infoLine) {
-      textSections += `
+  if (infoLine) {
+    textSections += `
 7. INFO LINE:
    Text: "${infoLine}"
    Position: Bottom center (around 92% of total height, below main title).
    Typography: Minimalist small sans-serif.
    Color: ${colorSecondaire} at 75% opacity.
 `;
-    }
+  }
 
-    const badgeSection = brandingName
-      ? `- TAG/BADGE: "${brandingName.toUpperCase()}" rendered in a small dark rectangular box in the TOP-LEFT corner.`
-      : '';
+  const badgeSection = brandingName
+    ? `- TAG/BADGE: "${brandingName.toUpperCase()}" rendered in a small dark rectangular box positioned in the TOP-LEFT corner, slightly closer to the top edge (around 5% from top, 5% from left).`
+    : '';
 
-    const finalPrompt = `
+  const finalPrompt = `
 CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER WITH A TWO-PART HORIZONTAL SPLIT.
 
 THE HERO IMAGE & COMPOSITION:
@@ -1038,9 +1038,9 @@ THE GRAPHIC LAYOUT:
    ${badgeSection}
    - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half.
    - INFO LINE: "${infoLine}" in elegant sans-serif, either above or below the main title in the bottom half.
-   - TYPOGRAPHY RULES: ABSOLUTELY NO underlines, NO highlights, NO strokes, NO boxes around text (except for the badge if applicable). Text must be clean and minimal. This applies to the MAIN TITLE, SUBTITLE, and INFO LINE.
+   - TYPOGRAPHY RULES: ABSOLUTELY NO highlights, NO strokes, NO boxes around text (except for the badge if applicable). Text must be clean and minimal.
    - TEXT CONTENT: ONLY render the text provided. DO NOT write the subject description ("${subject}") as text on the image.
-   - NO LINE, NO STROKES, NO UNDERLINES.
+   - NO LINES, NO STROKES.
 ${textSections}
 
 2. VERTICAL CENTER LINE:
@@ -1050,8 +1050,8 @@ STYLE: High-end luxury podcast/magazine advertising style. Swiss design influenc
 IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breathable for a circular lens overlay. DO NOT generate the circle or the black and white effect; this will be applied in post-production.
 `;
 
-    return finalPrompt;
-  }
+  return finalPrompt;
+}
 
   /**
    * 🔵 POST-PROCESS: Focus Circle Filter
