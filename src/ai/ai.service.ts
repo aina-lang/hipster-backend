@@ -3022,17 +3022,6 @@ COMPOSITION ARCHITECTURE:
             mainWord,
             scriptPhrase,
           );
-        } else if (model.toLowerCase().includes('diagonal split')) {
-          this.logger.log(
-            `[processFlyerBackground] Building DIAGONAL_SPLIT prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
-          );
-          magazineStyleDirective = this.buildDiagonalSplitPrompt(
-            customSubject || params.job || 'A premium subject',
-            params.mainWord || params.modelName || model || '',
-            params.scriptPhrase || params.subtitle || '',
-            colorPrincipale,
-            colorSecondaire,
-          );
         } else if (model.toLowerCase().includes('diagonal split design') || model.toLowerCase().includes('diagonal-split-design')) {
           this.logger.log(
             `[processFlyerBackground] Building DIAGONAL_SPLIT_DESIGN prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
@@ -3045,6 +3034,17 @@ COMPOSITION ARCHITECTURE:
             colorPrincipale,
             colorSecondaire,
             user?.name || '',
+          );
+        } else if (model.toLowerCase().includes('diagonal split')) {
+          this.logger.log(
+            `[processFlyerBackground] Building DIAGONAL_SPLIT prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+          );
+          magazineStyleDirective = this.buildDiagonalSplitPrompt(
+            customSubject || params.job || 'A premium subject',
+            params.mainWord || params.modelName || model || '',
+            params.scriptPhrase || params.subtitle || '',
+            colorPrincipale,
+            colorSecondaire,
           );
         } else if (architecture.layoutType === 'TYPE_EDITORIAL_GRID') {
           magazineStyleDirective = this.buildEditorialGridPrompt(
