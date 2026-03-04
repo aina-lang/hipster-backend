@@ -3033,7 +3033,7 @@ COMPOSITION ARCHITECTURE:
             colorPrincipale,
             colorSecondaire,
           );
-        } else if (model.toLowerCase().includes('diagonal split design')) {
+        } else if (model.toLowerCase().includes('diagonal split design') || model.toLowerCase().includes('diagonal-split-design')) {
           this.logger.log(
             `[processFlyerBackground] Building DIAGONAL_SPLIT_DESIGN prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
           );
@@ -3203,7 +3203,7 @@ COMPOSITION ARCHITECTURE:
       // Skip architecture rules if using specialized prompt builders like buildFocusCirclePrompt or buildDiagonalSplitDesignPrompt
       const isUsingSpecializedPromptBuilder = 
         (model.toLowerCase().includes('focus circle') && architecture?.layoutType === 'TYPE_FOCUS_CIRCLE') ||
-        (model.toLowerCase().includes('diagonal split design') && architecture?.layoutType === 'TYPE_DIAGONAL_SPLIT_DESIGN');
+        ((model.toLowerCase().includes('diagonal split design') || model.toLowerCase().includes('diagonal-split-design')) && architecture?.layoutType === 'TYPE_DIAGONAL_SPLIT_DESIGN');
       
       const architectureRules = architecture && !isUsingSpecializedPromptBuilder
         ? `
