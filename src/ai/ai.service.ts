@@ -1007,7 +1007,6 @@ SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
 ========================
 2. SUBJECT PLACEMENT
 ========================
-
 - The primary subject: "${subject}"
 - The subject must be positioned STRICTLY in the TOP-RIGHT quadrant.
 - Only upper torso / shoulders / head visible.
@@ -1015,7 +1014,6 @@ SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
 - The subject MUST stay on the RIGHT side.
 - The TOP-LEFT area must remain breathable and clean.
 - DO NOT render the subject description as text on the image.
-
 ========================
 3. TYPOGRAPHY SYSTEM (ULTRA STRICT)
 ========================
