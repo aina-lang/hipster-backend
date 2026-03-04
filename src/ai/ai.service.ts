@@ -1021,81 +1021,44 @@ private buildFocusCirclePrompt(
     ? `- TAG/BADGE: "${brandingName.toUpperCase()}" rendered in a small dark rectangular box positioned at the EXTREME TOP-LEFT corner (around 2% from top, 3% from left). It must sit very close to the top edge.`
     : '';
 
-const finalPrompt = `
+  const finalPrompt = `
 CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER WITH A TWO-PART HORIZONTAL SPLIT.
 
-========================
-LAYOUT STRUCTURE
-========================
+THE HERO IMAGE & COMPOSITION:
+- VISUAL STRUCTURE: Divide the layout into two equal horizontal halves (TOP and BOTTOM).
+- NO BORDERS: ABSOLUTELY NO visible line, border, stroke, separator, or divider between the top and bottom halves.
+- SYMMETRIC COLORS: Both halves must use the EXACT SAME BASE COLOR (${colorPrincipale}), with slightly different shades.
+- THE SUBJECT: Position the primary subject ("${subject}") strictly in the TOP-RIGHT quadrant.
+- CROPPING: The subject must appear cropped by the horizontal center divider line.
+- COLOR PALETTE: Entire image must use a rich monochromatic palette based on ${colorPrincipale}.
 
-- Divide the canvas into TWO EQUAL HORIZONTAL HALVES.
-- NO visible horizontal divider line. The separation must be purely color-based.
-- Use the EXACT SAME BASE COLOR (${colorPrincipale}) on both halves with a subtle shade difference.
-- Add ONE thin 2px vertical divider line in the exact center from top to bottom.
+THE GRAPHIC LAYOUT:
+1. TEXT PLACEMENT & STYLING (ULTRA-STRICT):
+   - MAIN TITLE: "${titleText.toUpperCase()}" centered in the bottom half.
+   ${badgeSection}
+   - SUBTITLE: "${subtitleText}" above the main title.
+   - INFO LINE: "${infoLine}" below the main title.
 
-========================
-HERO SUBJECT
-========================
+   TYPOGRAPHY RULES (EXTREMELY STRICT):
+   ABSOLUTELY NO underlines.
+   ABSOLUTELY NO horizontal lines.
+   ABSOLUTELY NO decorative lines.
+   ABSOLUTELY NO title separator lines.
+   ABSOLUTELY NO magazine rules.
+   ABSOLUTELY NO strokes.
+   ABSOLUTELY NO highlight bars.
+   ABSOLUTELY NO text decorations of any kind.
+   Text must float freely with clean spacing.
+   There must be NOTHING drawn above or below the subtitle.
 
-- The subject ("${subject}") MUST be positioned strictly in the TOP-RIGHT quadrant.
-- Only upper torso/head visible.
-- The subject must be cropped by the horizontal midline.
-- Leave the TOP-LEFT area empty for a circular overlay (do NOT generate the circle).
-- Cinematic monochromatic lighting using shades of ${colorPrincipale} and ${colorSecondaire}.
+   TEXT CONTENT: ONLY render the provided text. DO NOT write "${subject}" as text.
+${textSections}
 
-========================
-TYPOGRAPHY LAYOUT (STRICT)
-========================
+2. VERTICAL CENTER LINE:
+   - A thin 2px vertical divider running from top to bottom center.
 
-ALL TEXT MUST BE CENTERED IN THE BOTTOM HALF.
-
-1. SUBTITLE
-   Text: "${subtitleText}"
-   Position: Around 70% of total height.
-   Medium modern sans-serif.
-   Color: ${colorSecondaire} at 85% opacity.
-
-2. MAIN TITLE
-   Text: "${titleText.toUpperCase()}"
-   Position: Around 78% of total height.
-   Very large bold sans-serif.
-   Color: ${colorSecondaire}.
-
-3. INFO LINE
-   Text: "${infoLine}"
-   Position: Around 86% of total height.
-   Small minimalist sans-serif.
-   Color: ${colorSecondaire} at 75% opacity.
-
-========================
-BADGE
-========================
-
-- "${brandingName?.toUpperCase()}"
-- Small dark rectangular box
-- Positioned at EXTREME TOP-LEFT corner
-- Around 2% from top, 3% from left
-- Must sit very close to the top edge
-
-========================
-EXTREMELY STRICT TYPO RULES
-========================
-
-ABSOLUTELY NO underlines.
-ABSOLUTELY NO horizontal lines.
-ABSOLUTELY NO separator lines.
-ABSOLUTELY NO strokes around text.
-ABSOLUTELY NO decorative lines above or below text.
-ABSOLUTELY NO highlight bars.
-Text must float freely with clean spacing.
-ONLY render the provided text.
-DO NOT invent extra text.
-
-STYLE:
-High-end luxury podcast poster.
-Swiss design influence.
-Strong visual hierarchy.
-Clean. Premium. Minimal.
+STYLE: High-end luxury podcast advertising style. Clean Swiss-inspired layout but WITHOUT any decorative title lines.
+IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breathable.
 `;
 
   return finalPrompt;
