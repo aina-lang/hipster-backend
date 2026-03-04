@@ -1022,35 +1022,137 @@ CREATE A MODERN EDITORIAL POSTER USING ONE SINGLE PHOTOGRAPH.
 
 THE HERO IMAGE:
 - Use ONE high-resolution professional photograph of "${subject}".
-- The subject must be centered.
+- The subject must be centered with excellent lighting.
+- Full-frame professional photography, sharp focus, editorial quality.
 
-THE GRAPHIC LAYOUT (100% INTEGRATED):
-1. UNIFIED BACKGROUND:
-   - Apply a full-canvas overlay in ${colorPrincipale} (primary color) at 40% opacity.
-   - Tint the entire photograph evenly.
+THE GRAPHIC LAYOUT:
+1. COLOR OVERLAY:
+   - Apply a subtle tinted overlay in ${colorPrincipale} at 30% opacity across the full image.
+   - This gives the image a unified ambient color cast, preserving realistic details.
 
-2. LOCALIZED FILTER CIRCLE (TOP-LEFT):
-   - In the TOP-LEFT corner (Position: 10% from left, 12% from top), add a large circular area (Diameter: 38% width).
-   - TECHNIQUE: This circle acts ONLY as a desaturation lens.
-   - MANDATORY: The photograph portion INSIDE the circle must be BLACK AND WHITE (desaturated).
-   - MANDATORY: The photograph portion OUTSIDE the circle remains in COLOR + overlay.
-   - NO DUPLICATION: Do not generate a second subject. No zoom. No crop.
-   - PERFECT CONTINUITY: The features of the subject (eye, shoulder, hair) must ALIGN PERFECTLY between the B&W circle and the color background. It is a single image with a local grayscale filter.
-
-3. CENTER DIVIDER:
-   - Add a 3px perfectly straight vertical line at the horizontal center of the poster.
+2. CENTER DIVIDER:
+   - A thin (2-3px) vertical line at the horizontal CENTER of the poster.
    - Color: ${colorPrincipale}.
-   - Runs from top to bottom.
+   - Runs from top to bottom edge.
 
-4. TEXT & TYPOGRAPHY:
+3. TEXT & TYPOGRAPHY:
 ${textSections}
    - Font family: Inter, Montserrat, or SF Pro (sans-serif).
-   - All text within safe margins.
+   - All text within safe margins (15%).
+   - High contrast against the background.
 
-STYLE: High-end luxury advertising poster. Minimalist composition. Swiss design inspiration. Publication-ready.
+STYLE: High-end luxury advertising poster. Minimalist Swiss design. Cinematic editorial. Publication-ready.
+IMPORTANT: Generate ONE complete coherent image. NO duplication of subject. NO circular crops. The B&W circle treatment will be applied in post-production.
 `;
 
     return finalPrompt;
+  }
+
+  /**
+   * 🔵 POST-PROCESS: Focus Circle Filter
+   * Applies a circular B&W desaturation "lens" on the top-left of the image.
+   * The area INSIDE the circle becomes grayscale; everything OUTSIDE stays in color.
+   * This is a pure sharp composition — no AI involved.
+   */
+  private async compositeFocusCircleFilter(
+    inputBuffer: Buffer,
+    colorPrincipale: string = '#FF9800',
+  ): Promise<Buffer> {
+    this.logger.log(
+      '[compositeFocusCircleFilter] Applying B&W circle filter...',
+    );
+
+    // Get image dimensions
+    const meta = await sharp(inputBuffer).metadata();
+    const W = meta.width || 1024;
+    const H = meta.height || 1536;
+
+    // Circle parameters: top-left area, diameter = 38% of width
+    const diameter = Math.round(W * 0.38);
+    const radius = Math.floor(diameter / 2);
+    // Center of circle: left=10% from left, top=12% from top
+    const cx = Math.round(W * 0.1) + radius;
+    const cy = Math.round(H * 0.12) + radius;
+
+    // 1. Create a full B&W version of the image
+    const bwBuffer = await sharp(inputBuffer)
+      .greyscale()
+      .toFormat('png')
+      .toBuffer();
+
+    // 2. Create a circular mask (white circle on black background) for the B&W area
+    const circleMaskSvg = `<svg width="${W}" height="${H}">
+  <circle cx="${cx}" cy="${cy}" r="${radius}" fill="white"/>
+</svg>`;
+    const circleMaskBuffer = await sharp(Buffer.from(circleMaskSvg))
+      .png()
+      .toBuffer();
+
+    // 3. Composite B&W image on top of color image, masked by the circle
+    //    Step 3a: Mask the B&W image (cut it to the circle shape)
+    //    We do this by multiplying the B&W and the circle mask
+    //    Actually with sharp: composite bwBuffer over color using circle mask as alpha
+    //    Approach: make bw image RGBA with circle mask as alpha channel, then composite over color
+
+    // 3a. Convert B&W to RGBA (grayscale but with alpha = circle mask)
+    //     We create the B&W version at full size with circular alpha mask
+    const bwCircleBuffer = await sharp(inputBuffer)
+      .greyscale()
+      .toFormat('png')
+      .toBuffer();
+
+    // 3b. Apply the circular mask as alpha to the B&W image
+    const maskedBwBuffer = await sharp(bwCircleBuffer)
+      .ensureAlpha()
+      .composite([
+        {
+          input: circleMaskBuffer,
+          blend: 'dest-in', // Keep only pixels where mask is white
+        },
+      ])
+      .toBuffer();
+
+    // 4. Composite the masked B&W circle on top of the original color image
+    //    to produce the final: color everywhere + B&W in the circle zone
+    const withCircle = await sharp(inputBuffer)
+      .ensureAlpha()
+      .composite([
+        {
+          input: maskedBwBuffer,
+          blend: 'over',
+          top: 0,
+          left: 0,
+        },
+      ])
+      .toBuffer();
+
+    // 5. Add a thin circle border ring in the primary color for aesthetics
+    const borderSvg = `<svg width="${W}" height="${H}">
+  <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${colorPrincipale}" stroke-width="3"/>
+</svg>`;
+    const borderBuffer = Buffer.from(borderSvg);
+
+    // 6. Add a thin center vertical line in primary color
+    const centerX = Math.floor(W / 2);
+    const lineSvg = `<svg width="${W}" height="${H}">
+  <line x1="${centerX}" y1="0" x2="${centerX}" y2="${H}" stroke="${colorPrincipale}" stroke-width="2" opacity="0.8"/>
+</svg>`;
+    const lineBuffer = Buffer.from(lineSvg);
+
+    // 7. Final composite: withCircle + border ring + center line -> JPEG output
+    const finalBuffer = await sharp(withCircle)
+      .composite([
+        { input: borderBuffer, blend: 'over', top: 0, left: 0 },
+        { input: lineBuffer, blend: 'over', top: 0, left: 0 },
+      ])
+      .flatten({ background: { r: 0, g: 0, b: 0 } })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    this.logger.log(
+      '[compositeFocusCircleFilter] B&W circle filter applied successfully.',
+    );
+    return finalBuffer;
   }
 
   /**
@@ -2971,6 +3073,28 @@ OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. N
           quality: 'medium',
         });
       }
+
+      // ─── POST-PROCESSING: Focus Circle Filter ───────────────────────────
+      // If the architecture is TYPE_FOCUS_CIRCLE, apply the programmatic
+      // B&W circle overlay using sharp — DALL-E only generates the base image.
+      if (architecture?.layoutType === 'TYPE_FOCUS_CIRCLE') {
+        this.logger.log(
+          '[processFlyerBackground] Applying Focus Circle post-processing filter...',
+        );
+        const focusColor =
+          params.colorPrincipale ||
+          params.colorSecondaire ||
+          brandingColor ||
+          '#FF9800';
+        finalBuffer = await this.compositeFocusCircleFilter(
+          finalBuffer,
+          focusColor,
+        );
+        this.logger.log(
+          '[processFlyerBackground] Focus Circle filter applied successfully.',
+        );
+      }
+      // ────────────────────────────────────────────────────────────────────
 
       const fileName = `flyer_final_${generationId}_${Date.now()}.jpg`;
       const uploadPath = '/home/ubuntu/uploads/ai-generations';
