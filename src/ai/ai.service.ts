@@ -1121,13 +1121,13 @@ The vertical line must NEVER cut through typography.
     const W = meta.width || 1024;
     const H = meta.height || 1536;
 
-    // Circle parameters: Adjust coordinates based on the new "Top-Left Lens" layout
+    // Circle parameters: Center the circle in the middle of the image
     // Diameter = 42% of width.
     const diameter = Math.round(W * 0.42);
     const radius = Math.floor(diameter / 2);
-    // Center of circle: positioned to overlap the center vertical line on the left side (approx 25% from left, 30% from top)
-    const cx = Math.round(W * 0.08) + radius;
-    const cy = Math.round(H * 0.12) + radius;
+    // Center of circle: positioned at the center of the image
+    const cx = Math.round(W / 2);
+    const cy = Math.round(H / 2);
 
     // 1. Create a full B&W version of the image
     const bwBuffer = await sharp(inputBuffer)
