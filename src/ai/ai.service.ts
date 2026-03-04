@@ -1055,7 +1055,22 @@ ${textSections}
    - A thin 2px vertical divider running from top to bottom center.
 
 STYLE: High-end luxury podcast/magazine advertising style. Swiss design influence. Clean and powerful visual hierarchy.
-IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breathable for a circular lens overlay. DO NOT generate the circle or the black and white effect; this will be applied in post-production.
+
+IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breathable for a PERFECTLY CENTERED CIRCULAR OVERLAY.
+
+CIRCLE REQUIREMENT (ULTRA-STRICT):
+- A PERFECT geometric circle.
+- 100% round. No oval. No ellipse. No distortion.
+- Positioned EXACTLY at the center of the full canvas (50% width, 50% height).
+- Perfect 1:1 aspect ratio.
+- Clean edge.
+- Symmetrical.
+- Balanced.
+- The circle must be mathematically centered on the vertical divider.
+- DO NOT distort perspective.
+- DO NOT stretch.
+
+DO NOT generate the circle or the black and white effect; this will be applied in post-production.
 `;
 
   return finalPrompt;
