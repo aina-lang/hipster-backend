@@ -978,61 +978,90 @@ STYLE:
    */
   private buildFocusCirclePrompt(
     subject: string = 'modern subject',
-    titleText: string = 'NEW EPISODE',
+    titleText: string = '',
     subtitleText: string = '',
+    infoLine: string = '',
     colorPrincipale: string = '#FF9800',
     colorSecondaire: string = '#000000',
   ): string {
-    const finalPrompt = `Create a modern promotional poster with a strong editorial graphic layout.
+    let textSections = '';
+
+    if (titleText) {
+      textSections += `
+5. MAIN TITLE:
+   Text: "${titleText}"
+   Position: Place a very large bold title exactly in the center of the poster.
+   Typography: Bold modern sans-serif. Centered.
+   Color: use ${colorSecondaire} (Secondary Color).
+`;
+    }
+
+    if (subtitleText) {
+      textSections += `
+6. SUBTITLE:
+   Text: "${subtitleText}"
+   Position: Directly below the main title.
+   Typography: Modern clean sans-serif, smaller than title.
+   Color: use ${colorSecondaire}.
+`;
+    }
+
+    if (infoLine) {
+      textSections += `
+7. INFO LINE:
+   Text: "${infoLine}"
+   Position: At the absolute bottom edge, centered.
+   Typography: Minimalist small caps.
+   Color: ${colorSecondaire}.
+`;
+    }
+
+    const finalPrompt = `Create a modern editorial promotional poster with a fixed graphic layout.
 
 FORMAT:
-Vertical flyer layout (A4 poster format).
-Clean professional advertising design.
+Vertical poster layout (A4 or Instagram poster format).
+Clean advertising design.
+
+BACKGROUND:
+The background must be a single UNIFIED background.
+It must NOT be split in half.
+Use a textured gradient background using the user's PRIMARY COLOR (${colorPrincipale}) and SECONDARY COLOR (${colorSecondaire}).
+Add subtle poster grain texture.
 
 MAIN SUBJECT:
 ${subject}.
 Only ONE main subject.
+The subject must appear in the RIGHT SIDE of the poster in full color.
+Specifically, place the subject in the TOP RIGHT area of the poster.
+The subject must remain fully visible and NOT be cut in half.
 
 LAYOUT STRUCTURE:
 
-1. TOP SECTION:
-   Place the main subject image in the top half of the poster.
+1. CIRCULAR ELEMENT:
+   Add a large circular graphic element on the LEFT SIDE.
+   Inside the circle: show a BLACK AND WHITE cropped version of the subject.
+   IMPORTANT: The circle must overlap slightly with the subject area.
 
-2. LEFT SIDE:
-   Add a large circular graphic element overlapping the subject.
-   Inside the circle: show a BLACK AND WHITE crop of the subject.
-
-3. RIGHT SIDE:
-   The subject remains in full color.
-
-4. CENTER DIVIDER:
-   Add a thin vertical line exactly in the center of the poster from top to bottom.
-   Rules: perfectly straight, clean, minimal, modern design element.
+2. CENTER DIVIDER:
+   Add a thin vertical divider line exactly in the center of the poster from top to bottom.
+   Rules: perfectly straight, minimal, clean, modern.
    Color: use ${colorPrincipale} (Primary Color).
 
-5. MAIN TITLE:
-   Text: "${titleText}"
-   Position: Place a very large bold title in the center of the poster.
-   Typography: Bold modern sans-serif. Centered.
-   Color: use ${colorSecondaire} (Secondary Color).
-
-BACKGROUND:
-Use a textured gradient background.
-Colors: ${colorPrincipale} mixed with ${colorSecondaire}.
-The gradient should be smooth and modern with slight texture (poster grain).
+${textSections}
 
 STYLE:
-Modern editorial poster. High contrast. Minimal graphic design. Professional photography look. Very clean composition. Advertising ready.
+Modern editorial poster. Minimal graphic design. High contrast. Clean advertising layout. Professional photography look.
 
 IMPORTANT RULES:
-- Keep the circular element.
-- Keep the vertical center divider line.
-- Keep the large centered title.
-- No extra decorative elements.
-- The layout must remain identical even if the subject changes.
+- Do NOT split the background in two.
+- Do NOT split the subject in half.
+- The circular element must contain the black and white version of the subject.
+- The subject must remain fully visible on the right side.
+- Keep the vertical divider line.
+- Keep the centered title if provided.
 
 OUTPUT:
-High resolution. Professional marketing poster. Ready for social media and print.`;
+High resolution. Professional marketing poster. Social media ready. Print ready.`;
 
     return finalPrompt;
   }
@@ -2650,8 +2679,9 @@ COMPOSITION ARCHITECTURE:
           );
           magazineStyleDirective = this.buildFocusCirclePrompt(
             customSubject || params.job || 'A premium subject',
-            mainWord || 'NEW EPISODE',
-            scriptPhrase || params.subtitle || '',
+            params.mainWord || params.modelName || model || 'NEW EPISODE',
+            params.scriptPhrase || params.subtitle || '',
+            params.infoLine || params.infoBlock || '',
             colorPrincipale,
             colorSecondaire,
           );

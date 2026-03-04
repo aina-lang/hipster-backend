@@ -152,16 +152,16 @@ export const FOCUS_CIRCLE_ARCH: VisualArchitecture = {
   colorPalette: 'Primary/Secondary',
   rules: {
     subject:
-      'Place the main subject image in the top half of the poster. Can be a person, product, animal, building, or object.',
+      'The subject must appear in the TOP RIGHT of the poster in full color. It must remain fully visible and NOT be cut in half.',
     background:
-      'Use a textured gradient background with slight poster grain. Colors: Primary and Secondary.',
+      'UNIFIED BACKGROUND: Single textured gradient using PRIMARY and SECONDARY colors. No split. Subtle poster grain texture.',
     title:
-      'MAIN TITLE: Very large bold modern sans-serif in the center. Color: Secondary Color.',
+      'MAIN TITLE: Large bold modern sans-serif exactly in the center of the poster. Color: SECONDARY COLOR.',
     subtitle: 'None.',
     infoBlock: 'None.',
     upperZone: 'None.',
     constraints:
-      'LAYOUT: Vertical flyer (A4). CENTER DIVIDER: Thin vertical line exactly in the center using PRIMARY COLOR. LEFT SIDE: Large circular graphic element overlapping subject, showing a BLACK AND WHITE crop of the subject inside.',
+      'LAYOUT: Vertical/Poster format. CIRCULAR ELEMENT: Large circular graphic on the LEFT containing a BLACK AND WHITE crop of the subject. Slight overlap with subject area. CENTER DIVIDER: Thin vertical line exactly in the center using PRIMARY COLOR.',
   },
 };
 
