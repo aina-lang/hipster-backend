@@ -993,7 +993,7 @@ private buildFocusCirclePrompt(
    Text: "${titleText}"
    Position: EXACT CENTER of the poster.
    Typography: Very large bold modern sans-serif. Centered.
-   Color: ${colorSecondaire} (secondary color).
+   Color: ${colorSecondaire}.
 `;
   }
 
@@ -1011,67 +1011,70 @@ private buildFocusCirclePrompt(
     textSections += `
 7. INFO LINE:
    Text: "${infoLine}"
-   Position: Bottom edge, centered.
+   Position: Bottom center.
    Typography: Minimalist small sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
 `;
   }
 
   const finalPrompt = `
-Create a modern editorial promotional poster using ONE single photograph.
+Create a modern editorial promotional poster using ONE single color photograph.
 
 FORMAT:
-Vertical poster layout (Instagram post or A4 flyer). Clean professional advertising design.
+Vertical poster (Instagram post or A4 flyer). Clean modern advertising layout.
 
-BACKGROUND / COLOR:
-Use the same single photograph "${subject}" across the entire poster.
-Apply a uniform colored overlay across the WHOLE image (NEVER split / NEVER half-and-half).
-Overlay color: ${colorPrincipale} (primary color) at 40% opacity.
-Add a subtle grain/noise texture at 8% opacity over the whole canvas.
+BACKGROUND:
+Use the photograph "${subject}" fully as the background.
+Apply a uniform color overlay in ${colorPrincipale} at ~40% opacity.
+The overlay must tint the entire background and subtly harmonize with the subject's clothing.
 
-CIRCULAR DETAIL (top-left):
-Add a large **circle shape** in the TOP LEFT corner.
-Diameter = 38% of poster width.
+CLOTHING COLOR HARMONY:
+Color-grade the subject’s visible clothing to match the palette:
+- Dominant tint: ${colorPrincipale}
+- Secondary accent tint: ${colorSecondaire}
+Keep clothing natural but visually coherent with the theme.
+
+FOCUS CIRCLE (top-left):
+Add a large circular MASK in the top-left corner.
+Diameter: 38% of poster width.
 Position: 10% from left, 12% from top.
 
 Inside this circle:
-- Apply a **black-and-white filter** directly on the SAME underlying area of the main photograph.
+- Desaturate ONLY the area of the main photograph inside the circle.
 - NO zoom, NO crop, NO duplication.
-- The circle is a MASK that converts only that region to grayscale with slight contrast boost.
-Important: The pixels inside the circle must perfectly align with the main image behind it (no shift).
+- The circle simply applies a grayscale filter to the exact region of the main image.
+- The rest of the image must remain fully in color.
+- The grayscale region must align perfectly with the underlying image (no shift).
 
 CENTER DIVIDER:
-Add a thin vertical line exactly at the horizontal center of the poster, running from top to bottom.
-Width: 3px.
-Color: ${colorPrincipale} (primary color).
-Always visible over the overlay.
+Add a 3px vertical line at the exact center of the poster.
+Color: ${colorPrincipale}.
+Runs from top to bottom.
 
 ${textSections}
 
 TYPOGRAPHY:
-- Font family: Inter, Montserrat, or SF Pro (sans-serif bold/regular).
-- Title: large bold, color = ${colorSecondaire}.
-- Subtitle: medium, color = ${colorSecondaire} at 85% opacity.
-- Info line: small, color = ${colorSecondaire} at 85% opacity.
-- Max 3 lines of text total.
+- Font family: Inter, Montserrat, or SF Pro.
+- Title: bold, color ${colorSecondaire}.
+- Subtitle: ${colorSecondaire} at 85% opacity.
+- Info line: ${colorSecondaire} at 85% opacity.
+- Maximum of 3 text blocks.
 
 STYLE:
 Modern editorial poster.
-Graphic design layout.
-Clean advertising style.
-Professional photography look.
-Minimal composition.
-High production value.
+Clean graphic design.
+High-end photography.
+Minimal, balanced composition.
 
 ABSOLUTE RULES:
 - ONE single photograph only.
-- The circle is a grayscale filter mask, NOT a secondary image.
-- Background overlay is unified over the whole canvas.
-- All text within safe margins (60px from edges).
-- The center vertical line uses ${colorPrincipale} (primary color).
+- The circle is a grayscale mask, NOT another image.
+- Background overlay must be unified over the full canvas.
+- All text must stay within 60px safe margins.
+- Center vertical line uses ${colorPrincipale}.
 
 OUTPUT:
-High resolution promotional poster. Social media ready. Print ready.
+High-resolution promotional poster. Social media and print ready.
 `;
 
   return finalPrompt;
