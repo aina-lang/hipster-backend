@@ -154,14 +154,15 @@ export const FOCUS_CIRCLE_ARCH: VisualArchitecture = {
     subject:
       'The subject must appear in the TOP RIGHT of the poster in full color. It must remain fully visible and NOT be cut in half.',
     background:
-      'UNIFIED BACKGROUND: Single textured gradient using PRIMARY and SECONDARY colors. No split. Subtle poster grain texture.',
+      'DUO-TONE BACKGROUND: Two distinct zones. The top half uses a vibrant texture of the PRIMARY COLOR. The bottom half uses a deeper/darker shade of the same hue family or SECONDARY COLOR. Subtle poster grain throughout.',
     title:
-      'MAIN TITLE: Large bold modern sans-serif exactly in the center of the poster. Color: SECONDARY COLOR.',
+      'MAIN TITLE: Large bold simple sans-serif text (e.g., "NEW EPISODE") placed in the LOWER MIDDLE section, exactly on the vertical axis. Color: Off-white/Cream or SECONDARY COLOR.',
     subtitle: 'None.',
     infoBlock: 'None.',
-    upperZone: 'None.',
+    upperZone:
+      'TOP-LEFT ACCENT: A dark rectangular box containing a short category label (e.g., "PODCAST") in bold white uppercase text.',
     constraints:
-      'LAYOUT: Vertical/Poster format. CIRCULAR ELEMENT: Large circular graphic on the LEFT containing a BLACK AND WHITE crop of the subject. Slight overlap with subject area. CENTER DIVIDER: Thin vertical line exactly in the center using PRIMARY COLOR.',
+      'LAYOUT: Vertical/Poster. CIRCULAR ELEMENT: A large white-ish circular graphic on the CENTER-LEFT. Inside the circle: show a BLACK AND WHITE cropped version of the subject (e.g., a microphone or detail). The circle MUST overlap with the subject area slightly. CENTER DIVIDER: A thin vertical white line exactly in the center, interrupted by the main title.',
   },
 };
 

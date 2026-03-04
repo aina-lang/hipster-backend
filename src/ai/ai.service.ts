@@ -983,6 +983,7 @@ STYLE:
     infoLine: string = '',
     colorPrincipale: string = '#FF9800',
     colorSecondaire: string = '#000000',
+    job: string = '',
   ): string {
     let textSections = '';
 
@@ -990,9 +991,9 @@ STYLE:
       textSections += `
 5. MAIN TITLE:
    Text: "${titleText}"
-   Position: Place a very large bold title exactly in the center of the poster.
-   Typography: Bold modern sans-serif. Centered.
-   Color: use ${colorSecondaire} (Secondary Color).
+   Position: Place the title in the LOWER MIDDLE section of the poster, exactly on the vertical axis.
+   Typography: Bold simple modern sans-serif. Centered.
+   Color: Off-white/Cream or SECONDARY COLOR (${colorSecondaire}).
 `;
     }
 
@@ -1002,7 +1003,7 @@ STYLE:
    Text: "${subtitleText}"
    Position: Directly below the main title.
    Typography: Modern clean sans-serif, smaller than title.
-   Color: use ${colorSecondaire}.
+   Color: ${colorSecondaire}.
 `;
     }
 
@@ -1016,36 +1017,42 @@ STYLE:
 `;
     }
 
-    const finalPrompt = `Create a modern editorial promotional poster with a fixed graphic layout.
+    // Determine the category label for the top-left box
+    const categoryLabel = (job || 'PODCAST').toUpperCase();
+
+    const finalPrompt = `Create a modern editorial promotional poster with a fixed graphic layout exactly matching this structure.
 
 FORMAT:
 Vertical poster layout (A4 or Instagram poster format).
 Clean advertising design.
 
 BACKGROUND:
-The background must be a single UNIFIED background.
-It must NOT be split in half.
-Use a textured gradient background using the user's PRIMARY COLOR (${colorPrincipale}) and SECONDARY COLOR (${colorSecondaire}).
-Add subtle poster grain texture.
+DUO-TONE BACKGROUND: Two distinct horizontal zones.
+- TOP HALF: Vibrant texture using the PRIMARY COLOR (${colorPrincipale}).
+- BOTTOM HALF: Deeper/darker shade of the same hue family or SECONDARY COLOR (${colorSecondaire}).
+- Subtle poster grain texture throughout.
 
 MAIN SUBJECT:
 ${subject}.
 Only ONE main subject.
-The subject must appear in the RIGHT SIDE of the poster in full color.
-Specifically, place the subject in the TOP RIGHT area of the poster.
+Position: The subject must appear in the TOP RIGHT area of the poster in full color.
 The subject must remain fully visible and NOT be cut in half.
 
 LAYOUT STRUCTURE:
 
-1. CIRCULAR ELEMENT:
-   Add a large circular graphic element on the LEFT SIDE.
-   Inside the circle: show a BLACK AND WHITE cropped version of the subject.
-   IMPORTANT: The circle must overlap slightly with the subject area.
+1. UPPER ZONE (TOP-LEFT ACCENT):
+   Add a dark rectangular label box in the absolute TOP-LEFT corner.
+   Inside the box: exact text "${categoryLabel}" in bold white uppercase sans-serif.
 
-2. CENTER DIVIDER:
-   Add a thin vertical divider line exactly in the center of the poster from top to bottom.
-   Rules: perfectly straight, minimal, clean, modern.
-   Color: use ${colorPrincipale} (Primary Color).
+2. CIRCULAR ELEMENT:
+   Add a large light/off-white circular graphic element on the CENTER-LEFT side.
+   Inside the circle: show a BLACK AND WHITE cropped version of the subject (e.g., a detail or close-up).
+   IMPORTANT: The circle must overlap slightly with the main subject area.
+
+3. CENTER DIVIDER:
+   Add a thin vertical off-white/light line exactly in the center of the poster from top to bottom.
+   Rules: perfectly straight, minimal, clean.
+   The line should be interrupted/split by the main title text.
 
 ${textSections}
 
@@ -1053,12 +1060,12 @@ STYLE:
 Modern editorial poster. Minimal graphic design. High contrast. Clean advertising layout. Professional photography look.
 
 IMPORTANT RULES:
-- Do NOT split the background in two.
-- Do NOT split the subject in half.
-- The circular element must contain the black and white version of the subject.
-- The subject must remain fully visible on the right side.
-- Keep the vertical divider line.
-- Keep the centered title if provided.
+- Use the DUO-TONE background (vibrant top, dark bottom).
+- Place the label box in the TOP-LEFT.
+- Place the subject in the TOP-RIGHT.
+- The circular element MUST contain the black and white version of the subject.
+- The vertical divider line must be centered and split by the title.
+- Keep the title in the LOWER MIDDLE section.
 
 OUTPUT:
 High resolution. Professional marketing poster. Social media ready. Print ready.`;
@@ -2684,6 +2691,7 @@ COMPOSITION ARCHITECTURE:
             params.infoLine || params.infoBlock || '',
             colorPrincipale,
             colorSecondaire,
+            params.job || '',
           );
         } else {
           // Standard magazine-style prompt for other architectures
