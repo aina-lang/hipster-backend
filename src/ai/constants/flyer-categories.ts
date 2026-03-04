@@ -60,6 +60,21 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
           frame: 'thin-white',
         },
       },
+      {
+        label: 'Focus Circle',
+        structure: {
+          subject: 'centered-portrait',
+          subjectSize: 'hero',
+          title: 'centered-bottom',
+          banner: 'none',
+          particles: 'none',
+          decorations: ['circular-focal-zone'],
+          background: 'abstract-gradient',
+          colorFilter: 'none',
+          typography: 'modern-sans',
+          frame: 'borderless',
+        },
+      },
     ],
   },
   {

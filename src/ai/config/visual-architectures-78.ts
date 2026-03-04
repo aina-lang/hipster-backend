@@ -146,6 +146,25 @@ export const EDITORIAL_GRID_ARCH: VisualArchitecture = {
   },
 };
 
+export const FOCUS_CIRCLE_ARCH: VisualArchitecture = {
+  name: 'Focus Circle',
+  layoutType: 'TYPE_FOCUS_CIRCLE',
+  colorPalette: 'Primary/Secondary',
+  rules: {
+    subject:
+      'Place the main subject image in the top half of the poster. Can be a person, product, animal, building, or object.',
+    background:
+      'Use a textured gradient background with slight poster grain. Colors: Primary and Secondary.',
+    title:
+      'MAIN TITLE: Very large bold modern sans-serif in the center. Color: Secondary Color.',
+    subtitle: 'None.',
+    infoBlock: 'None.',
+    upperZone: 'None.',
+    constraints:
+      'LAYOUT: Vertical flyer (A4). CENTER DIVIDER: Thin vertical line exactly in the center using PRIMARY COLOR. LEFT SIDE: Large circular graphic element overlapping subject, showing a BLACK AND WHITE crop of the subject inside.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
@@ -154,6 +173,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   PRESTIGE: PRESTIGE_ARCH,
   SIGNATURE_SPLASH: SIGNATURE_SPLASH_ARCH,
   EDITORIAL_GRID: EDITORIAL_GRID_ARCH,
+  FOCUS_CIRCLE: FOCUS_CIRCLE_ARCH,
 };
 
 export function getVisualArchitecture(

@@ -721,10 +721,10 @@ ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object o
   }
 
   private buildPrestigeBWPosterPrompt(
-  subject: string,
-  titleText: string,
-): string {
-  const finalPrompt = `
+    subject: string,
+    titleText: string,
+  ): string {
+    const finalPrompt = `
 ULTRA MINIMALIST BLACK & WHITE LUXURY ADVERTISING POSTER.
 SUBJECT: ${titleText}, front-facing hero shot, perfectly centered, symmetrical composition, slightly low angle.
 
@@ -800,12 +800,12 @@ COMPOSITION:
    * Creates ultra-realistic splash effect advertising posters
    * Features dynamic splash effects (liquid, powder, fire, etc.)
    */
-private buildSignatureSplashPrompt(
-  subject: string,
-  titleText: string,
-  subtitleText: string = '',
-): string {
-  const finalPrompt = `Create an ultra realistic premium advertising poster.
+  private buildSignatureSplashPrompt(
+    subject: string,
+    titleText: string,
+    subtitleText: string = '',
+  ): string {
+    const finalPrompt = `Create an ultra realistic premium advertising poster.
 
 MAIN SUBJECT:
 ${subject}
@@ -894,26 +894,25 @@ Elegant
 Appetizing
 `;
 
-  this.logger.log(
-    `[buildSignatureSplashPrompt] Generated CLEAN SUBJECT + CINEMATIC SPLASH AROUND prompt for subject: ${subject}`,
-  );
+    this.logger.log(
+      `[buildSignatureSplashPrompt] Generated CLEAN SUBJECT + CINEMATIC SPLASH AROUND prompt for subject: ${subject}`,
+    );
 
-  return finalPrompt;
-}
+    return finalPrompt;
+  }
 
   /**
    * 🎨 BUILD EDITORIAL GRID PROMPT FOR DALL-E
    * Crée une affiche de luxe premium avec layout asymétrique 3 panneaux
    */
-private buildEditorialGridPrompt(
-  subject: string = 'luxury subject',
-  titleText: string = '',
-  subtitleText: string = '',
-  colorPrincipale: string = '#1a3a52',
-  colorSecondaire: string = '#ffffff',
-): string {
-
-  const finalPrompt = `Create a high-end luxury promotional poster with a bold asymmetrical editorial layout featuring a realistic ${subject} at sunset with elegant reflection.
+  private buildEditorialGridPrompt(
+    subject: string = 'luxury subject',
+    titleText: string = '',
+    subtitleText: string = '',
+    colorPrincipale: string = '#1a3a52',
+    colorSecondaire: string = '#ffffff',
+  ): string {
+    const finalPrompt = `Create a high-end luxury promotional poster with a bold asymmetrical editorial layout featuring a realistic ${subject} at sunset with elegant reflection.
 
 IMPORTANT STRUCTURE:
 
@@ -970,9 +969,74 @@ STYLE:
 – Ultra sharp.
 – High resolution.
 `;
+    return finalPrompt;
+  }
 
-  return finalPrompt;
-}
+  /**
+   * 🎨 BUILD FOCUS CIRCLE PROMPT FOR DALL-E
+   * Modern editorial layout with symmetrical split and circular focus zone.
+   */
+  private buildFocusCirclePrompt(
+    subject: string = 'modern subject',
+    titleText: string = 'NEW EPISODE',
+    subtitleText: string = '',
+    colorPrincipale: string = '#FF9800',
+    colorSecondaire: string = '#000000',
+  ): string {
+    const finalPrompt = `Create a modern promotional poster with a strong editorial graphic layout.
+
+FORMAT:
+Vertical flyer layout (A4 poster format).
+Clean professional advertising design.
+
+MAIN SUBJECT:
+${subject}.
+Only ONE main subject.
+
+LAYOUT STRUCTURE:
+
+1. TOP SECTION:
+   Place the main subject image in the top half of the poster.
+
+2. LEFT SIDE:
+   Add a large circular graphic element overlapping the subject.
+   Inside the circle: show a BLACK AND WHITE crop of the subject.
+
+3. RIGHT SIDE:
+   The subject remains in full color.
+
+4. CENTER DIVIDER:
+   Add a thin vertical line exactly in the center of the poster from top to bottom.
+   Rules: perfectly straight, clean, minimal, modern design element.
+   Color: use ${colorPrincipale} (Primary Color).
+
+5. MAIN TITLE:
+   Text: "${titleText}"
+   Position: Place a very large bold title in the center of the poster.
+   Typography: Bold modern sans-serif. Centered.
+   Color: use ${colorSecondaire} (Secondary Color).
+
+BACKGROUND:
+Use a textured gradient background.
+Colors: ${colorPrincipale} mixed with ${colorSecondaire}.
+The gradient should be smooth and modern with slight texture (poster grain).
+
+STYLE:
+Modern editorial poster. High contrast. Minimal graphic design. Professional photography look. Very clean composition. Advertising ready.
+
+IMPORTANT RULES:
+- Keep the circular element.
+- Keep the vertical center divider line.
+- Keep the large centered title.
+- No extra decorative elements.
+- The layout must remain identical even if the subject changes.
+
+OUTPUT:
+High resolution. Professional marketing poster. Ready for social media and print.`;
+
+    return finalPrompt;
+  }
+
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
    * Génère un prompt ultra-affiné pour produire des rendus Vogue/Numéro/Fashion
@@ -2573,14 +2637,21 @@ COMPOSITION ARCHITECTURE:
             scriptPhrase,
           );
         } else if (architecture.layoutType === 'TYPE_EDITORIAL_GRID') {
-          this.logger.log(
-            `[processFlyerBackground] Building EDITORIAL_GRID prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
-          );
-
           magazineStyleDirective = this.buildEditorialGridPrompt(
             customSubject || params.job || 'A luxury subject',
             mainWord,
             scriptPhrase,
+            colorPrincipale,
+            colorSecondaire,
+          );
+        } else if (model.toLowerCase().includes('focus circle')) {
+          this.logger.log(
+            `[processFlyerBackground] Building FOCUS_CIRCLE prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+          );
+          magazineStyleDirective = this.buildFocusCirclePrompt(
+            customSubject || params.job || 'A premium subject',
+            mainWord || 'NEW EPISODE',
+            scriptPhrase || params.subtitle || '',
             colorPrincipale,
             colorSecondaire,
           );

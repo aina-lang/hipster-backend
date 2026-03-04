@@ -24,6 +24,7 @@ export type TitlePos =
   | 'center-right'
   | 'bottom-left'
   | 'bottom-center'
+  | 'centered-bottom'
   | 'bottom-right'
   | 'over-subject'
   | 'split-vertical'
@@ -94,6 +95,7 @@ export type Decoration =
   | 'color-block' // blocs de couleur
   | 'golden-ratio-lines' // lignes nombre d'or
   | 'cinematic-bars' // bandes cinéma
+  | 'circular-focal-zone' // zone focale circulaire
   | 'none';
 
 export type Background =
