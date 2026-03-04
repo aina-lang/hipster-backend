@@ -1004,7 +1004,7 @@ private buildFocusCirclePrompt(
    Position: Directly above the main title (around 80% of total height).
    Typography: Medium sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
-   Decoration: NO underline.
+   Decoration: NO underline. NO decorative lines.
 `;
   }
 
@@ -1019,7 +1019,7 @@ private buildFocusCirclePrompt(
   }
 
   const badgeSection = brandingName
-    ? `- TAG/BADGE: "${brandingName.toUpperCase()}" rendered in a small dark rectangular box positioned in the TOP-LEFT corner, closer to the top edge.`
+    ? `- TAG/BADGE: "${brandingName.toUpperCase()}" rendered in a small dark rectangular box positioned at the EXTREME TOP-LEFT corner (around 2% from top, 3% from left). It must sit very close to the top edge.`
     : '';
 
   const finalPrompt = `
@@ -1037,9 +1037,16 @@ THE GRAPHIC LAYOUT:
 1. TEXT PLACEMENT & STYLING (ULTRA-STRICT):
    - MAIN TITLE: "${titleText.toUpperCase()}" rendered in massive bold sans-serif, perfectly CENTERED in the BOTTOM half.
    ${badgeSection}
-   - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half. NO underline.
+   - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half. ABSOLUTELY NO underline. ABSOLUTELY NO decorative lines.
    - INFO LINE: "${infoLine}" in elegant sans-serif, either above or below the main title in the bottom half.
-   - TYPOGRAPHY RULES: ABSOLUTELY NO highlights, NO strokes, NO boxes around text (except for the badge if applicable). Text must be clean and minimal. This applies to the MAIN TITLE, SUBTITLE, and INFO LINE.
+   - TYPOGRAPHY RULES (EXTREMELY STRICT):
+     ABSOLUTELY NO underlines.
+     ABSOLUTELY NO decorative lines.
+     ABSOLUTELY NO horizontal lines above or below any text.
+     ABSOLUTELY NO separator lines.
+     ABSOLUTELY NO strokes.
+     ABSOLUTELY NO highlight bars.
+     Text must float freely with clean spacing.
    - TEXT CONTENT: ONLY render the text provided. DO NOT write the subject description ("${subject}") as text on the image.
    - NO LINE, NO STROKES.
 ${textSections}
