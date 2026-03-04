@@ -1009,11 +1009,11 @@ SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
 ========================
 
 - The primary subject: "${subject}"
-- The subject must be positioned STRICTLY in the TOP-RIGHT quadrant.
+- The subject must be positioned STRICTLY at the CENTER horizontally.
 - Only upper torso / shoulders / head visible.
 - The subject must appear visually cropped by the horizontal midpoint.
-- The subject MUST stay on the RIGHT side.
-- The TOP-LEFT area must remain breathable and clean.
+- The subject MUST be centered horizontally on the X-axis.
+- Keep generous negative space around it.
 - DO NOT render the subject description as text on the image.
 
 ========================
@@ -1266,7 +1266,7 @@ The vertical line must NEVER cut through typography.
     const diameter = Math.round(W * 0.42);
     const radius = Math.floor(diameter / 2);
     // Center of circle: centered horizontally, positioned at 30% from top (higher up)
-    const cx = Math.round(W / 2);
+    const cx = Math.round(W * 0.35);
     const cy = Math.round(H * 0.3);
 
     // 1. Create a full B&W version of the image
