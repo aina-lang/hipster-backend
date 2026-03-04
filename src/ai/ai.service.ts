@@ -1040,7 +1040,7 @@ THE GRAPHIC LAYOUT:
    - INFO LINE: "${infoLine}" in elegant sans-serif, either above or below the main title in the bottom half.
    - TYPOGRAPHY RULES: ABSOLUTELY NO underlines, NO highlights, NO strokes, NO boxes around text (except for the badge if applicable). Text must be clean and minimal. This applies to the MAIN TITLE, SUBTITLE, and INFO LINE.
    - TEXT CONTENT: ONLY render the text provided. DO NOT write the subject description ("${subject}") as text on the image.
-
+   - NO LINE, NO STROKES, NO UNDERLINES.
 ${textSections}
 
 2. VERTICAL CENTER LINE:
