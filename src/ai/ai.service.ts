@@ -3015,7 +3015,10 @@ COMPOSITION ARCHITECTURE:
       }
 
       // 5. ARCHITECTURE-AWARE FLYER TEXT RULES (Enhanced from 78-architecture data)
-      const architectureRules = architecture
+      // Skip architecture rules if using a specialized prompt builder like buildFocusCirclePrompt
+      const isUsingSpecializedPromptBuilder = model.toLowerCase().includes('focus circle') && architecture?.layoutType === 'TYPE_FOCUS_CIRCLE';
+      
+      const architectureRules = architecture && !isUsingSpecializedPromptBuilder
         ? `
   ARCHITECTURE DIRECTIVES:
   - SUBJECT POSITIONING: ${params.subject ? `Center the custom subject: "${params.subject}"` : architecture.rules.subject}
