@@ -61,6 +61,21 @@ export const FLYER_CATEGORIES: FlyerCategory[] = [
         },
       },
       {
+        label: 'Diagonal Split',
+        structure: {
+          subject: 'center', // slightly off-center handled in prompt
+          subjectSize: 'large',
+          title: 'bottom-center',
+          banner: 'none',
+          particles: 'noise-grain',
+          decorations: ['diagonal-stripe'],
+          background: 'solid-light',
+          colorFilter: 'none',
+          typography: 'modern-sans',
+          frame: 'diagonal-split',
+        },
+      },
+      {
         label: 'Focus Circle',
         structure: {
           subject: 'centered-portrait',

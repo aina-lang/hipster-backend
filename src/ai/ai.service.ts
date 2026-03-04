@@ -991,9 +991,96 @@ STYLE:
       textSections += `
 5. MAIN TITLE:
    Text: "${titleText}"
-   Position: Place the title in the LOWER MIDDLE section of the poster, exactly on the vertical axis.
-   Typography: Bold simple modern sans-serif. Centered.
-   Color: Off-white/Cream or SECONDARY COLOR (${colorSecondaire}).
+   Position: EXACT CENTER of the poster.
+   Typography: Very large bold modern sans-serif. Centered.
+   Color: White or high-contrast cream.
+`;
+    }
+
+    if (subtitleText) {
+      textSections += `
+6. SUBTITLE:
+   Text: "${subtitleText}"
+   Position: Directly below the main title.
+   Typography: Modern clean sans-serif.
+   Color: White or high-contrast.
+`;
+    }
+
+    if (infoLine) {
+      textSections += `
+7. INFO LINE:
+   Text: "${infoLine}"
+   Position: Bottom edge, centered.
+   Typography: Minimalist.
+   Color: White or high-contrast.
+`;
+    }
+
+    const finalPrompt = `Create a modern editorial promotional poster using ONE single photograph.
+
+FORMAT:
+Vertical poster layout (Instagram post or A4 flyer).
+Clean professional advertising design.
+
+BACKGROUND / COLOR:
+Use the same single photograph "${subject}" across the entire poster.
+Apply a uniform colored overlay across the WHOLE image.
+The overlay color must be ${colorPrincipale} (User's choice).
+The overlay must tint the entire image evenly and professionally.
+
+CIRCULAR DETAIL:
+Add a large circle in the TOP LEFT corner.
+Inside this circle: show a ZOOMED CROP from the SAME photograph used in the background.
+IMPORTANT rules for the circle:
+- The circle must use the same original image.
+- The circle must NOT generate a new image or subject.
+- The circle must NOT duplicate the subject but show a zoomed detail of it.
+- Convert the image inside the circle to BLACK AND WHITE.
+
+CENTER DIVIDER:
+Add a thin vertical line exactly in the center of the poster from top to bottom.
+Rules: perfectly straight, minimal, clean.
+
+${textSections}
+
+STYLE:
+Modern editorial poster. Graphic design layout. Clean advertising style. Professional photography look. Minimal composition.
+
+ABSOLUTE RULES:
+- Use ONE single photograph.
+- Do NOT generate a second image.
+- The circle must be a crop of the original image.
+- The circle must appear in the top left.
+- Apply a full color overlay across the whole image.
+- Keep the layout identical regardless of the subject.
+
+OUTPUT:
+High resolution promotional poster. Social media ready. Print ready.`;
+
+    return finalPrompt;
+  }
+
+  /**
+   * 🎨 BUILD DIAGONAL SPLIT PROMPT FOR DALL-E
+   * Modern minimalist layout with a diagonal geometric band.
+   */
+  private buildDiagonalSplitPrompt(
+    subject: string = 'modern subject',
+    titleText: string = '',
+    subtitleText: string = '',
+    colorPrincipale: string = '#FF9800',
+    colorSecondaire: string = '#000000',
+  ): string {
+    let textSections = '';
+
+    if (titleText) {
+      textSections += `
+5. MAIN TITLE:
+   Text: "${titleText}"
+   Position: High-impact headline in the lower-middle area.
+   Typography: Large bold modern sans-serif. Centered.
+   Color: ${colorSecondaire}.
 `;
     }
 
@@ -1007,68 +1094,42 @@ STYLE:
 `;
     }
 
-    if (infoLine) {
-      textSections += `
-7. INFO LINE:
-   Text: "${infoLine}"
-   Position: At the absolute bottom edge, centered.
-   Typography: Minimalist small caps.
-   Color: ${colorSecondaire}.
-`;
-    }
-
-    // Determine the category label for the top-left box
-    const categoryLabel = (job || 'PODCAST').toUpperCase();
-
-    const finalPrompt = `Create a modern editorial promotional poster with a fixed graphic layout exactly matching this structure.
+    const finalPrompt = `Create a modern minimalist advertising poster with a clean and balanced composition.
 
 FORMAT:
 Vertical poster layout (A4 or Instagram poster format).
-Clean advertising design.
+High-end modern branding design.
 
 BACKGROUND:
-DUO-TONE BACKGROUND: Two distinct horizontal zones.
-- TOP HALF: Vibrant texture using the PRIMARY COLOR (${colorPrincipale}).
-- BOTTOM HALF: Deeper/darker shade of the same hue family or SECONDARY COLOR (${colorSecondaire}).
-- Subtle poster grain texture throughout.
+Clean white studio background. Minimalist and professional.
 
 MAIN SUBJECT:
 ${subject}.
 Only ONE main subject.
-Position: The subject must appear in the TOP RIGHT area of the poster in full color.
-The subject must remain fully visible and NOT be cut in half.
+Positioning: Place the subject slightly off-center.
+Style: Professional studio photography with strong, clean lighting and high resolution.
 
 LAYOUT STRUCTURE:
 
-1. UPPER ZONE (TOP-LEFT ACCENT):
-   Add a dark rectangular label box in the absolute TOP-LEFT corner.
-   Inside the box: exact text "${categoryLabel}" in bold white uppercase sans-serif.
-
-2. CIRCULAR ELEMENT:
-   Add a large light/off-white circular graphic element on the CENTER-LEFT side.
-   Inside the circle: show a BLACK AND WHITE cropped version of the subject (e.g., a detail or close-up).
-   IMPORTANT: The circle must overlap slightly with the main subject area.
-
-3. CENTER DIVIDER:
-   Add a thin vertical off-white/light line exactly in the center of the poster from top to bottom.
-   Rules: perfectly straight, minimal, clean.
-   The line should be interrupted/split by the main title text.
+1. DIAGONAL GEOMETRIC BAND:
+   Add a large semi-transparent diagonal band crossing the composition.
+   Direction: From absolute TOP-LEFT to BOTTOM-RIGHT.
+   Effect: Partially overlay the main subject to create a modern graphic design depth effect.
+   Color: use ${colorPrincipale} (Primary Color).
 
 ${textSections}
 
 STYLE:
-Modern editorial poster. Minimal graphic design. High contrast. Clean advertising layout. Professional photography look.
+Geometric composition. Modern branding poster. Minimalist layout. Professional studio lighting. Ultra sharp. High visual hierarchy.
 
 IMPORTANT RULES:
-- Use the DUO-TONE background (vibrant top, dark bottom).
-- Place the label box in the TOP-LEFT.
-- Place the subject in the TOP-RIGHT.
-- The circular element MUST contain the black and white version of the subject.
-- The vertical divider line must be centered and split by the title.
-- Keep the title in the LOWER MIDDLE section.
+- The background MUST remain clean white.
+- The diagonal band MUST be semi-transparent and overlay the subject.
+- Keep the composition balanced and professional.
+- No other decorative elements or clutter.
 
 OUTPUT:
-High resolution. Professional marketing poster. Social media ready. Print ready.`;
+High resolution. Professional publication-ready marketing poster.`;
 
     return finalPrompt;
   }
@@ -2671,6 +2732,17 @@ COMPOSITION ARCHITECTURE:
             customSubject || params.job || 'A premium subject',
             mainWord,
             scriptPhrase,
+          );
+        } else if (model.toLowerCase().includes('diagonal split')) {
+          this.logger.log(
+            `[processFlyerBackground] Building DIAGONAL_SPLIT prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+          );
+          magazineStyleDirective = this.buildDiagonalSplitPrompt(
+            customSubject || params.job || 'A premium subject',
+            params.mainWord || params.modelName || model || '',
+            params.scriptPhrase || params.subtitle || '',
+            colorPrincipale,
+            colorSecondaire,
           );
         } else if (architecture.layoutType === 'TYPE_EDITORIAL_GRID') {
           magazineStyleDirective = this.buildEditorialGridPrompt(

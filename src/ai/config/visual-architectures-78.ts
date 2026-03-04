@@ -149,20 +149,39 @@ export const EDITORIAL_GRID_ARCH: VisualArchitecture = {
 export const FOCUS_CIRCLE_ARCH: VisualArchitecture = {
   name: 'Focus Circle',
   layoutType: 'TYPE_FOCUS_CIRCLE',
-  colorPalette: 'Primary/Secondary',
+  colorPalette: 'Primary/Overlaid',
   rules: {
     subject:
-      'The subject must appear in the TOP RIGHT of the poster in full color. It must remain fully visible and NOT be cut in half.',
+      'ONE single photograph for the entire composition. No second image. High-quality professional photography.',
     background:
-      'DUO-TONE BACKGROUND: Two distinct zones. The top half uses a vibrant texture of the PRIMARY COLOR. The bottom half uses a deeper/darker shade of the same hue family or SECONDARY COLOR. Subtle poster grain throughout.',
+      'The background is the full photograph with a uniform color overlay using the PRIMARY COLOR. The overlay tints the entire image evenly.',
     title:
-      'MAIN TITLE: Large bold simple sans-serif text (e.g., "NEW EPISODE") placed in the LOWER MIDDLE section, exactly on the vertical axis. Color: Off-white/Cream or SECONDARY COLOR.',
+      'MAIN TITLE: Very large bold modern sans-serif in the exact center. Color: White or high contrast.',
     subtitle: 'None.',
     infoBlock: 'None.',
-    upperZone:
-      'TOP-LEFT ACCENT: A dark rectangular box containing a short category label (e.g., "PODCAST") in bold white uppercase text.',
+    upperZone: 'None.',
     constraints:
-      'LAYOUT: Vertical/Poster. CIRCULAR ELEMENT: A large white-ish circular graphic on the CENTER-LEFT. Inside the circle: show a BLACK AND WHITE cropped version of the subject (e.g., a microphone or detail). The circle MUST overlap with the subject area slightly. CENTER DIVIDER: A thin vertical white line exactly in the center, interrupted by the main title.',
+      'CIRCULAR DETAIL: A large circle in the TOP LEFT corner containing a BLACK AND WHITE zoomed crop of the same original photograph. It must be a detail of the photo, not a duplicate. CENTER DIVIDER: A thin vertical line exactly in the center of the poster.',
+  },
+};
+
+export const DIAGONAL_SPLIT_ARCH: VisualArchitecture = {
+  name: 'Diagonal Split',
+  layoutType: 'TYPE_DIAGONAL_SPLIT',
+  colorPalette: 'Clean/Modern',
+  rules: {
+    subject:
+      'SUBJECT: [SUBJECT] placed slightly off-center with strong lighting and professional photography style. Partially overlaid by the diagonal band.',
+    background:
+      'BACKGROUND: Clean white studio background. Minimalist advertising poster look.',
+    title:
+      'RENDER TEXT - MAIN TITLE: Large bold headline in modern sans-serif typography: "[MAIN TITLE]".',
+    subtitle:
+      'RENDER TEXT - SUBTITLE: Smaller subtitle underneath: "[SUBTITLE]".',
+    infoBlock: 'None.',
+    upperZone: 'None.',
+    constraints:
+      'LAYOUT: A large semi-transparent diagonal geometric band crosses the composition from top-left to bottom-right with the color [COLOR]. Geometric composition, modern branding poster, minimalist layout, professional studio lighting, ultra sharp.',
   },
 };
 
@@ -175,6 +194,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   SIGNATURE_SPLASH: SIGNATURE_SPLASH_ARCH,
   EDITORIAL_GRID: EDITORIAL_GRID_ARCH,
   FOCUS_CIRCLE: FOCUS_CIRCLE_ARCH,
+  DIAGONAL_SPLIT: DIAGONAL_SPLIT_ARCH,
 };
 
 export function getVisualArchitecture(
