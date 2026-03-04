@@ -1018,17 +1018,19 @@ STYLE:
     }
 
     const finalPrompt = `
-CREATE A MODERN EDITORIAL POSTER USING ONE SINGLE PHOTOGRAPH.
+CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER USING ONE SINGLE PHOTOGRAPH.
 
 THE HERO IMAGE:
 - Use ONE high-resolution professional photograph of "${subject}".
 - The subject must be centered with excellent lighting.
+- WARDROBE & STYLING: The subject's clothing and accessories MUST be rendered in shades of ${colorPrincipale} or ${colorSecondaire}.
 - Full-frame professional photography, sharp focus, editorial quality.
 
 THE GRAPHIC LAYOUT:
-1. COLOR OVERLAY:
-   - Apply a subtle tinted overlay in ${colorPrincipale} at 30% opacity across the full image.
-   - This gives the image a unified ambient color cast, preserving realistic details.
+1. COLOR OVERLAY & BACKGROUND:
+   - Apply a unified color treatment to the entire scene.
+   - The background and overall ambient lighting MUST use shades and tints of ${colorPrincipale} ONLY.
+   - This creates a sophisticated monochromatic atmosphere.
 
 2. CENTER DIVIDER:
    - A thin (2-3px) vertical line at the horizontal CENTER of the poster.
@@ -1039,9 +1041,9 @@ THE GRAPHIC LAYOUT:
 ${textSections}
    - Font family: Inter, Montserrat, or SF Pro (sans-serif).
    - All text within safe margins (15%).
-   - High contrast against the background.
+   - Text color MUST be ${colorSecondaire} or a very bright/light tint of ${colorPrincipale} for maximum legibility against the monochromatic background.
 
-STYLE: High-end luxury advertising poster. Minimalist Swiss design. Cinematic editorial. Publication-ready.
+STYLE: High-end luxury advertising poster. Minimalist Swiss design. Monochromatic editorial aesthetic. Publication-ready.
 IMPORTANT: Generate ONE complete coherent image. NO duplication of subject. NO circular crops. The B&W circle treatment will be applied in post-production.
 `;
 
@@ -3011,6 +3013,7 @@ COMPOSITION ARCHITECTURE:
         'TYPE_EDITORIAL_COVER',
         'TYPE_IMPACT_COMMERCIAL',
         'TYPE_EDITORIAL',
+        'TYPE_FOCUS_CIRCLE',
       ].includes(architecture?.layoutType);
 
       const flyerTextRule = isSpecializedArch

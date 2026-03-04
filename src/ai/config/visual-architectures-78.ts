@@ -152,16 +152,16 @@ export const FOCUS_CIRCLE_ARCH: VisualArchitecture = {
   colorPalette: 'Primary/Overlaid',
   rules: {
     subject:
-      'ONE single photograph for the entire composition. No second image. High-quality professional photography.',
+      'ONE single photograph for the entire composition. SUBJECT STYLE: Wardrobe and accessories MUST be in shades of the PRIMARY or SECONDARY color. High-quality professional photography.',
     background:
-      'The background is the full photograph with a uniform color overlay using the PRIMARY COLOR. The overlay tints the entire image evenly.',
+      'MONOCHROMATIC BACKDROP: The background MUST use shades of the PRIMARY COLOR only. Clean minimalist aesthetic.',
     title:
       'MAIN TITLE: Very large bold modern sans-serif in the exact center. Color: White or high contrast.',
     subtitle: 'None.',
     infoBlock: 'None.',
     upperZone: 'None.',
     constraints:
-      'CIRCULAR DETAIL: A large circle in the TOP LEFT corner containing a BLACK AND WHITE zoomed crop of the same original photograph. It must be a detail of the photo, not a duplicate. CENTER DIVIDER: A thin vertical line exactly in the center of the poster.',
+      'LAYOUT: Strict minimalist composition. YOU MUST RENDER ALL TEXT BLOCKS DIRECTLY ON THE IMAGE. Professional typography integration. No logos. Zero AI artifacts.',
   },
 };
 
