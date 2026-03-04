@@ -1018,7 +1018,7 @@ private buildFocusCirclePrompt(
   }
 
   const badgeSection = brandingName
-    ? `- TAG/BADGE: "${brandingName.toUpperCase()}" rendered in a small dark rectangular box positioned in the TOP-LEFT corner, slightly closer to the top edge (around 5% from top, 5% from left).`
+    ? `- TAG/BADGE: "${brandingName.toUpperCase()}" rendered in a small dark rectangular box positioned in the TOP-LEFT corner, closer to the top edge.`
     : '';
 
   const finalPrompt = `
@@ -1038,9 +1038,9 @@ THE GRAPHIC LAYOUT:
    ${badgeSection}
    - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half.
    - INFO LINE: "${infoLine}" in elegant sans-serif, either above or below the main title in the bottom half.
-   - TYPOGRAPHY RULES: ABSOLUTELY NO highlights, NO strokes, NO boxes around text (except for the badge if applicable). Text must be clean and minimal.
+   - TYPOGRAPHY RULES: ABSOLUTELY NO highlights, NO strokes, NO boxes around text (except for the badge if applicable). Text must be clean and minimal. This applies to the MAIN TITLE, SUBTITLE, and INFO LINE.
    - TEXT CONTENT: ONLY render the text provided. DO NOT write the subject description ("${subject}") as text on the image.
-   - NO LINES, NO STROKES.
+   - NO LINE, NO STROKES.
 ${textSections}
 
 2. VERTICAL CENTER LINE:
