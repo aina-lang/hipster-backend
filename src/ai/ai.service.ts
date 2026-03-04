@@ -1036,9 +1036,9 @@ THE GRAPHIC LAYOUT:
 1. TEXT PLACEMENT & STYLING (ULTRA-STRICT):
    - MAIN TITLE: "${titleText.toUpperCase()}" rendered in massive bold sans-serif, perfectly CENTERED in the BOTTOM half.
    ${badgeSection}
-   - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half.
+   - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half. ABSOLUTELY NO underline.
    - INFO LINE: "${infoLine}" in elegant sans-serif, either above or below the main title in the bottom half.
-   - TYPOGRAPHY RULES: ABSOLUTELY NO highlights, NO strokes, NO boxes around text (except for the badge if applicable). Text must be clean and minimal. This applies to the MAIN TITLE, SUBTITLE, and INFO LINE.
+   - TYPOGRAPHY RULES: ABSOLUTELY NO underlines, NO highlights, NO strokes, NO boxes around text (except for the badge if applicable). Text must be clean and minimal. This applies to the MAIN TITLE and INFO LINE.
    - TEXT CONTENT: ONLY render the text provided. DO NOT write the subject description ("${subject}") as text on the image.
    - NO LINE, NO STROKES.
 ${textSections}
