@@ -152,17 +152,18 @@ export const FOCUS_CIRCLE_ARCH: VisualArchitecture = {
   colorPalette: 'Primary/Overlaid',
   rules: {
     subject:
-      'ONE single photograph for the entire composition. SUBJECT STYLE: Wardrobe and accessories MUST be in shades of the PRIMARY or SECONDARY color. High-quality professional photography.',
+      'RICHE MONOCHROMATIC SUBJECT: Primary subject positioned in the TOP-RIGHT quadrant. Subject must be cropped/cut at the horizontal center line. Rich monochromatic styling in shades of the PRIMARY COLOR.',
     background:
-      'MONOCHROMATIC BACKDROP: The background MUST use shades of the PRIMARY COLOR only. Clean minimalist aesthetic.',
+      'HORIZONTAL SPLIT: Layout divided into two equal horizontal halves. Entire scene follows a rich monochromatic atmosphere with cinematic lighting.',
     title:
-      'MAIN TITLE: Very large bold modern sans-serif at the BOTTOM. Color: White or high contrast.',
+      'MAIN TITLE: Large bold sans-serif perfectly centered in the BOTTOM half. Color: White or high contrast.',
     subtitle:
-      'SUBTITLE: Elegant sans-serif positioned directly above the main title.',
-    infoBlock: 'None.',
+      'SUBTITLE: Modern sans-serif positioned in the bottom half near the main title.',
+    infoBlock:
+      'TAG/BADGE: Small title/job in a dark rectangular box in the top-left corner.',
     upperZone: 'None.',
     constraints:
-      'LAYOUT: Strict minimalist composition. YOU MUST RENDER ALL TEXT BLOCKS DIRECTLY ON THE IMAGE. Professional typography integration. No logos. Zero AI artifacts.',
+      'LAYOUT: Two-part horizontal split with vertical center line. Subject in top-right. NO circular crops by AI (applied in post-processing). High-end editorial aesthetic.',
   },
 };
 

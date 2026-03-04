@@ -1018,33 +1018,25 @@ STYLE:
     }
 
     const finalPrompt = `
-CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER USING ONE SINGLE PHOTOGRAPH.
+CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER WITH A TWO-PART HORIZONTAL SPLIT.
 
-THE HERO IMAGE:
-- Use ONE high-resolution professional photograph of "${subject}".
-- The subject must be centered with excellent lighting.
-- WARDROBE & STYLING: The subject's clothing and accessories MUST be rendered in shades of ${colorPrincipale} or ${colorSecondaire}.
-- Full-frame professional photography, sharp focus, editorial quality.
+THE HERO IMAGE & COMPOSITION:
+- VISUAL STRUCTURE: Divide the layout into two equal horizontal halves (TOP and BOTTOM).
+- THE SUBJECT: Position the primary subject ("${subject}") strictly in the TOP-RIGHT quadrant.
+- CROPPING: The subject must appear "cut" or cropped by the horizontal center divider line. Only the upper torso/head/shoulder should be visible in the top half.
+- COLOR PALETTE: Entire image must use a RICH MONOCHROMATIC palette based on ${colorPrincipale}. No flat overlays — use cinematic lighting with deep shadows and vibrant highlights in shades of ${colorPrincipale} and ${colorSecondaire}.
 
 THE GRAPHIC LAYOUT:
-1. COLOR OVERLAY & BACKGROUND:
-   - Apply a unified color treatment to the entire scene.
-   - The background and overall ambient lighting MUST use shades and tints of ${colorPrincipale} ONLY.
-   - This creates a sophisticated monochromatic atmosphere.
+1. TEXT PLACEMENT:
+   - MAIN TITLE: "${titleText.toUpperCase()}" rendered in massive bold sans-serif, perfectly CENTERED in the BOTTOM half.
+   - TAG/BADGE: "${job.toUpperCase() || 'PREMIUM'}" rendered in a small dark rectangular box in the TOP-LEFT corner.
+   - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half.
 
-2. CENTER DIVIDER:
-   - A thin (2-3px) vertical line at the horizontal CENTER of the poster.
-   - Color: ${colorPrincipale}.
-   - Runs from top to bottom edge.
+2. VERTICAL CENTER LINE:
+   - A thin 2px vertical divider running from top to bottom center.
 
-3. TEXT & TYPOGRAPHY:
-${textSections}
-   - Font family: Inter, Montserrat, or SF Pro (sans-serif).
-   - All text within safe margins (15%).
-   - Text color MUST be ${colorSecondaire} or a very bright/light tint of ${colorPrincipale} for maximum legibility against the monochromatic background.
-
-STYLE: High-end luxury advertising poster. Minimalist Swiss design. Monochromatic editorial aesthetic. Publication-ready.
-IMPORTANT: Generate ONE complete coherent image. NO duplication of subject. NO circular crops. The B&W circle treatment will be applied in post-production.
+STYLE: High-end luxury podcast/magazine advertising style. Swiss design influence. Clean and powerful visual hierarchy.
+IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breathable for a circular lens overlay. DO NOT generate the circle or the black and white effect; this will be applied in post-production.
 `;
 
     return finalPrompt;
@@ -1069,13 +1061,13 @@ IMPORTANT: Generate ONE complete coherent image. NO duplication of subject. NO c
     const W = meta.width || 1024;
     const H = meta.height || 1536;
 
-    // Circle parameters: Adjust coordinates to better overlap with centered subjects
-    // New: Diameter = 45% of width (larger), cx and cy shifted more towards center
-    const diameter = Math.round(W * 0.45);
+    // Circle parameters: Adjust coordinates based on the new "Top-Left Lens" layout
+    // Diameter = 42% of width.
+    const diameter = Math.round(W * 0.42);
     const radius = Math.floor(diameter / 2);
-    // Center of circle: shifted more to center-left (approx 40% from left, 35% from top)
-    const cx = Math.round(W * 0.18) + radius;
-    const cy = Math.round(H * 0.15) + radius;
+    // Center of circle: positioned to overlap the center vertical line on the left side (approx 25% from left, 30% from top)
+    const cx = Math.round(W * 0.08) + radius;
+    const cy = Math.round(H * 0.12) + radius;
 
     // 1. Create a full B&W version of the image
     const bwBuffer = await sharp(inputBuffer)
@@ -1135,14 +1127,16 @@ IMPORTANT: Generate ONE complete coherent image. NO duplication of subject. NO c
 </svg>`;
     const borderBuffer = Buffer.from(borderSvg);
 
-    // 6. Add a thin center vertical line in primary color
+    // 6. Add thin center lines (Vertical AND Horizontal) in primary color
     const centerX = Math.floor(W / 2);
+    const centerY = Math.floor(H * 0.5); // Exact middle horizontal split
     const lineSvg = `<svg width="${W}" height="${H}">
-  <line x1="${centerX}" y1="0" x2="${centerX}" y2="${H}" stroke="${colorPrincipale}" stroke-width="2" opacity="0.8"/>
+  <line x1="${centerX}" y1="0" x2="${centerX}" y2="${H}" stroke="${colorPrincipale}" stroke-width="2" opacity="0.6"/>
+  <line x1="0" y1="${centerY}" x2="${W}" y2="${centerY}" stroke="${colorPrincipale}" stroke-width="2" opacity="0.6"/>
 </svg>`;
     const lineBuffer = Buffer.from(lineSvg);
 
-    // 7. Final composite: withCircle + border ring + center line -> JPEG output
+    // 7. Final composite: withCircle + border ring + center lines -> JPEG output
     const finalBuffer = await sharp(withCircle)
       .composite([
         { input: borderBuffer, blend: 'over', top: 0, left: 0 },
