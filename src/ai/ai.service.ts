@@ -976,316 +976,107 @@ STYLE:
    * 🎨 BUILD FOCUS CIRCLE PROMPT FOR DALL-E
    * Modern editorial layout with symmetrical split and circular focus zone.
    */
-  private buildFocusCirclePrompt(
-    subject: string = 'modern subject',
-    titleText: string = '',
-    subtitleText: string = '',
-    infoLine: string = '',
-    colorPrincipale: string = '#FF9800',
-    colorSecondaire: string = '#FFFFFF',
-    job: string = '',
-  ): string {
-    let textSections = '';
+private buildFocusCirclePrompt(
+  subject: string = 'modern subject',
+  titleText: string = '',
+  subtitleText: string = '',
+  infoLine: string = '',
+  colorPrincipale: string = '#FF9800',
+  colorSecondaire: string = '#FFFFFF',
+  job: string = '',
+): string {
+  let textSections = '';
 
-    if (titleText) {
-      textSections += `
+  if (titleText) {
+    textSections += `
 5. MAIN TITLE:
    Text: "${titleText}"
    Position: EXACT CENTER of the poster.
    Typography: Very large bold modern sans-serif. Centered.
    Color: ${colorSecondaire} (secondary color).
 `;
-    }
+  }
 
-    if (subtitleText) {
-      textSections += `
+  if (subtitleText) {
+    textSections += `
 6. SUBTITLE:
    Text: "${subtitleText}"
    Position: Directly below the main title.
    Typography: Modern clean sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
 `;
-    }
+  }
 
-    if (infoLine) {
-      textSections += `
+  if (infoLine) {
+    textSections += `
 7. INFO LINE:
    Text: "${infoLine}"
    Position: Bottom edge, centered.
    Typography: Minimalist small sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
 `;
-    }
+  }
 
-    const finalPrompt = `Create a modern editorial promotional poster using ONE single photograph.
+  const finalPrompt = `
+Create a modern editorial promotional poster using ONE single photograph.
 
 FORMAT:
-Vertical poster layout (Instagram post or A4 flyer).
-Clean professional advertising design.
+Vertical poster layout (Instagram post or A4 flyer). Clean professional advertising design.
 
 BACKGROUND / COLOR:
 Use the same single photograph "${subject}" across the entire poster.
 Apply a uniform colored overlay across the WHOLE image (NEVER split / NEVER half-and-half).
-The overlay color must be ${colorPrincipale} (primary color) at 40% opacity.
-The overlay must tint the entire image evenly and professionally.
+Overlay color: ${colorPrincipale} (primary color) at 40% opacity.
 Add a subtle grain/noise texture at 8% opacity over the whole canvas.
 
 CIRCULAR DETAIL (top-left):
-Add a large circle in the TOP LEFT corner. Diameter = 38% of poster width. Position: 10% from left, 12% from top.
-Inside this circle: show a ZOOMED CROP (zoom x1.5) from the SAME photograph used in the background.
-IMPORTANT rules for the circle:
-- The circle must use the EXACT same original image — same source.
-- The circle must NOT generate a new image or new subject.
-- Convert the image inside the circle to BLACK AND WHITE (desaturate + slight contrast boost).
+Add a large **circle shape** in the TOP LEFT corner.
+Diameter = 38% of poster width.
+Position: 10% from left, 12% from top.
+
+Inside this circle:
+- Apply a **black-and-white filter** directly on the SAME underlying area of the main photograph.
+- NO zoom, NO crop, NO duplication.
+- The circle is a MASK that converts only that region to grayscale with slight contrast boost.
+Important: The pixels inside the circle must perfectly align with the main image behind it (no shift).
 
 CENTER DIVIDER:
 Add a thin vertical line exactly at the horizontal center of the poster, running from top to bottom.
-Rules: perfectly straight, 3px width, color = ${colorPrincipale} (primary color), always visible over the overlay.
+Width: 3px.
+Color: ${colorPrincipale} (primary color).
+Always visible over the overlay.
 
 ${textSections}
 
 TYPOGRAPHY:
-- All text uses font family: Inter, Montserrat, or SF Pro (sans-serif bold/regular).
-- Title: large bold, color = ${colorSecondaire} (secondary color). Centered.
+- Font family: Inter, Montserrat, or SF Pro (sans-serif bold/regular).
+- Title: large bold, color = ${colorSecondaire}.
 - Subtitle: medium, color = ${colorSecondaire} at 85% opacity.
-- Info line at bottom center: small, color = ${colorSecondaire} at 85% opacity.
-- Max 3 lines of text total. No paragraphs.
+- Info line: small, color = ${colorSecondaire} at 85% opacity.
+- Max 3 lines of text total.
 
 STYLE:
-Modern editorial poster. Graphic design layout. Clean advertising style. Professional photography look. Minimal composition. Professional photography. High production value.
+Modern editorial poster.
+Graphic design layout.
+Clean advertising style.
+Professional photography look.
+Minimal composition.
+High production value.
 
 ABSOLUTE RULES:
-- ONE single photograph only. Do NOT generate a second or alternate image.
-- The circle must be a crop of the original image, in black and white, in the top-left corner.
-- Background overlay is UNIFIED (full canvas), never half-and-half or split.
+- ONE single photograph only.
+- The circle is a grayscale filter mask, NOT a secondary image.
+- Background overlay is unified over the whole canvas.
 - All text within safe margins (60px from edges).
 - The center vertical line uses ${colorPrincipale} (primary color).
 
 OUTPUT:
-High resolution promotional poster. Social media ready. Print ready.`;
+High resolution promotional poster. Social media ready. Print ready.
+`;
 
-    return finalPrompt;
-  }
+  return finalPrompt;
+}
 
-  /**
-   * 🖼️ COMPOSITE FOCUS CIRCLE POSTER (100% Sharp, NO AI for layout)
-   * Builds the final poster programmatically:
-   *   - Background: baseImage cover + blur + primaryColor overlay + grain
-   *   - Circle top-left: B&W zoomed crop of baseImage
-   *   - Vertical center line: primaryColor
-   *   - Text: SVG layer using secondaryColor
-   */
-  private async compositeFocusCircle(
-    baseImage: Buffer,
-    opts: {
-      title?: string;
-      subtitle?: string;
-      infoLine?: string;
-      primaryColor?: string;
-      secondaryColor?: string;
-      width?: number;
-      height?: number;
-    },
-  ): Promise<Buffer> {
-    const W = opts.width || 1080;
-    const H = opts.height || 1350;
-    const primary = opts.primaryColor || '#17A2B8';
-    const secondary = opts.secondaryColor || '#FFFFFF';
-    const MARGIN = 60;
-
-    // ---------- Parse HEX → RGB for overlay ----------
-    const hexToRgb = (hex: string) => {
-      const clean = hex.replace('#', '');
-      return {
-        r: parseInt(clean.substring(0, 2), 16),
-        g: parseInt(clean.substring(2, 4), 16),
-        b: parseInt(clean.substring(4, 6), 16),
-      };
-    };
-    const primaryRgb = hexToRgb(primary);
-
-    // ─────────────────────────────────────────────────
-    // 1. Background: baseImage cover + blur
-    // ─────────────────────────────────────────────────
-    const bgBlurred = await sharp(baseImage)
-      .resize(W, H, { fit: 'cover', position: 'centre' })
-      .blur(8)
-      .toBuffer();
-
-    // 2. Overlay: primaryColor at 40% opacity (flat PNG)
-    const overlayBuf = await sharp({
-      create: {
-        width: W,
-        height: H,
-        channels: 4,
-        background: {
-          r: primaryRgb.r,
-          g: primaryRgb.g,
-          b: primaryRgb.b,
-          alpha: 0.4,
-        },
-      },
-    })
-      .png()
-      .toBuffer();
-
-    // 3. Grain: subtle noise at 8% opacity
-    // We generate a random pixel noise buffer via raw RGBA
-    const noiseData = Buffer.alloc(W * H * 4);
-    for (let i = 0; i < W * H; i++) {
-      const v = Math.floor(Math.random() * 255);
-      noiseData[i * 4] = v;
-      noiseData[i * 4 + 1] = v;
-      noiseData[i * 4 + 2] = v;
-      noiseData[i * 4 + 3] = Math.floor(0.08 * 255); // 8% opacity
-    }
-    const grainBuf = await sharp(noiseData, {
-      raw: { width: W, height: H, channels: 4 },
-    })
-      .png()
-      .toBuffer();
-
-    // Merge: bg + overlay + grain
-    let canvas = await sharp(bgBlurred)
-      .composite([
-        { input: overlayBuf, blend: 'over' },
-        { input: grainBuf, blend: 'over' },
-      ])
-      .png()
-      .toBuffer();
-
-    // ─────────────────────────────────────────────────
-    // 4. Circle top-left: B&W zoomed crop of baseImage
-    // ─────────────────────────────────────────────────
-    const circleDiam = Math.round(0.38 * W);
-    const circleX = Math.round(0.1 * W);
-    const circleY = Math.round(0.12 * H);
-    const zoom = 1.5;
-    const cropW = Math.round(circleDiam / zoom);
-    const cropH = Math.round(circleDiam / zoom);
-
-    // Resize source to full W×H to get proper crop coordinates
-    const srcMeta = await sharp(baseImage)
-      .resize(W, H, { fit: 'cover', position: 'centre' })
-      .toBuffer();
-    const halfW = Math.round(W / 2);
-    const halfH = Math.round(H / 2);
-    const cropLeft = Math.max(0, halfW - Math.round(cropW / 2));
-    const cropTop = Math.max(0, halfH - Math.round(cropH / 2));
-
-    // Extract crop → resize to circle diameter → grayscale → clip to circle mask
-    const circleContentBuf = await sharp(srcMeta)
-      .extract({ left: cropLeft, top: cropTop, width: cropW, height: cropH })
-      .resize(circleDiam, circleDiam, { fit: 'fill' })
-      .grayscale()
-      .modulate({ brightness: 1.05, saturation: 0 })
-      .png()
-      .toBuffer();
-
-    // Create circular SVG mask
-    const circleMaskSvg = Buffer.from(
-      `<svg width="${circleDiam}" height="${circleDiam}">
-         <circle cx="${circleDiam / 2}" cy="${circleDiam / 2}" r="${circleDiam / 2}" fill="white"/>
-       </svg>`,
-    );
-
-    // Apply mask to the circle content
-    const circleClipped = await sharp(circleContentBuf)
-      .composite([{ input: circleMaskSvg, blend: 'dest-in' }])
-      .png()
-      .toBuffer();
-
-    // Add the circle to canvas
-    canvas = await sharp(canvas)
-      .composite([{ input: circleClipped, left: circleX, top: circleY }])
-      .png()
-      .toBuffer();
-
-    // ─────────────────────────────────────────────────
-    // 5. Center vertical line in primaryColor
-    // ─────────────────────────────────────────────────
-    const lineX = Math.round(W / 2);
-    const lineY1 = Math.round(0.08 * H);
-    const lineY2 = Math.round(0.92 * H);
-    const lineWidth = 3;
-
-    const lineSvg = Buffer.from(
-      `<svg width="${W}" height="${H}">
-         <line x1="${lineX}" y1="${lineY1}" x2="${lineX}" y2="${lineY2}"
-               stroke="${primary}" stroke-width="${lineWidth}" stroke-linecap="round"/>
-       </svg>`,
-    );
-    canvas = await sharp(canvas)
-      .composite([{ input: lineSvg, blend: 'over' }])
-      .png()
-      .toBuffer();
-
-    // ─────────────────────────────────────────────────
-    // 6. Text layer (SVG) in secondaryColor
-    // ─────────────────────────────────────────────────
-    const textParts: string[] = [];
-    const safe = MARGIN;
-
-    // Determine vertical space: title sits around 62% of H, sub below, info at bottom
-    if (opts.title) {
-      const titleFontSize = Math.round(
-        Math.min(150, Math.max(60, (W / opts.title.length) * 1.6)),
-      );
-      const titleY = Math.round(H * 0.62);
-      textParts.push(
-        `<text x="${W / 2}" y="${titleY}"
-              font-family="Inter, Montserrat, Arial, sans-serif"
-              font-weight="700"
-              font-size="${titleFontSize}"
-              fill="${secondary}"
-              text-anchor="middle"
-              dominant-baseline="middle">${opts.title}</text>`,
-      );
-
-      if (opts.subtitle) {
-        const subY = titleY + titleFontSize + 16;
-        textParts.push(
-          `<text x="${W / 2}" y="${subY}"
-                font-family="Inter, Montserrat, Arial, sans-serif"
-                font-weight="400"
-                font-size="40"
-                fill="${secondary}"
-                fill-opacity="0.85"
-                text-anchor="middle">${opts.subtitle}</text>`,
-        );
-      }
-    }
-
-    if (opts.infoLine) {
-      const infoY = H - safe - 10;
-      textParts.push(
-        `<text x="${W / 2}" y="${infoY}"
-              font-family="Inter, Montserrat, Arial, sans-serif"
-              font-weight="400"
-              font-size="30"
-              fill="${secondary}"
-              fill-opacity="0.85"
-              text-anchor="middle">${opts.infoLine}</text>`,
-      );
-    }
-
-    if (textParts.length > 0) {
-      const textSvg = Buffer.from(
-        `<svg width="${W}" height="${H}">${textParts.join('\n')}</svg>`,
-      );
-      canvas = await sharp(canvas)
-        .composite([{ input: textSvg, blend: 'over' }])
-        .png()
-        .toBuffer();
-    }
-
-    // ─────────────────────────────────────────────────
-    // QA: ensure output is exactly W×H
-    // ─────────────────────────────────────────────────
-    canvas = await sharp(canvas).resize(W, H, { fit: 'fill' }).png().toBuffer();
-
-    return canvas;
-  }
 
   /**
    * 🎨 BUILD DIAGONAL SPLIT PROMPT FOR DALL-E
@@ -3187,46 +2978,7 @@ OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. N
       let finalBuffer: Buffer;
       const finalSize = '1024x1536';
 
-      const isFocusCircle = model.toLowerCase().includes('focus circle');
-
-      if (isFocusCircle && imageBuffer) {
-        // ─── FOCUS CIRCLE: 100% CODE LAYOUT (no AI for layout) ───
-        this.logger.log(
-          `[processFlyerBackground] FOCUS CIRCLE (upload mode) — using compositeFocusCircle. Gen: ${generationId}`,
-        );
-        finalBuffer = await this.compositeFocusCircle(imageBuffer, {
-          title: params.mainWord || params.modelName || 'NOUVEAU',
-          subtitle: params.scriptPhrase || params.subtitle || undefined,
-          infoLine: params.infoLine || params.infoBlock || undefined,
-          primaryColor: params.colorPrincipale || brandingColor || '#17A2B8',
-          secondaryColor: params.colorSecondaire || '#FFFFFF',
-          width: 1080,
-          height: 1350,
-        });
-      } else if (isFocusCircle && !imageBuffer) {
-        // ─── FOCUS CIRCLE: generate "Photo only" base first, then compose ───
-        this.logger.log(
-          `[processFlyerBackground] FOCUS CIRCLE (generate mode) — generating base photo then compositing. Gen: ${generationId}`,
-        );
-        const photoOnlyPrompt = `Generate ONE single realistic professional photo of: ${params.subject || params.userQuery || params.job || 'modern professional subject'}.
-Photorealistic, natural lighting, sharp details.
-No text, no typography, no poster, no graphic layout, no frames, no circles, no split, no borders, no watermark.
-Single subject only. High resolution.`;
-        finalBuffer = await this.callOpenAiToolImage(photoOnlyPrompt, {
-          size: finalSize,
-          quality: 'medium',
-        });
-        // Then apply the code composite
-        finalBuffer = await this.compositeFocusCircle(finalBuffer, {
-          title: params.mainWord || params.modelName || 'NOUVEAU',
-          subtitle: params.scriptPhrase || params.subtitle || undefined,
-          infoLine: params.infoLine || params.infoBlock || undefined,
-          primaryColor: params.colorPrincipale || brandingColor || '#17A2B8',
-          secondaryColor: params.colorSecondaire || '#FFFFFF',
-          width: 1080,
-          height: 1350,
-        });
-      } else if (imageBuffer) {
+      if (imageBuffer) {
         this.logger.log(
           `[processFlyerBackground] Strategy: Image Edit with FLYER prompt. Size: ${finalSize}`,
         );
