@@ -976,110 +976,82 @@ STYLE:
    * 🎨 BUILD FOCUS CIRCLE PROMPT FOR DALL-E
    * Modern editorial layout with symmetrical split and circular focus zone.
    */
-private buildFocusCirclePrompt(
-  subject: string = 'modern subject',
-  titleText: string = '',
-  subtitleText: string = '',
-  infoLine: string = '',
-  colorPrincipale: string = '#FF9800',
-  colorSecondaire: string = '#FFFFFF',
-  job: string = '',
-): string {
-  let textSections = '';
+  private buildFocusCirclePrompt(
+    subject: string = 'modern subject',
+    titleText: string = '',
+    subtitleText: string = '',
+    infoLine: string = '',
+    colorPrincipale: string = '#FF9800',
+    colorSecondaire: string = '#FFFFFF',
+    job: string = '',
+  ): string {
+    let textSections = '';
 
-  if (titleText) {
-    textSections += `
+    if (titleText) {
+      textSections += `
 5. MAIN TITLE:
    Text: "${titleText}"
    Position: EXACT CENTER of the poster.
-   Typography: Very large bold modern sans-serif. Centered.
+   Typography: Very large bold modern sans-serif.
    Color: ${colorSecondaire}.
 `;
-  }
+    }
 
-  if (subtitleText) {
-    textSections += `
+    if (subtitleText) {
+      textSections += `
 6. SUBTITLE:
    Text: "${subtitleText}"
    Position: Directly below the main title.
-   Typography: Modern clean sans-serif.
+   Typography: Medium sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
 `;
-  }
+    }
 
-  if (infoLine) {
-    textSections += `
+    if (infoLine) {
+      textSections += `
 7. INFO LINE:
    Text: "${infoLine}"
    Position: Bottom center.
    Typography: Minimalist small sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
 `;
-  }
+    }
 
-  const finalPrompt = `
-Create a modern editorial promotional poster using ONE single color photograph.
+    const finalPrompt = `
+CREATE A MODERN EDITORIAL POSTER USING ONE SINGLE PHOTOGRAPH.
 
-FORMAT:
-Vertical poster (Instagram post or A4 flyer). Clean modern advertising layout.
+THE HERO IMAGE:
+- Use ONE high-resolution professional photograph of "${subject}".
+- The subject must be centered.
 
-BACKGROUND:
-Use the photograph "${subject}" fully as the background.
-Apply a uniform color overlay in ${colorPrincipale} at ~40% opacity.
-The overlay must tint the entire background and subtly harmonize with the subject's clothing.
+THE GRAPHIC LAYOUT (100% INTEGRATED):
+1. UNIFIED BACKGROUND:
+   - Apply a full-canvas overlay in ${colorPrincipale} (primary color) at 40% opacity.
+   - Tint the entire photograph evenly.
 
-CLOTHING COLOR HARMONY:
-Color-grade the subject’s visible clothing to match the palette:
-- Dominant tint: ${colorPrincipale}
-- Secondary accent tint: ${colorSecondaire}
-Keep clothing natural but visually coherent with the theme.
+2. LOCALIZED FILTER CIRCLE (TOP-LEFT):
+   - In the TOP-LEFT corner (Position: 10% from left, 12% from top), add a large circular area (Diameter: 38% width).
+   - TECHNIQUE: This circle acts ONLY as a desaturation lens.
+   - MANDATORY: The photograph portion INSIDE the circle must be BLACK AND WHITE (desaturated).
+   - MANDATORY: The photograph portion OUTSIDE the circle remains in COLOR + overlay.
+   - NO DUPLICATION: Do not generate a second subject. No zoom. No crop.
+   - PERFECT CONTINUITY: The features of the subject (eye, shoulder, hair) must ALIGN PERFECTLY between the B&W circle and the color background. It is a single image with a local grayscale filter.
 
-FOCUS CIRCLE (top-left):
-Add a large circular MASK in the top-left corner.
-Diameter: 38% of poster width.
-Position: 10% from left, 12% from top.
+3. CENTER DIVIDER:
+   - Add a 3px perfectly straight vertical line at the horizontal center of the poster.
+   - Color: ${colorPrincipale}.
+   - Runs from top to bottom.
 
-Inside this circle:
-- Desaturate ONLY the area of the main photograph inside the circle.
-- NO zoom, NO crop, NO duplication.
-- The circle simply applies a grayscale filter to the exact region of the main image.
-- The rest of the image must remain fully in color.
-- The grayscale region must align perfectly with the underlying image (no shift).
-
-CENTER DIVIDER:
-Add a 3px vertical line at the exact center of the poster.
-Color: ${colorPrincipale}.
-Runs from top to bottom.
-
+4. TEXT & TYPOGRAPHY:
 ${textSections}
+   - Font family: Inter, Montserrat, or SF Pro (sans-serif).
+   - All text within safe margins.
 
-TYPOGRAPHY:
-- Font family: Inter, Montserrat, or SF Pro.
-- Title: bold, color ${colorSecondaire}.
-- Subtitle: ${colorSecondaire} at 85% opacity.
-- Info line: ${colorSecondaire} at 85% opacity.
-- Maximum of 3 text blocks.
-
-STYLE:
-Modern editorial poster.
-Clean graphic design.
-High-end photography.
-Minimal, balanced composition.
-
-ABSOLUTE RULES:
-- ONE single photograph only.
-- The circle is a grayscale mask, NOT another image.
-- Background overlay must be unified over the full canvas.
-- All text must stay within 60px safe margins.
-- Center vertical line uses ${colorPrincipale}.
-
-OUTPUT:
-High-resolution promotional poster. Social media and print ready.
+STYLE: High-end luxury advertising poster. Minimalist composition. Swiss design inspiration. Publication-ready.
 `;
 
-  return finalPrompt;
-}
-
+    return finalPrompt;
+  }
 
   /**
    * 🎨 BUILD DIAGONAL SPLIT PROMPT FOR DALL-E
