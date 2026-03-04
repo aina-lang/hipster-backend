@@ -1009,10 +1009,9 @@ SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
 ========================
 
 - The primary subject: "${subject}"
-- The subject must be positioned STRICTLY at the CENTER horizontally.
+- The subject must be positioned STRICTLY at the CENTER horizontally (X-axis only).
 - Only upper torso / shoulders / head visible.
 - The subject must appear visually cropped by the horizontal midpoint.
-- The subject MUST be centered horizontally on the X-axis.
 - Keep generous negative space around it.
 - DO NOT render the subject description as text on the image.
 
