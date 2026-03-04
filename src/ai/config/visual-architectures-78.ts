@@ -187,6 +187,27 @@ export const DIAGONAL_SPLIT_ARCH: VisualArchitecture = {
   },
 };
 
+export const DIAGONAL_SPLIT_DESIGN_ARCH: VisualArchitecture = {
+  name: 'Diagonal Split Design',
+  layoutType: 'TYPE_DIAGONAL_SPLIT_DESIGN',
+  colorPalette: 'Monochromatic',
+  rules: {
+    subject:
+      'RICHE MONOCHROMATIC SUBJECT: Primary subject positioned in the TOP-RIGHT quadrant. Subject must be cropped/cut at the horizontal center line. Rich monochromatic styling in shades of the PRIMARY COLOR. Cinematic lighting with deep shadows.',
+    background:
+      'HORIZONTAL SPLIT: Layout divided into two equal horizontal halves with subtle shade variation. Entire scene follows a rich monochromatic atmosphere with cinematic lighting. Circular lens overlay area positioned in TOP-LEFT quadrant (35-40% from left edge).',
+    title:
+      'MAIN TITLE: Large bold sans-serif centered in the BOTTOM half. Color: Secondary color. No underlines or decorations.',
+    subtitle:
+      'SUBTITLE: Modern sans-serif positioned in the bottom half. Color: Secondary color at 85% opacity.',
+    infoBlock:
+      'INFO LINE: Small minimalist sans-serif at the very bottom. Color: Secondary color at 75% opacity.',
+    upperZone: 'Circular lens overlay in TOP-LEFT area.',
+    constraints:
+      'LAYOUT: Two-part horizontal split with vertical center line running from top to 80-85% height. Subject in top-right. Circular lens overlay in top-left. Vertical line breaks around all typography elements. High-end editorial aesthetic with Swiss design influence.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
@@ -197,6 +218,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   EDITORIAL_GRID: EDITORIAL_GRID_ARCH,
   FOCUS_CIRCLE: FOCUS_CIRCLE_ARCH,
   DIAGONAL_SPLIT: DIAGONAL_SPLIT_ARCH,
+  DIAGONAL_SPLIT_DESIGN: DIAGONAL_SPLIT_DESIGN_ARCH,
 };
 
 export function getVisualArchitecture(
