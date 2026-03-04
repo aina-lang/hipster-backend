@@ -1077,12 +1077,14 @@ BRANDING BADGE:
 - A thin 2px vertical divider aligned at EXACT 50% width.
 - The line must run from TOP down to approximately 80-85% of the image height.
 - The line must STOP BEFORE the date/info line at the bottom (must not reach the date).
-- The line must run through empty space only.
-- It must NOT cross, touch, overlap, or pass behind any text.
-- The divider must BREAK around the text block.
-- Leave a clear safe margin around typography.
-- Minimum 40px clear space between the line and any text.
-- The line is purely decorative and must never act as a text separator.
+- CRITICAL: The vertical line must BREAK/JUMP around all text elements (Title, Subtitle, Info Line).
+- When the line encounters the MAIN TITLE, it must STOP, skip over the title entirely, then RESUME below it.
+- When the line encounters the SUBTITLE, it must STOP, skip over the subtitle entirely, then RESUME below it.
+- When the line encounters the INFO LINE/DATE, it must STOP and not continue further.
+- Create clear white space gaps around ALL typography so the line appears as multiple separate segments.
+- The line segments must be clearly separated by white space between each text element.
+- Minimum 40px clear space between the line segments and any text.
+- The line is purely decorative and must never touch or overlap typography.
 
 ========================
 5. STYLE DIRECTION
