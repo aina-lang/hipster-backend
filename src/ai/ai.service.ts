@@ -983,7 +983,7 @@ STYLE:
     infoLine: string = '',
     colorPrincipale: string = '#FF9800',
     colorSecondaire: string = '#FFFFFF',
-    job: string = '',
+    brandingName: string = '',
   ): string {
     let textSections = '';
 
@@ -1017,20 +1017,29 @@ STYLE:
 `;
     }
 
+    const badgeSection = brandingName
+      ? `- TAG/BADGE: "${brandingName.toUpperCase()}" rendered in a small dark rectangular box in the TOP-LEFT corner.`
+      : '';
+
     const finalPrompt = `
 CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER WITH A TWO-PART HORIZONTAL SPLIT.
 
 THE HERO IMAGE & COMPOSITION:
 - VISUAL STRUCTURE: Divide the layout into two equal horizontal halves (TOP and BOTTOM).
+- NO BORDERS: There must be ABSOLUTELY NO VISIBLE LINE, BORDER, OR STROKE between the top and bottom halves. The separation must be seamless and purely color-based.
+- SYMMETRIC COLORS: Both halves must use the EXACT SAME BASE COLOR (${colorPrincipale}), but with slightly different shades (e.g., the bottom half is slightly darker or different than the top to create a subtle split effect).
 - THE SUBJECT: Position the primary subject ("${subject}") strictly in the TOP-RIGHT quadrant.
 - CROPPING: The subject must appear "cut" or cropped by the horizontal center divider line. Only the upper torso/head/shoulder should be visible in the top half.
 - COLOR PALETTE: Entire image must use a RICH MONOCHROMATIC palette based on ${colorPrincipale}. No flat overlays — use cinematic lighting with deep shadows and vibrant highlights in shades of ${colorPrincipale} and ${colorSecondaire}.
 
 THE GRAPHIC LAYOUT:
-1. TEXT PLACEMENT:
+1. TEXT PLACEMENT & STYLING (ULTRA-STRICT):
    - MAIN TITLE: "${titleText.toUpperCase()}" rendered in massive bold sans-serif, perfectly CENTERED in the BOTTOM half.
-   - TAG/BADGE: "${job.toUpperCase() || 'PREMIUM'}" rendered in a small dark rectangular box in the TOP-LEFT corner.
+   ${badgeSection}
    - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half.
+   
+   - TYPOGRAPHY RULES: ABSOLUTELY NO underlines, NO highlights, NO strokes, NO boxes around text (except for the badge if applicable). Text must be clean and minimal.
+   - TEXT CONTENT: ONLY render the text provided. DO NOT write the subject description ("${subject}") as text on the image.
 
 2. VERTICAL CENTER LINE:
    - A thin 2px vertical divider running from top to bottom center.
@@ -1127,16 +1136,14 @@ IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breath
 </svg>`;
     const borderBuffer = Buffer.from(borderSvg);
 
-    // 6. Add thin center lines (Vertical AND Horizontal) in primary color
+    // 6. Add thin center line (Vertical ONLY) in primary color
     const centerX = Math.floor(W / 2);
-    const centerY = Math.floor(H * 0.5); // Exact middle horizontal split
     const lineSvg = `<svg width="${W}" height="${H}">
   <line x1="${centerX}" y1="0" x2="${centerX}" y2="${H}" stroke="${colorPrincipale}" stroke-width="2" opacity="0.6"/>
-  <line x1="0" y1="${centerY}" x2="${W}" y2="${centerY}" stroke="${colorPrincipale}" stroke-width="2" opacity="0.6"/>
 </svg>`;
     const lineBuffer = Buffer.from(lineSvg);
 
-    // 7. Final composite: withCircle + border ring + center lines -> JPEG output
+    // 7. Final composite: withCircle + border ring + center line -> JPEG output
     const finalBuffer = await sharp(withCircle)
       .composite([
         { input: borderBuffer, blend: 'over', top: 0, left: 0 },
@@ -2854,7 +2861,7 @@ COMPOSITION ARCHITECTURE:
             params.infoLine || params.infoBlock || '',
             colorPrincipale,
             colorSecondaire,
-            params.job || '',
+            user?.name || '',
           );
         } else {
           // Standard magazine-style prompt for other architectures
