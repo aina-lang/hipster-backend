@@ -993,7 +993,8 @@ private buildFocusCirclePrompt(
    Text: "${titleText}"
    Position: ABSOLUTE BOTTOM (around 78% of total height).
    Typography: Very large bold modern sans-serif.
-   Color: ${colorSecondaire}.
+   Color: ${colorPrincipale}.
+   NO UNDERLINE. NO decorative line beneath text. Text stands alone.
 `;
   }
 
@@ -1004,6 +1005,7 @@ private buildFocusCirclePrompt(
    Position: Directly above the main title (around 70% of total height).
    Typography: Medium sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
+   NO UNDERLINE. NO decorative line beneath text. Text stands alone.
 `;
   }
 
@@ -1014,6 +1016,7 @@ private buildFocusCirclePrompt(
    Position: Centered below the main title (around 86% of total height).
    Typography: Minimalist small sans-serif.
    Color: ${colorSecondaire} at 75% opacity.
+   NO UNDERLINE. NO decorative line beneath text. Text stands alone.
 `;
   }
 
@@ -1040,16 +1043,19 @@ THE GRAPHIC LAYOUT:
    - INFO LINE: "${infoLine}" below the main title.
 
    TYPOGRAPHY RULES (EXTREMELY STRICT):
-   ABSOLUTELY NO underlines.
-   ABSOLUTELY NO horizontal lines.
+   ABSOLUTELY NO underlines beneath any text element.
+   ABSOLUTELY NO horizontal lines anywhere near text.
    ABSOLUTELY NO decorative lines.
    ABSOLUTELY NO title separator lines.
    ABSOLUTELY NO magazine rules.
-   ABSOLUTELY NO strokes.
+   ABSOLUTELY NO strokes on text.
    ABSOLUTELY NO highlight bars.
    ABSOLUTELY NO text decorations of any kind.
+   ABSOLUTELY NOTHING drawn above or below ANY text element.
    Text must float freely with clean spacing.
-   There must be NOTHING drawn above or below the subtitle.
+   Each text element stands alone - isolated from any lines or decorations.
+   Primary color (${colorPrincipale}) is used for the main title.
+   Secondary color (${colorSecondaire}) is used for subtitle and info line.
 
    TEXT CONTENT: ONLY render the provided text. DO NOT write "${subject}" as text.
 ${textSections}
