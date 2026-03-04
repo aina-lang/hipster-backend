@@ -1025,6 +1025,8 @@ private buildFocusCirclePrompt(
     : '';
 
   const finalPrompt = `
+⚠️ CRITICAL INSTRUCTION: ABSOLUTELY NO UNDERLINES, NO RULES, NO LINES UNDER TEXT ⚠️
+
 CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER WITH A TWO-PART HORIZONTAL SPLIT.
 
 THE HERO IMAGE & COMPOSITION:
@@ -1043,6 +1045,7 @@ THE GRAPHIC LAYOUT:
    - INFO LINE: "${infoLine}" below the main title.
 
    TYPOGRAPHY RULES (EXTREMELY STRICT):
+   ⚠️ ZERO UNDERLINES - This is mandatory. DO NOT render any line under the title, subtitle, or any text.
    ABSOLUTELY NO underlines beneath any text element.
    ABSOLUTELY NO horizontal lines anywhere near text.
    ABSOLUTELY NO decorative lines.
