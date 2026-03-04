@@ -1013,7 +1013,7 @@ SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
 - The subject must appear visually cropped by the horizontal midpoint.
 - The subject MUST stay on the RIGHT side overall.
 - The TOP-LEFT area must remain breathable and clean.
-- DO NOT render the subject description as text on the image.
+- DO NOT render the subject description as text on the image.j
 ========================
 3. TYPOGRAPHY SYSTEM (ULTRA STRICT)
 ========================
