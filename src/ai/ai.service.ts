@@ -991,7 +991,7 @@ private buildFocusCirclePrompt(
     textSections += `
 5. MAIN TITLE:
    Text: "${titleText}"
-   Position: ABSOLUTE BOTTOM (at approximately 85% of total height).
+   Position: ABSOLUTE BOTTOM (around 78% of total height).
    Typography: Very large bold modern sans-serif.
    Color: ${colorSecondaire}.
 `;
@@ -1001,10 +1001,9 @@ private buildFocusCirclePrompt(
     textSections += `
 6. SUBTITLE:
    Text: "${subtitleText}"
-   Position: Directly above the main title (around 80% of total height).
+   Position: Directly above the main title (around 70% of total height).
    Typography: Medium sans-serif.
    Color: ${colorSecondaire} at 85% opacity.
-   Decoration: NO underline. NO decorative lines.
 `;
   }
 
@@ -1012,7 +1011,7 @@ private buildFocusCirclePrompt(
     textSections += `
 7. INFO LINE:
    Text: "${infoLine}"
-   Position: Bottom center (around 92% of total height, below main title).
+   Position: Centered below the main title (around 86% of total height).
    Typography: Minimalist small sans-serif.
    Color: ${colorSecondaire} at 75% opacity.
 `;
@@ -1027,35 +1026,39 @@ CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER WITH A TWO-PART HORIZONTAL SPLIT.
 
 THE HERO IMAGE & COMPOSITION:
 - VISUAL STRUCTURE: Divide the layout into two equal horizontal halves (TOP and BOTTOM).
-- NO BORDERS: There must be ABSOLUTELY NO VISIBLE LINE, BORDER, OR STROKE between the top and bottom halves. The separation must be seamless and purely color-based.
-- SYMMETRIC COLORS: Both halves must use the EXACT SAME BASE COLOR (${colorPrincipale}), but with slightly different shades (e.g., the bottom half is slightly darker or different than the top to create a subtle split effect).
+- NO BORDERS: ABSOLUTELY NO visible line, border, stroke, separator, or divider between the top and bottom halves.
+- SYMMETRIC COLORS: Both halves must use the EXACT SAME BASE COLOR (${colorPrincipale}), with slightly different shades.
 - THE SUBJECT: Position the primary subject ("${subject}") strictly in the TOP-RIGHT quadrant.
-- CROPPING: The subject must appear "cut" or cropped by the horizontal center divider line. Only the upper torso/head/shoulder should be visible in the top half.
-- COLOR PALETTE: Entire image must use a RICH MONOCHROMATIC palette based on ${colorPrincipale}. No flat overlays — use cinematic lighting with deep shadows and vibrant highlights in shades of ${colorPrincipale} and ${colorSecondaire}.
+- CROPPING: The subject must appear cropped by the horizontal center divider line.
+- COLOR PALETTE: Entire image must use a rich monochromatic palette based on ${colorPrincipale}.
 
 THE GRAPHIC LAYOUT:
 1. TEXT PLACEMENT & STYLING (ULTRA-STRICT):
-   - MAIN TITLE: "${titleText.toUpperCase()}" rendered in massive bold sans-serif, perfectly CENTERED in the BOTTOM half.
+   - MAIN TITLE: "${titleText.toUpperCase()}" centered in the bottom half.
    ${badgeSection}
-   - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half. ABSOLUTELY NO underline. ABSOLUTELY NO decorative lines.
-   - INFO LINE: "${infoLine}" in elegant sans-serif, either above or below the main title in the bottom half.
-   - TYPOGRAPHY RULES (EXTREMELY STRICT):
-     ABSOLUTELY NO underlines.
-     ABSOLUTELY NO decorative lines.
-     ABSOLUTELY NO horizontal lines above or below any text.
-     ABSOLUTELY NO separator lines.
-     ABSOLUTELY NO strokes.
-     ABSOLUTELY NO highlight bars.
-     Text must float freely with clean spacing.
-   - TEXT CONTENT: ONLY render the text provided. DO NOT write the subject description ("${subject}") as text on the image.
-   - NO LINE, NO STROKES.
+   - SUBTITLE: "${subtitleText}" above the main title.
+   - INFO LINE: "${infoLine}" below the main title.
+
+   TYPOGRAPHY RULES (EXTREMELY STRICT):
+   ABSOLUTELY NO underlines.
+   ABSOLUTELY NO horizontal lines.
+   ABSOLUTELY NO decorative lines.
+   ABSOLUTELY NO title separator lines.
+   ABSOLUTELY NO magazine rules.
+   ABSOLUTELY NO strokes.
+   ABSOLUTELY NO highlight bars.
+   ABSOLUTELY NO text decorations of any kind.
+   Text must float freely with clean spacing.
+   There must be NOTHING drawn above or below the subtitle.
+
+   TEXT CONTENT: ONLY render the provided text. DO NOT write "${subject}" as text.
 ${textSections}
 
 2. VERTICAL CENTER LINE:
    - A thin 2px vertical divider running from top to bottom center.
 
-STYLE: High-end luxury podcast/magazine advertising style. Swiss design influence. Clean and powerful visual hierarchy.
-IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breathable for a circular lens overlay. DO NOT generate the circle or the black and white effect; this will be applied in post-production.
+STYLE: High-end luxury podcast advertising style. Clean Swiss-inspired layout but WITHOUT any decorative title lines.
+IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breathable.
 `;
 
   return finalPrompt;
