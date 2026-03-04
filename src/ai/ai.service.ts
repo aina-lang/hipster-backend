@@ -1013,7 +1013,9 @@ SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
 - Only upper torso / shoulders / head visible.
 - The subject must appear visually cropped by the horizontal midpoint.
 - The subject MUST stay on the RIGHT side.
-- The TOP-LEFT area must remain breathable and clean.
+- A circular lens overlay area must be positioned in the TOP-LEFT quadrant but slightly closer to the center (around 35–40% from the left edge, vertically centered within the top half).
+- The circle must remain fully inside the top half.
+- Keep generous negative space around it.
 - DO NOT render the subject description as text on the image.
 
 ========================
