@@ -985,119 +985,92 @@ private buildFocusCirclePrompt(
   colorSecondaire: string = '#FFFFFF',
   brandingName: string = '',
 ): string {
+  let textSections = '';
+
+  if (titleText) {
+    textSections += `
+5. MAIN TITLE:
+   Text: "${titleText}"
+   Position: ABSOLUTE BOTTOM (at approximately 85% of total height).
+   Typography: Very large bold modern sans-serif.
+   Color: ${colorSecondaire}.
+`;
+  }
+
+  if (subtitleText) {
+    textSections += `
+6. SUBTITLE:
+   Text: "${subtitleText}"
+   Position: Directly above the main title (around 80% of total height).
+   Typography: Medium sans-serif.
+   Color: ${colorSecondaire} at 85% opacity.
+   Decoration: NO underline. NO decorative lines.
+`;
+  }
+
+  if (infoLine) {
+    textSections += `
+7. INFO LINE:
+   Text: "${infoLine}"
+   Position: Bottom center (around 92% of total height, below main title).
+   Typography: Minimalist small sans-serif.
+   Color: ${colorSecondaire} at 75% opacity.
+`;
+  }
+
+  const badgeSection = brandingName
+    ? `- TAG/BADGE: "${brandingName.toUpperCase()}" rendered in a small dark rectangular box positioned at the EXTREME TOP-LEFT corner (around 2% from top, 3% from left). It must sit very close to the top edge.`
+    : '';
 
   const finalPrompt = `
-CREATE A HIGH-END MODERN MONOCHROMATIC EDITORIAL POSTER.
-LUXURY PODCAST / MAGAZINE ADVERTISING STYLE.
-SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
+CREATE A MODERN MONOCHROMATIC EDITORIAL POSTER WITH A TWO-PART HORIZONTAL SPLIT.
 
-========================
-1. GLOBAL LAYOUT STRUCTURE
-========================
+THE HERO IMAGE & COMPOSITION:
+- VISUAL STRUCTURE: Divide the layout into two equal horizontal halves (TOP and BOTTOM).
+- NO BORDERS: There must be ABSOLUTELY NO VISIBLE LINE, BORDER, OR STROKE between the top and bottom halves. The separation must be seamless and purely color-based.
+- SYMMETRIC COLORS: Both halves must use the EXACT SAME BASE COLOR (${colorPrincipale}), but with slightly different shades (e.g., the bottom half is slightly darker or different than the top to create a subtle split effect).
+- THE SUBJECT: Position the primary subject ("${subject}") strictly in the TOP-RIGHT quadrant.
+- CROPPING: The subject must appear "cut" or cropped by the horizontal center divider line. Only the upper torso/head/shoulder should be visible in the top half.
+- COLOR PALETTE: Entire image must use a RICH MONOCHROMATIC palette based on ${colorPrincipale}. No flat overlays — use cinematic lighting with deep shadows and vibrant highlights in shades of ${colorPrincipale} and ${colorSecondaire}.
 
-- The canvas is divided into TWO EQUAL HORIZONTAL HALVES (TOP and BOTTOM).
-- There must be NO visible border, NO stroke, NO hard separator between the halves.
-- The separation must be achieved ONLY by subtle shade variation.
-- Both halves use the EXACT SAME BASE COLOR: ${colorPrincipale}.
-- The bottom half should be slightly darker or slightly richer than the top half.
-- Entire design must remain strictly monochromatic based on ${colorPrincipale}.
-- Use cinematic lighting, deep shadows, and refined highlights.
-- No flat overlays.
+THE GRAPHIC LAYOUT:
+1. TEXT PLACEMENT & STYLING (ULTRA-STRICT):
+   - MAIN TITLE: "${titleText.toUpperCase()}" rendered in massive bold sans-serif, perfectly CENTERED in the BOTTOM half.
+   ${badgeSection}
+   - SUBTITLE: "${subtitleText}" in elegant sans-serif, either above or below the main title in the bottom half. ABSOLUTELY NO underline. ABSOLUTELY NO decorative lines.
+   - INFO LINE: "${infoLine}" in elegant sans-serif, either above or below the main title in the bottom half.
+   - TYPOGRAPHY RULES (EXTREMELY STRICT):
+     ABSOLUTELY NO underlines.
+     ABSOLUTELY NO decorative lines.
+     ABSOLUTELY NO horizontal lines above or below any text.
+     ABSOLUTELY NO separator lines.
+     ABSOLUTELY NO strokes.
+     ABSOLUTELY NO highlight bars.
+     Text must float freely with clean spacing.
+   - TEXT CONTENT: ONLY render the text provided. DO NOT write the subject description ("${subject}") as text on the image.
+   - NO LINE, NO STROKES.
+${textSections}
 
-========================
-2. SUBJECT PLACEMENT
-========================
+2. VERTICAL CENTER LINE:
+   - A thin 2px vertical divider running **from slightly below the top edge to slightly above the bottom edge**, leaving small margins at top and bottom. It must be perfectly centered horizontally, fully visible, and clean.
 
-- The primary subject: "${subject}"
-- The subject must be positioned STRICTLY in the TOP-RIGHT quadrant.
-- Only upper torso / shoulders / head visible.
-- The subject must appear visually cropped by the horizontal midpoint.
-- The subject MUST stay on the RIGHT side.
-- The TOP-LEFT area must remain breathable and clean.
-- DO NOT render the subject description as text on the image.
+STYLE: High-end luxury podcast/magazine advertising style. Swiss design influence. Clean and powerful visual hierarchy.
 
-========================
-3. TYPOGRAPHY SYSTEM (ULTRA STRICT)
-========================
+IMPORTANT: The subject MUST be on the RIGHT side. Leave the TOP-LEFT area breathable for a PERFECTLY CENTERED CIRCULAR OVERLAY.
 
-TEXT CONTENT RULE:
-Render ONLY the text provided below.
-Do NOT invent text.
-Do NOT repeat the subject name.
-No extra words.
+CIRCLE REQUIREMENT (ULTRA-STRICT):
+- A PERFECT geometric circle.
+- 100% round. No oval. No ellipse. No distortion.
+- Positioned EXACTLY at the center of the full canvas (50% width, 50% height).
+- Perfect 1:1 aspect ratio.
+- Clean edge.
+- Symmetrical.
+- Balanced.
+- The circle must be mathematically centered on the vertical divider.
+- DO NOT distort perspective.
+- DO NOT stretch.
 
-TYPOGRAPHY RULES (ABSOLUTE):
-- NO underlines.
-- NO decorative lines.
-- NO horizontal separators.
-- NO strokes.
-- NO highlight bars.
-- NO background strips behind text.
-- Text must float freely with clean spacing.
-- Perfect alignment.
-- Clear visual hierarchy.
-
-MAIN TITLE:
-"${titleText.toUpperCase()}"
-- Position: Centered in the BOTTOM half.
-- Very large bold modern sans-serif.
-- Color: ${colorSecondaire}
-- Perfect horizontal centering.
-- Must not touch any line or graphic element.
-
-SUBTITLE:
-"${subtitleText}"
-- Position: Above or below main title inside bottom half.
-- Medium elegant sans-serif.
-- Color: ${colorSecondaire} at 85% opacity.
-- Absolutely NO underline.
-
-INFO LINE:
-"${infoLine}"
-- Position: Bottom center area of the bottom half.
-- Small minimalist sans-serif.
-- Color: ${colorSecondaire} at 75% opacity.
-
-${brandingName ? `
-BRANDING BADGE:
-- Text: "${brandingName.toUpperCase()}"
-- Small dark rectangular box.
-- Positioned at EXTREME TOP-LEFT corner.
-- Around 2% from top and 3% from left.
-- Must sit very close to the edge.
-` : ''}
-
-========================
-4. VERTICAL CENTER LINE (CRITICAL RULE)
-========================
-
-- A thin 2px vertical divider aligned at EXACT 50% width.
-- The line must run through empty space only.
-- It must NOT cross, touch, overlap, or pass behind any text.
-- The divider must BREAK around the text block.
-- Leave a clear safe margin around typography.
-- The line should appear as two separate segments (top segment and bottom segment).
-- Minimum 40px clear space between the line and any text.
-- The line is purely decorative and must never act as a text separator.
-
-========================
-5. STYLE DIRECTION
-========================
-
-- High-end editorial aesthetic.
-- Modern luxury podcast advertising look.
-- Strong negative space.
-- Perfect geometric balance.
-- Premium lighting.
-- Clean and powerful hierarchy.
-- No clutter.
-- No extra shapes.
-- No unnecessary graphic elements.
-
-IMPORTANT:
-The subject must stay on the RIGHT side.
-The text must stay fully readable.
-The vertical line must NEVER cut through typography.
+DO NOT generate the circle or the black and white effect; this will be applied in post-production.
 `;
 
   return finalPrompt;
