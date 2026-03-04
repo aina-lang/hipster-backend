@@ -1039,24 +1039,27 @@ TYPOGRAPHY RULES (ABSOLUTE):
 
 MAIN TITLE:
 "${titleText.toUpperCase()}"
-- Position: Centered in the BOTTOM half.
+- Position: Centered in the BOTTOM half, around 65-70% from top.
 - Very large bold modern sans-serif.
 - Color: ${colorSecondaire}
 - Perfect horizontal centering.
 - Must not touch any line or graphic element.
+- Generous white space below for the info line.
 
 SUBTITLE:
 "${subtitleText}"
-- Position: Above or below main title inside bottom half.
+- Position: Above main title inside bottom half, around 55-60% from top.
 - Medium elegant sans-serif.
 - Color: ${colorSecondaire} at 85% opacity.
 - Absolutely NO underline.
 
-INFO LINE:
+INFO LINE (DATE/TIME):
 "${infoLine}"
-- Position: Bottom center area of the bottom half.
+- Position: Very bottom of image, around 92-95% from top.
 - Small minimalist sans-serif.
 - Color: ${colorSecondaire} at 75% opacity.
+- Fully visible and not cut off by any edge.
+- Safe from any cropping or clipping.
 
 ${brandingName ? `
 BRANDING BADGE:
