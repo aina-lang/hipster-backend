@@ -3022,6 +3022,19 @@ COMPOSITION ARCHITECTURE:
             mainWord,
             scriptPhrase,
           );
+        } else if (architecture.layoutType === 'TYPE_DIAGONAL_SPLIT_DESIGN') {
+          this.logger.log(
+            `[processFlyerBackground] Building DIAGONAL_SPLIT_DESIGN prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+          );
+          magazineStyleDirective = this.buildDiagonalSplitDesignPrompt(
+            customSubject || params.job || 'A premium subject',
+            params.mainWord || params.modelName || model || 'NEW EPISODE',
+            params.scriptPhrase || params.subtitle || '',
+            params.infoLine || params.infoBlock || '',
+            colorPrincipale,
+            colorSecondaire,
+            user?.name || '',
+          );
         } else if (model.toLowerCase().includes('diagonal split design') || model.toLowerCase().includes('diagonal-split-design')) {
           this.logger.log(
             `[processFlyerBackground] Building DIAGONAL_SPLIT_DESIGN prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
