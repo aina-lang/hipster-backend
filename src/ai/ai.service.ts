@@ -1008,12 +1008,13 @@ SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
 2. SUBJECT PLACEMENT
 ========================
 - The primary subject: "${subject}"
-- The subject must be positioned in the TOP-RIGHT quadrant, **centered horizontally relative to the quadrant**, slightly shifted left from the extreme right.
+- The subject must be positioned at the CENTER of the composition, both horizontally and vertically.
+- Center the subject perfectly in the middle of the frame.
 - Only upper torso / shoulders / head visible.
 - The subject must appear visually cropped by the horizontal midpoint.
-- The subject MUST stay on the RIGHT side overall.
-- The TOP-LEFT area must remain breathable and clean.
-- DO NOT render the subject description as text on the image.j
+- The subject MUST be centered on the X-axis (middle horizontally).
+- Keep generous negative space around it.
+- DO NOT render the subject description as text on the image.
 ========================
 3. TYPOGRAPHY SYSTEM (ULTRA STRICT)
 ========================
