@@ -1147,29 +1147,23 @@ CLEAN. POWERFUL. PRECISE. MODERN.
 
 - The primary subject: "${subject}"
 
-SUBJECT STYLE (CRITICAL IMPROVEMENT):
-- The subject must look NATURAL, AUTHENTIC and REALISTIC.
-- Avoid exaggerated action poses, extreme expressions, or overly dramatic cinematic effects.
-- The subject should feel like a real person captured in a professional lifestyle photoshoot.
-- Prefer natural posture, relaxed stance, subtle movement or everyday activity.
-- Facial expression must be calm, confident, or neutral — NOT aggressive or intense.
-- Lighting should feel realistic and studio-soft, not hyper-contrasted or overly stylized.
-- Avoid "epic sports poster" exaggeration or superhero-like poses.
-- The overall look should resemble modern commercial photography used in magazines or brand campaigns.
+SUBJECT STYLE (REALISTIC & NATURAL):
+- The subject should look NATURAL, AUTHENTIC, and REALISTIC.
+- Avoid exaggerated poses, extreme expressions, or overly dramatic cinematic effects.
+- The subject should feel like a real person captured in a professional lifestyle or editorial photoshoot.
+- Preferred posture: relaxed, confident, or natural standing/sitting position.
+- Facial expression should be calm or subtle — NOT aggressive or intense.
+- Lighting should be realistic and soft, like in a professional studio or lifestyle shoot.
 - Slight natural imperfections are acceptable to enhance realism.
-
-COMPOSITION RULES:
-- CRITICAL: Subject MUST be FULLY VISIBLE (complete from head to feet / entire figure).
-- Position the subject in the RIGHT portion of the frame (right 35–50% horizontally).
-- Vertical placement: Subject occupies the FULL TOP HALF and extends slightly into the middle of the image.
-- The diagonal band (${colorPrincipale}) crosses OVER the subject with semi-transparency (40–50% opacity).
-- Subject remains sharp, highly detailed, and photorealistic.
-- The subject should integrate naturally with the background — not look cut-out or composited.
-- Natural body proportions and realistic shadows are required.
+- Subject size is FLEXIBLE: they do **not need to occupy the entire top half**; just enough to feel balanced in the composition.
+- The diagonal band (${colorPrincipale}) may partially overlay the subject (40–50% opacity) without forcing them to fill the space.
+- Subject remains sharp, detailed, and photorealistic.
+- Integrate naturally with the background — avoid cut-out or composited look.
+- Maintain realistic body proportions and natural shadows.
 
 VISUAL QUALITY:
 - High-resolution professional photography look.
-- Realistic textures (skin, clothing, materials).
+- Realistic textures (skin, clothing, props).
 - Balanced color tones.
 - No artificial HDR or hyper-sharpened effects.
 
