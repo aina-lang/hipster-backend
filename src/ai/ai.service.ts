@@ -1394,7 +1394,17 @@ The shapes must be flat graphic elements (no shadows).
 
 LAYOUT RULES
 
-The subject must be centered in the composition.`;
+The subject must be centered in the composition.
+
+CRITICAL PROHIBITION
+
+DO NOT render the subject description as text in the image.
+
+The description "${subject}" must NOT appear as typography or text anywhere on the poster.
+
+Only the subject image itself should be visible - never display the subject text.
+
+This is a VISUAL design only, with geometric shapes and the subject image.`;
 
   return finalPrompt;
 }
