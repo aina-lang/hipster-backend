@@ -3268,6 +3268,17 @@ COMPOSITION ARCHITECTURE:
             colorSecondaire,
             user?.name || '',
           );
+        } else if (architecture.layoutType === 'TYPE_STUDIO_POSTER') {
+          this.logger.log(
+            `[processFlyerBackground] Building STUDIO_POSTER prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+          );
+          magazineStyleDirective = this.buildStudioPosterPrompt(
+            customSubject || params.job || 'A premium subject',
+            params.mainWord || params.modelName || model || '',
+            params.scriptPhrase || params.subtitle || '',
+            colorPrincipale,
+            colorSecondaire,
+          );
         } else if (model.toLowerCase().includes('diagonal split design') || model.toLowerCase().includes('diagonal-split-design')) {
           this.logger.log(
             `[processFlyerBackground] Building DIAGONAL_SPLIT_DESIGN prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
