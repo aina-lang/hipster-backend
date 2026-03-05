@@ -1147,25 +1147,58 @@ CLEAN. POWERFUL. PRECISE. MODERN.
 
 - The primary subject: "${subject}"
 
-SUBJECT STYLE (REALISTIC & NATURAL):
-- The subject should look NATURAL, AUTHENTIC, and REALISTIC.
-- Avoid exaggerated poses, extreme expressions, or overly dramatic cinematic effects.
-- The subject should feel like a real person captured in a professional lifestyle or editorial photoshoot.
-- Preferred posture: relaxed, confident, or natural standing/sitting position.
-- Facial expression should be calm or subtle — NOT aggressive or intense.
-- Lighting should be realistic and soft, like in a professional studio or lifestyle shoot.
-- Slight natural imperfections are acceptable to enhance realism.
-- Subject size is FLEXIBLE: they do **not need to occupy the entire top half**; just enough to feel balanced in the composition.
-- The diagonal band (${colorPrincipale}) may partially overlay the subject (40–50% opacity) without forcing them to fill the space.
-- Subject remains sharp, detailed, and photorealistic.
-- Integrate naturally with the background — avoid cut-out or composited look.
-- Maintain realistic body proportions and natural shadows.
+SUBJECT STYLE (PHOTOREALISTIC & AUTHENTIC):
+- The subject must look like a REAL PHOTOGRAPH captured by a professional photographer.
+- This is NOT a stylized illustration, NOT a cinematic render, NOT an AI artifact.
+- The subject must have AUTHENTIC HUMAN QUALITIES: natural skin texture, realistic proportions, genuine expression.
+- Avoid over-processed, plastic, or artificial appearance.
+- Avoid exaggerated cinematic lighting, extreme color grading, or hyper-enhanced effects.
 
-VISUAL QUALITY:
-- High-resolution professional photography look.
-- Realistic textures (skin, clothing, props).
-- Balanced color tones.
-- No artificial HDR or hyper-sharpened effects.
+POSTURE & EXPRESSION:
+- The subject should display a NATURAL, CONFIDENT, and APPROACHABLE demeanor.
+- Posture: relaxed yet confident standing or dynamic action pose (if relevant to the subject).
+- Facial expression: calm, focused, or natural smile — NOT aggressive, NOT overly intense.
+- Gaze: direct to camera or naturally directed, maintaining eye contact confidence.
+- Body language: comfortable, balanced, and naturally proportioned.
+
+PHOTOGRAPHY & LIGHTING QUALITY:
+- Lighting must be NATURAL and REALISTIC — like professional studio or daylight photography.
+- Soft directional light (3-point lighting: key light + fill light + subtle rim light).
+- No harsh shadows, no blown highlights, no artificial glows.
+- Natural color temperature (no weird color casts).
+- Balanced exposure with realistic shadows and highlights.
+- Depth of field: sharp subject with slightly soft background (natural bokeh, NOT artificial).
+
+TEXTURE & DETAIL REALISM:
+- Skin texture: natural, with subtle imperfections (pores, micro-textures) — NOT plasticked or smoothed.
+- Clothing: realistic fabric texture and natural wrinkles/creases.
+- Hair: natural movement and texture, NOT stiff or overly groomed.
+- Eyes: intelligent, alive, and natural — NOT glossy or artificial.
+- Overall: High-frequency details that feel authentically captured, not digitally enhanced.
+
+COMPOSITION & INTEGRATION:
+- Subject positioned naturally in TOP-RIGHT area (NOT cropped awkwardly, NOT forced into frame).
+- Subject size is FLEXIBLE and naturally proportioned to the composition.
+- The diagonal band (${colorPrincipale}) may partially overlay the subject (40–50% opacity) WITHOUT visual clash.
+- Natural shadows cast by the subject enhance the 3D integration.
+- Background integrates naturally — NO cut-out look, NO visible compositing seams.
+- Subject appears as part of a cohesive photographic scene, NOT a pasted element.
+
+COLOR & TONE:
+- Realistic color palette based on actual human appearance and clothing.
+- NO oversaturation, NO artificial color enhancement.
+- Warm or neutral color temperature for approachable, authentic feel.
+- Skin tones: natural and accurate.
+- Maintain the user's selected colors (${colorPrincipale}/${colorSecondaire}) for the design elements, NOT forced into the subject.
+
+CRITICAL PROHIBITIONS (REALISM):
+- NO AI-generated artifacts (distorted fingers, morphed faces, unnatural proportions).
+- NO plastic appearance or glossy skin.
+- NO exaggerated cinematic effects (extreme vignetting, unrealistic glows, impossible physics).
+- NO hyper-sharpened or over-processed look.
+- NO stock photo watermarks or generic stock appearance.
+- NO mannequin-like stiffness or unnatural poses.
+- NO blurry or low-quality background.
 
 STRICT RULE:
 - DO NOT render the subject description as text in the image.
