@@ -1146,13 +1146,13 @@ CLEAN. POWERFUL. PRECISE. MODERN.
 ========================
 
 - The primary subject: "${subject}"
-- CRITICAL: Subject MUST be positioned in the TOP-RIGHT quadrant of the image.
-- Subject position: Extremely high in the frame, cropped at approximately the horizontal midpoint.
-- Only upper torso / shoulders / head visible (cropped cleanly by the frame edge).
-- The subject MUST stay on the RIGHT side - NOT centered, strictly positioned to the RIGHT.
-- Subject appears dynamic, reaching, or in active motion toward TOP-RIGHT.
+- CRITICAL: Subject MUST be FULLY VISIBLE (complete from head to feet/entire figure).
+- Position the subject in the RIGHT portion of the frame (right 35-50% horizontally).
+- Vertical placement: Subject occupies the FULL TOP HALF and extends into the middle of the image.
+- The diagonal band (${colorPrincipale}) crosses OVER the subject with semi-transparency (40-50% opacity).
 - Subject remains sharp, highly detailed, photorealistic, vibrant color.
-- Subject is ENTIRELY ABOVE the diagonal band - NOT obscured or overlapped by the band.
+- Subject is PARTIALLY OVERLAPPED by the diagonal band - creating dynamic visual layering.
+- Ensure the complete figure is visible despite the band crossing it.
 - DO NOT render the subject description as text on the image.
 
 ========================
