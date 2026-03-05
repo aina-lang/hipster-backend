@@ -1333,6 +1333,149 @@ CRITICAL EXECUTION RULES:
 }
 
   /**
+   * 🎨 BUILD STUDIO POSTER PROMPT FOR DALL-E
+   * Modern editorial promotional poster with minimal graphic design style
+   * Features a clean subject with geometric shapes behind
+   */
+private buildStudioPosterPrompt(
+  subject: string = 'modern subject',
+  titleText: string = '',
+  subtitleText: string = '',
+  colorPrincipale: string = '#FF9800',
+  colorSecondaire: string = '#FFFFFF',
+): string {
+
+  const finalPrompt = `
+CREATE A MODERN EDITORIAL PROMOTIONAL POSTER.
+MINIMAL GRAPHIC DESIGN STYLE.
+CLEAN. PROFESSIONAL. MINIMALIST.
+
+========================
+1. BACKGROUND
+========================
+
+- ABSOLUTELY white or very light grey studio background (#FFFFFF or #F5F5F5).
+- STRICTLY clean and empty.
+- NO gradients.
+- NO textures.
+- NO patterns.
+- NO colored elements in the background.
+- Professional minimal poster aesthetic.
+- Studio photography look.
+
+========================
+2. MAIN SUBJECT
+========================
+
+- The main subject: "${subject}"
+
+SUBJECT PRESENTATION:
+- The subject must be cleanly cut out / isolated from background.
+- Positioned CENTERED in the composition vertically and horizontally.
+- Subject size: FLEXIBLE and naturally proportioned (not too small, not overly large).
+- The subject should be CLEAN, CLEAR, and WELL-DEFINED against the light background.
+- Photography quality: PHOTOREALISTIC and professional.
+- The subject MUST SLIGHTLY OVERLAP the geometric shapes behind (shapes visible around and under subject).
+- No harsh cut-out look — subject integrates naturally with the composition.
+- Focus: SHARP and detailed.
+- Lighting: Natural, soft, professional studio lighting (no harsh shadows, no artificial effects).
+
+STRICT RULE:
+- DO NOT render the subject description as text in the image.
+
+========================
+3. GEOMETRIC SHAPES (COLOR: ${colorPrincipale})
+========================
+
+TWO GRAPHIC ELEMENTS positioned BEHIND the subject:
+
+1 — LARGE CIRCLE:
+   - Centered vertically and horizontally in the composition.
+   - Diameter: Approximately 30–40% of image width.
+   - Positioned BEHIND the subject (subject slightly overlaps).
+   - Color: ${colorPrincipale} (Primary Color).
+   - Flat geometric element (NO shadows, NO gradients, NO 3D effects).
+   - Clean, sharp edges.
+   - 100% opaque fill.
+
+2 — TALL VERTICAL ROUNDED RECTANGLE:
+   - Centered vertically and horizontally in the composition.
+   - Width: Approximately 15–25% of image width.
+   - Height: Extends ABOVE the circle, approximately 50–60% of image height.
+   - Top part positioned well above the circle.
+   - Bottom extends slightly below or aligned with circle center.
+   - Corners: ALL CORNERS ROUNDED (borderRadius effect).
+   - Color: SAME as circle — ${colorPrincipale} (Primary Color).
+   - Flat geometric element (NO shadows, NO gradients, NO 3D effects).
+   - Clean, sharp edges.
+   - 100% opaque fill.
+
+SHAPE RELATIONSHIP:
+- Both shapes use IDENTICAL COLOR: ${colorPrincipale}.
+- Shapes are FLAT GRAPHIC ELEMENTS (no drop shadows, no layer effects, no 3D depth).
+- Shapes are positioned symmetrically behind the subject.
+- The subject SLIGHTLY OVERLAPS both shapes (subject is in front).
+- Shapes create a modern, minimal graphic accent behind the subject.
+
+========================
+4. TYPOGRAPHY (OPTIONAL)
+========================
+
+${titleText ? `
+MAIN TITLE:
+"${titleText.toUpperCase()}"
+- Position: TOP or BOTTOM of composition (based on available space).
+- Alignment: CENTERED or positioned strategically around the subject.
+- Font: Modern sans-serif, minimal, elegant.
+- Size: LARGE but not overwhelming (approximately 8–12% of image height).
+- Color: BLACK or dark grey (#000000 or #333333).
+- Weight: BOLD or semi-bold.
+- 100% opaque and fully legible.
+- NO shadows, NO outlines, NO effects.
+` : ''}
+
+${subtitleText ? `
+SUBTITLE:
+"${subtitleText}"
+- Position: Below or above main title (minimal positioning).
+- Font: Elegant sans-serif or light serif, smaller than title.
+- Size: Approximately 4–6% of image height.
+- Color: BLACK or dark grey (#000000 or #333333) at 80% opacity.
+- Weight: Regular or light.
+- NO underlines, NO decorations.
+` : ''}
+
+TYPOGRAPHY RULES (ABSOLUTE):
+- NO additional text or watermarks.
+- Clean, minimal typography only.
+- Text must not overlap shapes or subject in confusing ways.
+- Maximum 2 text elements (title + subtitle).
+
+========================
+5. LAYOUT & COMPOSITION
+========================
+
+- CENTERED composition with the subject and shapes as the focal point.
+- White/light grey background fills entire frame.
+- Strong visual balance between subject and geometric accent shapes.
+- Strategic negative space around subject and shapes.
+- Professional, minimal aesthetic — suitable for print and digital design.
+- Magazine-quality or billboard-ready layout.
+
+EXECUTION RULES:
+- Subject MUST be centered (not off-axis, not awkwardly positioned).
+- Shapes MUST be centered behind subject.
+- Subject MUST overlap shapes slightly (shapes visible around edges).
+- All elements (subject, shapes, text) must integrate cohesively.
+- Background MUST remain clean white/light grey.
+- NO clutter, NO extra elements, NO unnecessary details.
+- Professional minimal poster design quality.
+`;
+
+  return finalPrompt;
+}
+
+  /**
    * 🔵 POST-PROCESS: Focus Circle Filter
    * Applies a circular B&W desaturation "lens" on the top-left of the image.
    * The area INSIDE the circle becomes grayscale; everything OUTSIDE stays in color.
@@ -3124,6 +3267,17 @@ COMPOSITION ARCHITECTURE:
             colorPrincipale,
             colorSecondaire,
             user?.name || '',
+          );
+        } else if (architecture.layoutType === 'TYPE_STUDIO_POSTER') {
+          this.logger.log(
+            `[processFlyerBackground] Building STUDIO_POSTER prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+          );
+          magazineStyleDirective = this.buildStudioPosterPrompt(
+            customSubject || params.job || 'A premium subject',
+            params.mainWord || params.modelName || model || '',
+            params.scriptPhrase || params.subtitle || '',
+            colorPrincipale,
+            colorSecondaire,
           );
         } else if (model.toLowerCase().includes('diagonal split design') || model.toLowerCase().includes('diagonal-split-design')) {
           this.logger.log(

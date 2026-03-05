@@ -208,6 +208,27 @@ export const DIAGONAL_SPLIT_DESIGN_ARCH: VisualArchitecture = {
   },
 };
 
+export const STUDIO_POSTER_ARCH: VisualArchitecture = {
+  name: 'Studio Poster',
+  layoutType: 'TYPE_STUDIO_POSTER',
+  colorPalette: 'Minimal/Geometric',
+  rules: {
+    subject:
+      'Clean cut-out subject centered in composition, slightly overlapping geometric shapes behind.',
+    background:
+      'Clean white or very light grey studio background. No gradients, no textures, no colored backgrounds.',
+    title:
+      'Optional title element using typography or minimal text (user-defined).',
+    subtitle:
+      'Optional subtitle or supporting text (minimal, elegant).',
+    infoBlock:
+      'None.',
+    upperZone: 'None.',
+    constraints:
+      'LAYOUT: Minimal graphic design poster. Two geometric shapes (circle + vertical rounded rectangle) using primary color as flat elements behind the centered subject. Subject slightly overlaps shapes. Professional minimal poster aesthetic.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
@@ -219,6 +240,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FOCUS_CIRCLE: FOCUS_CIRCLE_ARCH,
   DIAGONAL_SPLIT: DIAGONAL_SPLIT_ARCH,
   DIAGONAL_SPLIT_DESIGN: DIAGONAL_SPLIT_DESIGN_ARCH,
+  STUDIO_POSTER: STUDIO_POSTER_ARCH,
 };
 
 export function getVisualArchitecture(
