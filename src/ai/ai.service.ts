@@ -1146,14 +1146,35 @@ CLEAN. POWERFUL. PRECISE. MODERN.
 ========================
 
 - The primary subject: "${subject}"
-- CRITICAL: Subject MUST be FULLY VISIBLE (complete from head to feet/entire figure).
-- Position the subject in the RIGHT portion of the frame (right 35-50% horizontally).
-- Vertical placement: Subject occupies the FULL TOP HALF and extends into the middle of the image.
-- The diagonal band (${colorPrincipale}) crosses OVER the subject with semi-transparency (40-50% opacity).
-- Subject remains sharp, highly detailed, photorealistic, vibrant color.
-- Subject is PARTIALLY OVERLAPPED by the diagonal band - creating dynamic visual layering.
-- Ensure the complete figure is visible despite the band crossing it.
-- DO NOT render the subject description as text on the image.
+
+SUBJECT STYLE (CRITICAL IMPROVEMENT):
+- The subject must look NATURAL, AUTHENTIC and REALISTIC.
+- Avoid exaggerated action poses, extreme expressions, or overly dramatic cinematic effects.
+- The subject should feel like a real person captured in a professional lifestyle photoshoot.
+- Prefer natural posture, relaxed stance, subtle movement or everyday activity.
+- Facial expression must be calm, confident, or neutral — NOT aggressive or intense.
+- Lighting should feel realistic and studio-soft, not hyper-contrasted or overly stylized.
+- Avoid "epic sports poster" exaggeration or superhero-like poses.
+- The overall look should resemble modern commercial photography used in magazines or brand campaigns.
+- Slight natural imperfections are acceptable to enhance realism.
+
+COMPOSITION RULES:
+- CRITICAL: Subject MUST be FULLY VISIBLE (complete from head to feet / entire figure).
+- Position the subject in the RIGHT portion of the frame (right 35–50% horizontally).
+- Vertical placement: Subject occupies the FULL TOP HALF and extends slightly into the middle of the image.
+- The diagonal band (${colorPrincipale}) crosses OVER the subject with semi-transparency (40–50% opacity).
+- Subject remains sharp, highly detailed, and photorealistic.
+- The subject should integrate naturally with the background — not look cut-out or composited.
+- Natural body proportions and realistic shadows are required.
+
+VISUAL QUALITY:
+- High-resolution professional photography look.
+- Realistic textures (skin, clothing, materials).
+- Balanced color tones.
+- No artificial HDR or hyper-sharpened effects.
+
+STRICT RULE:
+- DO NOT render the subject description as text in the image.
 
 ========================
 3. TYPOGRAPHY SYSTEM (POSITIONED BOTTOM-LEFT/CENTER)
