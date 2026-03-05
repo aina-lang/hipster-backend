@@ -1114,133 +1114,32 @@ The vertical line must NEVER cut through typography.
    * High-end modern design with two horizontal halves split by subtle shading
    * Features a circular lens overlay in the top-left area and vertical center line
    */
-  private buildDiagonalSplitDesignPrompt(
-    subject: string = 'modern subject',
-    titleText: string = '',
-    subtitleText: string = '',
-    infoLine: string = '',
-    colorPrincipale: string = '#FF9800',
-    colorSecondaire: string = '#FFFFFF',
-    brandingName: string = '',
-  ): string {
-    const finalPrompt = `
-CREATE A HIGH-END MODERN MONOCHROMATIC EDITORIAL POSTER.
-LUXURY PODCAST / MAGAZINE ADVERTISING STYLE.
-SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
+private buildDiagonalSplitDesignPrompt(
+  subject: string = 'modern subject',
+  titleText: string = '',
+  subtitleText: string = '',
+  colorPrincipale: string = '#FF9800',
+): string {
 
-========================
-1. GLOBAL LAYOUT STRUCTURE
-========================
+  const finalPrompt = `
+Modern minimalist advertising poster on a clean white studio background.
+The main subject is ${subject} placed slightly off-center with strong lighting and professional photography style.
 
-- The canvas is divided into TWO EQUAL HORIZONTAL HALVES (TOP and BOTTOM).
-- There must be NO visible border, NO stroke, NO hard separator between the halves.
-- The separation must be achieved ONLY by subtle shade variation.
-- Both halves use the EXACT SAME BASE COLOR: ${colorPrincipale}.
-- The bottom half should be slightly darker or slightly richer than the top half.
-- Entire design must remain strictly monochromatic based on ${colorPrincipale}.
-- Use cinematic lighting, deep shadows, and refined highlights.
-- No flat overlays.
+A large semi-transparent diagonal geometric band crosses the composition from top-left to bottom-right with the color ${colorPrincipale}, partially overlaying the subject to create a modern graphic design effect.
 
-========================
-2. SUBJECT PLACEMENT
-========================
+The composition is clean and balanced with strong visual hierarchy.
 
-- The primary subject: "${subject}"
-- The subject must be positioned STRICTLY in the TOP-RIGHT quadrant.
-- Only upper torso / shoulders / head visible.
-- The subject must appear visually cropped by the horizontal midpoint.
-- The subject MUST stay on the RIGHT side.
-- A circular lens overlay area must be positioned in the TOP-LEFT quadrant but slightly closer to the center (around 35–40% from the left edge, vertically centered within the top half).
-- The circle must remain fully inside the top half.
-- Keep generous negative space around it.
-- DO NOT render the subject description as text on the image.
+Large bold headline in modern sans-serif typography:
+"${titleText}"
 
-========================
-3. TYPOGRAPHY SYSTEM (ULTRA STRICT)
-========================
-
-TEXT CONTENT RULE:
-Render ONLY the text provided below.
-Do NOT invent text.
-Do NOT repeat the subject name.
-No extra words.
-
-TYPOGRAPHY RULES (ABSOLUTE):
-- NO underlines.
-- NO decorative lines.
-- NO horizontal separators.
-- NO strokes.
-- NO highlight bars.
-- NO background strips behind text.
-- Text must float freely with clean spacing.
-- Perfect alignment.
-- Clear visual hierarchy.
-
-MAIN TITLE:
-"${titleText.toUpperCase()}"
-- Position: Centered in the BOTTOM half.
-- Very large bold modern sans-serif.
-- Color: ${colorSecondaire}
-- Perfect horizontal centering.
-- Must not touch any line or graphic element.
-
-SUBTITLE:
+Smaller subtitle underneath:
 "${subtitleText}"
-- Position: Above or below main title inside bottom half.
-- Medium elegant sans-serif.
-- Color: ${colorSecondaire} at 85% opacity.
-- Absolutely NO underline.
 
-INFO LINE:
-"${infoLine}"
-- Position: Bottom center area of the bottom half.
-- Small minimalist sans-serif.
-- Color: ${colorSecondaire} at 75% opacity.
-
-${brandingName ? `
-BRANDING BADGE:
-- Text: "${brandingName.toUpperCase()}"
-- Small dark rectangular box.
-- Positioned at EXTREME TOP-LEFT corner.
-- Around 2% from top and 3% from left.
-- Must sit very close to the edge.
-` : ''}
-
-========================
-4. VERTICAL CENTER LINE (CRITICAL RULE)
-========================
-
-- A thin 2px vertical divider aligned at EXACT 50% width.
-- The line must run through empty space only.
-- It must NOT cross, touch, overlap, or pass behind any text.
-- The divider must BREAK around the text block.
-- Leave a clear safe margin around typography.
-- The line should appear as two separate segments (top segment and bottom segment).
-- Minimum 40px clear space between the line and any text.
-- The line is purely decorative and must never act as a text separator.
-
-========================
-5. STYLE DIRECTION
-========================
-
-- High-end editorial aesthetic.
-- Modern luxury podcast advertising look.
-- Strong negative space.
-- Perfect geometric balance.
-- Premium lighting.
-- Clean and powerful hierarchy.
-- No clutter.
-- No extra shapes.
-- No unnecessary graphic elements.
-
-IMPORTANT:
-The subject must stay on the RIGHT side.
-The text must stay fully readable.
-The vertical line must NEVER cut through typography.
+High-end advertising design, geometric composition, modern branding poster, minimalist layout, professional studio lighting, ultra sharp, high resolution.
 `;
 
-    return finalPrompt;
-  }
+  return finalPrompt;
+}
 
   /**
    * 🔵 POST-PROCESS: Focus Circle Filter
