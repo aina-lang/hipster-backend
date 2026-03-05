@@ -1142,9 +1142,10 @@ CLEAN. POWERFUL. PRECISE. MODERN.
 - Professional studio aesthetic with premium finish and cinematic lighting.
 
 ========================
-2. SUBJECT PLACEMENT (TOP-RIGHT)
+2. SUBJECT PLACEMENT & ENVIRONMENT (TOP-RIGHT WITH RICH CONTEXT)
 ========================
 
+PRIMARY SUBJECT:
 - The primary subject: "${subject}"
 
 SUBJECT STYLE (PHOTOREALISTIC & AUTHENTIC):
@@ -1167,7 +1168,7 @@ PHOTOGRAPHY & LIGHTING QUALITY:
 - No harsh shadows, no blown highlights, no artificial glows.
 - Natural color temperature (no weird color casts).
 - Balanced exposure with realistic shadows and highlights.
-- Depth of field: sharp subject with slightly soft background (natural bokeh, NOT artificial).
+- Depth of field: sharp subject with naturally soft background (organic depth, NOT artificial blur).
 
 TEXTURE & DETAIL REALISM:
 - Skin texture: natural, with subtle imperfections (pores, micro-textures) — NOT plasticked or smoothed.
@@ -1176,20 +1177,36 @@ TEXTURE & DETAIL REALISM:
 - Eyes: intelligent, alive, and natural — NOT glossy or artificial.
 - Overall: High-frequency details that feel authentically captured, not digitally enhanced.
 
-COMPOSITION & INTEGRATION:
-- Subject positioned naturally in TOP-RIGHT area (NOT cropped awkwardly, NOT forced into frame).
-- Subject size is FLEXIBLE and naturally proportioned to the composition.
-- The diagonal band (${colorPrincipale}) may partially overlay the subject (40–50% opacity) WITHOUT visual clash.
-- Natural shadows cast by the subject enhance the 3D integration.
-- Background integrates naturally — NO cut-out look, NO visible compositing seams.
-- Subject appears as part of a cohesive photographic scene, NOT a pasted element.
+ENVIRONMENT & CONTEXTUAL BACKGROUND (CRITICAL):
+- The background is NOT a generic blur or empty studio — it is a RICH, DETAILED ENVIRONMENT.
+- The environment must be DIRECTLY RELEVANT to the subject and convey profession/context.
+- Examples: factory floor for manufacturing, restaurant kitchen for chef, workshop for craftsman, retail store for salesperson, medical facility for healthcare worker, etc.
+- Environmental details MUST be CLEAR and VISIBLE in the background:
+  * Tools, equipment, products, or machinery relevant to the subject's field.
+  * Interior elements: shelves, displays, workstations, counters, lighting fixtures, architectural details.
+  * Atmospheric elements: depth, perspective, realistic spatial arrangement.
+  * Professional setting details that establish credibility and context.
+- Background clarity: SHARP to SOFT FOCUS, but NOT blurred into illegibility.
+- The environment occupies 40–50% of the visual frame depth, NOT just a thin backdrop.
+- Natural lighting reflects the actual environment (indoor facility lighting, natural window light, etc.).
+- Colors in background complement the ${colorPrincipale} diagonal band — NO color clashing.
+
+SUBJECT POSITIONING & INTEGRATION:
+- Subject positioned NATURALLY in TOP-RIGHT or CENTER-RIGHT area (flexible, NOT forced cropping).
+- Subject size is NATURALLY PROPORTIONED to the composition and environment.
+- The diagonal band (${colorPrincipale}) may overlay the subject (40–50% opacity) WITHOUT visual clash.
+- Natural shadows cast by the subject enhance 3D integration with the environment.
+- Subject and environment integrate seamlessly — NO cut-out look, NO visible compositing seams, NO floating appearance.
+- Subject appears as PART OF the environment, not separate or pasted.
+- Environmental elements (equipment, furniture, etc.) may naturally frame or surround the subject.
 
 COLOR & TONE:
-- Realistic color palette based on actual human appearance and clothing.
+- Realistic color palette based on actual human appearance, clothing, and environmental context.
 - NO oversaturation, NO artificial color enhancement.
 - Warm or neutral color temperature for approachable, authentic feel.
 - Skin tones: natural and accurate.
-- Maintain the user's selected colors (${colorPrincipale}/${colorSecondaire}) for the design elements, NOT forced into the subject.
+- Environment colors: realistic and grounded in actual material colors (metal, wood, fabric, equipment, etc.).
+- The user's selected colors (${colorPrincipale}/${colorSecondaire}) used for DESIGN ELEMENTS (band, text), NOT forced into the subject or environment.
 
 CRITICAL PROHIBITIONS (REALISM):
 - NO AI-generated artifacts (distorted fingers, morphed faces, unnatural proportions).
@@ -1198,7 +1215,8 @@ CRITICAL PROHIBITIONS (REALISM):
 - NO hyper-sharpened or over-processed look.
 - NO stock photo watermarks or generic stock appearance.
 - NO mannequin-like stiffness or unnatural poses.
-- NO blurry or low-quality background.
+- NO empty, blurry, or low-quality background — background MUST be DETAILED and CONTEXTUAL.
+- NO generic white/grey empty studio — environment MUST be profession-specific and photorealistic.
 
 STRICT RULE:
 - DO NOT render the subject description as text in the image.
