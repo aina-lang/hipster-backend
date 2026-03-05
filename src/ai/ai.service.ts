@@ -1111,31 +1111,156 @@ The vertical line must NEVER cut through typography.
 
   /**
    * 🟢 DIAGONAL SPLIT DESIGN PROMPT
-   * High-end modern design with two horizontal halves split by subtle shading
-   * Features a circular lens overlay in the top-left area and vertical center line
+   * High-end modern design with diagonal band split and dynamic subject positioning
+   * Subject in TOP-RIGHT, diagonal band traversing composition, typography in BOTTOM-LEFT/CENTER
+   * Uses user-selected colors: colorPrincipale for band, colorSecondaire for text
    */
 private buildDiagonalSplitDesignPrompt(
   subject: string = 'modern subject',
   titleText: string = '',
   subtitleText: string = '',
+  infoLine: string = '',
   colorPrincipale: string = '#FF9800',
+  colorSecondaire: string = '#FFFFFF',
+  brandingName: string = '',
 ): string {
 
   const finalPrompt = `
-Modern minimalist advertising poster on a clean white studio background.
-The main subject is ${subject} placed slightly off-center with strong lighting and professional photography style.
+CREATE A HIGH-END MODERN DIAGONAL SPLIT DESIGN POSTER.
+DYNAMIC SPORTS / ACTION ADVERTISING STYLE.
+CLEAN. POWERFUL. PRECISE. MODERN.
 
-A large semi-transparent diagonal geometric band crosses the composition from top-left to bottom-right with the color ${colorPrincipale}, partially overlaying the subject to create a modern graphic design effect.
+========================
+1. GLOBAL LAYOUT STRUCTURE
+========================
 
-The composition is clean and balanced with strong visual hierarchy.
+- Clean light background (white, light grey, or off-white base).
+- ONE LARGE DIAGONAL BAND traversing the composition from TOP-LEFT to BOTTOM-RIGHT.
+- The diagonal band is SEMI-TRANSPARENT (60-70% opacity) in color: ${colorPrincipale}.
+- Diagonal band creates dynamic visual split between subject area (top) and text area (bottom).
+- The band flows smoothly with sharp, clean edges.
+- Professional studio aesthetic with premium finish and cinematic lighting.
 
-Large bold headline in modern sans-serif typography:
-"${titleText}"
+========================
+2. SUBJECT PLACEMENT (TOP-RIGHT)
+========================
 
-Smaller subtitle underneath:
+- The primary subject: "${subject}"
+- CRITICAL: Subject MUST be positioned in the TOP-RIGHT quadrant of the image.
+- Subject position: Extremely high in the frame, cropped at approximately the horizontal midpoint.
+- Only upper torso / shoulders / head visible (cropped cleanly by the frame edge).
+- The subject MUST stay on the RIGHT side - NOT centered, strictly positioned to the RIGHT.
+- Subject appears dynamic, reaching, or in active motion toward TOP-RIGHT.
+- Subject remains sharp, highly detailed, photorealistic, vibrant color.
+- Subject is ENTIRELY ABOVE the diagonal band - NOT obscured or overlapped by the band.
+- DO NOT render the subject description as text on the image.
+
+========================
+3. TYPOGRAPHY SYSTEM (POSITIONED BOTTOM-LEFT/CENTER)
+========================
+
+TEXT CONTENT RULE:
+Render ONLY the text provided below.
+Do NOT invent text.
+Do NOT repeat the subject name.
+No extra words.
+
+TYPOGRAPHY RULES (ABSOLUTE):
+- NO underlines.
+- NO decorative lines.
+- NO horizontal separators.
+- NO strokes.
+- NO highlight bars.
+- NO background strips behind text.
+- Text must float freely with clean spacing.
+- Perfect alignment and maximum readability.
+- Clear visual hierarchy.
+
+MAIN TITLE:
+"${titleText.toUpperCase()}"
+- Position: BOTTOM-LEFT to BOTTOM-CENTER area (lower 30% of image vertically).
+- Horizontal position: LEFT or CENTER-LEFT, NOT right-aligned.
+- Alignment: LEFT-aligned or CENTER text block.
+- Very large, ultra-bold, modern sans-serif (like Bebas Neue, Montserrat Bold, or Impact).
+- Color: ${colorSecondaire}
+- Weight: ULTRA-BOLD, MAXIMUM VISUAL IMPACT.
+- 100% OPAQUE, bright and crisp, highly legible against light background.
+- Font size: Approximately 15-18% of image height.
+
+SUBTITLE:
 "${subtitleText}"
+- Position: Directly BELOW main title in the BOTTOM area (lower 35-45% of image).
+- Alignment: LEFT-aligned or CENTER, matching main title alignment.
+- Medium elegant sans-serif or refined serif.
+- Color: ${colorSecondaire} at 90% opacity.
+- Absolutely NO underline, NO italic distortions.
+- Elegant and refined, contrasting with the bold title.
+- Generous spacing above (between title and subtitle) and below.
 
-High-end advertising design, geometric composition, modern branding poster, minimalist layout, professional studio lighting, ultra sharp, high resolution.
+INFO LINE:
+"${infoLine}"
+- Position: Below subtitle or as part of text block footer.
+- Small minimalist sans-serif.
+- Color: ${colorSecondaire} at 80% opacity.
+- Minimal weight, supporting text role only.
+
+${brandingName ? `
+BRANDING BADGE:
+- Text: "${brandingName.toUpperCase()}"
+- Small text or minimal rectangular element.
+- Positioned at TOP-LEFT or TOP-RIGHT corner.
+- Does NOT interfere with subject positioning.
+- Color: ${colorSecondaire} or subtle shade of ${colorPrincipale}.
+` : ''}
+
+========================
+4. DIAGONAL BAND SPECIFICATIONS
+========================
+
+- One large semi-transparent diagonal band.
+- Direction: Flows from TOP-LEFT corner toward BOTTOM-RIGHT corner at approximately 25-35 degree angle.
+- Opacity: 60-70% semi-transparency for modern premium effect.
+- Color: Primary Color (${colorPrincipale}).
+- Width: Approximately 40-50% of image width at widest point.
+- Clean, sharp edges - NOT blurred, NOT soft feathered.
+- The band visually separates the subject (top-right) from typography (bottom-left/center).
+- Band does NOT obscure, overlap, or interfere with the subject.
+- Band creates dynamic visual energy and modern aesthetic.
+- Band flows naturally with smooth gradient transitions.
+
+========================
+5. COLOR SYSTEM & CONTRAST
+========================
+
+- Background: Clean light/white or light grey (neutral base for readability).
+- Primary Band Color: ${colorPrincipale} (semi-transparent overlay).
+- Subject: Full photorealistic color, vibrant and detailed.
+- Typography: ${colorSecondaire} (high contrast against light background and semi-transparent band).
+- Typography MUST have MAXIMUM READABILITY and VISIBILITY.
+- Use user's selected colors: ${colorPrincipale} for brand accent band, ${colorSecondaire} for text.
+
+========================
+6. STYLE DIRECTION & EXECUTION
+========================
+
+- High-end modern advertising aesthetic.
+- Dynamic sports/action energy balanced with premium minimalism.
+- Strong visual contrast between subject and typography areas.
+- Geometric precision from the diagonal band.
+- Professional magazine / billboard quality.
+- Clean composition with strategic negative space.
+- Modern luxury branding feel.
+- No clutter, no unnecessary graphic elements.
+
+CRITICAL EXECUTION RULES:
+- Subject MUST stay in TOP-RIGHT quadrant (NOT centered, NOT left).
+- Diagonal band MUST traverse cleanly from TOP-LEFT to BOTTOM-RIGHT.
+- Typography MUST be in BOTTOM-LEFT/CENTER area (NOT top, NOT right-side).
+- Main title MUST be large and bold for maximum impact.
+- All text colors MUST be ${colorSecondaire} (user-selected secondary color).
+- Band color MUST be ${colorPrincipale} (user-selected primary color).
+- All text 100% opaque and fully readable.
+- Create distinct visual balance: subject upward (top-right), text downward (bottom-left).
 `;
 
   return finalPrompt;
