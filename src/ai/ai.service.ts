@@ -1788,18 +1788,19 @@ IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the im
     const hasGenderSpecified = genderKeywords.test(subject);
 
     return !hasGenderSpecified && isPersonRequested
-      ? `MANNEQUIN VARIATION -- VERY IMPORTANT:
+      ? `MANNEQUIN VARIATION -- EXTREMELY IMPORTANT -- MANDATORY:
 - Do NOT use the same model or type of person repeatedly
 - VARY the gender: sometimes display a realistic woman, sometimes display a realistic man
 - VARY body types: athletic, average, curvy, slim - different builds each time
 - VARY ethnicity and features naturally
-- VARY age ranges: younger, middle-aged, diverse ages
+- VARY age ranges: ONLY younger to middle-aged (18-50 years old), NO elderly, NO old people, NO people over 55
 - VARY skin tones: all natural tones represented authentically
 - VARY hairstyles and hair properties completely different each time
 - Create 3D realistic human forms with natural proportions
 - Photorealistic skin texture with natural imperfections
 - Each generation should feel like a completely different real person
-- NO generic AI models, NO repeated faces across generations\n`
+- NO generic AI models, NO repeated faces across generations
+- STRICT AGE REQUIREMENT: Every person MUST appear young to middle-aged (18-50 maximum), absolutely NO wrinkles of old age, NO elderly appearance\n`
       : '';
   }
 
