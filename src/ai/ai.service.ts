@@ -1748,9 +1748,14 @@ High resolution. Professional publication-ready marketing poster.`;
     const finalPrompt = `CREATE A MODERN EDITORIAL PROMOTIONAL POSTER.
 
 THE SUBJECT:
-The subject is: "${subject}".
-Only ONE subject must appear, perfectly centered.
-The subject can be a person, object, product, chair, car, building, animal, furniture, fashion item, food, etc.
+Generate a striking visual element - a modern subject.
+Only ONE visual element must appear, perfectly centered.
+The visual can be a person, object, product, architecture, animal, fashion item, food, etc.
+
+CRITICAL RULE:
+DO NOT RENDER OR DISPLAY ANY TEXT RELATED TO THE SUBJECT.
+NO subject name, NO description text, NO typography of subject description.
+Only the visual representation, no text whatsoever.
 
 BACKGROUND (ULTRA-STRICT):
 - The entire image must be FULL COLOR and EXTREMELY SHARP.
