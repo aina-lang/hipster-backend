@@ -1515,12 +1515,6 @@ EXECUTION RULES:
     const cx = Math.round(W * 0.35);
     const cy = Math.round(H * 0.3);
 
-    // 1. Create a full B&W version of the image
-    const bwBuffer = await sharp(inputBuffer)
-      .greyscale()
-      .toFormat('png')
-      .toBuffer();
-
     // 2. Create a circular mask (white circle on black background) for the B&W area
     const circleMaskSvg = `<svg width="${W}" height="${H}">
   <circle cx="${cx}" cy="${cy}" r="${radius}" fill="white"/>
@@ -1627,7 +1621,7 @@ EXECUTION RULES:
     const ry = Math.round((H - rectH) / 2);
 
     // 1. Create the B&W Blurred background version (base layer)
-    const bgBuffer = await sharp(inputBuffer).greyscale().blur(15).toBuffer();
+    const bgBuffer = await sharp(inputBuffer).greyscale().blur(0.1).toBuffer();
 
     // 2. Create the rectangular mask
     const maskSvg = `<svg width="${W}" height="${H}">
