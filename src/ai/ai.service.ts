@@ -976,17 +976,16 @@ STYLE:
    * 🎨 BUILD FOCUS CIRCLE PROMPT FOR DALL-E
    * Modern editorial layout with symmetrical split and circular focus zone.
    */
-private buildFocusCirclePrompt(
-  subject: string = 'modern subject',
-  titleText: string = '',
-  subtitleText: string = '',
-  infoLine: string = '',
-  colorPrincipale: string = '#FF9800',
-  colorSecondaire: string = '#FFFFFF',
-  brandingName: string = '',
-): string {
-
-  const finalPrompt = `
+  private buildFocusCirclePrompt(
+    subject: string = 'modern subject',
+    titleText: string = '',
+    subtitleText: string = '',
+    infoLine: string = '',
+    colorPrincipale: string = '#FF9800',
+    colorSecondaire: string = '#FFFFFF',
+    brandingName: string = '',
+  ): string {
+    const finalPrompt = `
 CREATE A HIGH-END MODERN MONOCHROMATIC EDITORIAL POSTER.
 LUXURY PODCAST / MAGAZINE ADVERTISING STYLE.
 SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
@@ -1061,14 +1060,18 @@ INFO LINE (DATE/TIME):
 - Fully visible and not cut off by any edge.
 - Safe from any cropping or clipping.
 
-${brandingName ? `
+${
+  brandingName
+    ? `
 BRANDING BADGE:
 - Text: "${brandingName.toUpperCase()}"
 - Small dark rectangular box.
 - Positioned at EXTREME TOP-LEFT corner.
 - Around 2% from top and 3% from left.
 - Must sit very close to the edge.
-` : ''}
+`
+    : ''
+}
 
 ========================
 4. VERTICAL CENTER LINE (CRITICAL RULE)
@@ -1106,8 +1109,8 @@ The text must stay fully readable.
 The vertical line must NEVER cut through typography.
 `;
 
-  return finalPrompt;
-}
+    return finalPrompt;
+  }
 
   /**
    * 🟢 DIAGONAL SPLIT DESIGN PROMPT
@@ -1115,17 +1118,16 @@ The vertical line must NEVER cut through typography.
    * Subject in TOP-RIGHT, diagonal band traversing composition, typography in BOTTOM-LEFT/CENTER
    * Uses user-selected colors: colorPrincipale for band, colorSecondaire for text
    */
-private buildDiagonalSplitDesignPrompt(
-  subject: string = 'modern subject',
-  titleText: string = '',
-  subtitleText: string = '',
-  infoLine: string = '',
-  colorPrincipale: string = '#FF9800',
-  colorSecondaire: string = '#FFFFFF',
-  brandingName: string = '',
-): string {
-
-  const finalPrompt = `
+  private buildDiagonalSplitDesignPrompt(
+    subject: string = 'modern subject',
+    titleText: string = '',
+    subtitleText: string = '',
+    infoLine: string = '',
+    colorPrincipale: string = '#FF9800',
+    colorSecondaire: string = '#FFFFFF',
+    brandingName: string = '',
+  ): string {
+    const finalPrompt = `
 CREATE A HIGH-END MODERN DIAGONAL SPLIT DESIGN POSTER.
 DYNAMIC SPORTS / ACTION ADVERTISING STYLE.
 CLEAN. POWERFUL. PRECISE. MODERN.
@@ -1270,14 +1272,18 @@ INFO LINE:
 - Color: ${colorSecondaire} at 80% opacity.
 - Minimal weight, supporting text role only.
 
-${brandingName ? `
+${
+  brandingName
+    ? `
 BRANDING BADGE:
 - Text: "${brandingName.toUpperCase()}"
 - Small text or minimal rectangular element.
 - Positioned at TOP-LEFT or TOP-RIGHT corner.
 - Does NOT interfere with subject positioning.
 - Color: ${colorSecondaire} or subtle shade of ${colorPrincipale}.
-` : ''}
+`
+    : ''
+}
 
 ========================
 4. DIAGONAL BAND SPECIFICATIONS
@@ -1329,23 +1335,22 @@ CRITICAL EXECUTION RULES:
 - Create distinct visual balance: subject upward (top-right), text downward (bottom-left).
 `;
 
-  return finalPrompt;
-}
+    return finalPrompt;
+  }
 
   /**
    * 🎨 BUILD STUDIO POSTER PROMPT FOR DALL-E
    * Modern editorial promotional poster with minimal graphic design style
    * Features a clean subject with geometric shapes behind
    */
-private buildStudioPosterPrompt(
-  subject: string = 'modern subject',
-  titleText: string = '',
-  subtitleText: string = '',
-  colorPrincipale: string = '#FF9800',
-  colorSecondaire: string = '#FFFFFF',
-): string {
-
-  const finalPrompt = `
+  private buildStudioPosterPrompt(
+    subject: string = 'modern subject',
+    titleText: string = '',
+    subtitleText: string = '',
+    colorPrincipale: string = '#FF9800',
+    colorSecondaire: string = '#FFFFFF',
+  ): string {
+    const finalPrompt = `
 CREATE A MODERN EDITORIAL PROMOTIONAL POSTER.
 MINIMAL GRAPHIC DESIGN STYLE.
 CLEAN. PROFESSIONAL. MINIMALIST.
@@ -1421,7 +1426,9 @@ SHAPE RELATIONSHIP:
 4. TYPOGRAPHY (OPTIONAL)
 ========================
 
-${titleText ? `
+${
+  titleText
+    ? `
 MAIN TITLE:
 "${titleText.toUpperCase()}"
 - Position: TOP or BOTTOM of composition (based on available space).
@@ -1432,9 +1439,13 @@ MAIN TITLE:
 - Weight: BOLD or semi-bold.
 - 100% opaque and fully legible.
 - NO shadows, NO outlines, NO effects.
-` : ''}
+`
+    : ''
+}
 
-${subtitleText ? `
+${
+  subtitleText
+    ? `
 SUBTITLE:
 "${subtitleText}"
 - Position: Below or above main title (minimal positioning).
@@ -1443,7 +1454,9 @@ SUBTITLE:
 - Color: BLACK or dark grey (#000000 or #333333) at 80% opacity.
 - Weight: Regular or light.
 - NO underlines, NO decorations.
-` : ''}
+`
+    : ''
+}
 
 TYPOGRAPHY RULES (ABSOLUTE):
 - NO additional text or watermarks.
@@ -1472,8 +1485,8 @@ EXECUTION RULES:
 - Professional minimal poster design quality.
 `;
 
-  return finalPrompt;
-}
+    return finalPrompt;
+  }
 
   /**
    * 🔵 POST-PROCESS: Focus Circle Filter
@@ -1584,6 +1597,100 @@ EXECUTION RULES:
   }
 
   /**
+   * 🔵 POST-PROCESS: Editorial Reveal Filter
+   * Applies a tall vertical rectangle in the center.
+   * Inside: Sharp, full color.
+   * Outside: Blurred, Black and White (as generated by AI).
+   * Note: The AI is instructed to generate B&W Blurred already, so we mainly
+   * need to restore color in the center if we had a color source, or simply
+   * add the border and ensure the transition.
+   * REALLY, we want to take the original (which AI made B&W/Blurred)
+   * and we can't "restore" color if it wasn't there.
+   * BUT if we want the "Reveal" effect, we actually need the AI to generate COLOR,
+   * then WE blur/desaturate outside.
+   */
+  private async compositeEditorialRevealFilter(
+    inputBuffer: Buffer,
+  ): Promise<Buffer> {
+    this.logger.log(
+      '[compositeEditorialRevealFilter] Applying Editorial Reveal filter...',
+    );
+
+    const meta = await sharp(inputBuffer).metadata();
+    const W = meta.width || 1024;
+    const H = meta.height || 1536;
+
+    // Rectangle dimensions: Tall vertical rectangle in the center
+    const rectW = Math.round(W * 0.45);
+    const rectH = Math.round(H * 0.85);
+    const rx = Math.round((W - rectW) / 2);
+    const ry = Math.round((H - rectH) / 2);
+
+    // 1. Create the B&W Blurred background version
+    const bgBuffer = await sharp(inputBuffer)
+      .greyscale()
+      .blur(15) // Heavy blur
+      .toBuffer();
+
+    // 2. Create the rectangular mask
+    const maskSvg = `<svg width="${W}" height="${H}">
+      <rect x="${rx}" y="${ry}" width="${rectW}" height="${rectH}" fill="white" />
+    </svg>`;
+    const maskBuffer = await sharp(Buffer.from(maskSvg)).png().toBuffer();
+
+    // 3. Composite the original sharp color image OVER the blurred B&W background using the mask
+    const revealed = await sharp(bgBuffer)
+      .composite([
+        {
+          input: inputBuffer, // Original color/sharp
+          blend: 'over',
+          top: 0,
+          left: 0,
+          // We use the mask to only keep the center rectangle of the sharp color image
+        },
+      ])
+      .toBuffer();
+
+    // Actually, sharp's composite doesn't directly take a mask for the 'input'.
+    // We need to mask the color image first.
+    const maskedColor = await sharp(inputBuffer)
+      .ensureAlpha()
+      .composite([
+        {
+          input: maskBuffer,
+          blend: 'dest-in',
+        },
+      ])
+      .toBuffer();
+
+    const withReveal = await sharp(bgBuffer)
+      .composite([
+        {
+          input: maskedColor,
+          top: 0,
+          left: 0,
+        },
+      ])
+      .toBuffer();
+
+    // 4. Add thin white border around the rectangle
+    const borderSvg = `<svg width="${W}" height="${H}">
+      <rect x="${rx}" y="${ry}" width="${rectW}" height="${rectH}" fill="none" stroke="white" stroke-width="4" />
+    </svg>`;
+    const borderBuffer = Buffer.from(borderSvg);
+
+    const finalBuffer = await sharp(withReveal)
+      .composite([{ input: borderBuffer, blend: 'over', top: 0, left: 0 }])
+      .jpeg({ quality: 90 })
+      .toBuffer();
+
+    this.logger.log(
+      '[compositeEditorialRevealFilter] Editorial Reveal filter applied successfully.',
+    );
+    return finalBuffer;
+  }
+
+  /**
    * 🎨 BUILD DIAGONAL SPLIT PROMPT FOR DALL-E
    * Modern minimalist layout with a diagonal geometric band.
    */
@@ -1653,6 +1760,41 @@ IMPORTANT RULES:
 OUTPUT:
 High resolution. Professional publication-ready marketing poster.`;
 
+    return finalPrompt;
+  }
+
+  /**
+   * 🎨 BUILD EDITORIAL REVEAL PROMPT FOR DALL-E
+   * Modern editorial layout with a blurred B&W background and a sharp color window.
+   */
+  private buildEditorialRevealPrompt(
+    subject: string = 'modern subject',
+    colorPrincipale: string = '#FFFFFF',
+    colorSecondaire: string = '#000000',
+  ): string {
+    const finalPrompt = `CREATE A MODERN EDITORIAL PROMOTIONAL POSTER.
+
+THE SUBJECT:
+The subject is: "${subject}".
+Only ONE subject must appear, perfectly centered.
+The subject can be a person, object, product, chair, car, building, animal, furniture, fashion item, food, etc.
+
+BACKGROUND (ULTRA-STRICT):
+- The entire background must be ONE SINGLE IMAGE.
+- The entire image must be BLACK AND WHITE (desaturated).
+- The entire image must be HEAVILY BLURRED with soft focus.
+- The background must cover the FULL image area.
+- IMPORTANT: The background must NOT be split. No two colors. No left/right division.
+- One continuous blurred grayscale image is MANDATORY.
+
+STYLE:
+Modern editorial poster. Minimal graphic design. Magazine advertising style. Professional photography. Clean composition.
+
+TECHNICAL DETAILS:
+High-end studio lighting. Professional editorial quality. 8K resolution.
+
+IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the image. These will be added in post-production. Simply generate the centered subject on a blurred B&W background.
+`;
     return finalPrompt;
   }
 
@@ -3279,7 +3421,10 @@ COMPOSITION ARCHITECTURE:
             colorPrincipale,
             colorSecondaire,
           );
-        } else if (model.toLowerCase().includes('diagonal split design') || model.toLowerCase().includes('diagonal-split-design')) {
+        } else if (
+          model.toLowerCase().includes('diagonal split design') ||
+          model.toLowerCase().includes('diagonal-split-design')
+        ) {
           this.logger.log(
             `[processFlyerBackground] Building DIAGONAL_SPLIT_DESIGN prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
           );
@@ -3311,6 +3456,15 @@ COMPOSITION ARCHITECTURE:
             colorPrincipale,
             colorSecondaire,
           );
+        } else if (architecture.layoutType === 'TYPE_EDITORIAL_REVEAL') {
+          this.logger.log(
+            `[processFlyerBackground] Building EDITORIAL_REVEAL prompt: subject="${customSubject || params.job}"`,
+          );
+          magazineStyleDirective = this.buildEditorialRevealPrompt(
+            customSubject || params.job || 'A premium subject',
+            colorPrincipale,
+            colorSecondaire,
+          );
         } else if (model.toLowerCase().includes('focus circle')) {
           this.logger.log(
             `[processFlyerBackground] Building FOCUS_CIRCLE prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
@@ -3323,6 +3477,15 @@ COMPOSITION ARCHITECTURE:
             colorPrincipale,
             colorSecondaire,
             user?.name || '',
+          );
+        } else if (model.toLowerCase().includes('editorial reveal')) {
+          this.logger.log(
+            `[processFlyerBackground] Building EDITORIAL_REVEAL prompt: subject="${customSubject || params.job}"`,
+          );
+          magazineStyleDirective = this.buildEditorialRevealPrompt(
+            customSubject || params.job || 'A premium subject',
+            colorPrincipale,
+            colorSecondaire,
           );
         } else {
           // Standard magazine-style prompt for other architectures
@@ -3458,12 +3621,16 @@ COMPOSITION ARCHITECTURE:
 
       // 5. ARCHITECTURE-AWARE FLYER TEXT RULES (Enhanced from 78-architecture data)
       // Skip architecture rules if using specialized prompt builders like buildFocusCirclePrompt or buildDiagonalSplitDesignPrompt
-      const isUsingSpecializedPromptBuilder = 
-        (model.toLowerCase().includes('focus circle') && architecture?.layoutType === 'TYPE_FOCUS_CIRCLE') ||
-        ((model.toLowerCase().includes('diagonal split design') || model.toLowerCase().includes('diagonal-split-design')) && architecture?.layoutType === 'TYPE_DIAGONAL_SPLIT_DESIGN');
-      
-      const architectureRules = architecture && !isUsingSpecializedPromptBuilder
-        ? `
+      const isUsingSpecializedPromptBuilder =
+        (model.toLowerCase().includes('focus circle') &&
+          architecture?.layoutType === 'TYPE_FOCUS_CIRCLE') ||
+        ((model.toLowerCase().includes('diagonal split design') ||
+          model.toLowerCase().includes('diagonal-split-design')) &&
+          architecture?.layoutType === 'TYPE_DIAGONAL_SPLIT_DESIGN');
+
+      const architectureRules =
+        architecture && !isUsingSpecializedPromptBuilder
+          ? `
   ARCHITECTURE DIRECTIVES:
   - SUBJECT POSITIONING: ${params.subject ? `Center the custom subject: "${params.subject}"` : architecture.rules.subject}
   - BACKGROUND STYLING: ${architecture.rules.background}
@@ -3473,7 +3640,7 @@ COMPOSITION ARCHITECTURE:
   - UPPER ZONE ELEMENTS: ${architecture.rules.upperZone}
   - TECHNICAL CONSTRAINTS: ${architecture.rules.constraints}
         `
-        : '';
+          : '';
 
       // Skip heavy generic rules if architecture prompt builder was used
       const isSpecializedArch = [
@@ -3564,6 +3731,17 @@ OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. N
         );
         this.logger.log(
           '[processFlyerBackground] Focus Circle filter applied successfully.',
+        );
+      } else if (
+        architecture?.layoutType === 'TYPE_EDITORIAL_REVEAL' ||
+        model.toLowerCase().includes('editorial reveal')
+      ) {
+        this.logger.log(
+          `[processFlyerBackground] Applying EDITORIAL_REVEAL Sharp filter for Gen: ${generationId}`,
+        );
+        finalBuffer = await this.compositeEditorialRevealFilter(finalBuffer);
+        this.logger.log(
+          '[processFlyerBackground] Editorial Reveal filter applied successfully.',
         );
       }
       // ────────────────────────────────────────────────────────────────────

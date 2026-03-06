@@ -219,13 +219,29 @@ export const STUDIO_POSTER_ARCH: VisualArchitecture = {
       'Clean white or very light grey studio background. No gradients, no textures, no colored backgrounds.',
     title:
       'Optional title element using typography or minimal text (user-defined).',
-    subtitle:
-      'Optional subtitle or supporting text (minimal, elegant).',
-    infoBlock:
-      'None.',
+    subtitle: 'Optional subtitle or supporting text (minimal, elegant).',
+    infoBlock: 'None.',
     upperZone: 'None.',
     constraints:
       'LAYOUT: Minimal graphic design poster. Two geometric shapes (circle + vertical rounded rectangle) using primary color as flat elements behind the centered subject. Subject slightly overlaps shapes. Professional minimal poster aesthetic.',
+  },
+};
+
+export const EDITORIAL_REVEAL_ARCH: VisualArchitecture = {
+  name: 'Editorial Reveal',
+  layoutType: 'TYPE_EDITORIAL_REVEAL',
+  colorPalette: 'Monochromatic/Reveal',
+  rules: {
+    subject:
+      'SUBJECT: One single subject (person, object, product, etc.). Centered and dominant.',
+    background:
+      'BACKGROUND: Black and white, desaturated, heavily blurred, soft focus. One continuous image covering the full background. NO split, NO two colors, NO left/right division.',
+    title: 'None.',
+    subtitle: 'None.',
+    infoBlock: 'None.',
+    upperZone: 'None.',
+    constraints:
+      'STYLE: Modern editorial poster, minimal graphic design. Background must be B&W and blurred. A tall vertical rectangle will be added in post-production. DO NOT render the rectangle or focus effect in the AI generation.',
   },
 };
 
@@ -241,6 +257,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   DIAGONAL_SPLIT: DIAGONAL_SPLIT_ARCH,
   DIAGONAL_SPLIT_DESIGN: DIAGONAL_SPLIT_DESIGN_ARCH,
   STUDIO_POSTER: STUDIO_POSTER_ARCH,
+  EDITORIAL_REVEAL: EDITORIAL_REVEAL_ARCH,
 };
 
 export function getVisualArchitecture(
