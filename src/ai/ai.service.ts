@@ -1785,6 +1785,7 @@ private buildMonoAccentPrompt(
   sousTitre: string = '',
   colorPrincipale: string = '#000000',
   colorSecondaire: string = '#FFFFFF',
+  isPersonRequested: boolean = false,
 ): string {
 
 const finalPrompt = `Create a clean professional promotional poster.
@@ -1867,6 +1868,11 @@ COMPOSITION RULES
 - no extra information
 - no decorative elements
 - only title and subtitle
+
+PROHIBITIONS
+${isPersonRequested ? '' : '- NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.\n'}- NO anatomy distortions or AI artifacts.
+- NO watermarks, NO signatures, NO metadata.
+- NO stock-photo style. UNIQUE editorial aesthetic only.
 
 OUTPUT
 High resolution professional marketing poster
@@ -3545,7 +3551,7 @@ COMPOSITION ARCHITECTURE:
           );
         } else if (architecture.layoutType === 'TYPE_MONO_ACCENT') {
           this.logger.log(
-            `[processFlyerBackground] Building MONO_ACCENT prompt: subject="${customSubject || params.job}", titleText="${mainWord}", colorPrincipale="${colorPrincipale}", colorSecondaire="${colorSecondaire}"`,
+            `[processFlyerBackground] Building MONO_ACCENT prompt: subject="${customSubject || params.job}", titleText="${mainWord}", colorPrincipale="${colorPrincipale}", colorSecondaire="${colorSecondaire}", isPersonRequested=${isPersonRequested}`,
           );
           magazineStyleDirective = this.buildMonoAccentPrompt(
             customSubject || params.job || 'A premium subject',
@@ -3553,6 +3559,7 @@ COMPOSITION ARCHITECTURE:
             scriptPhrase,
             colorPrincipale,
             colorSecondaire,
+            isPersonRequested,
           );
         } else if (model.toLowerCase().includes('focus circle')) {
           this.logger.log(
