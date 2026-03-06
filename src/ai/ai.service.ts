@@ -1776,6 +1776,34 @@ IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the im
   }
 
   /**
+   * 🎨 GET MANNEQUIN VARIATION DIRECTIVE - REUSABLE
+   * Returns a string with variation instructions if no gender is specified
+   * Can be used in any prompt builder
+   */
+  private getMannequinVariationDirective(
+    subject: string,
+    isPersonRequested: boolean,
+  ): string {
+    const genderKeywords = /femme|woman|fille|girl|male|mâle|homme|man|garçon|boy/i;
+    const hasGenderSpecified = genderKeywords.test(subject);
+
+    return !hasGenderSpecified && isPersonRequested
+      ? `MANNEQUIN VARIATION -- VERY IMPORTANT:
+- Do NOT use the same model or type of person repeatedly
+- VARY the gender: sometimes display a realistic woman, sometimes display a realistic man
+- VARY body types: athletic, average, curvy, slim - different builds each time
+- VARY ethnicity and features naturally
+- VARY age ranges: younger, middle-aged, diverse ages
+- VARY skin tones: all natural tones represented authentically
+- VARY hairstyles and hair properties completely different each time
+- Create 3D realistic human forms with natural proportions
+- Photorealistic skin texture with natural imperfections
+- Each generation should feel like a completely different real person
+- NO generic AI models, NO repeated faces across generations\n`
+      : '';
+  }
+
+  /**
    * 🎨 BUILD MONO ACCENT PROMPT FOR DALL-E
    * Minimalist B&W layout with a single color accent.
    */
@@ -1787,6 +1815,8 @@ private buildMonoAccentPrompt(
   colorSecondaire: string = '#FFFFFF',
   isPersonRequested: boolean = false,
 ): string {
+  // Get mannequin variation directive
+  const mannequinVariation = this.getMannequinVariationDirective(subject, isPersonRequested);
 
 const finalPrompt = `Create a clean professional promotional poster.
 
@@ -1801,7 +1831,7 @@ Use the subject provided by the user (${subject}) or the uploaded image.
 
 The subject must be centered and large in the composition.
 
-COLOR STYLE
+${mannequinVariation}COLOR STYLE
 Selective color photography effect.
 
 The entire image must first be converted to deep black and white with strong contrast.
