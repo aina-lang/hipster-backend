@@ -1626,11 +1626,8 @@ EXECUTION RULES:
     const rx = Math.round((W - rectW) / 2);
     const ry = Math.round((H - rectH) / 2);
 
-    // 1. Create the B&W Blurred background version
-    const bgBuffer = await sharp(inputBuffer)
-      .greyscale()
-      .blur(15) // Heavy blur
-      .toBuffer();
+    // 1. Create the B&W Blurred background version (base layer)
+    const bgBuffer = await sharp(inputBuffer).greyscale().blur(15).toBuffer();
 
     // 2. Create the rectangular mask
     const maskSvg = `<svg width="${W}" height="${H}">
@@ -1638,21 +1635,8 @@ EXECUTION RULES:
     </svg>`;
     const maskBuffer = await sharp(Buffer.from(maskSvg)).png().toBuffer();
 
-    // 3. Composite the original sharp color image OVER the blurred B&W background using the mask
-    const revealed = await sharp(bgBuffer)
-      .composite([
-        {
-          input: inputBuffer, // Original color/sharp
-          blend: 'over',
-          top: 0,
-          left: 0,
-          // We use the mask to only keep the center rectangle of the sharp color image
-        },
-      ])
-      .toBuffer();
-
-    // Actually, sharp's composite doesn't directly take a mask for the 'input'.
-    // We need to mask the color image first.
+    // 3. Create the reveal layer (sharp color only inside the rectangle)
+    // We MUST specify .png() to preserve the alpha channel for the next composite step
     const maskedColor = await sharp(inputBuffer)
       .ensureAlpha()
       .composite([
@@ -1661,26 +1645,21 @@ EXECUTION RULES:
           blend: 'dest-in',
         },
       ])
+      .png()
       .toBuffer();
 
-    const withReveal = await sharp(bgBuffer)
-      .composite([
-        {
-          input: maskedColor,
-          top: 0,
-          left: 0,
-        },
-      ])
-      .toBuffer();
-
-    // 4. Add thin white border around the rectangle
+    // 4. Create the border overlay
     const borderSvg = `<svg width="${W}" height="${H}">
       <rect x="${rx}" y="${ry}" width="${rectW}" height="${rectH}" fill="none" stroke="white" stroke-width="4" />
     </svg>`;
     const borderBuffer = Buffer.from(borderSvg);
 
-    const finalBuffer = await sharp(withReveal)
-      .composite([{ input: borderBuffer, blend: 'over', top: 0, left: 0 }])
+    // 5. Final composite: Background + Reveal + Border
+    const finalBuffer = await sharp(bgBuffer)
+      .composite([
+        { input: maskedColor, top: 0, left: 0 },
+        { input: borderBuffer, blend: 'over', top: 0, left: 0 },
+      ])
       .jpeg({ quality: 90 })
       .toBuffer();
 
