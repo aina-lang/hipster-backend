@@ -245,6 +245,26 @@ export const EDITORIAL_REVEAL_ARCH: VisualArchitecture = {
   },
 };
 
+export const MONO_ACCENT_ARCH: VisualArchitecture = {
+  name: 'Mono Accent',
+  layoutType: 'TYPE_MONO_ACCENT',
+  colorPalette: 'B&W / Single Accent',
+  rules: {
+    subject:
+      'SUBJECT: Centered and large in the composition. High contrast professional photography. Mostly black and white. Only ONE color must remain: use [COLOR_SECONDAIRE] for the main clothing or an important object.',
+    background:
+      'BACKGROUND: Clean white or light grey textured background. Minimalist and professional.',
+    title:
+      'RENDER TEXT - TOP TITLE: Large bold title at the top. modern sans-serif. Color: Black.',
+    subtitle:
+      'RENDER TEXT - SUBTITLE: Placed under the title. smaller modern sans-serif. Color: [COLOR_SECONDAIRE].',
+    infoBlock: 'None.',
+    upperZone: 'None.',
+    constraints:
+      'LAYOUT: Minimalist editorial advertising poster. Only title and subtitle at the top. No text at the bottom. No logos. No extra information. High resolution commercial advertising style.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
@@ -258,6 +278,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   DIAGONAL_SPLIT_DESIGN: DIAGONAL_SPLIT_DESIGN_ARCH,
   STUDIO_POSTER: STUDIO_POSTER_ARCH,
   EDITORIAL_REVEAL: EDITORIAL_REVEAL_ARCH,
+  MONO_ACCENT: MONO_ACCENT_ARCH,
 };
 
 export function getVisualArchitecture(

@@ -1771,6 +1771,59 @@ IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the im
   }
 
   /**
+   * 🎨 BUILD MONO ACCENT PROMPT FOR DALL-E
+   * Minimalist B&W layout with a single color accent.
+   */
+  private buildMonoAccentPrompt(
+    subject: string = 'modern subject',
+    titleText: string = '',
+    subtitleText: string = '',
+    colorSecondaire: string = '#000000',
+  ): string {
+    const finalPrompt = `Create a clean professional promotional poster.
+
+STYLE:
+Minimalist editorial advertising poster.
+White or light grey textured background.
+High contrast professional photography.
+
+THE SUBJECT:
+The subject is: "${subject}".
+The subject must be centered and large in the composition.
+COLOR STYLE: The image must be mostly black and white. Only ONE color must remain visible.
+Use the color "${colorSecondaire}" (Accent Color) to color:
+- the main clothing element
+- or an important object.
+All other parts of the subject and background must remain strictly monochrome (black, white, grey).
+
+TEXT RENDER RULES (MANDATORY):
+
+1. TOP TITLE:
+   Text: "${titleText}"
+   Position: Display a large bold title at the very top.
+   Typography: Bold modern sans-serif.
+   Color: Black.
+
+2. SUBTITLE:
+   Text: "${subtitleText}"
+   Position: Place directly under the title.
+   Typography: Smaller modern sans-serif.
+   Color: "${colorSecondaire}".
+
+COMPOSITION RULES:
+- Clean white or light grey textured background.
+- Subject centered and dominant.
+- NO text at the bottom.
+- NO logos, NO extra information, NO decorative elements.
+- ONLY the title and subtitle at the top.
+
+OUTPUT:
+High resolution professional marketing poster. Clean commercial advertising style.`;
+
+    return finalPrompt;
+  }
+
+  /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
    * Génère un prompt ultra-affiné pour produire des rendus Vogue/Numéro/Fashion
    * Utilise les règles de l'architecture + directives cinématographiques
@@ -3435,6 +3488,16 @@ COMPOSITION ARCHITECTURE:
           magazineStyleDirective = this.buildEditorialRevealPrompt(
             customSubject || params.job || 'A premium subject',
             colorPrincipale,
+            colorSecondaire,
+          );
+        } else if (architecture.layoutType === 'TYPE_MONO_ACCENT') {
+          this.logger.log(
+            `[processFlyerBackground] Building MONO_ACCENT prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+          );
+          magazineStyleDirective = this.buildMonoAccentPrompt(
+            customSubject || params.job || 'A premium subject',
+            mainWord,
+            scriptPhrase,
             colorSecondaire,
           );
         } else if (model.toLowerCase().includes('focus circle')) {
