@@ -1779,19 +1779,21 @@ IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the im
    * 🎨 BUILD MONO ACCENT PROMPT FOR DALL-E
    * Minimalist B&W layout with a single color accent.
    */
-  private buildMonoAccentPrompt(
-    subject: string = 'modern subject',
-    titre: string = '',
-    sousTitre: string = '',
-    colorPrincipale: string = '#000000',
-    colorSecondaire: string = '#FFFFFF',
-  ): string {
-    const finalPrompt = `Create a clean professional promotional poster.
+private buildMonoAccentPrompt(
+  subject: string = 'modern subject',
+  titre: string = '',
+  sousTitre: string = '',
+  colorPrincipale: string = '#000000',
+  colorSecondaire: string = '#FFFFFF',
+): string {
+
+const finalPrompt = `Create a clean professional promotional poster.
 
 STYLE
 Minimalist editorial advertising poster.
 White or light grey textured background.
 High contrast professional photography.
+Sharp lighting and crisp shadows.
 
 SUBJECT
 Use the subject provided by the user (${subject}) or the uploaded image.
@@ -1799,14 +1801,26 @@ Use the subject provided by the user (${subject}) or the uploaded image.
 The subject must be centered and large in the composition.
 
 COLOR STYLE
-The image must be mostly black and white.
-Only ONE color must remain visible.
+Selective color photography effect.
 
-Use the user's secondary color (${colorSecondaire}) to color:
-- the main clothing element
-- or an important object.
+The entire image must first be converted to deep black and white with strong contrast.
 
-All other parts remain monochrome.
+Then apply a SINGLE accent color.
+
+Use the user's secondary color (${colorSecondaire}) as a saturated accent color.
+
+Apply this accent color ONLY to:
+- the main clothing
+- or a key object related to the subject.
+
+Color treatment rules:
+- the accent color must be vivid and highly saturated
+- keep realistic lighting and texture on the colored elements
+- skin, background and environment must remain grayscale
+- bricks, tools or clothing may inherit the accent color if they belong to the subject
+- no color spill on the background
+
+The result must look like professional selective color photography.
 
 TEXT LAYOUT
 
@@ -1834,6 +1848,7 @@ COMPOSITION RULES
 
 - clean white background
 - subject centered
+- strong contrast between grayscale and accent color
 - no text at the bottom
 - no logos
 - no extra information
@@ -1842,10 +1857,11 @@ COMPOSITION RULES
 
 OUTPUT
 High resolution professional marketing poster
-clean commercial advertising style`;
+clean commercial advertising style
+selective color photo effect`;
 
-    return finalPrompt;
-  }
+return finalPrompt;
+}
 
   /**
    * 🎨 BUILD MAGAZINE-STYLE ELITE PROMPT FOR DALL-E
