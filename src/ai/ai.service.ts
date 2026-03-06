@@ -1781,49 +1781,67 @@ IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the im
    */
   private buildMonoAccentPrompt(
     subject: string = 'modern subject',
-    titleText: string = '',
-    subtitleText: string = '',
+    titre: string = '',
+    sousTitre: string = '',
     colorSecondaire: string = '#000000',
   ): string {
     const finalPrompt = `Create a clean professional promotional poster.
 
-STYLE:
+STYLE
 Minimalist editorial advertising poster.
 White or light grey textured background.
 High contrast professional photography.
 
-THE SUBJECT:
-The subject is: "${subject}".
+SUBJECT
+Use the subject provided by the user (${subject}) or the uploaded image.
+
 The subject must be centered and large in the composition.
-COLOR STYLE: The image must be mostly black and white. Only ONE color must remain visible.
-Use the color "${colorSecondaire}" (Accent Color) to color:
+
+COLOR STYLE
+The image must be mostly black and white.
+Only ONE color must remain visible.
+
+Use the user's secondary color (${colorSecondaire}) to color:
 - the main clothing element
 - or an important object.
-All other parts of the subject and background must remain strictly monochrome (black, white, grey).
 
-TEXT RENDER RULES (MANDATORY):
+All other parts remain monochrome.
 
-1. TOP TITLE:
-   Text: "${titleText}"
-   Position: Display a large bold title at the very top.
-   Typography: Bold modern sans-serif.
-   Color: Black.
+TEXT LAYOUT
 
-2. SUBTITLE:
-   Text: "${subtitleText}"
-   Position: Place directly under the title.
-   Typography: Smaller modern sans-serif.
-   Color: "${colorSecondaire}".
+TOP TITLE
+Display a large bold title at the top.
 
-COMPOSITION RULES:
-- Clean white or light grey textured background.
-- Subject centered and dominant.
-- NO text at the bottom.
-- NO logos, NO extra information, NO decorative elements.
-- ONLY the title and subtitle at the top.
+Text:
+${titre}
 
-OUTPUT:
-High resolution professional marketing poster. Clean commercial advertising style.`;
+Typography:
+Bold modern sans-serif
+Black color
+
+SUBTITLE
+Place a subtitle under the title.
+
+Text:
+${sousTitre}
+
+Style:
+smaller modern sans-serif
+color: ${colorSecondaire}
+
+COMPOSITION RULES
+
+- clean white background
+- subject centered
+- no text at the bottom
+- no logos
+- no extra information
+- no decorative elements
+- only title and subtitle
+
+OUTPUT
+High resolution professional marketing poster
+clean commercial advertising style`;
 
     return finalPrompt;
   }
