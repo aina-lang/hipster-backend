@@ -1780,34 +1780,60 @@ IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the im
    * Returns a string with variation instructions if no gender is specified
    * Can be used in any prompt builder
    */
-  private getMannequinVariationDirective(
-    subject: string,
-    isPersonRequested: boolean,
-  ): string {
-    const genderKeywords = /femme|woman|fille|girl|male|mâle|homme|man|garçon|boy/i;
-    const hasGenderSpecified = genderKeywords.test(subject);
+private getMannequinVariationDirective(
+  subject: string,
+  isPersonRequested: boolean,
+): string {
 
-    return !hasGenderSpecified && isPersonRequested
-      ? `MANNEQUIN VARIATION -- EXTREMELY IMPORTANT -- MANDATORY:
-- Do NOT use the same model or type of person repeatedly
-- VARY the gender: sometimes display a realistic woman, sometimes display a realistic man
-- VARY body types: athletic, average, curvy, slim - different builds each time
-- VARY ethnicity and features naturally
-- VARY age ranges: ONLY younger to middle-aged (18-50 years old), NO elderly, NO old people, NO people over 55
-- VARY skin tones: all natural tones represented authentically
-- VARY hairstyles and hair properties completely different each time
-- Create 3D realistic human forms with natural proportions
-- Photorealistic skin texture with natural imperfections
-- Each generation should feel like a completely different real person
-- NO generic AI models, NO repeated faces across generations
-- STRICT AGE REQUIREMENT: Every person MUST appear young to middle-aged (18-50 maximum), absolutely NO wrinkles of old age, NO elderly appearance\n`
-      : '';
-  }
+  const castingSeed = Math.floor(Math.random() * 100000);
 
-  /**
-   * 🎨 BUILD MONO ACCENT PROMPT FOR DALL-E
-   * Minimalist B&W layout with a single color accent.
-   */
+  const genderKeywords = /femme|woman|fille|girl|male|mâle|homme|man|garçon|boy/i;
+  const hasGenderSpecified = genderKeywords.test(subject);
+
+  return !hasGenderSpecified && isPersonRequested
+    ? `HUMAN MODEL CASTING SYSTEM
+
+CASTING SEED: ${castingSeed}
+
+The system must cast a completely different human model for this image.
+
+Model selection rules:
+- random gender
+- random ethnicity
+- random facial structure
+- random hairstyle
+- random body type
+
+Possible examples:
+- asian female creative
+- athletic black male architect
+- latina female designer
+- european male photographer
+- middle eastern female artist
+- mixed ethnicity male illustrator
+
+Select ONE randomly based on the casting seed.
+
+Age rules:
+- 18 to 50 years old only
+- young adult to middle-aged
+- NO elderly
+- NO old faces
+
+The generated person must look like a real unique individual.
+
+Never reuse the same face across generations.
+
+The identity of the person must be completely different each time this prompt is executed.
+`
+    : '';
+}
+
+
+/**
+ * 🎨 BUILD MONO ACCENT PROMPT FOR DALL-E
+ * Minimalist B&W layout with a single color accent.
+ */
 private buildMonoAccentPrompt(
   subject: string = 'modern subject',
   titre: string = '',
@@ -1816,7 +1842,7 @@ private buildMonoAccentPrompt(
   colorSecondaire: string = '#FFFFFF',
   isPersonRequested: boolean = false,
 ): string {
-  // Get mannequin variation directive
+
   const mannequinVariation = this.getMannequinVariationDirective(subject, isPersonRequested);
 
 const finalPrompt = `Create a clean professional promotional poster.
@@ -1828,11 +1854,13 @@ High contrast professional photography.
 Sharp lighting and crisp shadows.
 
 SUBJECT
-Use the subject provided by the user (${subject}) or the uploaded image.
+Use the subject provided by the user (${subject}) or the uploaded image, featuring a human model.
 
 The subject must be centered and large in the composition.
 
-${mannequinVariation}COLOR STYLE
+${mannequinVariation}
+
+COLOR STYLE
 Selective color photography effect.
 
 The entire image must first be converted to deep black and white with strong contrast.
