@@ -1780,12 +1780,11 @@ Only ONE subject must appear, perfectly centered.
 The subject can be a person, object, product, chair, car, building, animal, furniture, fashion item, food, etc.
 
 BACKGROUND (ULTRA-STRICT):
-- The entire background must be ONE SINGLE IMAGE.
-- The entire image must be BLACK AND WHITE (desaturated).
-- The entire image must be HEAVILY BLURRED with soft focus.
+- The entire image must be FULL COLOR and EXTREMELY SHARP.
+- High detail, professional studio photography.
 - The background must cover the FULL image area.
-- IMPORTANT: The background must NOT be split. No two colors. No left/right division.
-- One continuous blurred grayscale image is MANDATORY.
+- IMPORTANT: DO NOT BLUR THE IMAGE. DO NOT MAKE IT BLACK AND WHITE.
+- ONE single continuous high-resolution color image is MANDATORY.
 
 STYLE:
 Modern editorial poster. Minimal graphic design. Magazine advertising style. Professional photography. Clean composition.
@@ -1793,7 +1792,7 @@ Modern editorial poster. Minimal graphic design. Magazine advertising style. Pro
 TECHNICAL DETAILS:
 High-end studio lighting. Professional editorial quality. 8K resolution.
 
-IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the image. These will be added in post-production. Simply generate the centered subject on a blurred B&W background.
+IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the image. These will be added in post-production. Simply generate the centered subject in FULL COLOR and SHARP FOCUS.
 `;
     return finalPrompt;
   }

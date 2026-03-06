@@ -235,13 +235,13 @@ export const EDITORIAL_REVEAL_ARCH: VisualArchitecture = {
     subject:
       'SUBJECT: One single subject (person, object, product, etc.). Centered and dominant.',
     background:
-      'BACKGROUND: Black and white, desaturated, heavily blurred, soft focus. One continuous image covering the full background. NO split, NO two colors, NO left/right division.',
+      'BACKGROUND: Full color, sharp, high detail, high contrast. One continuous professional studio background. NO blur, NO black and white, NO split.',
     title: 'None.',
     subtitle: 'None.',
     infoBlock: 'None.',
     upperZone: 'None.',
     constraints:
-      'STYLE: Modern editorial poster, minimal graphic design. Background must be B&W and blurred. A tall vertical rectangle will be added in post-production. DO NOT render the rectangle or focus effect in the AI generation.',
+      'STYLE: Modern editorial poster, minimal graphic design. Background must be SHARP and FULL COLOR. The blurred B&W effect will be added in post-production. DO NOT generate the rectangle or desaturation yourself.',
   },
 };
 
