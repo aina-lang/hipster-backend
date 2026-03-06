@@ -1621,7 +1621,7 @@ EXECUTION RULES:
     const ry = Math.round((H - rectH) / 2);
 
     // 1. Create the B&W Blurred background version (base layer)
-    const bgBuffer = await sharp(inputBuffer).greyscale().blur(0.1).toBuffer();
+    const bgBuffer = await sharp(inputBuffer).greyscale().blur(0.3).toBuffer();
 
     // 2. Create the rectangular mask
     const maskSvg = `<svg width="${W}" height="${H}">
