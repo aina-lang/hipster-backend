@@ -1807,18 +1807,24 @@ The entire image must first be converted to deep black and white with strong con
 
 Then apply a SINGLE accent color.
 
-Use the user's secondary color (${colorSecondaire}) as a saturated accent color.
+Use the user's primary color (${colorPrincipale}) as the accent color.
 
-Apply this accent color ONLY to:
-- the main clothing
-- or a key object related to the subject.
+Apply this color to ALL elements belonging to the subject including:
+- clothing
+- accessories
+- shoes
+- hats
+- tools
+- props
+- any object held by the subject
 
 Color treatment rules:
 - the accent color must be vivid and highly saturated
-- keep realistic lighting and texture on the colored elements
-- skin, background and environment must remain grayscale
-- bricks, tools or clothing may inherit the accent color if they belong to the subject
-- no color spill on the background
+- keep realistic lighting and texture
+- skin must remain grayscale
+- background must remain grayscale
+- environment must remain grayscale
+- ONLY the subject's clothing and accessories are colored
 
 The result must look like professional selective color photography.
 
@@ -1832,7 +1838,7 @@ ${titre}
 
 Typography:
 Bold modern sans-serif
-Color: ${colorPrincipale}
+Color: ${colorSecondaire}
 
 SUBTITLE
 Place a subtitle under the title.
@@ -1840,9 +1846,16 @@ Place a subtitle under the title.
 Text:
 ${sousTitre}
 
-Style:
-smaller modern sans-serif
-color: ${colorSecondaire}
+Subtitle style:
+- smaller modern sans-serif
+- white text
+- placed on a horizontal paint brush background
+
+The brush background must:
+- use the primary color (${colorPrincipale})
+- look like a rough paint stroke or spray paint bar
+- extend slightly wider than the subtitle text
+- be centered under the title
 
 COMPOSITION RULES
 
