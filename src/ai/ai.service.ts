@@ -1783,7 +1783,8 @@ IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the im
     subject: string = 'modern subject',
     titre: string = '',
     sousTitre: string = '',
-    colorSecondaire: string = '#000000',
+    colorPrincipale: string = '#000000',
+    colorSecondaire: string = '#FFFFFF',
   ): string {
     const finalPrompt = `Create a clean professional promotional poster.
 
@@ -1817,7 +1818,7 @@ ${titre}
 
 Typography:
 Bold modern sans-serif
-Black color
+Color: ${colorPrincipale}
 
 SUBTITLE
 Place a subtitle under the title.
@@ -3515,12 +3516,13 @@ COMPOSITION ARCHITECTURE:
           );
         } else if (architecture.layoutType === 'TYPE_MONO_ACCENT') {
           this.logger.log(
-            `[processFlyerBackground] Building MONO_ACCENT prompt: subject="${customSubject || params.job}", titleText="${mainWord}"`,
+            `[processFlyerBackground] Building MONO_ACCENT prompt: subject="${customSubject || params.job}", titleText="${mainWord}", colorPrincipale="${colorPrincipale}", colorSecondaire="${colorSecondaire}"`,
           );
           magazineStyleDirective = this.buildMonoAccentPrompt(
             customSubject || params.job || 'A premium subject',
             mainWord,
             scriptPhrase,
+            colorPrincipale,
             colorSecondaire,
           );
         } else if (model.toLowerCase().includes('focus circle')) {
