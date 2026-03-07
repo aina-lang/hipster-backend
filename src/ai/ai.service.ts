@@ -2163,183 +2163,54 @@ private buildMonoAccentPrompt(
 
   const mannequinVariation = this.getMannequinVariationDirective(subject, isPersonRequested);
 
-const finalPrompt = `Create a clean professional promotional poster.
+const finalPrompt = `Create a minimalist editorial advertising poster.
 
-STYLE
+Scene:
+A construction worker kneeling and laying bricks with a trowel.
 
-Minimalist editorial advertising poster.
+Lighting:
+Strong directional lighting from the top left creating natural shadows on the subject.
+High contrast on the worker, soft contrast on the background.
 
-Bright high-key photography with a luminous white atmosphere.
+Color style:
+Selective color effect.
+The entire image is black and white except one fluorescent neon accent color: ${colorSecondaire}.
 
-The image must feel very bright and clean.
+The accent color must be extremely saturated and vibrant, almost glowing.
 
-Use strong selective color effect:
-the image is black and white except one accent color.
+Apply the accent color to:
+- clothing
+- tools
+- work materials
 
-The accent color must be extremely vibrant, neon-like, ultra saturated and visually striking.
-
-The color should appear bold, fluorescent and almost glowing against the grayscale environment.
-
-Use commercial advertising color grading to make the color pop intensely.
-
-Add subtle photographic grain and light concrete texture.
-
-Lighting must emphasize the subject with directional highlights and shadows.
-
-The contrast must be applied mainly on the subject, not the background.
-
-Natural shadows should appear in clothing folds, arms and objects.
-
-The subject should feel sculpted by light with depth and texture.
-
-
-SUBJECT
-
-If the user uploads an image:
-Use the uploaded image as the main subject.
-
-Do not change the identity of the person.
-
-Keep the pose and appearance but adapt the environment to match the poster style.
-
-If no image is uploaded:
-Generate a realistic professional subject based on:
-${subject}
+Everything else must remain grayscale.
 
 ${mannequinVariation}
 
-PROFESSION ACTION
+Background:
+Bright white concrete wall with subtle texture and small grey imperfections.
+The background must be bright, slightly dirty, and textured but not dark.
 
-The subject must be performing a natural professional action.
+Composition:
+The subject is placed in the lower half of the image.
+Large empty space above the subject for the text.
 
-Avoid static posing.
+Typography:
+Bold modern sans-serif font.
+All text must be horizontal.
 
-The scene should feel like a real moment of work.
-
-
-PROFESSION CONTEXT
-
-Add one or two contextual objects related to the profession.
-
-Examples:
-* mason → bricks
-* photographer → camera gear
-* baker → bread or flour
-* carpenter → wood plank
-* designer → tablet, headphones, color samples
-
-Maximum two objects.
-
-Avoid clutter.
-
-
-COMPOSITION
-
-The subject must appear in the lower half of the poster.
-
-Large empty space must remain above the subject.
-
-The subject dominates the lower part of the image.
-
-The upper area should remain bright and minimal.
-
-
-BACKGROUND
-
-Bright white concrete wall with subtle grain texture.
-
-The background must remain very bright and low contrast.
-
-Avoid dark shadows in the background.
-
-The texture must be visible but very subtle, similar to a white concrete surface.
-
-Avoid perfectly smooth studio backgrounds but keep the texture minimal.
-
-
-COLOR STYLE
-
-The entire image must be black and white except one accent color.
-
-The accent color is ${colorSecondaire}.
-
-This color must be extremely saturated, fluorescent and neon-like.
-
-The color should appear visually striking and almost glowing.
-
-Apply the accent color to multiple elements such as:
-
-* clothing
-* tools
-* professional objects
-
-The color should repeat naturally across the scene.
-
-
-TEXT LAYOUT
-
-The poster must contain ONLY two text elements.
-
-1) Main title at the top
-
-Text:
+Top title (very large and bold):
 ${titre}
 
-Style:
-Bold modern sans-serif
-Black color
-
-
-2) Subtitle below the title
-
-Text:
+Subtitle below:
 ${sousTitre}
 
-Style:
-Bold modern sans-serif
-Accent color (${colorSecondaire})
+Style reference:
+Industrial advertising photography, documentary realism, high contrast subject, bright textured background.
 
-
-TEXT RULES
-
-All text must be perfectly horizontal.
-
-No vertical text.
-
-No rotated text.
-
-No diagonal text.
-
-Do NOT add any graphic lines.
-
-No underline.
-
-No separators.
-
-No strokes.
-
-No decorative elements.
-
-Only pure typography.
-
-No additional text allowed.
-
-
-MOOD
-
-Editorial
-Minimal
-Bright
-Professional
-Iconic
-
-
-OUTPUT
-
-High resolution professional marketing poster.
-
-Bright white textured background with strong subject contrast and extremely vibrant neon accent color.
-`;
+Output:
+Professional poster style, high resolution, cinematic lighting.
+fluorescent workwear color grading`;
 
 return finalPrompt;
 }
