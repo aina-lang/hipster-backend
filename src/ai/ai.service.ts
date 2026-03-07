@@ -2299,6 +2299,7 @@ Do not add graphic lines.
 
 No separators.
 No underline.
+No line under the title.
 No decorative strokes.
 No design elements.
 
