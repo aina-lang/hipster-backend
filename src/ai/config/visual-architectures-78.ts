@@ -306,6 +306,27 @@ export const NEON_EDITORIAL_ARCH: VisualArchitecture = {
   },
 };
 
+export const MATTE_PRODUCT_ARCH: VisualArchitecture = {
+  name: 'Matte Product',
+  layoutType: 'TYPE_MATTE_PRODUCT',
+  colorPalette: 'Dual Gradient / Matte',
+  rules: {
+    subject:
+      'SUBJECT: Centered product or scene in the composition. Premium product advertising style, realistic professional presentation.',
+    background:
+      'BACKGROUND: Matte gradient background using two colors for smooth soft transition. Should have matte texture aesthetic.',
+    title:
+      'RENDER TEXT - MAIN TITLE: Bold, large, centered, white text. PRIMARY typography element.',
+    subtitle:
+      'RENDER TEXT - SLOGAN: Minimal, small text, modern typography displayed below the central graphic dot.',
+    infoBlock:
+      'GRAPHIC ELEMENTS: Two small white cross symbols near the top, bold central title, centered white dot under title.',
+    upperZone: 'Two small white cross symbols positioned near the top.',
+    constraints:
+      'LAYOUT: Modern minimalist advertising poster. Minimal UI with geometric elements. Premium matte gradient design. No logos. Product-focused composition.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
@@ -321,6 +342,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   EDITORIAL_REVEAL: EDITORIAL_REVEAL_ARCH,
   EPIC_BRAND: EPIC_BRAND_ARCH,
   NEON_EDITORIAL: NEON_EDITORIAL_ARCH,
+  MATTE_PRODUCT: MATTE_PRODUCT_ARCH,
   MONO_ACCENT: MONO_ACCENT_ARCH,
 };
 

@@ -1830,6 +1830,92 @@ The identity of the person must be completely different each time this prompt is
 }
 
 /**
+ * 🎨 BUILD MATTE PRODUCT PROMPT FOR DALL-E
+ * Modern minimalist advertising poster with matte gradient background
+ */
+private buildMatteProductPrompt(
+  subject: string = 'modern product',
+  titre: string = '',
+  sousTitre: string = '',
+  colorPrincipale: string = '#1A1A2E',
+  colorSecondaire: string = '#FFFFFF',
+): string {
+  const finalPrompt = `Create a modern minimalist advertising poster.
+
+SUBJECT
+
+If an image is uploaded:
+Use the uploaded image as the main subject.
+
+If no image is uploaded:
+Generate a realistic professional scene based on:
+
+${subject}
+
+STYLE
+
+Premium product advertising.
+
+The subject must be centered in the composition.
+
+BACKGROUND
+
+Use a matte gradient background using only two colors:
+
+Primary color:
+${colorPrincipale}
+
+Secondary color:
+${colorSecondaire}
+
+The gradient should be smooth and soft with a matte texture.
+
+GRAPHIC ELEMENTS
+
+Add minimal graphic UI elements:
+
+* two small white cross symbols near the top
+* a bold central title
+* a graphic dot below the title
+
+TYPOGRAPHY
+
+Main title:
+${titre}
+
+Style:
+* bold
+* large
+* centered
+* white text
+
+GRAPHIC DOT
+
+Place a centered white dot under the title.
+
+SLOGAN
+
+Below the dot display the slogan:
+
+${sousTitre}
+
+Style:
+* minimal
+* small text
+* modern typography
+
+MOOD
+
+Minimal
+Premium
+Modern advertising
+Matte gradient design
+Product poster`;
+
+  return finalPrompt;
+}
+
+/**
  * 🎨 BUILD NEON EDITORIAL PROMPT FOR DALL-E
  * Modern editorial poster with strong cinematic contrast and futuristic elements
  */
@@ -3771,6 +3857,17 @@ COMPOSITION ARCHITECTURE:
             customSubject || params.job || 'A premium subject',
             mainWord,
             scriptPhrase,
+            colorSecondaire,
+          );
+        } else if (architecture.layoutType === 'TYPE_MATTE_PRODUCT') {
+          this.logger.log(
+            `[processFlyerBackground] Building MATTE_PRODUCT prompt: subject="${customSubject || params.job}", title="${mainWord}", subtitle="${scriptPhrase}", colorPrincipale="${colorPrincipale}", colorSecondaire="${colorSecondaire}"`,
+          );
+          magazineStyleDirective = this.buildMatteProductPrompt(
+            customSubject || params.job || 'A premium product',
+            mainWord,
+            scriptPhrase,
+            colorPrincipale,
             colorSecondaire,
           );
         } else if (architecture.layoutType === 'TYPE_MONO_ACCENT') {
