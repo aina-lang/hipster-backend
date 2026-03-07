@@ -2069,7 +2069,10 @@ private buildProfessionIconPrompt(
   subject: string = 'professional',
   titre: string = '',
   sousTitre: string = '',
+  isPersonRequested: boolean = false,
 ): string {
+  const mannequinVariation = this.getMannequinVariationDirective(subject, isPersonRequested);
+  
   const finalPrompt = `Create a minimalist editorial poster inspired by magazine covers.
 
 SUBJECT
@@ -2081,6 +2084,8 @@ If no image is uploaded:
 Generate a realistic professional scene based on:
 
 ${subject}
+
+${mannequinVariation}
 
 STYLE
 
@@ -3944,12 +3949,13 @@ COMPOSITION ARCHITECTURE:
           );
         } else if (architecture.layoutType === 'TYPE_PROFESSION_ICON') {
           this.logger.log(
-            `[processFlyerBackground] Building PROFESSION_ICON prompt: subject="${customSubject || params.job}", title="${mainWord}", subtitle="${scriptPhrase}"`,
+            `[processFlyerBackground] Building PROFESSION_ICON prompt: subject="${customSubject || params.job}", title="${mainWord}", subtitle="${scriptPhrase}", isPersonRequested=${isPersonRequested}`,
           );
           magazineStyleDirective = this.buildProfessionIconPrompt(
             customSubject || params.job || 'A professional subject',
             mainWord,
             scriptPhrase,
+            isPersonRequested,
           );
         } else if (architecture.layoutType === 'TYPE_MONO_ACCENT') {
           this.logger.log(
