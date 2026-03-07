@@ -2062,6 +2062,75 @@ DESIGN STYLE:
 }
 
 /**
+ * 🎨 BUILD PROFESSION ICON PROMPT FOR DALL-E
+ * Editorial magazine poster inspired by professional magazine covers
+ */
+private buildProfessionIconPrompt(
+  subject: string = 'professional',
+  titre: string = '',
+  sousTitre: string = '',
+): string {
+  const finalPrompt = `Create a minimalist editorial poster inspired by magazine covers.
+
+SUBJECT
+
+If an image is uploaded:
+Use the uploaded image as the main subject.
+
+If no image is uploaded:
+Generate a realistic professional scene based on:
+
+${subject}
+
+STYLE
+
+Black and white photography.
+
+High contrast editorial portrait.
+
+The subject must appear professional and iconic.
+
+COMPOSITION
+
+The subject must be centered in the lower half of the image.
+
+Add objects related to the profession around the subject.
+
+Example:
+* bread and flour for a baker
+* house model for a real estate agent
+* tattoo machine for a tattoo artist
+
+BACKGROUND
+
+Minimal light background.
+
+Clean and spacious composition with lots of empty space.
+
+TEXT LAYOUT
+
+Horizontal title at the top:
+
+${titre}
+
+Vertical profession text on the side:
+
+${sousTitre}
+
+Typography must be bold, modern and editorial.
+
+MOOD
+
+Editorial magazine poster
+Professional
+Minimal
+Iconic
+Documentary photography style`;
+
+  return finalPrompt;
+}
+
+/**
  * 🎨 BUILD MONO ACCENT PROMPT FOR DALL-E
  * Minimalist B&W layout with a single color accent.
  */
@@ -3869,6 +3938,15 @@ COMPOSITION ARCHITECTURE:
             scriptPhrase,
             colorPrincipale,
             colorSecondaire,
+          );
+        } else if (architecture.layoutType === 'TYPE_PROFESSION_ICON') {
+          this.logger.log(
+            `[processFlyerBackground] Building PROFESSION_ICON prompt: subject="${customSubject || params.job}", title="${mainWord}", subtitle="${scriptPhrase}"`,
+          );
+          magazineStyleDirective = this.buildProfessionIconPrompt(
+            customSubject || params.job || 'A professional subject',
+            mainWord,
+            scriptPhrase,
           );
         } else if (architecture.layoutType === 'TYPE_MONO_ACCENT') {
           this.logger.log(

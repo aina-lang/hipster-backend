@@ -327,6 +327,27 @@ export const MATTE_PRODUCT_ARCH: VisualArchitecture = {
   },
 };
 
+export const PROFESSION_ICON_ARCH: VisualArchitecture = {
+  name: 'Profession Icon',
+  layoutType: 'TYPE_PROFESSION_ICON',
+  colorPalette: 'Black & White',
+  rules: {
+    subject:
+      'SUBJECT: Realistic professional centered in the lower half of image. Objects related to profession positioned around subject.',
+    background:
+      'BACKGROUND: Minimal light background. Clean and spacious composition with lots of empty space.',
+    title:
+      'RENDER TEXT - HORIZONTAL TITLE: Bold, modern, editorial typography positioned at the top.',
+    subtitle:
+      'RENDER TEXT - VERTICAL PROFESSION TEXT: Bold, modern, editorial typography positioned on the side.',
+    infoBlock:
+      'GRAPHIC DESIGN: Professional objects and tools related to the profession (bread/flour for baker, house model for real estate agent, etc.).',
+    upperZone: 'Horizontal title at top.',
+    constraints:
+      'LAYOUT: Editorial magazine poster style. High contrast B&W photography. Professional and iconic appearance. Documentary photography style. No logos.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
@@ -343,6 +364,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   EPIC_BRAND: EPIC_BRAND_ARCH,
   NEON_EDITORIAL: NEON_EDITORIAL_ARCH,
   MATTE_PRODUCT: MATTE_PRODUCT_ARCH,
+  PROFESSION_ICON: PROFESSION_ICON_ARCH,
   MONO_ACCENT: MONO_ACCENT_ARCH,
 };
 
