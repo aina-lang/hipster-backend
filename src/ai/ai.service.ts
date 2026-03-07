@@ -1840,27 +1840,55 @@ private buildMatteProductPrompt(
   colorPrincipale: string = '#1A1A2E',
   colorSecondaire: string = '#FFFFFF',
 ): string {
-  const finalPrompt = `Create a modern minimalist advertising poster.
+  const finalPrompt = `Create a premium cinematic advertising poster.
+
+FORMAT
+
+Vertical poster layout.
+Modern minimalist editorial advertising design.
+
+COMPOSITION
+
+The composition must follow a strong visual hierarchy.
+
+The subject must be placed in the LOWER THIRD of the image.
+
+Leave a large clean negative space in the upper area for typography.
+
+Do NOT center the subject vertically.
 
 SUBJECT
 
 If an image is uploaded:
-Use the uploaded image exactly as the main subject.
-Do not recreate or redesign the subject.
+Use the uploaded image as the main subject.
+Do not redesign it.
 Do not modify it.
-Only integrate it into the poster composition.
+Only integrate it naturally into the poster composition.
 
-The subject must be centered.
+If no image is uploaded:
+Generate the following subject:
 
-STYLE
+${subject}
 
-Premium product advertising
-Modern minimalist poster
-Strong visual hierarchy
+The subject must look natural, professional and realistic.
+
+PHOTOGRAPHY STYLE
+
+Cinematic studio photography.
+Editorial advertising photography.
+
+Lighting style:
+soft directional studio lighting
+dramatic shadows
+high contrast
+moody atmosphere
+subtle rim light
+
+The lighting should create depth and a premium look.
 
 BACKGROUND
 
-Use a matte gradient background using only two colors.
+Use a dark matte gradient background.
 
 Primary color:
 ${colorPrincipale}
@@ -1868,36 +1896,42 @@ ${colorPrincipale}
 Secondary color:
 ${colorSecondaire}
 
-The gradient must be smooth, soft and matte.
+The gradient must be smooth, cinematic and slightly textured.
+
+The background should feel like a professional studio backdrop.
 
 GRAPHIC ELEMENTS
 
-Add minimal UI graphic elements:
+Add minimal UI design elements:
 
-* two small white cross symbols near the top
+* two very small thin white cross symbols near the top corners
 * a bold centered title
 * a centered white graphic dot below the title
+
+These elements should be subtle and clean.
 
 TYPOGRAPHY
 
 Main title:
 ${titre}
 
-Style requirements:
+Typography style requirements:
 
 * EXTRA BOLD
 * ALL CAPS
+* condensed sans-serif
+* strong advertising typography
+* Bebas Neue / Druk style
 * very large
 * centered
 * white text
-* heavy weight typography
 * strong visual impact
 
 The title must dominate the poster.
 
 GRAPHIC DOT
 
-Place one centered white dot directly under the title.
+Place one small centered white dot directly under the title.
 
 SLOGAN
 
@@ -1907,23 +1941,24 @@ ${sousTitre}
 
 Style:
 
+* small size
+* modern minimalist sans-serif
 * lowercase
-* minimal
-* small text
-* modern sans-serif typography
-* spaced words separated by spaces
+* wide letter spacing
+* subtle and elegant
 
-Example:
+Example format:
 art   encre   créativité
 
 MOOD
 
 Minimal
 Premium
-Modern advertising
-Matte gradient poster design
+Modern editorial advertising
+Cinematic lighting
+Dark atmospheric poster
 Clean layout
-Centered composition`;
+Luxury brand feeling`;
 
   return finalPrompt;
 }
