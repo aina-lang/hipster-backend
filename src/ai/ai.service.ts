@@ -1830,6 +1830,89 @@ The identity of the person must be completely different each time this prompt is
 }
 
 /**
+ * 🎨 BUILD NEON EDITORIAL PROMPT FOR DALL-E
+ * Modern editorial poster with strong cinematic contrast and futuristic elements
+ */
+private buildNeonEditorialPrompt(
+  subject: string = 'modern subject',
+  titre: string = '',
+  sousTitre: string = '',
+  colorSecondaire: string = '#00FF88',
+): string {
+  const finalPrompt = `Create a modern editorial poster with a strong cinematic contrast.
+
+SUBJECT
+
+If an image is uploaded:
+Use the uploaded image as the main subject.
+
+If no image is uploaded:
+Generate a realistic professional portrait based on this description:
+
+${subject}
+
+STYLE
+
+High contrast portrait photography.
+
+The subject should appear mostly dark, almost black silhouette,
+with subtle light edges.
+
+BACKGROUND
+
+Use a vibrant glowing gradient background color:
+
+${colorSecondaire}
+
+The background should feel luminous and atmospheric.
+
+GRAPHIC DESIGN
+
+Add subtle futuristic UI elements:
+
+* thin white graphic lines
+* micro typography
+* minimal tech interface elements
+* abstract geometric overlays
+
+BACKGROUND TITLE
+
+Use the TITLE as a very large word behind the subject.
+
+Text:
+${titre}
+
+Style:
+* very large typography
+* bold
+* partially hidden behind the subject
+* opacity around 20–30%
+
+FOREGROUND TEXT
+
+Display the subtitle as a small slogan in front.
+
+Text:
+${sousTitre}
+
+Style:
+* clean modern typography
+* white text
+* centered or slightly above the lower third
+* minimal and elegant
+
+MOOD
+
+Editorial poster  
+Modern startup visual  
+High contrast  
+Premium digital design  
+Futuristic and minimal`;
+
+  return finalPrompt;
+}
+
+/**
  * 🎨 BUILD EPIC BRAND PROMPT FOR DALL-E
  * Cinematic promotional poster with double-exposure composition
  */
@@ -3675,6 +3758,16 @@ COMPOSITION ARCHITECTURE:
             `[processFlyerBackground] Building EPIC_BRAND prompt: subject="${customSubject || params.job}", title="${mainWord}", subtitle="${scriptPhrase}", color="${colorSecondaire}"`,
           );
           magazineStyleDirective = this.buildEpicBrandPrompt(
+            customSubject || params.job || 'A premium subject',
+            mainWord,
+            scriptPhrase,
+            colorSecondaire,
+          );
+        } else if (architecture.layoutType === 'TYPE_NEON_EDITORIAL') {
+          this.logger.log(
+            `[processFlyerBackground] Building NEON_EDITORIAL prompt: subject="${customSubject || params.job}", title="${mainWord}", subtitle="${scriptPhrase}", color="${colorSecondaire}"`,
+          );
+          magazineStyleDirective = this.buildNeonEditorialPrompt(
             customSubject || params.job || 'A premium subject',
             mainWord,
             scriptPhrase,

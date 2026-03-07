@@ -285,6 +285,27 @@ export const EPIC_BRAND_ARCH: VisualArchitecture = {
   },
 };
 
+export const NEON_EDITORIAL_ARCH: VisualArchitecture = {
+  name: 'Neon Editorial',
+  layoutType: 'TYPE_NEON_EDITORIAL',
+  colorPalette: 'Dark / Neon Glow',
+  rules: {
+    subject:
+      'SUBJECT: High contrast portrait photography. Subject appears mostly dark, almost black silhouette, with subtle light edges.',
+    background:
+      'BACKGROUND: Vibrant glowing gradient background using the accent color. Should feel luminous and atmospheric.',
+    title:
+      'RENDER TEXT - BACKGROUND TITLE: Very large typography, bold, partially hidden behind subject with 20-30% opacity.',
+    subtitle:
+      'RENDER TEXT - FOREGROUND TEXT: Clean modern typography, white text, centered or slightly above lower third, minimal and elegant.',
+    infoBlock:
+      'GRAPHIC DESIGN: Subtle futuristic UI elements including thin white graphic lines, micro typography, minimal tech interface elements, and abstract geometric overlays.',
+    upperZone: 'Futuristic UI elements and abstract geometric overlays.',
+    constraints:
+      'LAYOUT: Modern editorial poster with startup visual aesthetic. High contrast, premium digital design, futuristic and minimal. No logos. Ultra realistic photography.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
@@ -299,6 +320,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   STUDIO_POSTER: STUDIO_POSTER_ARCH,
   EDITORIAL_REVEAL: EDITORIAL_REVEAL_ARCH,
   EPIC_BRAND: EPIC_BRAND_ARCH,
+  NEON_EDITORIAL: NEON_EDITORIAL_ARCH,
   MONO_ACCENT: MONO_ACCENT_ARCH,
 };
 
