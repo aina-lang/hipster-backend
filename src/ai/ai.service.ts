@@ -2156,27 +2156,22 @@ STYLE
 
 Minimalist editorial advertising poster.
 
-Ultra high contrast editorial photography.
+Bright high-key photography.
 
-Dramatic directional lighting creating strong shadows and highlights.
+The image must feel very bright and luminous.
 
-Use a strong selective color effect:
+Use strong selective color effect:
 the image is black and white except one accent color.
 
-The accent color must be neon-like, extremely vibrant, ultra saturated
-and visually striking.
+The accent color must be extremely vibrant, neon-like and highly saturated.
 
-The color must look fluorescent and very intense,
-almost glowing against the grayscale environment.
+The color should appear bold, intense and visually striking.
 
-Use strong commercial color grading to make the color extremely punchy.
+Use commercial advertising color grading to make the color pop strongly.
 
-Add subtle photographic grain, dust and texture.
+Add subtle photographic grain and light concrete texture.
 
-The image should feel slightly gritty and industrial,
-not clean or studio-perfect.
-
-Inspired by industrial advertising photography.
+The image should feel bright, clean and realistic.
 
 
 SUBJECT
@@ -2186,7 +2181,7 @@ Use the uploaded image as the main subject.
 
 Do not change the identity of the person.
 
-Keep the pose and appearance but adapt the environment to match the poster style.
+Keep the pose and appearance but adapt the scene to match the poster style.
 
 If no image is uploaded:
 Generate a realistic professional subject based on:
@@ -2208,13 +2203,12 @@ PROFESSION CONTEXT
 Add one or two contextual objects related to the profession.
 
 Examples:
-* mason → bricks, mortar
-* photographer → tripod, camera bag
-* baker → flour, bread
-* carpenter → wood plank
+* mason → bricks
+* photographer → camera gear
+* baker → bread or flour
 * designer → tablet, headphones, color samples
 
-Maximum two objects.
+Use a maximum of two objects.
 
 Avoid clutter.
 
@@ -2225,23 +2219,22 @@ The subject must appear in the lower half of the poster.
 
 Large empty space must remain above the subject.
 
-The subject dominates the lower area.
+The upper area must remain bright and clean.
 
 
 BACKGROUND
 
-Light grey industrial background with visible concrete texture.
+Bright white background with subtle concrete texture.
 
-The background must look like a dusty concrete wall.
+The background must feel very luminous and clean.
 
-Add subtle imperfections such as:
+The texture should be light and subtle, similar to a white concrete wall.
 
-* concrete grain
-* dust particles
-* light stains
-* rough wall texture
+Avoid dark areas in the background.
 
-Avoid perfectly smooth backgrounds.
+Avoid heavy contrast in the background.
+
+Avoid smooth studio background but keep the texture minimal.
 
 
 COLOR STYLE
@@ -2250,11 +2243,9 @@ The entire image must be black and white except one accent color.
 
 The accent color is ${colorSecondaire}.
 
-The color must be extremely saturated, fluorescent and neon-like.
+The color must be neon-like, extremely saturated and visually striking.
 
-The color must be visually aggressive and eye-catching.
-
-It should appear almost glowing against the grayscale environment.
+The color should appear almost glowing.
 
 Apply the accent color to multiple elements such as:
 
@@ -2277,7 +2268,7 @@ Bold modern sans-serif
 Black color
 
 
-2) Subtitle directly below the title
+2) Subtitle below the title
 
 Text:
 ${sousTitre}
@@ -2295,13 +2286,15 @@ No vertical text.
 No rotated text.
 No diagonal text.
 
-Do not add graphic lines.
+Do NOT add any graphic lines.
 
-No separators.
 No underline.
-No line under the title.
-No decorative strokes.
-No design elements.
+No separators.
+No strokes.
+No design bars.
+No decorative elements.
+
+Only pure text.
 
 No additional text allowed.
 
@@ -2310,16 +2303,16 @@ MOOD
 
 Editorial
 Minimal
+Bright
 Professional
 Iconic
-Industrial documentary style
 
 
 OUTPUT
 
 High resolution professional marketing poster.
 
-Strong contrast with extremely vibrant neon accent color and gritty concrete texture background.
+Bright white textured background with extremely vibrant neon accent color.
 `;
 
 return finalPrompt;
