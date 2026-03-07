@@ -2156,22 +2156,28 @@ STYLE
 
 Minimalist editorial advertising poster.
 
-Bright high-key photography.
+Bright high-key photography with a luminous white atmosphere.
 
-The image must feel very bright and luminous.
+The image must feel very bright and clean.
 
 Use strong selective color effect:
 the image is black and white except one accent color.
 
-The accent color must be extremely vibrant, neon-like and highly saturated.
+The accent color must be extremely vibrant, neon-like, ultra saturated and visually striking.
 
-The color should appear bold, intense and visually striking.
+The color should appear bold, fluorescent and almost glowing against the grayscale environment.
 
-Use commercial advertising color grading to make the color pop strongly.
+Use commercial advertising color grading to make the color pop intensely.
 
 Add subtle photographic grain and light concrete texture.
 
-The image should feel bright, clean and realistic.
+Lighting must emphasize the subject with directional highlights and shadows.
+
+The contrast must be applied mainly on the subject, not the background.
+
+Natural shadows should appear in clothing folds, arms and objects.
+
+The subject should feel sculpted by light with depth and texture.
 
 
 SUBJECT
@@ -2181,7 +2187,7 @@ Use the uploaded image as the main subject.
 
 Do not change the identity of the person.
 
-Keep the pose and appearance but adapt the scene to match the poster style.
+Keep the pose and appearance but adapt the environment to match the poster style.
 
 If no image is uploaded:
 Generate a realistic professional subject based on:
@@ -2191,11 +2197,11 @@ ${mannequinVariation}
 
 PROFESSION ACTION
 
-The subject must be performing a natural work action.
+The subject must be performing a natural professional action.
 
 Avoid static posing.
 
-The image should feel like a real moment of work.
+The scene should feel like a real moment of work.
 
 
 PROFESSION CONTEXT
@@ -2206,9 +2212,10 @@ Examples:
 * mason → bricks
 * photographer → camera gear
 * baker → bread or flour
+* carpenter → wood plank
 * designer → tablet, headphones, color samples
 
-Use a maximum of two objects.
+Maximum two objects.
 
 Avoid clutter.
 
@@ -2219,22 +2226,22 @@ The subject must appear in the lower half of the poster.
 
 Large empty space must remain above the subject.
 
-The upper area must remain bright and clean.
+The subject dominates the lower part of the image.
+
+The upper area should remain bright and minimal.
 
 
 BACKGROUND
 
-Bright white background with subtle concrete texture.
+Bright white concrete wall with subtle grain texture.
 
-The background must feel very luminous and clean.
+The background must remain very bright and low contrast.
 
-The texture should be light and subtle, similar to a white concrete wall.
+Avoid dark shadows in the background.
 
-Avoid dark areas in the background.
+The texture must be visible but very subtle, similar to a white concrete surface.
 
-Avoid heavy contrast in the background.
-
-Avoid smooth studio background but keep the texture minimal.
+Avoid perfectly smooth studio backgrounds but keep the texture minimal.
 
 
 COLOR STYLE
@@ -2243,15 +2250,17 @@ The entire image must be black and white except one accent color.
 
 The accent color is ${colorSecondaire}.
 
-The color must be neon-like, extremely saturated and visually striking.
+This color must be extremely saturated, fluorescent and neon-like.
 
-The color should appear almost glowing.
+The color should appear visually striking and almost glowing.
 
 Apply the accent color to multiple elements such as:
 
 * clothing
 * tools
 * professional objects
+
+The color should repeat naturally across the scene.
 
 
 TEXT LAYOUT
@@ -2283,18 +2292,22 @@ TEXT RULES
 All text must be perfectly horizontal.
 
 No vertical text.
+
 No rotated text.
+
 No diagonal text.
 
 Do NOT add any graphic lines.
 
 No underline.
+
 No separators.
+
 No strokes.
-No design bars.
+
 No decorative elements.
 
-Only pure text.
+Only pure typography.
 
 No additional text allowed.
 
@@ -2312,7 +2325,7 @@ OUTPUT
 
 High resolution professional marketing poster.
 
-Bright white textured background with extremely vibrant neon accent color.
+Bright white textured background with strong subject contrast and extremely vibrant neon accent color.
 `;
 
 return finalPrompt;
