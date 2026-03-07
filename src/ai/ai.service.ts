@@ -2158,47 +2158,36 @@ Minimalist editorial advertising poster.
 High contrast photography.
 Selective color photography.
 
-Black and white image with only one accent color.
+Black and white image with one accent color.
 
-Add subtle photographic grain and texture to create a realistic editorial look.
-
+Add subtle photographic grain and texture.
 Avoid overly smooth studio rendering.
-
-The visual style should feel like a professional documentary editorial photo.
 
 SUBJECT
 
 Use the subject provided by the user (${subject}) or the uploaded image.
 
-The subject must dominate the composition and appear natural and realistic.
-
-The subject must be shown performing a natural professional action,
-not posing for the camera.
+The subject must appear natural and professional,
+performing a real work action.
 
 ${mannequinVariation}
 
 PROFESSION CONTEXT
 
-Add one small contextual element related to the profession to create realism.
+Add one or two contextual elements related to the profession
+to create a realistic working moment.
 
 Examples:
-* mason → bricks or mortar
-* photographer → tripod, camera bag or lens
-* baker → flour or bread
+* photographer → camera bag, tripod, lens
+* mason → bricks, mortar, tools
+* baker → flour, bread
 * carpenter → wood plank
-* florist → flowers
-
-Use only one or two objects maximum.
-
-The scene must feel like a real moment of work in progress.
 
 COMPOSITION
 
 The subject must appear in the lower half of the image.
 
-The composition must remain very minimal with a lot of empty space.
-
-Avoid complex environments and avoid clutter.
+The composition must remain minimal with large empty space.
 
 BACKGROUND
 
@@ -2207,25 +2196,20 @@ Light grey or white background with subtle natural texture.
 The background must NOT be perfectly smooth.
 
 It should contain slight imperfections such as:
-concrete texture, wall grain, dust, subtle noise or industrial surface.
-
-The texture must remain soft and minimal so the subject stays the main focus.
-
-Avoid clean studio backdrops.
+concrete texture, wall grain, dust or subtle noise.
 
 COLOR STYLE
 
-The entire image must be black and white except one accent color.
+The image must be black and white except one accent color.
 
-All elements must be fully desaturated (pure grayscale)
-except the main clothing of the subject.
+Apply the accent color ${colorSecondaire} to multiple key elements:
+* clothing
+* tools
+* professional objects
 
-Apply the accent color ${colorSecondaire} ONLY to the clothing
-(jacket, helmet, shirt or uniform).
+The color should repeat naturally across the scene.
 
-No other colored elements allowed.
-
-All objects, tools and background must remain grayscale.
+All other elements must remain grayscale.
 
 TEXT LAYOUT
 
@@ -2249,12 +2233,19 @@ Style:
 Bold modern sans-serif
 Black color
 
-No other text allowed.
+TEXT RULES
 
-No slogan.
-No subtitle.
-No paragraph.
-No decorative typography.
+All text must be perfectly horizontal or perfectly vertical.
+
+No angled text.
+No rotated text.
+No diagonal typography.
+
+Do not add graphic lines or separators.
+
+No underline.
+No decorative strokes.
+No extra design elements.
 
 MOOD
 
@@ -2263,12 +2254,25 @@ Minimal
 Professional
 Iconic
 
-Inspired by minimalist magazine posters.
-
 OUTPUT
 
 High resolution professional marketing poster.
-Clean editorial advertising style.`;
+Clean editorial advertising style.
+
+SUBJECT
+
+If the user uploads an image:
+Use the uploaded image as the main subject of the poster.
+
+Do not change the identity of the person in the image.
+
+Keep the person's pose and appearance,
+but adapt the scene to match the poster style.
+
+If no image is uploaded:
+Generate a realistic professional subject based on:
+${subject}
+`;
 
 return finalPrompt;
 }
