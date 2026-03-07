@@ -2155,61 +2155,104 @@ const finalPrompt = `Create a clean professional promotional poster.
 STYLE
 
 Minimalist editorial advertising poster.
-High contrast photography.
-Selective color photography.
 
-Black and white image with one accent color.
+High contrast editorial photography.
 
-Add subtle photographic grain and texture.
-Avoid overly smooth studio rendering.
+Dramatic directional lighting to create strong shadows and highlights.
+
+Use a strong selective color effect:
+the image is black and white except one vivid accent color.
+
+The accent color must appear vibrant, saturated and visually striking
+against the grayscale environment.
+
+Add subtle photographic grain, dust and texture to create a realistic editorial look.
+
+The image should feel slightly gritty and documentary,
+not clean or overly smooth.
+
+Inspired by industrial editorial advertising photography.
+
 
 SUBJECT
 
-Use the subject provided by the user (${subject}) or the uploaded image.
+If the user uploads an image:
+Use the uploaded image as the main subject of the poster.
 
-The subject must appear natural and professional,
-performing a real work action.
+Do not change the identity of the person in the image.
+
+Keep the pose and appearance of the person,
+but adapt the environment to match the poster style.
+
+If no image is uploaded:
+Generate a realistic professional subject based on:
+${subject}
 
 ${mannequinVariation}
 
+PROFESSION ACTION
+
+The subject must be shown performing a natural professional action,
+not posing for the camera.
+
+The scene should feel like a real moment of work in progress.
+
+
 PROFESSION CONTEXT
 
-Add one or two contextual elements related to the profession
-to create a realistic working moment.
+Add one or two contextual elements related to the profession.
 
 Examples:
-* photographer → camera bag, tripod, lens
-* mason → bricks, mortar, tools
-* baker → flour, bread
+* mason → bricks or mortar
+* photographer → tripod, lens or camera bag
+* baker → flour or bread
 * carpenter → wood plank
+* designer → tablet, color samples, headphones
+
+Use only one or two objects maximum.
+
+Avoid clutter and avoid busy scenes.
+
 
 COMPOSITION
 
 The subject must appear in the lower half of the image.
 
-The composition must remain minimal with large empty space.
+The composition must remain minimal with large empty space above the subject.
+
+The subject should dominate the lower part of the poster.
+
 
 BACKGROUND
 
-Light grey or white background with subtle natural texture.
+Light grey industrial background with visible texture.
 
-The background must NOT be perfectly smooth.
+The background should look like a concrete wall or dusty construction surface.
 
-It should contain slight imperfections such as:
-concrete texture, wall grain, dust or subtle noise.
+Add subtle imperfections such as:
+* concrete grain
+* dust particles
+* light stains
+* rough wall texture
+
+Avoid perfectly smooth studio backgrounds.
+
+The background must feel slightly gritty and realistic.
+
 
 COLOR STYLE
 
-The image must be black and white except one accent color.
+The entire image must be black and white except one accent color.
 
-Apply the accent color ${colorSecondaire} to multiple key elements:
+Apply the accent color ${colorSecondaire} to multiple key elements such as:
 * clothing
 * tools
 * professional objects
 
-The color should repeat naturally across the scene.
+The color must appear vivid, bold and saturated.
 
-All other elements must remain grayscale.
+The color should visually pop and repeat across the scene.
+
 
 TEXT LAYOUT
 
@@ -2224,7 +2267,8 @@ Style:
 Bold modern sans-serif
 Black color
 
-2) One vertical profession text
+
+2) One vertical profession text on the side
 
 Text:
 ${sousTitre}
@@ -2232,6 +2276,7 @@ ${sousTitre}
 Style:
 Bold modern sans-serif
 Black color
+
 
 TEXT RULES
 
@@ -2241,11 +2286,14 @@ No angled text.
 No rotated text.
 No diagonal typography.
 
-Do not add graphic lines or separators.
+Do not add graphic lines, separators or decorative strokes.
 
 No underline.
-No decorative strokes.
-No extra design elements.
+No horizontal lines.
+No design elements around the text.
+
+No extra text allowed.
+
 
 MOOD
 
@@ -2253,25 +2301,31 @@ Editorial
 Minimal
 Professional
 Iconic
+Industrial documentary style
+
 
 OUTPUT
 
 High resolution professional marketing poster.
-Clean editorial advertising style.
 
-SUBJECT
+Clean editorial advertising style with strong contrast and vibrant accent color.
 
-If the user uploads an image:
-Use the uploaded image as the main subject of the poster.
 
-Do not change the identity of the person in the image.
+COLOR STYLE
 
-Keep the person's pose and appearance,
-but adapt the scene to match the poster style.
+The entire image must be black and white except one accent color.
 
-If no image is uploaded:
-Generate a realistic professional subject based on:
-${subject}
+The accent color ${colorSecondaire} must be extremely vibrant and highly saturated.
+
+The colored elements should appear luminous and visually striking.
+
+Use strong color contrast so the colored elements look almost glowing
+against the grayscale environment.
+
+The color should feel bold, intense and eye-catching.
+Ultra high contrast lighting.
+Strong color saturation.
+Commercial advertising color grading.
 `;
 
 return finalPrompt;
