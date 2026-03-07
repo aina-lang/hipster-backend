@@ -1840,125 +1840,102 @@ private buildMatteProductPrompt(
   colorPrincipale: string = '#1A1A2E',
   colorSecondaire: string = '#FFFFFF',
 ): string {
-  const finalPrompt = `Create a premium cinematic advertising poster.
+  const finalPrompt = `Create a premium cinematic editorial advertising poster.
 
 FORMAT
 
 Vertical poster layout.
-Modern minimalist editorial advertising design.
+Modern minimalist advertising design.
 
 COMPOSITION
 
-The composition must follow a strong visual hierarchy.
+The subject must appear LARGE in the frame.
 
-The subject must be placed in the LOWER THIRD of the image.
+Use a medium portrait framing (waist up or chest up).
 
-Leave a large clean negative space in the upper area for typography.
+The subject should fill most of the lower part of the poster.
 
-Do NOT center the subject vertically.
+Place the subject in the LOWER THIRD but keep the subject large and dominant.
 
-SUBJECT
-
-If an image is uploaded:
-Use the uploaded image as the main subject.
-Do not redesign it.
-Do not modify it.
-Only integrate it naturally into the poster composition.
-
-If no image is uploaded:
-Generate the following subject:
-
-${subject}
-
-The subject must look natural, professional and realistic.
+Leave negative space above the subject for typography.
 
 PHOTOGRAPHY STYLE
 
-Cinematic studio photography.
-Editorial advertising photography.
+Cinematic editorial studio photography.
 
 Lighting style:
-soft directional studio lighting
+soft directional side lighting
 dramatic shadows
 high contrast
 moody atmosphere
-subtle rim light
+low key lighting
 
-The lighting should create depth and a premium look.
+The subject should be partially in shadow.
 
 BACKGROUND
 
-Use a dark matte gradient background.
+Use a deep black background as the base color.
+
+Add a soft gradient glow using ONE secondary color.
 
 Primary color:
-${colorPrincipale}
+black
 
 Secondary color:
 ${colorSecondaire}
 
-The gradient must be smooth, cinematic and slightly textured.
+The colored light should appear behind the subject.
 
-The background should feel like a professional studio backdrop.
+Add a strong vignette around the edges.
+
+Edges must be dark and cinematic.
+
+The center should be slightly illuminated.
 
 GRAPHIC ELEMENTS
 
-Add minimal UI design elements:
+Add minimal UI graphic elements:
 
 * two very small thin white cross symbols near the top corners
 * a bold centered title
-* a centered white graphic dot below the title
-
-These elements should be subtle and clean.
+* a small centered white dot under the title
+* a very thin horizontal divider line above the dot
 
 TYPOGRAPHY
 
 Main title:
 ${titre}
 
-Typography style requirements:
+Style:
 
 * EXTRA BOLD
 * ALL CAPS
 * condensed sans-serif
-* strong advertising typography
-* Bebas Neue / Druk style
+* Bebas Neue / Druk / Oswald style
 * very large
 * centered
 * white text
-* strong visual impact
-
-The title must dominate the poster.
-
-GRAPHIC DOT
-
-Place one small centered white dot directly under the title.
 
 SLOGAN
 
-Below the dot display the slogan:
+Below the dot display:
 
 ${sousTitre}
 
 Style:
 
-* small size
-* modern minimalist sans-serif
-* lowercase
-* wide letter spacing
-* subtle and elegant
-
-Example format:
-art   encre   créativité
+* small
+* minimalist sans-serif
+* elegant spacing
 
 MOOD
 
-Minimal
 Premium
-Modern editorial advertising
-Cinematic lighting
+Cinematic
+Minimal
+Editorial advertising
 Dark atmospheric poster
-Clean layout
-Luxury brand feeling`;
+Luxury brand aesthetic`;
 
   return finalPrompt;
 }
