@@ -1845,22 +1845,22 @@ private buildMatteProductPrompt(
 SUBJECT
 
 If an image is uploaded:
-Use the uploaded image as the main subject.
+Use the uploaded image exactly as the main subject.
+Do not recreate or redesign the subject.
+Do not modify it.
+Only integrate it into the poster composition.
 
-If no image is uploaded:
-Generate a realistic professional scene based on:
-
-${subject}
+The subject must be centered.
 
 STYLE
 
-Premium product advertising.
-
-The subject must be centered in the composition.
+Premium product advertising
+Modern minimalist poster
+Strong visual hierarchy
 
 BACKGROUND
 
-Use a matte gradient background using only two colors:
+Use a matte gradient background using only two colors.
 
 Primary color:
 ${colorPrincipale}
@@ -1868,30 +1868,36 @@ ${colorPrincipale}
 Secondary color:
 ${colorSecondaire}
 
-The gradient should be smooth and soft with a matte texture.
+The gradient must be smooth, soft and matte.
 
 GRAPHIC ELEMENTS
 
-Add minimal graphic UI elements:
+Add minimal UI graphic elements:
 
 * two small white cross symbols near the top
-* a bold central title
-* a graphic dot below the title
+* a bold centered title
+* a centered white graphic dot below the title
 
 TYPOGRAPHY
 
 Main title:
 ${titre}
 
-Style:
-* bold
-* large
+Style requirements:
+
+* EXTRA BOLD
+* ALL CAPS
+* very large
 * centered
 * white text
+* heavy weight typography
+* strong visual impact
+
+The title must dominate the poster.
 
 GRAPHIC DOT
 
-Place a centered white dot under the title.
+Place one centered white dot directly under the title.
 
 SLOGAN
 
@@ -1900,17 +1906,24 @@ Below the dot display the slogan:
 ${sousTitre}
 
 Style:
+
+* lowercase
 * minimal
 * small text
-* modern typography
+* modern sans-serif typography
+* spaced words separated by spaces
+
+Example:
+art   encre   créativité
 
 MOOD
 
 Minimal
 Premium
 Modern advertising
-Matte gradient design
-Product poster`;
+Matte gradient poster design
+Clean layout
+Centered composition`;
 
   return finalPrompt;
 }
