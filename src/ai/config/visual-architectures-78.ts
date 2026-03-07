@@ -265,6 +265,26 @@ export const MONO_ACCENT_ARCH: VisualArchitecture = {
   },
 };
 
+export const EPIC_BRAND_ARCH: VisualArchitecture = {
+  name: 'Epic Brand',
+  layoutType: 'TYPE_EPIC_BRAND',
+  colorPalette: 'B&W / Accent Color',
+  rules: {
+    subject:
+      'SUBJECT: Cinematic promotional poster with powerful double-exposure composition. Main subject in foreground with semi-transparent duplicate behind for depth effect.',
+    background:
+      'BACKGROUND: Partially white or very light for clean premium look. Behind subject create dramatic lighting effect using accent color.',
+    title:
+      'RENDER TEXT - MAIN TITLE: Bold modern typography. High contrast positioning.',
+    subtitle:
+      'RENDER TEXT - SUBTITLE: Supporting text below main title. Elegant and refined.',
+    infoBlock: 'None.',
+    upperZone: 'Color gradient overlay using accent color.',
+    constraints:
+      'LAYOUT: Cinematic double-exposure editorial poster. Mostly black and white with ONE strong accent color as dramatic lighting/glow. No logos. Ultra realistic photography. Strong contrast cinematic lighting.',
+  },
+};
+
 export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   FASHION_VERTICAL_IMPACT: FASHION_VERTICAL_IMPACT_ARCH,
   MAGAZINE_COVER_POSTER: MAGAZINE_COVER_POSTER_ARCH,
@@ -278,6 +298,7 @@ export const VISUAL_ARCHITECTURES_MAP: Record<string, VisualArchitecture> = {
   DIAGONAL_SPLIT_DESIGN: DIAGONAL_SPLIT_DESIGN_ARCH,
   STUDIO_POSTER: STUDIO_POSTER_ARCH,
   EDITORIAL_REVEAL: EDITORIAL_REVEAL_ARCH,
+  EPIC_BRAND: EPIC_BRAND_ARCH,
   MONO_ACCENT: MONO_ACCENT_ARCH,
 };
 

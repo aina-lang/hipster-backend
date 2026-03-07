@@ -1829,6 +1829,68 @@ The identity of the person must be completely different each time this prompt is
     : '';
 }
 
+/**
+ * 🎨 BUILD EPIC BRAND PROMPT FOR DALL-E
+ * Cinematic promotional poster with double-exposure composition
+ */
+private buildEpicBrandPrompt(
+  subject: string = 'modern subject',
+  titre: string = '',
+  sousTitre: string = '',
+  colorSecondaire: string = '#FF9800',
+): string {
+  const finalPrompt = `Create a cinematic promotional poster with a powerful double-exposure composition.
+
+INPUT TYPE RULES:
+
+If an image is provided by the user:
+- Use the uploaded image as the MAIN SUBJECT.
+- Do NOT generate a new person or subject.
+- Keep the exact face, pose, and identity from the uploaded image.
+- Apply the design and effects around this image only.
+
+If NO image is provided:
+- Generate a realistic professional image based on the subject description.
+
+SUBJECT:
+${subject}
+
+STYLE:
+Modern cinematic poster inspired by movie key art and premium advertising visuals.
+
+COMPOSITION:
+- Vertical poster layout
+- Main subject placed in the foreground
+- Behind the subject create a large semi-transparent portrait of the same subject
+- This creates a double exposure cinematic effect
+- The background must remain partially white or very light for a clean premium look
+
+COLOR RULES:
+- The image should be mostly black and white
+- Only ONE strong accent color is used: ${colorSecondaire}
+- Apply this color as dramatic lighting, glow, or gradient overlay
+- High contrast cinematic lighting
+
+TEXT LAYOUT:
+Add bold modern typography.
+
+Main title:
+${titre}
+
+Subtitle:
+${sousTitre}
+
+Do NOT add any additional text.
+
+DESIGN STYLE:
+- Premium advertising poster
+- Ultra realistic photography
+- Cinematic lighting
+- Strong contrast
+- Modern clean composition`;
+
+  return finalPrompt;
+}
 
 /**
  * 🎨 BUILD MONO ACCENT PROMPT FOR DALL-E
@@ -3606,6 +3668,16 @@ COMPOSITION ARCHITECTURE:
           magazineStyleDirective = this.buildEditorialRevealPrompt(
             customSubject || params.job || 'A premium subject',
             colorPrincipale,
+            colorSecondaire,
+          );
+        } else if (architecture.layoutType === 'TYPE_EPIC_BRAND') {
+          this.logger.log(
+            `[processFlyerBackground] Building EPIC_BRAND prompt: subject="${customSubject || params.job}", title="${mainWord}", subtitle="${scriptPhrase}", color="${colorSecondaire}"`,
+          );
+          magazineStyleDirective = this.buildEpicBrandPrompt(
+            customSubject || params.job || 'A premium subject',
+            mainWord,
+            scriptPhrase,
             colorSecondaire,
           );
         } else if (architecture.layoutType === 'TYPE_MONO_ACCENT') {
