@@ -2214,6 +2214,9 @@ All text must be horizontal.
 Top title (very large and bold):
 ${titre}
 
+No line under the title.
+No decorative stroke.
+
 Subtitle below:
 ${sousTitre}
 
