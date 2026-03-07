@@ -1845,38 +1845,39 @@ private buildMatteProductPrompt(
 FORMAT
 
 Vertical poster layout.
-Modern minimalist advertising design.
+Minimal modern advertising design.
 
 COMPOSITION
 
-The subject must appear LARGE in the frame.
+Place the subject in the LOWER THIRD of the frame.
 
-Use a medium portrait framing (waist up or chest up).
+Use a medium portrait framing (chest up).
 
-The subject should fill most of the lower part of the poster.
+The subject should appear large and dominant.
 
-Place the subject in the LOWER THIRD but keep the subject large and dominant.
+Position the subject slightly LEFT of center.
 
-Leave negative space above the subject for typography.
+Leave large negative space above the subject for typography.
 
 PHOTOGRAPHY STYLE
 
 Cinematic editorial studio photography.
 
 Lighting style:
-soft directional side lighting
-dramatic shadows
-high contrast
-moody atmosphere
-low key lighting
+
+low key lighting  
+dramatic shadows  
+soft directional side light  
+high contrast  
+moody atmosphere  
 
 The subject should be partially in shadow.
 
 BACKGROUND
 
-Use a deep black background as the base color.
+Use a deep black background.
 
-Add a soft gradient glow using ONE secondary color.
+Add a colored light glow behind the subject.
 
 Primary color:
 black
@@ -1884,58 +1885,63 @@ black
 Secondary color:
 ${colorSecondaire}
 
-The colored light should appear behind the subject.
+The colored light must come from the RIGHT side behind the subject.
 
-Add a strong vignette around the edges.
+Create a strong vignette around the edges.
 
-Edges must be dark and cinematic.
-
-The center should be slightly illuminated.
+Edges must fade into deep black.
 
 GRAPHIC ELEMENTS
 
-Add minimal UI graphic elements:
+Add minimal UI design elements:
 
-* two very small thin white cross symbols near the top corners
-* a bold centered title
-* a small centered white dot under the title
-* a very thin horizontal divider line above the dot
+two very small thin white crosses near the top corners.
 
 TYPOGRAPHY
 
 Main title:
+
 ${titre}
 
 Style:
 
-* EXTRA BOLD
-* ALL CAPS
-* condensed sans-serif
-* Bebas Neue / Druk / Oswald style
-* very large
-* centered
-* white text
+EXTRA BOLD  
+ALL CAPS  
+condensed sans-serif  
+Druk / Bebas Neue style  
+
+The title must be EXTREMELY LARGE.
+
+The title should dominate the upper half of the poster.
+
+GRAPHIC DIVIDER
+
+Below the title add a thin horizontal line on both sides.
+
+Place a medium white dot exactly in the center between the lines.
+
+Example structure:
+
+-----   ●   -----
 
 SLOGAN
 
-Below the dot display:
+Below the divider display:
 
 ${sousTitre}
 
 Style:
 
-* small
-* minimalist sans-serif
-* elegant spacing
+small  
+modern minimalist sans-serif  
+centered  
+subtle spacing
 
 MOOD
 
-Premium
-Cinematic
-Minimal
-Editorial advertising
-Dark atmospheric poster
-Luxury brand aesthetic`;
+dark cinematic poster  
+editorial advertising photography  
+luxury brand aesthetic`;
 
   return finalPrompt;
 }
