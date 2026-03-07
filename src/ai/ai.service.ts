@@ -2153,98 +2153,122 @@ private buildMonoAccentPrompt(
 const finalPrompt = `Create a clean professional promotional poster.
 
 STYLE
-Minimalist editorial advertising poster.
-Studio lighting.
-High contrast professional photography.
-Sharp lighting and crisp shadows.
 
-BACKGROUND
-No background.
-The subject must be fully isolated.
-Pure transparent or empty background.
-No environment, no scenery, no studio wall.
+Minimalist editorial advertising poster.
+High contrast photography.
+Selective color photography.
+
+Black and white image with only one accent color.
+
+Add subtle photographic grain and texture to create a realistic editorial look.
+
+Avoid overly smooth studio rendering.
+
+The visual style should feel like a professional documentary editorial photo.
 
 SUBJECT
-Use the subject provided by the user (${subject}) or the uploaded image, featuring a human model.
 
-The subject must be centered and large in the composition.
+Use the subject provided by the user (${subject}) or the uploaded image.
+
+The subject must dominate the composition and appear natural and realistic.
+
+The subject must be shown performing a natural professional action,
+not posing for the camera.
 
 ${mannequinVariation}
 
+PROFESSION CONTEXT
+
+Add one small contextual element related to the profession to create realism.
+
+Examples:
+* mason → bricks or mortar
+* photographer → tripod, camera bag or lens
+* baker → flour or bread
+* carpenter → wood plank
+* florist → flowers
+
+Use only one or two objects maximum.
+
+The scene must feel like a real moment of work in progress.
+
+COMPOSITION
+
+The subject must appear in the lower half of the image.
+
+The composition must remain very minimal with a lot of empty space.
+
+Avoid complex environments and avoid clutter.
+
+BACKGROUND
+
+Light grey or white background with subtle natural texture.
+
+The background must NOT be perfectly smooth.
+
+It should contain slight imperfections such as:
+concrete texture, wall grain, dust, subtle noise or industrial surface.
+
+The texture must remain soft and minimal so the subject stays the main focus.
+
+Avoid clean studio backdrops.
+
 COLOR STYLE
-Selective color photography effect.
 
-The entire image must first be converted to deep black and white with strong contrast.
+The entire image must be black and white except one accent color.
 
-Then apply a SINGLE accent color.
+All elements must be fully desaturated (pure grayscale)
+except the main clothing of the subject.
 
-Use the user's primary color (${colorPrincipale}) as the accent color.
+Apply the accent color ${colorSecondaire} ONLY to the clothing
+(jacket, helmet, shirt or uniform).
 
-Apply this color to ALL elements belonging to the subject including:
-- clothing
-- accessories
-- shoes
-- hats
-- tools
-- props
-- any object held by the subject
+No other colored elements allowed.
 
-Color treatment rules:
-- the accent color must be vivid and highly saturated
-- keep realistic lighting and texture
-- skin must remain grayscale
-- ONLY the subject's clothing and accessories are colored
-
-The result must look like professional selective color photography.
+All objects, tools and background must remain grayscale.
 
 TEXT LAYOUT
 
-TOP TITLE
-Display a large bold title at the top.
+The poster must contain ONLY two text elements.
+
+1) One horizontal title at the top
 
 Text:
 ${titre}
 
-Typography:
+Style:
 Bold modern sans-serif
-Color: ${colorSecondaire}
+Black color
 
-SUBTITLE
-Place a subtitle under the title.
+2) One vertical profession text
 
 Text:
 ${sousTitre}
 
-Subtitle style:
-- smaller modern sans-serif
-- white text
-- placed on a horizontal paint brush background
+Style:
+Bold modern sans-serif
+Black color
 
-The brush background must:
-- use the primary color (${colorPrincipale})
-- look like a rough paint stroke or spray paint bar
-- extend slightly wider than the subtitle text
-- be centered under the title
+No other text allowed.
 
-COMPOSITION RULES
+No slogan.
+No subtitle.
+No paragraph.
+No decorative typography.
 
-- subject centered
-- strong contrast between grayscale and accent color
-- no text at the bottom
-- no logos
-- no extra information
-- no decorative elements
-- only title and subtitle
+MOOD
 
-PROHIBITIONS
-${isPersonRequested ? '' : '- NO humans, NO people, NO fashion models, NO mannequins. Focus ONLY on the object/subject.\n'}- NO anatomy distortions or AI artifacts.
-- NO watermarks, NO signatures, NO metadata.
-- NO stock-photo style. UNIQUE editorial aesthetic only.
+Editorial
+Minimal
+Professional
+Iconic
+
+Inspired by minimalist magazine posters.
 
 OUTPUT
-High resolution professional marketing poster
-clean commercial advertising style
-selective color photo effect`;
+
+High resolution professional marketing poster.
+Clean editorial advertising style.`;
 
 return finalPrompt;
 }
