@@ -2149,9 +2149,15 @@ const finalPrompt = `Create a clean professional promotional poster.
 
 STYLE
 Minimalist editorial advertising poster.
-White or light grey textured background.
+Studio lighting.
 High contrast professional photography.
 Sharp lighting and crisp shadows.
+
+BACKGROUND
+No background.
+The subject must be fully isolated.
+Pure transparent or empty background.
+No environment, no scenery, no studio wall.
 
 SUBJECT
 Use the subject provided by the user (${subject}) or the uploaded image, featuring a human model.
@@ -2182,8 +2188,6 @@ Color treatment rules:
 - the accent color must be vivid and highly saturated
 - keep realistic lighting and texture
 - skin must remain grayscale
-- background must remain grayscale
-- environment must remain grayscale
 - ONLY the subject's clothing and accessories are colored
 
 The result must look like professional selective color photography.
@@ -2219,7 +2223,6 @@ The brush background must:
 
 COMPOSITION RULES
 
-- clean white background
 - subject centered
 - strong contrast between grayscale and accent color
 - no text at the bottom
