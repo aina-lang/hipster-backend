@@ -114,9 +114,19 @@ export class AiPaymentWebhookController {
         this.logger.log(
           `Upgrading user ${user.id} to ATELIER after trial ended/activation.`,
         );
+
+        // Send Trial Ended Email
+        try {
+          await this.aiPaymentService.sendTrialEndedEmail(user, 'Atelier');
+        } catch (e) {
+          this.logger.error(
+            `Failed to send trial ended email to ${user.email}`,
+            e.message,
+          );
+        }
       }
 
-      // Detect plan change (e.g., scheduled downgrade)
+      // Detect plan change (e.g., scheduled downgrade or upgrade)
       const priceId = subscription.items.data[0]?.price.id;
       const plans = await this.aiPaymentService.getPlans();
       const newPlan = plans.find((p) => p.stripePriceId === priceId);
@@ -170,6 +180,16 @@ export class AiPaymentWebhookController {
     if (user) {
       user.subscriptionStatus = SubscriptionStatus.CANCELED;
       await this.aiUserRepo.save(user);
+
+      // Send Subscription Cancelled Email
+      try {
+        await this.aiPaymentService.sendSubscriptionCancelledEmail(user);
+      } catch (e) {
+        this.logger.error(
+          `Failed to send cancellation email to ${user.email}`,
+          e.message,
+        );
+      }
     }
   }
 

@@ -653,7 +653,7 @@ export class AiPaymentService {
       subject: '⚠️ Échec de paiement - Action requise',
       template: 'payment-failed',
       context: {
-        userName: user.name,
+        userName: user.name || user.email,
         attemptNumber,
         maxAttempts,
         nextAttemptDate: nextAttemptDate?.toLocaleDateString('fr-FR'),
@@ -663,6 +663,32 @@ export class AiPaymentService {
     });
 
     this.logger.log(`Payment failed email sent to ${user.email}`);
+  }
+
+  async sendSubscriptionCancelledEmail(user: AiUser): Promise<void> {
+    await this.mailService.sendEmail({
+      to: user.email,
+      subject: 'ℹ️ Votre abonnement Hipster IA est terminé',
+      template: 'subscription-cancelled',
+      context: {
+        name: user.name || user.email,
+        endDate: new Date().toLocaleDateString('fr-FR'),
+      },
+    });
+    this.logger.log(`Subscription cancelled email sent to ${user.email}`);
+  }
+
+  async sendTrialEndedEmail(user: AiUser, planName: string): Promise<void> {
+    await this.mailService.sendEmail({
+      to: user.email,
+      subject: "🚀 Votre période d'essai est terminée - Bienvenue !",
+      template: 'trial-ended',
+      context: {
+        name: user.name || user.email,
+        planName,
+      },
+    });
+    this.logger.log(`Trial ended email sent to ${user.email}`);
   }
 
   private getTypeLabel(type: AiGenerationType): string {
