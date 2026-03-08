@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  h2 ⚠️ Action requise : Échec de paiement
+  p Bonjour #{userName},
+  p Nous n'avons pas pu traiter le paiement de votre abonnement Hipster IA.
+  
+  div(style="background-color: #fff7ed; padding: 24px; border-radius: 12px; margin: 32px 0; border: 1px solid #ffedd5;")
+    p(style="margin: 0; font-weight: 700; color: #9a3412;") Détails de l'incident :
+    ul(style="color: #7c2d12; font-size: 14px; margin-top: 12px;")
+      li **Tentative :** #{attemptNumber} / #{maxAttempts}
+      li **Montant :** #{invoiceAmount} €
+      if nextAttemptDate
+        li **Prochaine tentative :** le #{nextAttemptDate}
+
+  p(style="color: #52525b; font-size: 14px;") 
+    | Pour éviter toute interruption de service, merci de mettre à jour vos informations de paiement.
+
+  div(style="text-align: center; margin: 32px 0;")
+    a(href=updatePaymentUrl, style="background-color: #18181b; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;") Mettre à jour mon paiement
+
+  div.divider
+
+  p(style="font-size: 13px; color: #52525b; text-align: center;") 
+    | L'équipe Hipster IA

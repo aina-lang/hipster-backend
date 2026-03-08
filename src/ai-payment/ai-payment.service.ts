@@ -79,7 +79,7 @@ export class AiPaymentService {
           : 'L’essentiel pour créer',
         features: [
           'Génération de texte',
-          'Génération d\'image',
+          "Génération d'image",
           "Accompagnement de l'agence",
         ],
       },
@@ -96,7 +96,7 @@ export class AiPaymentService {
         description: 'Orienté photo',
         features: [
           'Génération de texte',
-          'Génération d\'image',
+          "Génération d'image",
           'Optimisation image HD / 4K',
           "Accompagnement de l'agence",
         ],
@@ -115,7 +115,7 @@ export class AiPaymentService {
         description: 'Puissance maximale',
         features: [
           'Génération de texte',
-          'Génération d\'image',
+          "Génération d'image",
           'Optimisation image HD / 4K',
           'Création vidéo',
           'Création sonore',
@@ -265,26 +265,63 @@ export class AiPaymentService {
       }
 
       // For paid plans (Atelier, Studio, Agence)
-      subscription = await this.stripe.subscriptions.create({
-        customer: customerId,
-        items: [{ price: selectedPlan.stripePriceId }],
-        payment_behavior: 'default_incomplete',
-        payment_settings: { save_default_payment_method: 'on_subscription' },
-        expand: ['latest_invoice.payment_intent'],
-        metadata: { userId: userId.toString(), planId: selectedPlan.id },
-      });
+      // Check if user already has an active subscription to update instead of creating a new one
+      if (user.stripeSubscriptionId && user.planType !== PlanType.CURIEUX) {
+        this.logger.log(
+          `[createPaymentSheet] Updating existing subscription ${user.stripeSubscriptionId} for refill/change`,
+        );
+
+        const existingSub = await this.stripe.subscriptions.retrieve(
+          user.stripeSubscriptionId,
+        );
+
+        const updateParams: any = {
+          items: [
+            {
+              id: (existingSub as any).items.data[0].id,
+              price: selectedPlan.stripePriceId,
+            },
+          ],
+          payment_behavior: 'default_incomplete',
+          billing_cycle_anchor: 'now', // Force immediate charge for refill/reset
+          proration_behavior: 'none', // Don't carry over unused time for refill
+          expand: ['latest_invoice.payment_intent'],
+        };
+
+        // End trial if one is active
+        if (
+          (existingSub as any).trial_end &&
+          (existingSub as any).trial_end * 1000 > Date.now()
+        ) {
+          updateParams.trial_end = 'now';
+        }
+
+        subscription = await this.stripe.subscriptions.update(
+          user.stripeSubscriptionId,
+          updateParams,
+        );
+      } else {
+        subscription = await this.stripe.subscriptions.create({
+          customer: customerId,
+          items: [{ price: selectedPlan.stripePriceId }],
+          payment_behavior: 'default_incomplete',
+          payment_settings: { save_default_payment_method: 'on_subscription' },
+          expand: ['latest_invoice.payment_intent'],
+          metadata: { userId: userId.toString(), planId: selectedPlan.id },
+        });
+      }
 
       const invoice = subscription.latest_invoice as any;
       const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
 
       const result = {
-        paymentIntentClientSecret: paymentIntent.client_secret,
+        paymentIntentClientSecret: paymentIntent?.client_secret,
         subscriptionId: subscription.id,
         ephemeralKey: ephemeralKey.secret,
         customerId: customerId,
       };
       this.logger.log(
-        `[${selectedPlan.id}] Payment sheet created successfully: ${subscription.id}`,
+        `[${selectedPlan.id}] Payment sheet created successfully: ${subscription.id}, hasSecret=${!!result.paymentIntentClientSecret}`,
       );
       return result;
     } catch (error: any) {
@@ -527,11 +564,13 @@ export class AiPaymentService {
       throw new BadRequestException('Impossible de revenir au plan Curieux');
     }
 
-    // Déterminer si c'est un upgrade ou downgrade
+    // Déterminer si c'est un upgrade, downgrade ou un refill (même plan)
     const currentPrice =
       typeof currentPlan?.price === 'number' ? currentPlan.price : 0;
     const newPrice = typeof newPlan.price === 'number' ? newPlan.price : 0;
-    const isUpgrade = newPrice > currentPrice;
+
+    const isSamePlan = newPlanId === user.planType?.toLowerCase();
+    const isUpgrade = newPrice > currentPrice || isSamePlan;
 
     // Récupérer la subscription Stripe
     const stripeSubscription = (await this.stripe.subscriptions.retrieve(
@@ -539,30 +578,48 @@ export class AiPaymentService {
     )) as any;
 
     // Mettre à jour la subscription Stripe
+    const updateParams: any = {
+      items: [
+        {
+          id: stripeSubscription.items.data[0].id,
+          price: newPlan.stripePriceId,
+        },
+      ],
+      proration_behavior: isUpgrade ? 'create_prorations' : 'none',
+      billing_cycle_anchor: isUpgrade ? 'now' : 'unchanged',
+    };
+
+    // Si on demande un reset immédiat (upgrade/refill) et qu'il y a un essai en cours,
+    // on doit terminer l'essai immédiatement car billing_cycle_anchor ne peut pas être avant trial_end
+    if (
+      isUpgrade &&
+      stripeSubscription.trial_end &&
+      stripeSubscription.trial_end * 1000 > Date.now()
+    ) {
+      updateParams.trial_end = 'now';
+    }
+
     const updatedSubscription = (await this.stripe.subscriptions.update(
       user.stripeSubscriptionId,
-      {
-        items: [
-          {
-            id: stripeSubscription.items.data[0].id,
-            price: newPlan.stripePriceId,
-          },
-        ],
-        proration_behavior: isUpgrade ? 'create_prorations' : 'none',
-        billing_cycle_anchor: isUpgrade ? 'now' : 'unchanged',
-      },
+      updateParams,
     )) as any;
 
-    // Si upgrade, mettre à jour immédiatement
+    this.logger.log(
+      `[switchPlan] Subscription updated. isSamePlan=${isSamePlan}`,
+    );
+
+    // Si upgrade ou même plan (refill), mettre à jour immédiatement
     if (isUpgrade) {
       user.planType =
         PlanType[newPlanId.toUpperCase() as keyof typeof PlanType];
       await this.aiUserRepo.save(user);
 
-      // Appliquer les nouvelles limites
+      // Appliquer les nouvelles limites (force le reset car billing_cycle_anchor est 'now')
       await this.confirmPlan(userId, newPlanId, user.stripeSubscriptionId);
 
-      this.logger.log(`User ${userId} upgraded to ${newPlanId}`);
+      this.logger.log(
+        `User ${userId} ${isSamePlan ? 'refilled' : 'upgraded to'} ${newPlanId}`,
+      );
     } else {
       this.logger.log(
         `User ${userId} scheduled downgrade to ${newPlanId} at end of period`,
@@ -570,14 +627,17 @@ export class AiPaymentService {
     }
 
     return {
-      message: isUpgrade
-        ? 'Upgrade effectué avec succès !'
-        : 'Downgrade planifié pour la fin de votre cycle actuel.',
+      message: isSamePlan
+        ? 'Votre forfait a été renouvelé avec succès ! Vos limites ont été réinitialisées.'
+        : isUpgrade
+          ? 'Upgrade effectué avec succès !'
+          : 'Downgrade planifié pour la fin de votre cycle actuel.',
       effectiveDate: isUpgrade
         ? new Date()
         : new Date(updatedSubscription.current_period_end * 1000),
       newPlan: newPlan.name,
-      isUpgrade,
+      isUpgrade: isUpgrade || isSamePlan,
+      isRefill: isSamePlan,
     };
   }
 
@@ -593,7 +653,7 @@ export class AiPaymentService {
       subject: '⚠️ Échec de paiement - Action requise',
       template: 'payment-failed',
       context: {
-        userName: user.name,
+        userName: user.name || user.email,
         attemptNumber,
         maxAttempts,
         nextAttemptDate: nextAttemptDate?.toLocaleDateString('fr-FR'),
@@ -603,6 +663,32 @@ export class AiPaymentService {
     });
 
     this.logger.log(`Payment failed email sent to ${user.email}`);
+  }
+
+  async sendSubscriptionCancelledEmail(user: AiUser): Promise<void> {
+    await this.mailService.sendEmail({
+      to: user.email,
+      subject: 'ℹ️ Votre abonnement Hipster IA est terminé',
+      template: 'subscription-cancelled',
+      context: {
+        name: user.name || user.email,
+        endDate: new Date().toLocaleDateString('fr-FR'),
+      },
+    });
+    this.logger.log(`Subscription cancelled email sent to ${user.email}`);
+  }
+
+  async sendTrialEndedEmail(user: AiUser, planName: string): Promise<void> {
+    await this.mailService.sendEmail({
+      to: user.email,
+      subject: "🚀 Votre période d'essai est terminée - Bienvenue !",
+      template: 'trial-ended',
+      context: {
+        name: user.name || user.email,
+        planName,
+      },
+    });
+    this.logger.log(`Trial ended email sent to ${user.email}`);
   }
 
   private getTypeLabel(type: AiGenerationType): string {
