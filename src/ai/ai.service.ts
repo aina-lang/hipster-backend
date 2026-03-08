@@ -2179,156 +2179,53 @@ private buildMonoAccentPrompt(
   isPersonRequested: boolean = false,
 ): string {
 
-  const mannequinVariation = this.getMannequinVariationDirective(subject, isPersonRequested);
-
 const finalPrompt = `Create a minimalist editorial advertising poster.
 
-STYLE
-High-key editorial advertising photography.
+Scene:
+A construction worker kneeling and laying bricks with a trowel.
 
-The image must be mostly black and white with ONE fluorescent neon accent color.
+Lighting:
+Strong directional lighting from the top left creating natural shadows on the subject.
+High contrast on the worker, soft contrast on the background.
 
-The accent color must be extremely saturated, vibrant and visually striking.
+Color style:
+Selective color effect.
+The entire image is black and white except one fluorescent neon accent color: ${colorSecondaire}.
 
-The color should feel fluorescent, similar to safety construction colors or neon sports gear.
+The accent color must be extremely saturated and vibrant, almost glowing.
 
-Examples:
-neon orange, acid green, electric blue, neon pink, toxic yellow.
+Apply the accent color to:
+- clothing
+- tools
+- work materials
 
+Everything else must remain grayscale.
 
-BACKGROUND
-Bright white background with subtle texture.
+Background:
+Bright white concrete wall with subtle texture and small grey imperfections.
+The background must be bright, slightly dirty, and textured but not dark.
 
-The background must NOT be perfectly smooth.
-
-It should resemble a lightly textured surface such as:
-* white concrete wall
-* plaster wall
-* studio wall with grain
-* light dust texture
-
-The background must remain bright and luminous.
-
-
-SUBJECT
-If the user uploads an image:
-Use the uploaded person as the subject.
-
-If no image is uploaded:
-Generate a realistic professional subject based on:
-${subject}
-
-${mannequinVariation}
-
-The subject must appear in the lower half of the poster.
-
-
-ACTION
-The subject must be performing a natural professional action.
-
-Examples:
-* mason laying bricks
-* photographer holding a camera
-* barber cutting hair
-* baker shaping dough
-* ice-cream maker serving ice cream
-* baseball player preparing to hit
-* designer working on a tablet
-
-
-CONTEXT OBJECTS
-Add one or two profession-related objects maximum.
-
-Examples:
-* bricks
-* camera
-* scissors
-* bread
-* laptop
-* golf club
-* paint roller
-
-Avoid clutter.
-
-
-GROUND ELEMENT
-Add a small ground detail under the subject to anchor them in space.
-
-Examples:
-* a small patch of grass
-* concrete floor
-* dust
-* gravel
-* sand
-* workshop floor
-
-The ground element must be subtle and minimal.
-
-
-COLOR RULE
-The entire image must be black and white except the neon accent color: ${colorSecondaire}
-
-Apply the accent color to important elements such as:
-* clothing
-* tools
-* work materials
-* small objects
-
-The color must appear extremely saturated and fluorescent.
-
-
-LIGHTING
-Strong directional lighting creating contrast on the subject.
-
-The subject should have visible shadows and volume.
-
-The background should remain soft and bright.
-
-
-COMPOSITION
-Minimalist poster layout.
-
-Large empty space above the subject.
-
-Subject placed in the lower half of the image.
-
-
-TEXT
-Only ONE text element is allowed.
-
-Top title:
-
-${titre}
+Composition:
+The subject is placed in the lower half of the image.
+Large empty space above the subject for the text.
 
 Typography:
-* bold
-* uppercase
-* modern sans-serif
-* black color
-* centered
-* very large
+Bold modern sans-serif font.
+All text must be horizontal.
 
-No subtitles.
+Top title (very large and bold):
+${titre}
 
-No decorative lines.
+Subtitle below:
+${sousTitre}
 
-No separators.
+Style reference:
+Industrial advertising photography, documentary realism, high contrast subject, bright textured background.
 
-No graphic elements around the text.
+Output:
+Professional poster style, high resolution, cinematic lighting.
 
-
-MOOD
-Editorial
-Advertising
-Sport poster style
-Minimalist
-High contrast subject
-Fluorescent accent color
-
-
-OUTPUT
-High resolution professional poster.
-Clean advertising style with strong visual impact.`;
+fluorescent workwear color grading`;
 
 return finalPrompt;
 }
