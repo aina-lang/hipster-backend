@@ -2182,7 +2182,7 @@ private buildMonoAccentPrompt(
 const finalPrompt = `Create a minimalist editorial advertising poster.
 
 Scene:
-A construction worker kneeling and laying bricks with a trowel.
+A carpenter working on wood craftsmanship - building, assembling, or crafting wooden structures.
 
 Lighting:
 Strong directional lighting from the top left creating natural shadows on the subject.
