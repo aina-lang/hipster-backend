@@ -119,7 +119,7 @@ export class AiPaymentService {
           'Optimisation image HD / 4K',
           'Création vidéo',
           'Création sonore',
-          'Générations 3D/Sketch',
+          'Génération 3D/Sketch',
           "Accompagnement de l'agence",
         ],
       },
