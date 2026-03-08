@@ -1914,9 +1914,19 @@ The title must be EXTREMELY LARGE.
 
 The title should dominate the upper half of the poster.
 
+GRAPHIC DIVIDER
+
+Below the title add a thin horizontal line on both sides.
+
+Place a medium white dot exactly in the center between the lines.
+
+Example structure:
+
+-----   ●   -----
+
 SLOGAN
 
-Below the title display:
+Below the divider display:
 
 ${sousTitre}
 
@@ -2173,55 +2183,152 @@ private buildMonoAccentPrompt(
 
 const finalPrompt = `Create a minimalist editorial advertising poster.
 
-Scene:
+STYLE
+High-key editorial advertising photography.
+
+The image must be mostly black and white with ONE fluorescent neon accent color.
+
+The accent color must be extremely saturated, vibrant and visually striking.
+
+The color should feel fluorescent, similar to safety construction colors or neon sports gear.
+
+Examples:
+neon orange, acid green, electric blue, neon pink, toxic yellow.
+
+
+BACKGROUND
+Bright white background with subtle texture.
+
+The background must NOT be perfectly smooth.
+
+It should resemble a lightly textured surface such as:
+* white concrete wall
+* plaster wall
+* studio wall with grain
+* light dust texture
+
+The background must remain bright and luminous.
+
+
+SUBJECT
+If the user uploads an image:
+Use the uploaded person as the subject.
+
+If no image is uploaded:
+Generate a realistic professional subject based on:
 ${subject}
-
-Lighting:
-Strong directional lighting from the top left creating natural shadows on the subject.
-High contrast on the subject, soft contrast on the background.
-
-Color style:
-Selective color effect.
-The entire image is black and white except one fluorescent neon accent color: ${colorSecondaire}.
-
-The accent color must be extremely saturated and vibrant, almost glowing.
-
-Apply the accent color to key elements of the subject such as:
-- clothing
-- accessories
-- tools or relevant props
-
-Everything else must remain grayscale.
 
 ${mannequinVariation}
 
-Background:
-Bright white concrete wall with subtle texture and small grey imperfections.
-The background must be bright, slightly dirty, and textured but not dark.
+The subject must appear in the lower half of the poster.
 
-Composition:
-The subject is placed in the lower half of the image.
-Large empty space above the subject for the text.
 
-Typography:
-Bold modern sans-serif font.
-All text must be horizontal.
+ACTION
+The subject must be performing a natural professional action.
 
-Top title (very large and bold):
+Examples:
+* mason laying bricks
+* photographer holding a camera
+* barber cutting hair
+* baker shaping dough
+* ice-cream maker serving ice cream
+* baseball player preparing to hit
+* designer working on a tablet
+
+
+CONTEXT OBJECTS
+Add one or two profession-related objects maximum.
+
+Examples:
+* bricks
+* camera
+* scissors
+* bread
+* laptop
+* golf club
+* paint roller
+
+Avoid clutter.
+
+
+GROUND ELEMENT
+Add a small ground detail under the subject to anchor them in space.
+
+Examples:
+* a small patch of grass
+* concrete floor
+* dust
+* gravel
+* sand
+* workshop floor
+
+The ground element must be subtle and minimal.
+
+
+COLOR RULE
+The entire image must be black and white except the neon accent color: ${colorSecondaire}
+
+Apply the accent color to important elements such as:
+* clothing
+* tools
+* work materials
+* small objects
+
+The color must appear extremely saturated and fluorescent.
+
+
+LIGHTING
+Strong directional lighting creating contrast on the subject.
+
+The subject should have visible shadows and volume.
+
+The background should remain soft and bright.
+
+
+COMPOSITION
+Minimalist poster layout.
+
+Large empty space above the subject.
+
+Subject placed in the lower half of the image.
+
+
+TEXT
+Only ONE text element is allowed.
+
+Top title:
+
 ${titre}
 
-No line under the title.
-No decorative stroke.
+Typography:
+* bold
+* uppercase
+* modern sans-serif
+* black color
+* centered
+* very large
 
-Subtitle below:
-${sousTitre}
+No subtitles.
 
-Style reference:
-Professional advertising photography, documentary realism, high contrast subject, bright textured background.
+No decorative lines.
 
-Output:
-Professional poster style, high resolution, cinematic lighting.
-fluorescent accent color grading`;
+No separators.
+
+No graphic elements around the text.
+
+
+MOOD
+Editorial
+Advertising
+Sport poster style
+Minimalist
+High contrast subject
+Fluorescent accent color
+
+
+OUTPUT
+High resolution professional poster.
+Clean advertising style with strong visual impact.`;
 
 return finalPrompt;
 }
