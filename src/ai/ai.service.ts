@@ -2214,7 +2214,7 @@ Bold modern sans-serif font.
 All text must be horizontal.
 
 Top title (very large and bold):
-${titre}
+${titre.toUpperCase()}
 
 Subtitle below:
 ${sousTitre}
