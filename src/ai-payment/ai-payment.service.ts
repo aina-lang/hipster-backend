@@ -550,6 +550,7 @@ export class AiPaymentService {
       ],
       proration_behavior: isUpgrade ? 'create_prorations' : 'none',
       billing_cycle_anchor: isUpgrade ? 'now' : 'unchanged',
+      expand: ['latest_invoice.payment_intent'],
     };
 
     // Si on demande un reset immédiat (upgrade/refill) et qu'il y a un essai en cours,
@@ -566,6 +567,14 @@ export class AiPaymentService {
       user.stripeSubscriptionId,
       updateParams,
     )) as any;
+
+    // Si on demande un refill, on veut éventuellement retourner le Payment Intent pour confirmation client
+    let paymentIntentClientSecret = null;
+    if (isSamePlan) {
+      const invoice = updatedSubscription.latest_invoice as any;
+      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+      paymentIntentClientSecret = paymentIntent?.client_secret;
+    }
 
     // Si upgrade ou même plan (refill), mettre à jour immédiatement
     if (isUpgrade) {
@@ -585,6 +594,15 @@ export class AiPaymentService {
       );
     }
 
+    // Créer une clé éphémère si on veut ouvrir le Payment Sheet
+    let ephemeralKey = null;
+    if (isSamePlan && user.stripeCustomerId) {
+      ephemeralKey = await this.stripe.ephemeralKeys.create(
+        { customer: user.stripeCustomerId },
+        { apiVersion: '2024-06-20' as any },
+      );
+    }
+
     return {
       message: isSamePlan
         ? 'Votre forfait a été renouvelé avec succès ! Vos limites ont été réinitialisées.'
@@ -597,6 +615,9 @@ export class AiPaymentService {
       newPlan: newPlan.name,
       isUpgrade: isUpgrade || isSamePlan,
       isRefill: isSamePlan,
+      paymentIntentClientSecret,
+      customerId: user.stripeCustomerId,
+      ephemeralKey: ephemeralKey?.secret,
     };
   }
 
