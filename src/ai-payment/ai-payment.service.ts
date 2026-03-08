@@ -568,12 +568,26 @@ export class AiPaymentService {
       updateParams,
     )) as any;
 
+    this.logger.log(
+      `[switchPlan] Subscription updated. isSamePlan=${isSamePlan}`,
+    );
+
     // Si on demande un refill, on veut éventuellement retourner le Payment Intent pour confirmation client
     let paymentIntentClientSecret = null;
     if (isSamePlan) {
       const invoice = updatedSubscription.latest_invoice as any;
       const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
       paymentIntentClientSecret = paymentIntent?.client_secret;
+
+      this.logger.log(
+        `[switchPlan] Refill flow: invoiceId=${invoice?.id}, paymentIntentId=${paymentIntent?.id}, hasSecret=${!!paymentIntentClientSecret}`,
+      );
+
+      if (!paymentIntentClientSecret && invoice?.status === 'open') {
+        this.logger.warn(
+          `[switchPlan] Invoice is open but no payment intent secret found. Status: ${invoice.status}`,
+        );
+      }
     }
 
     // Si upgrade ou même plan (refill), mettre à jour immédiatement
