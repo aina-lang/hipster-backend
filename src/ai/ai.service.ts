@@ -1914,19 +1914,9 @@ The title must be EXTREMELY LARGE.
 
 The title should dominate the upper half of the poster.
 
-GRAPHIC DIVIDER
-
-Below the title add a thin horizontal line on both sides.
-
-Place a medium white dot exactly in the center between the lines.
-
-Example structure:
-
------   ●   -----
-
 SLOGAN
 
-Below the divider display:
+Below the title display:
 
 ${sousTitre}
 
