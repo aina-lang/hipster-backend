@@ -541,18 +541,30 @@ export class AiPaymentService {
     )) as any;
 
     // Mettre à jour la subscription Stripe
+    const updateParams: any = {
+      items: [
+        {
+          id: stripeSubscription.items.data[0].id,
+          price: newPlan.stripePriceId,
+        },
+      ],
+      proration_behavior: isUpgrade ? 'create_prorations' : 'none',
+      billing_cycle_anchor: isUpgrade ? 'now' : 'unchanged',
+    };
+
+    // Si on demande un reset immédiat (upgrade/refill) et qu'il y a un essai en cours,
+    // on doit terminer l'essai immédiatement car billing_cycle_anchor ne peut pas être avant trial_end
+    if (
+      isUpgrade &&
+      stripeSubscription.trial_end &&
+      stripeSubscription.trial_end * 1000 > Date.now()
+    ) {
+      updateParams.trial_end = 'now';
+    }
+
     const updatedSubscription = (await this.stripe.subscriptions.update(
       user.stripeSubscriptionId,
-      {
-        items: [
-          {
-            id: stripeSubscription.items.data[0].id,
-            price: newPlan.stripePriceId,
-          },
-        ],
-        proration_behavior: isUpgrade ? 'create_prorations' : 'none',
-        billing_cycle_anchor: isUpgrade ? 'now' : 'unchanged',
-      },
+      updateParams,
     )) as any;
 
     // Si upgrade ou même plan (refill), mettre à jour immédiatement
