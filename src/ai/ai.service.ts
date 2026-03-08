@@ -2179,10 +2179,14 @@ private buildMonoAccentPrompt(
   isPersonRequested: boolean = false,
 ): string {
 
+const sceneDescription = isPersonRequested
+  ? 'A carpenter working on wood craftsmanship - building, assembling, or crafting wooden structures.'
+  : 'A close-up of wood craftsmanship - tools, wood materials, chips, and wooden structures being created.';
+
 const finalPrompt = `Create a minimalist editorial advertising poster.
 
 Scene:
-A carpenter working on wood craftsmanship - building, assembling, or crafting wooden structures.
+${sceneDescription}
 
 Lighting:
 Strong directional lighting from the top left creating natural shadows on the subject.
