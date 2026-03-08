@@ -79,7 +79,7 @@ export class AiPaymentService {
           : 'L’essentiel pour créer',
         features: [
           'Génération de texte',
-          '50 images / mois',
+          'Génération d\'image',
           "Accompagnement de l'agence",
         ],
       },
@@ -96,7 +96,7 @@ export class AiPaymentService {
         description: 'Orienté photo',
         features: [
           'Génération de texte',
-          '100 images / mois',
+          'Génération d\'image',
           'Optimisation image HD / 4K',
           "Accompagnement de l'agence",
         ],
@@ -115,11 +115,11 @@ export class AiPaymentService {
         description: 'Puissance maximale',
         features: [
           'Génération de texte',
-          '100 images / mois',
+          'Génération d\'image',
           'Optimisation image HD / 4K',
           'Création vidéo',
           'Création sonore',
-          '25 générations 3D/Sketch',
+          'Génération 3D/Sketch',
           "Accompagnement de l'agence",
         ],
       },
