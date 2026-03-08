@@ -79,7 +79,7 @@ export class AiPaymentService {
           : 'L’essentiel pour créer',
         features: [
           'Génération de texte',
-          'Génération d\'image',
+          "Génération d'image",
           "Accompagnement de l'agence",
         ],
       },
@@ -96,7 +96,7 @@ export class AiPaymentService {
         description: 'Orienté photo',
         features: [
           'Génération de texte',
-          'Génération d\'image',
+          "Génération d'image",
           'Optimisation image HD / 4K',
           "Accompagnement de l'agence",
         ],
@@ -115,7 +115,7 @@ export class AiPaymentService {
         description: 'Puissance maximale',
         features: [
           'Génération de texte',
-          'Génération d\'image',
+          "Génération d'image",
           'Optimisation image HD / 4K',
           'Création vidéo',
           'Création sonore',
@@ -527,11 +527,13 @@ export class AiPaymentService {
       throw new BadRequestException('Impossible de revenir au plan Curieux');
     }
 
-    // Déterminer si c'est un upgrade ou downgrade
+    // Déterminer si c'est un upgrade, downgrade ou un refill (même plan)
     const currentPrice =
       typeof currentPlan?.price === 'number' ? currentPlan.price : 0;
     const newPrice = typeof newPlan.price === 'number' ? newPlan.price : 0;
-    const isUpgrade = newPrice > currentPrice;
+
+    const isSamePlan = newPlanId === user.planType?.toLowerCase();
+    const isUpgrade = newPrice > currentPrice || isSamePlan;
 
     // Récupérer la subscription Stripe
     const stripeSubscription = (await this.stripe.subscriptions.retrieve(
@@ -553,16 +555,18 @@ export class AiPaymentService {
       },
     )) as any;
 
-    // Si upgrade, mettre à jour immédiatement
+    // Si upgrade ou même plan (refill), mettre à jour immédiatement
     if (isUpgrade) {
       user.planType =
         PlanType[newPlanId.toUpperCase() as keyof typeof PlanType];
       await this.aiUserRepo.save(user);
 
-      // Appliquer les nouvelles limites
+      // Appliquer les nouvelles limites (force le reset car billing_cycle_anchor est 'now')
       await this.confirmPlan(userId, newPlanId, user.stripeSubscriptionId);
 
-      this.logger.log(`User ${userId} upgraded to ${newPlanId}`);
+      this.logger.log(
+        `User ${userId} ${isSamePlan ? 'refilled' : 'upgraded to'} ${newPlanId}`,
+      );
     } else {
       this.logger.log(
         `User ${userId} scheduled downgrade to ${newPlanId} at end of period`,
@@ -570,14 +574,17 @@ export class AiPaymentService {
     }
 
     return {
-      message: isUpgrade
-        ? 'Upgrade effectué avec succès !'
-        : 'Downgrade planifié pour la fin de votre cycle actuel.',
+      message: isSamePlan
+        ? 'Votre forfait a été renouvelé avec succès ! Vos limites ont été réinitialisées.'
+        : isUpgrade
+          ? 'Upgrade effectué avec succès !'
+          : 'Downgrade planifié pour la fin de votre cycle actuel.',
       effectiveDate: isUpgrade
         ? new Date()
         : new Date(updatedSubscription.current_period_end * 1000),
       newPlan: newPlan.name,
-      isUpgrade,
+      isUpgrade: isUpgrade || isSamePlan,
+      isRefill: isSamePlan,
     };
   }
 
