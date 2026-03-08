@@ -265,26 +265,63 @@ export class AiPaymentService {
       }
 
       // For paid plans (Atelier, Studio, Agence)
-      subscription = await this.stripe.subscriptions.create({
-        customer: customerId,
-        items: [{ price: selectedPlan.stripePriceId }],
-        payment_behavior: 'default_incomplete',
-        payment_settings: { save_default_payment_method: 'on_subscription' },
-        expand: ['latest_invoice.payment_intent'],
-        metadata: { userId: userId.toString(), planId: selectedPlan.id },
-      });
+      // Check if user already has an active subscription to update instead of creating a new one
+      if (user.stripeSubscriptionId && user.planType !== PlanType.CURIEUX) {
+        this.logger.log(
+          `[createPaymentSheet] Updating existing subscription ${user.stripeSubscriptionId} for refill/change`,
+        );
+
+        const existingSub = await this.stripe.subscriptions.retrieve(
+          user.stripeSubscriptionId,
+        );
+
+        const updateParams: any = {
+          items: [
+            {
+              id: (existingSub as any).items.data[0].id,
+              price: selectedPlan.stripePriceId,
+            },
+          ],
+          payment_behavior: 'default_incomplete',
+          billing_cycle_anchor: 'now', // Force immediate charge for refill/reset
+          proration_behavior: 'none', // Don't carry over unused time for refill
+          expand: ['latest_invoice.payment_intent'],
+        };
+
+        // End trial if one is active
+        if (
+          (existingSub as any).trial_end &&
+          (existingSub as any).trial_end * 1000 > Date.now()
+        ) {
+          updateParams.trial_end = 'now';
+        }
+
+        subscription = await this.stripe.subscriptions.update(
+          user.stripeSubscriptionId,
+          updateParams,
+        );
+      } else {
+        subscription = await this.stripe.subscriptions.create({
+          customer: customerId,
+          items: [{ price: selectedPlan.stripePriceId }],
+          payment_behavior: 'default_incomplete',
+          payment_settings: { save_default_payment_method: 'on_subscription' },
+          expand: ['latest_invoice.payment_intent'],
+          metadata: { userId: userId.toString(), planId: selectedPlan.id },
+        });
+      }
 
       const invoice = subscription.latest_invoice as any;
       const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
 
       const result = {
-        paymentIntentClientSecret: paymentIntent.client_secret,
+        paymentIntentClientSecret: paymentIntent?.client_secret,
         subscriptionId: subscription.id,
         ephemeralKey: ephemeralKey.secret,
         customerId: customerId,
       };
       this.logger.log(
-        `[${selectedPlan.id}] Payment sheet created successfully: ${subscription.id}`,
+        `[${selectedPlan.id}] Payment sheet created successfully: ${subscription.id}, hasSecret=${!!result.paymentIntentClientSecret}`,
       );
       return result;
     } catch (error: any) {
@@ -550,8 +587,6 @@ export class AiPaymentService {
       ],
       proration_behavior: isUpgrade ? 'create_prorations' : 'none',
       billing_cycle_anchor: isUpgrade ? 'now' : 'unchanged',
-      payment_behavior: isSamePlan ? 'default_incomplete' : 'allow_incomplete',
-      expand: ['latest_invoice.payment_intent'],
     };
 
     // Si on demande un reset immédiat (upgrade/refill) et qu'il y a un essai en cours,
@@ -573,24 +608,6 @@ export class AiPaymentService {
       `[switchPlan] Subscription updated. isSamePlan=${isSamePlan}`,
     );
 
-    // Si on demande un refill, on veut éventuellement retourner le Payment Intent pour confirmation client
-    let paymentIntentClientSecret = null;
-    if (isSamePlan) {
-      const invoice = updatedSubscription.latest_invoice as any;
-      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
-      paymentIntentClientSecret = paymentIntent?.client_secret;
-
-      this.logger.log(
-        `[switchPlan] Refill flow: invoiceId=${invoice?.id}, paymentIntentId=${paymentIntent?.id}, hasSecret=${!!paymentIntentClientSecret}`,
-      );
-
-      if (!paymentIntentClientSecret && invoice?.status === 'open') {
-        this.logger.warn(
-          `[switchPlan] Invoice is open but no payment intent secret found. Status: ${invoice.status}`,
-        );
-      }
-    }
-
     // Si upgrade ou même plan (refill), mettre à jour immédiatement
     if (isUpgrade) {
       user.planType =
@@ -609,15 +626,6 @@ export class AiPaymentService {
       );
     }
 
-    // Créer une clé éphémère si on veut ouvrir le Payment Sheet
-    let ephemeralKey = null;
-    if (isSamePlan && user.stripeCustomerId) {
-      ephemeralKey = await this.stripe.ephemeralKeys.create(
-        { customer: user.stripeCustomerId },
-        { apiVersion: '2024-06-20' as any },
-      );
-    }
-
     return {
       message: isSamePlan
         ? 'Votre forfait a été renouvelé avec succès ! Vos limites ont été réinitialisées.'
@@ -630,9 +638,6 @@ export class AiPaymentService {
       newPlan: newPlan.name,
       isUpgrade: isUpgrade || isSamePlan,
       isRefill: isSamePlan,
-      paymentIntentClientSecret,
-      customerId: user.stripeCustomerId,
-      ephemeralKey: ephemeralKey?.secret,
     };
   }
 
