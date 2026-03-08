@@ -2188,7 +2188,7 @@ ${subject}
 
 Lighting:
 Strong directional lighting from the top left creating natural shadows on the subject.
-High contrast on the worker, soft contrast on the background.
+High contrast on the subject, soft contrast on the background.
 
 Color style:
 Selective color effect.
@@ -2196,10 +2196,10 @@ The entire image is black and white except one fluorescent neon accent color: ${
 
 The accent color must be extremely saturated and vibrant, almost glowing.
 
-Apply the accent color to:
+Apply the accent color to key elements of the subject such as:
 - clothing
-- tools
-- work materials
+- accessories
+- tools or relevant props
 
 Everything else must remain grayscale.
 
@@ -2227,11 +2227,11 @@ Subtitle below:
 ${sousTitre}
 
 Style reference:
-Industrial advertising photography, documentary realism, high contrast subject, bright textured background.
+Professional advertising photography, documentary realism, high contrast subject, bright textured background.
 
 Output:
 Professional poster style, high resolution, cinematic lighting.
-fluorescent workwear color grading`;
+fluorescent accent color grading`;
 
 return finalPrompt;
 }
