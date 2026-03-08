@@ -550,6 +550,7 @@ export class AiPaymentService {
       ],
       proration_behavior: isUpgrade ? 'create_prorations' : 'none',
       billing_cycle_anchor: isUpgrade ? 'now' : 'unchanged',
+      payment_behavior: isSamePlan ? 'default_incomplete' : 'allow_incomplete',
       expand: ['latest_invoice.payment_intent'],
     };
 
