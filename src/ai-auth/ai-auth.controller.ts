@@ -8,7 +8,7 @@ import { ResponseMessage } from '../common/decorators/response-message.decorator
 @ApiTags('AI-Auth')
 @Controller('ai/auth')
 export class AiAuthController {
-  constructor(private readonly aiAuthService: AiAuthService) {}
+  constructor(private readonly aiAuthService: AiAuthService) { }
 
   @Public()
   @ApiOperation({ summary: "Inscription d'un utilisateur IA" })
@@ -74,5 +74,34 @@ export class AiAuthController {
   @Post('logout')
   async logout(@Req() req) {
     return this.aiAuthService.logout(req.user.sub);
+  }
+
+  @Public()
+  @ApiOperation({
+    summary: 'Demande de réinitialisation de mot de passe IA (envoi OTP)',
+  })
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return this.aiAuthService.forgotPassword(email);
+  }
+
+  @Public()
+  @ApiOperation({
+    summary: 'Confirmation OTP IA et génération nouveau mot de passe',
+  })
+  @Post('reset-password')
+  async resetPassword(
+    @Body() body: { email: string; code: string; password?: string },
+  ) {
+    return this.aiAuthService.resetPassword(body.email, body.code, body.password);
+  }
+
+  @Public()
+  @ApiOperation({
+    summary: 'Vérification OTP pour réinitialisation de mot de passe IA',
+  })
+  @Post('verify-reset-code')
+  async verifyResetCode(@Body() body: { email: string; code: string }) {
+    return this.aiAuthService.verifyResetCode(body.email, body.code);
   }
 }

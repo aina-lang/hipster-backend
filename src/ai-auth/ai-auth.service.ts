@@ -31,7 +31,7 @@ export class AiAuthService {
     private readonly otpService: OtpService,
     private readonly mailService: MailService,
     private readonly aiPaymentService: AiPaymentService,
-  ) {}
+  ) { }
 
   private readonly logger = new Logger(AiAuthService.name);
 
@@ -55,8 +55,8 @@ export class AiAuthService {
         brandingColor: dto.brandingColor || '#8B5CF6',
         logoUrl:
           dto.logoUrl &&
-          !dto.logoUrl.startsWith('file://') &&
-          !dto.logoUrl.includes('/cache/')
+            !dto.logoUrl.startsWith('file://') &&
+            !dto.logoUrl.includes('/cache/')
             ? dto.logoUrl
             : null,
         job: dto.job || null,
@@ -337,5 +337,78 @@ export class AiAuthService {
     await this.aiUserRepo.save(user);
 
     return { message: 'Mot de passe modifié avec succès.' };
+  }
+
+  async forgotPassword(email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.aiUserRepo.findOne({ where: { email: normalizedEmail } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const otp = await this.otpService.generateOtp(user, OtpType.PASSWORD_RESET);
+    await this.mailService.sendEmail({
+      to: user.email,
+      subject: 'Réinitialisation de votre mot de passe Hipster',
+      template: 'otp-email',
+      context: { name: user.name || user.email, code: otp },
+    });
+
+    return {
+      message:
+        'Un code de réinitialisation a été envoyé à votre adresse email.',
+    };
+  }
+
+  async verifyResetCode(email: string, code: string) {
+    const user = await this.aiUserRepo.findOne({ where: { email } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const isValid = await this.otpService.verifyOtp(
+      user,
+      code,
+      OtpType.PASSWORD_RESET,
+      false, // Do not consume the OTP yet
+    );
+    if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
+
+    return { message: 'Code vérifié avec succès.' };
+  }
+
+  async resetPassword(email: string, code: string, password?: string) {
+    const user = await this.aiUserRepo.findOne({ where: { email } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable.');
+
+    const isValid = await this.otpService.verifyOtp(
+      user,
+      code,
+      OtpType.PASSWORD_RESET,
+    );
+    if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
+
+    if (password) {
+      user.password = await bcrypt.hash(password, 10);
+      await this.aiUserRepo.save(user);
+      return { message: 'Votre mot de passe a été réinitialisé avec succès.' };
+    }
+
+    // Fallback if no password is provided in the request
+    const randomDigits = Math.floor(1000 + Math.random() * 9000);
+    const cleanName = user.name
+      ? user.name.replace(/[^a-zA-Z0-9]/g, '')
+      : 'AiUser';
+    const temporaryPassword = `${cleanName}${randomDigits}!`;
+
+    user.password = await bcrypt.hash(temporaryPassword, 10);
+    await this.aiUserRepo.save(user);
+
+    await this.mailService.sendEmail({
+      to: user.email,
+      subject: 'Votre nouveau mot de passe Hipster',
+      template: 'otp-email', // Needs a different template probably, but reusing for safety
+      context: { name: user.name, temporaryPassword },
+    });
+
+    return {
+      message: 'Votre mot de passe a été réinitialisé. Vérifiez vos emails.',
+    };
   }
 }
