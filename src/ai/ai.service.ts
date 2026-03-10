@@ -1489,6 +1489,153 @@ EXECUTION RULES:
   }
 
   /**
+   * 🎬 BUILD PROFESSION ICON PROMPT
+   * Minimalist editorial poster style for profession icons
+   * Black and white aesthetics with high contrast
+   */
+  /**
+   * 🎨 BUILD PROFESSION ICON PROMPT FOR DALL-E
+   * Minimalist editorial poster style for profession icons
+   * Black and white aesthetics with high contrast
+   */
+  private buildProfessionIconPrompt(subject: string = 'professional'): string {
+    const finalPrompt = `Create a minimalist editorial poster inspired by magazine covers.
+
+STYLE
+
+Strict black and white photography.
+High contrast.
+Minimal editorial photography.
+
+SUBJECT
+
+Generate a realistic professional subject based on:
+${subject}
+
+COMPOSITION
+
+The subject must be placed in the lower half of the image.
+
+The composition must be very minimal with a lot of empty space.
+
+Use very few visual elements.
+Avoid busy scenes and avoid multiple accessories.
+
+BACKGROUND
+
+Plain white or light grey studio background.
+No scenery.
+No room decor.
+No complex environment.
+
+TEXT LAYOUT (VERY IMPORTANT)
+
+Add NO text elements in the icon.
+
+Keep the image purely visual without any overlay text.
+
+TYPOGRAPHY
+
+(Not applicable for pure icon generation - image only, no text)
+
+MOOD
+
+Minimal
+Editorial
+Iconic
+Clean magazine cover style
+
+TECHNICAL SPECIFICATIONS
+
+- 4K quality or higher
+- Black and white photography (strict grayscale)
+- Hyper-detailed, sharp focus
+- No colors, NO colored elements
+- Professional photographer aesthetic
+- Studio photography quality
+- NO AI artifacts
+- NO watermarks
+- Perfect for icon usage`;
+
+    return finalPrompt;
+  }
+
+  /**
+   * 🎨 BUILD PROFESSION FLYER PROMPT FOR DALL-E
+   * Editorial magazine poster inspired by professional magazine covers
+   * Used for full flyers with typography support
+   */
+  private buildProfessionFlyerPrompt(
+    subject: string = 'professional',
+    titre: string = '',
+    sousTitre: string = '',
+    isPersonRequested: boolean = false,
+  ): string {
+    const mannequinVariation = this.getMannequinVariationDirective(subject, isPersonRequested);
+    
+    const finalPrompt = `Create a minimalist editorial poster inspired by magazine covers.
+
+SUBJECT
+
+If an image is uploaded:
+Use the uploaded image as the main subject.
+
+If no image is uploaded:
+Generate a realistic professional scene based on:
+
+${subject}
+
+${mannequinVariation}
+
+STYLE
+
+Black and white photography.
+
+High contrast editorial portrait.
+
+The subject must appear professional and iconic.
+
+COMPOSITION
+
+The subject must be centered in the lower half of the image.
+
+Add objects related to the profession around the subject.
+
+Example:
+* bread and flour for a baker
+* house model for a real estate agent
+* tattoo machine for a tattoo artist
+
+BACKGROUND
+
+Minimal light background.
+
+Clean and spacious composition with lots of empty space.
+
+TEXT LAYOUT
+
+Horizontal title at the top:
+
+${titre}
+
+Vertical profession text on the side:
+
+${sousTitre}
+
+Typography must be bold, modern and editorial.
+
+MOOD
+
+Editorial magazine poster
+Professional
+Minimal
+Iconic
+Documentary photography style`;
+
+    return finalPrompt;
+  }
+
+  /**
    * 🔵 POST-PROCESS: Focus Circle Filter
    * Applies a circular B&W desaturation "lens" on the top-left of the image.
    * The area INSIDE the circle becomes grayscale; everything OUTSIDE stays in color.
@@ -2686,6 +2833,10 @@ MANDATE: Create a VOGUE/NUMÉRO magazine editorial-quality flyer that would ACTU
         jobStr,
         options,
       );
+    }
+
+    if (styleName === 'Profession Icon') {
+      return this.buildProfessionIconPrompt(jobStr);
     }
 
     return `Minimalist professional photo of ${jobStr}. Extreme simplicity, spacious framing. Natural and empty.`;
