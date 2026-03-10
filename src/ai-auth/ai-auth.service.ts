@@ -98,6 +98,19 @@ export class AiAuthService {
 
     await this.aiUserRepo.save(user);
 
+    // Apply referral code if provided at registration
+    if (dto.referralCode) {
+      const code = (dto.referralCode as string).trim().toUpperCase();
+      const referrer = await this.aiUserRepo.findOne({ where: { referralCode: code } });
+      if (referrer && referrer.id !== user.id) {
+        user.referredBy = code;
+        await this.aiUserRepo.save(user);
+        this.logger.log(`User ${user.id} registered with referral code: ${code}`);
+      } else {
+        this.logger.warn(`Referral code ${code} invalid or self-referral, skipping.`);
+      }
+    }
+
     const otp = await this.otpService.generateOtp(user, OtpType.OTP);
     await this.mailService.sendEmail({
       to: user.email,
