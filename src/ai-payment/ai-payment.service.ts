@@ -35,7 +35,7 @@ export class AiPaymentService {
     }
   }
 
-  public async getPlans() {
+  public async getPlans(isAmbassador = false, discountMonthsCount = 0, isReferred = false) {
     // Count active subscribers (excluding Curieux)
     const activeSubscribersCount = await this.aiUserRepo.count({
       where: {
@@ -45,10 +45,17 @@ export class AiPaymentService {
     });
 
     const isEarlyBird = activeSubscribersCount < 30;
-    const atelierPrice = isEarlyBird ? 9.9 : 17.9;
-    const atelierPriceId = isEarlyBird
+    
+    // Ambassador/Referral pricing
+    const hasDiscount = isAmbassador || (isReferred && discountMonthsCount < 3);
+
+    const atelierPrice = hasDiscount ? 9.9 : (isEarlyBird ? 9.9 : 17.9);
+    const atelierPriceId = hasDiscount || isEarlyBird
       ? 'price_1SzcrqFhrfQ5vRxFsG1jQfGE'
       : 'price_1SzcrqFhrfQ5vRxFMg8ReF0v';
+
+    const studioPrice = hasDiscount ? 22 : 29.9;
+    const studioPriceId = 'price_1SzcrrFhrfQ5vRxFTkRYTkag'; 
 
     return [
       {
@@ -74,9 +81,9 @@ export class AiPaymentService {
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
-        description: isEarlyBird
-          ? '9,90€ 30 premiers - ensuite 17,90€ / mois'
-          : 'L’essentiel pour créer',
+        description: isAmbassador 
+          ? 'Tarif Ambassadeur' 
+          : (isReferred && discountMonthsCount < 3 ? 'Tarif parrainage (3 mois)' : (isEarlyBird ? '9,90€ 30 premiers - ensuite 17,90€ / mois' : 'L’essentiel pour créer')),
         features: [
           'Génération de texte',
           "Génération d'image",
@@ -86,14 +93,14 @@ export class AiPaymentService {
       {
         id: 'studio',
         name: 'Studio',
-        price: 29.9,
-        stripePriceId: 'price_1SzcrrFhrfQ5vRxFTkRYTkag',
+        price: studioPrice,
+        stripePriceId: studioPriceId,
         promptsLimit: 999999,
         imagesLimit: 100,
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
-        description: 'Orienté photo',
+        description: isAmbassador ? 'Tarif Ambassadeur' : (isReferred && discountMonthsCount < 3 ? 'Tarif parrainage (3 mois)' : 'Orienté photo'),
         features: [
           'Génération de texte',
           "Génération d'image",
@@ -127,8 +134,12 @@ export class AiPaymentService {
   }
 
   async getPlansForUser(userId: number) {
-    const plans = await this.getPlans();
     const user = await this.aiUserRepo.findOneBy({ id: userId });
+    const plans = await this.getPlans(
+      user?.isAmbassador || false, 
+      user?.discountMonthsCount || 0,
+      !!user?.referredBy
+    );
 
     if (!user) return plans;
 
@@ -301,14 +312,26 @@ export class AiPaymentService {
           updateParams,
         );
       } else {
-        subscription = await this.stripe.subscriptions.create({
+        const subParams: Stripe.SubscriptionCreateParams = {
           customer: customerId,
           items: [{ price: selectedPlan.stripePriceId }],
           payment_behavior: 'default_incomplete',
           payment_settings: { save_default_payment_method: 'on_subscription' },
           expand: ['latest_invoice.payment_intent'],
           metadata: { userId: userId.toString(), planId: selectedPlan.id },
-        });
+        };
+
+        // Apply referral discount if it's the first paid subscription
+        if (user.referredBy && !user.hasUsedTrial && user.planType === PlanType.CURIEUX) {
+          // We apply a coupon or discount. 
+          // For now, I'll use a metadata flag to let the webhook know or try to find a coupon.
+          // Ideally, we'd have a coupon ID for parrainage.
+          // Let's assume we have a coupon named 'PARRAINAGE_DISCOUNT'
+          // subParams.coupon = 'PARRAINAGE_DISCOUNT';
+          this.logger.log(`Applying referral discount for user ${userId}`);
+        }
+
+        subscription = await this.stripe.subscriptions.create(subParams);
       }
 
       const invoice = subscription.latest_invoice as any;

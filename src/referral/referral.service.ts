@@ -5,44 +5,47 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from 'src/users/entities/user.entity';
+import { AiUser, SubscriptionStatus, PlanType } from 'src/ai/entities/ai-user.entity';
 import { randomBytes } from 'crypto';
 
 @Injectable()
 export class ReferralService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
+    @InjectRepository(AiUser)
+    private readonly aiUserRepo: Repository<AiUser>,
   ) {}
 
   async getReferralStats(userId: number) {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.aiUserRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException(`User #${userId} not found`);
 
     // Generate code if missing
     if (!user.referralCode) {
-      user.referralCode = `REF-${user.firstName.toUpperCase().substring(0, 3)}-${randomBytes(2).toString('hex').toUpperCase()}`;
-      await this.userRepo.save(user);
+      user.referralCode = `REF-${user.name?.toUpperCase().substring(0, 3) || 'USR'}-${randomBytes(2).toString('hex').toUpperCase()}`;
+      await this.aiUserRepo.save(user);
     }
 
-    // Count referrals
-    const totalReferred = await this.userRepo.count({
-      where: { referredBy: user.referralCode },
+    // Count referrals (only paid ones)
+    const totalReferred = await this.aiUserRepo.count({
+      where: { 
+        referredBy: user.referralCode,
+        subscriptionStatus: SubscriptionStatus.ACTIVE 
+      },
     });
 
-    // Calculate earnings (Mock logic: 50€ per referral)
-    const earnings = totalReferred * 50;
-
+    // Calculate free months (Mock logic: logic moved to webhook actually)
+    // Here we just return the stats
     return {
       referralCode: user.referralCode,
       totalReferred,
-      earnings,
+      isAmbassador: user.isAmbassador,
+      freeMonthsPending: user.freeMonthsPending,
       currency: 'EUR',
     };
   }
 
   async applyReferralCode(userId: number, code: string) {
-    const user = await this.userRepo.findOne({ where: { id: userId } });
+    const user = await this.aiUserRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException(`User #${userId} not found`);
 
     if (user.referredBy) {
@@ -50,7 +53,7 @@ export class ReferralService {
     }
 
     // Check if code exists (and not self-referral)
-    const referrer = await this.userRepo.findOne({
+    const referrer = await this.aiUserRepo.findOne({
       where: { referralCode: code },
     });
     if (!referrer) throw new NotFoundException('Invalid referral code');
@@ -58,47 +61,47 @@ export class ReferralService {
       throw new BadRequestException('Cannot refer yourself');
 
     user.referredBy = code;
-    await this.userRepo.save(user);
+    await this.aiUserRepo.save(user);
 
     return { message: 'Referral code applied successfully' };
   }
 
   async getAllReferralStats() {
-    // Get all users who have a referral code or are clients
-    const users = await this.userRepo.find({
+    const users = await this.aiUserRepo.find({
       select: [
         'id',
-        'firstName',
-        'lastName',
+        'name',
         'email',
         'referralCode',
         'avatarUrl',
+        'isAmbassador',
       ],
     });
 
     const results: any[] = [];
 
     for (const user of users) {
-      // If user has no referral code, skip or show 0
       if (!user.referralCode) continue;
 
-      const totalReferred = await this.userRepo.count({
-        where: { referredBy: user.referralCode },
+      const totalReferred = await this.aiUserRepo.count({
+        where: { 
+          referredBy: user.referralCode,
+          subscriptionStatus: SubscriptionStatus.ACTIVE 
+        },
       });
 
       results.push({
         user: {
           id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          name: user.name,
           email: user.email,
           avatarUrl: user.avatarUrl,
+          isAmbassador: user.isAmbassador,
         },
         stats: {
           referralCode: user.referralCode,
           totalReferred,
-          earnings: totalReferred * 50,
-          currency: 'EUR',
+          freeMonths: user.freeMonthsPending,
         },
       });
     }
