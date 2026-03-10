@@ -83,7 +83,7 @@ export class AiPaymentService {
         threeDLimit: 0,
         description: isAmbassador 
           ? 'Tarif Ambassadeur' 
-          : (isReferred && discountMonthsCount < 3 ? 'Tarif parrainage (3 mois)' : (isEarlyBird ? '9,90€ 30 premiers - ensuite 17,90€ / mois' : 'L’essentiel pour créer')),
+          : (isReferred && discountMonthsCount < 1 ? 'Tarif parrainage (1er mois)' : (isEarlyBird ? '9,90€ 30 premiers - ensuite 17,90€ / mois' : 'L’essentiel pour créer')),
         features: [
           'Génération de texte',
           "Génération d'image",
