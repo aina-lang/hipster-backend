@@ -34,6 +34,9 @@ jobs:
             echo "--- Build de l'application ---"
             npm run build
             
+            echo "--- Exécution des migrations ---"
+            npm run migration:run
+            
             mkdir -p dist/src/templates
             cp -r dist/templates/* dist/src/templates/ || true
            
