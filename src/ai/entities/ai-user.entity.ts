@@ -148,6 +148,24 @@ export class AiUser {
   @Column({ nullable: true })
   logoUrl?: string;
 
+  @Column({ unique: true, nullable: true })
+  referralCode?: string;
+
+  @Column({ nullable: true })
+  referredBy?: string;
+
+  @Column({ default: false })
+  isAmbassador: boolean;
+
+  @Column({ default: 0 })
+  freeMonthsPending: number;
+
+  @Column({ default: 0 })
+  discountMonthsCount: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastFreeMonthAppliedAt?: Date;
+
   // Relations
   @OneToMany(() => Otp, (otp) => otp.aiUser)
   otps: Otp[];

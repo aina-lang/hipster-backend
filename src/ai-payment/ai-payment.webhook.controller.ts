@@ -69,7 +69,7 @@ export class AiPaymentWebhookController {
         );
         break;
       case 'invoice.payment_succeeded':
-        // Optional: handle successful payments for logging or other logic
+        await this.handleInvoiceSucceeded(event.data.object as Stripe.Invoice);
         break;
       case 'customer.subscription.deleted':
         await this.handleSubscriptionDeleted(
@@ -115,6 +115,11 @@ export class AiPaymentWebhookController {
           `Upgrading user ${user.id} to ATELIER after trial ended/activation.`,
         );
 
+        // Handle Parrainage (Referral)
+        if (user.referredBy) {
+          await this.handleReferralReward(user.referredBy);
+        }
+
         // Send Trial Ended Email
         try {
           await this.aiPaymentService.sendTrialEndedEmail(user, 'Atelier');
@@ -128,7 +133,7 @@ export class AiPaymentWebhookController {
 
       // Detect plan change (e.g., scheduled downgrade or upgrade)
       const priceId = subscription.items.data[0]?.price.id;
-      const plans = await this.aiPaymentService.getPlans();
+      const plans = await this.aiPaymentService.getPlans(user.isAmbassador);
       const newPlan = plans.find((p) => p.stripePriceId === priceId);
 
       if (newPlan && user.planType?.toLowerCase() !== newPlan.id) {
@@ -155,6 +160,11 @@ export class AiPaymentWebhookController {
       subscription.status === 'unpaid'
     ) {
       user.subscriptionStatus = SubscriptionStatus.CANCELED;
+      // Lose Ambassador status if subscription is canceled
+      if (user.isAmbassador) {
+        user.isAmbassador = false;
+        this.logger.log(`User ${user.id} lost Ambassador status due to cancellation.`);
+      }
     }
 
     // Update dates
@@ -163,6 +173,97 @@ export class AiPaymentWebhookController {
     user.subscriptionEndDate = new Date(sub.current_period_end * 1000);
 
     await this.aiUserRepo.save(user);
+  }
+
+  private async handleInvoiceSucceeded(invoice: Stripe.Invoice) {
+    this.logger.log(`Invoice succeeded: ${invoice.id} for customer ${invoice.customer}`);
+
+    const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
+    if (!customerId) return;
+
+    const user = await this.aiUserRepo.findOne({
+      where: { stripeCustomerId: customerId },
+    });
+
+    if (!user) return;
+
+    // We only care about subscription invoices for discount tracking
+    if (!(invoice as any).subscription) return;
+
+    // Increment discount months if user was referred
+    if (user.referredBy) {
+      user.discountMonthsCount += 1;
+      this.logger.log(`User ${user.id} discount month count: ${user.discountMonthsCount}`);
+
+      // If it reaches 3 months and it's a Studio plan, we must revert to normal pricing
+      // unless they are an Ambassador.
+      if (user.discountMonthsCount >= 3 && user.planType === PlanType.STUDIO && !user.isAmbassador) {
+        this.logger.log(`Reverting user ${user.id} Studio plan to normal price.`);
+        
+        try {
+          const subscription = await this.stripe.subscriptions.retrieve((invoice as any).subscription as string);
+          
+          // Find the normal Studio price
+          const plans = await this.aiPaymentService.getPlans(false, 3, false);
+          const normalStudioPriceId = plans.find(p => p.id === 'studio')?.stripePriceId;
+
+          if (normalStudioPriceId) {
+            await this.stripe.subscriptions.update((invoice as any).subscription as string, {
+              items: [{
+                id: subscription.items.data[0].id,
+                price: normalStudioPriceId,
+              }],
+              proration_behavior: 'none',
+            });
+            this.logger.log(`Subscription ${subscription.id} updated to normal Studio price.`);
+          }
+        } catch (error) {
+          this.logger.error(`Failed to revert Studio price for user ${user.id}: ${error.message}`);
+        }
+      }
+    }
+
+    await this.aiUserRepo.save(user);
+  }
+
+  private async handleReferralReward(referralCode: string) {
+    const referrer = await this.aiUserRepo.findOne({
+      where: { referralCode },
+    });
+
+    if (!referrer) {
+      this.logger.warn(`Referrer with code ${referralCode} not found.`);
+      return;
+    }
+
+    // Check if referrer already got a free month this month
+    const now = new Date();
+    const canGetFreeMonth = !referrer.lastFreeMonthAppliedAt || 
+      referrer.lastFreeMonthAppliedAt.getMonth() !== now.getMonth() ||
+      referrer.lastFreeMonthAppliedAt.getFullYear() !== now.getFullYear();
+
+    if (canGetFreeMonth) {
+      referrer.freeMonthsPending += 1;
+      referrer.lastFreeMonthAppliedAt = now;
+      this.logger.log(`User ${referrer.id} earned 1 free month from referral.`);
+    } else {
+      this.logger.log(`User ${referrer.id} already received a free month this month. Referral tracked but no extra month added.`);
+    }
+
+    // Check for Ambassador Status (10+ paid referrals)
+    const paidReferralsCount = await this.aiUserRepo.count({
+      where: { 
+        referredBy: referralCode,
+        subscriptionStatus: SubscriptionStatus.ACTIVE 
+      },
+    });
+
+    if (paidReferralsCount >= 10 && !referrer.isAmbassador) {
+      referrer.isAmbassador = true;
+      this.logger.log(`User ${referrer.id} promoted to Ambassador!`);
+    }
+
+    await this.aiUserRepo.save(referrer);
   }
 
   private async handleSubscriptionDeleted(subscription: Stripe.Subscription) {
