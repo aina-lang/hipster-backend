@@ -60,6 +60,14 @@ export class ReferralService {
     if (referrer.id === userId)
       throw new BadRequestException('Cannot refer yourself');
 
+    // ─── Anti-circular referral ──────────────────────────────────────────────
+    // If the potential referrer is already a filleul of the current user → block
+    if (user.referralCode && referrer.referredBy === user.referralCode) {
+      throw new BadRequestException(
+        'Parrainage circulaire détecté : cet utilisateur est déjà ton filleul.',
+      );
+    }
+
     user.referredBy = code;
     await this.aiUserRepo.save(user);
 
