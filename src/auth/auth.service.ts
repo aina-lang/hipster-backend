@@ -296,8 +296,11 @@ export class AuthService {
     if (!isMatch)
       throw new BadRequestException('Ancien mot de passe incorrect.');
 
-    user.password = await bcrypt.hash(dto.newPassword, 10);
-    await this.userRepo.save(user);
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    await this.userRepo.update(
+      { id: userId },
+      { password: hashedPassword }
+    );
 
     return { message: 'Mot de passe mis à jour avec succès.' };
   }
@@ -349,8 +352,12 @@ export class AuthService {
     if (!isValid) throw new UnauthorizedException('Code invalide ou expiré.');
 
     if (password) {
-      user.password = await bcrypt.hash(password, 10);
-      await this.userRepo.save(user);
+      const hashedPassword = await bcrypt.hash(password, 10);
+      // Utiliser .update() au lieu de .save() pour forcer la persistance
+      await this.userRepo.update(
+        { id: user.id },
+        { password: hashedPassword }
+      );
       return { message: 'Votre mot de passe a été réinitialisé avec succès.' };
     }
 
@@ -361,8 +368,11 @@ export class AuthService {
       : 'User';
     const temporaryPassword = `${cleanLastName}${randomDigits}!`;
 
-    user.password = await bcrypt.hash(temporaryPassword, 10);
-    await this.userRepo.save(user);
+    const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
+    await this.userRepo.update(
+      { id: user.id },
+      { password: hashedPassword }
+    );
 
     // Envoyer le nouveau mot de passe par email
     await this.mailService.sendWelcomeEmail(
