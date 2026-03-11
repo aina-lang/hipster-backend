@@ -1499,63 +1499,179 @@ EXECUTION RULES:
    * Black and white aesthetics with high contrast
    */
   private buildProfessionIconPrompt(subject: string = 'professional'): string {
-    const finalPrompt = `Create a minimalist editorial poster inspired by magazine covers.
+    const finalPrompt = `Create an ultra-stylized Swiss modernist editorial poster.
 
-STYLE
+VISUAL STYLE
 
 Strict black and white photography.
-High contrast.
-Minimal editorial photography.
+Ultra high contrast monochrome image.
+Swiss International Typographic Style.
+Avant-garde editorial design aesthetic.
+Premium European graphic design magazine cover.
+
+The image should feel like a poster from a high-end design exhibition or a Swiss graphic design book.
+
+Extremely clean layout.
+
+Minimal but visually striking.
+
+COLOR
+
+Pure black and white only.
+
+No grey tones except natural photographic shadows.
+
+Deep blacks and bright whites.
+
+Strong dramatic contrast.
 
 SUBJECT
 
-Generate a realistic professional subject based on:
-${subject}
+Generate a realistic ${subject}.
 
 COMPOSITION
 
-The subject must be placed in the lower half of the image.
+The subject must appear small compared to the environment.
 
-The composition must be very minimal with a lot of empty space.
+The subject should occupy only about 20% to 25% of the collage height.
 
-Use very few visual elements.
-Avoid busy scenes and avoid multiple accessories.
+The environment must dominate visually.
+
+The subject must feel embedded inside the environment, not the main focus.
+
+SCENE DESIGN
+
+Build a dense vertical environment behind the subject.
+
+Elements should include tools, materials, and professional items related to the subject's field.
+
+The environment should feel like a sculptural stack of professional elements.
+
+COLLAGE STRUCTURE
+
+The collage must be:
+
+tall
+narrow
+vertical
+
+Objects must stack upward like an architectural tower.
+
+The professional elements should feel monumental and graphic.
+
+Avoid wide scenes.
+
+Avoid horizontal layouts.
+
+The collage should resemble a cut-out editorial collage from a design magazine.
+
+Edges slightly soft.
+
+The bottom of the collage must fade organically into the white background.
+
+SCALE RELATIONSHIP
+
+The environment must be significantly larger than the subject.
+
+Racks and shelves should extend far above the subject.
+
+The environment should feel towering and sculptural.
+
+POSTER COMPOSITION
+
+Vertical poster orientation.
+
+Divide the poster into three visual zones.
+
+BOTTOM AREA (35%)
+
+The collage begins exactly at the bottom edge.
+
+Elements may spread slightly outward.
+
+CENTER AREA (40%)
+
+The subject appears inside the environment working.
+
+The professional environment continues far above the subject.
+
+The environment visually dominates the composition.
+
+TOP AREA (25%)
+
+Large empty white space.
+
+Very strong Swiss poster negative space.
 
 BACKGROUND
 
-Plain white or light grey studio background.
-No scenery.
-No room decor.
-No complex environment.
+Pure white poster background.
 
-TEXT LAYOUT (VERY IMPORTANT)
+Subtle paper grain texture.
 
-Add NO text elements in the icon.
+The collage must softly dissolve into the white background.
 
-Keep the image purely visual without any overlay text.
+No visible background edges.
 
-TYPOGRAPHY
+CRITICAL LAYOUT RULE
 
-(Not applicable for pure icon generation - image only, no text)
+The collage must occupy ONLY the left third of the poster.
+
+The subject must NOT be centered.
+
+Composition must feel asymmetrical and modernist.
+
+LAYERED LAYOUT:
+
+LEFT → professional environment
+CENTER LEFT → subject working
+RIGHT → empty space
+
+LIGHTING
+
+Studio photography lighting.
+
+Soft top lighting.
+
+Strong shadows.
+
+Particles visible in the air.
+
+High texture on professional materials and surfaces.
+
+DESIGN PRINCIPLES
+
+Swiss grid system
+radical asymmetry
+strong negative space
+architectural collage composition
+editor cut-out photography
+modernist poster design
+minimal graphic layout
 
 MOOD
 
-Minimal
+Elegant
+Modernist
 Editorial
-Iconic
-Clean magazine cover style
+Craftsmanship
+Design exhibition poster
 
-TECHNICAL SPECIFICATIONS
+KEYWORDS
 
-- 4K quality or higher
-- Black and white photography (strict grayscale)
-- Hyper-detailed, sharp focus
-- No colors, NO colored elements
-- Professional photographer aesthetic
-- Studio photography quality
-- NO AI artifacts
-- NO watermarks
-- Perfect for icon usage`;
+Swiss graphic design poster
+modernist editorial collage
+architectural vertical composition
+asymmetrical layout
+avant-garde aesthetic
+design magazine cover
+Swiss modernist poster
+high-end editorial design
+minimalist graphic poster
+subject off-center
+environment dominant
+sculptural collage composition
+small subject scale`;
 
     return finalPrompt;
   }
