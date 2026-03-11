@@ -40,6 +40,7 @@ export class ReferralService {
       totalReferred,
       isAmbassador: user.isAmbassador,
       freeMonthsPending: user.freeMonthsPending,
+      isReferred: !!user.referredBy,   // true = compte déjà parrainé, champ en lecture seule
       currency: 'EUR',
     };
   }
