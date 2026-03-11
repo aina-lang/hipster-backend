@@ -1499,103 +1499,13 @@ EXECUTION RULES:
    * Black and white aesthetics with high contrast
    */
   private buildProfessionIconPrompt(subject: string = 'professional'): string {
-    const finalPrompt = `Create an ultra-stylized Swiss modernist editorial poster.
+    const finalPrompt = `Create an ultra-stylized Swiss modernist editorial poster. VISUAL STYLE Strict black and white photography. Ultra high contrast monochrome image. Swiss International Typographic Style. Avant-garde editorial design aesthetic. Premium European graphic design magazine cover. The image should feel like a poster from a high-end design exhibition or a Swiss graphic design book. Extremely clean layout. Minimal but visually striking. COLOR Pure black and white only. No grey tones except natural photographic shadows. Deep blacks and bright whites. Strong dramatic contrast. SUBJECT If an image is uploaded: Use the uploaded image as the subject. If no image is uploaded: Generate a realistic artisan baker kneading bread dough on a flour-covered wooden table. The baker must be actively working. Clothing must feel authentic: artisan apron rolled sleeves work clothes Hands covered with flour. Flour dust visible in the air. SUBJECT SCALE The subject must appear small compared to the environment. The baker should occupy only about 20% to 25% of the collage height. The bakery environment must dominate visually. The subject must feel embedded inside the environment, not the main focus. SCENE DESIGN Behind the subject build a dense vertical bakery environment. Elements may include: bread loaves baguettes wooden bakery racks flour sacks baking trays bread baskets wooden tables The environment should feel like a sculptural stack of bakery elements. COLLAGE STRUCTURE The collage must be: tall narrow vertical Objects must stack upward like an architectural tower. The bakery elements should feel monumental and graphic. Avoid wide scenes. Avoid horizontal layouts. The collage should resemble a cut-out editorial collage from a design magazine. Edges slightly soft. The bottom of the collage must fade organically into the white background. SCALE RELATIONSHIP The environment must be significantly larger than the baker. Bread racks and bakery shelves should extend far above the subject. The environment should feel towering and sculptural. POSTER COMPOSITION Vertical poster orientation. Divide the poster into three visual zones. BOTTOM AREA (35%) The collage begins exactly at the bottom edge. Bread, flour, and bakery tools may spread slightly outward. CENTER AREA (40%) The baker appears inside the environment working on dough. The bakery environment continues far above the subject. The environment visually dominates the composition. TOP AREA (25%) Large empty white space. Very strong Swiss poster negative space. BACKGROUND Pure white poster background. Subtle paper grain texture. The collage must softly dissolve into the white background. No visible background edges. CRITICAL LAYOUT RULE The collage must occupy ONLY the left third of the poster. The subject must NOT be centered. Composition must feel asymmetrical and modernist. Layered layout: LEFT → bakery environment CENTER LEFT → baker working RIGHT → typography TYPOGRAPHY (VERY IMPORTANT) Add ONLY two text elements. TYPOGRAPHY CASE RULE All typography must be written in FULL UPPERCASE. Never use lowercase letters. Both titles must appear in uppercase only. The typography must feel bold, graphic and typical of Swiss modernist posters. VERTICAL TITLE ARTISAN Large ultra bold condensed sans-serif typography. Swiss grotesk style. Black text. The title must be vertical. The title must sit very close to the collage column. Typography height must match the collage height. Do NOT place it near the poster edge. LAYERING RULE The vertical typography must appear behind the baker. Parts of the letters must be hidden by the subject. The baker slightly overlaps the typography. Typography must feel physically integrated into the scene. HORIZONTAL TITLE BOULANGER Small horizontal text above the subject. Very minimal spacing. Clean Swiss grid alignment. TYPOGRAPHY STYLE Bold condensed grotesk typography. Extremely clean kerning. Graphic designer style typography. Black only. LIGHTING Studio photography lighting. Soft top lighting. Strong shadows. Flour particles visible in the air. High texture on bread and wood surfaces. DESIGN PRINCIPLES Swiss grid system radical asymmetry strong negative space architectural collage composition editorial cut-out photography modernist poster design minimal graphic layout MOOD Elegant Modernist Editorial Craftsmanship Design exhibition poster KEYWORDS Swiss graphic design poster modernist editorial collage architectural vertical composition asymmetrical layout avant-garde typography design magazine cover Swiss modernist poster high-end editorial design minimalist graphic poster subject off-center typography behind subject sculptural collage composition environment dominant small subject scale uppercase typography all caps typography swiss poster uppercase type bold uppercase grotesk typography`;
 
-VISUAL STYLE
+    return finalPrompt;
+  }
 
-Strict black and white photography.
-Ultra high contrast monochrome image.
-Swiss International Typographic Style.
-Avant-garde editorial design aesthetic.
-Premium European graphic design magazine cover.
-
-The image should feel like a poster from a high-end design exhibition or a Swiss graphic design book.
-
-Extremely clean layout.
-
-Minimal but visually striking.
-
-COLOR
-
-Pure black and white only.
-
-No grey tones except natural photographic shadows.
-
-Deep blacks and bright whites.
-
-Strong dramatic contrast.
-
-SUBJECT
-
-Generate a realistic ${subject}.
-
-COMPOSITION
-
-The subject must appear small compared to the environment.
-
-The subject should occupy only about 20% to 25% of the collage height.
-
-The environment must dominate visually.
-
-The subject must feel embedded inside the environment, not the main focus.
-
-SCENE DESIGN
-
-Build a dense vertical environment behind the subject.
-
-Elements should include tools, materials, and professional items related to the subject's field.
-
-The environment should feel like a sculptural stack of professional elements.
-
-COLLAGE STRUCTURE
-
-The collage must be:
-
-tall
-narrow
-vertical
-
-Objects must stack upward like an architectural tower.
-
-The professional elements should feel monumental and graphic.
-
-Avoid wide scenes.
-
-Avoid horizontal layouts.
-
-The collage should resemble a cut-out editorial collage from a design magazine.
-
-Edges slightly soft.
-
-The bottom of the collage must fade organically into the white background.
-
-SCALE RELATIONSHIP
-
-The environment must be significantly larger than the subject.
-
-Racks and shelves should extend far above the subject.
-
-The environment should feel towering and sculptural.
-
-POSTER COMPOSITION
-
-Vertical poster orientation.
-
-Divide the poster into three visual zones.
-
-BOTTOM AREA (35%)
-
-The collage begins exactly at the bottom edge.
-
-Elements may spread slightly outward.
-
-CENTER AREA (40%)
-
-The subject appears inside the environment working.
-
-The professional environment continues far above the subject.
-
-The environment visually dominates the composition.
+  /**
+   * 🔵 POST-PROCESS: Focus Circle Filter
 
 TOP AREA (25%)
 
@@ -2359,81 +2269,11 @@ DESIGN STYLE:
  * 🎨 BUILD PROFESSION ICON PROMPT FOR DALL-E
  * Editorial magazine poster inspired by professional magazine covers
  */
-private buildProfessionIconPrompt(
-  subject: string = 'professional',
-  titre: string = '',
-  sousTitre: string = '',
-  isPersonRequested: boolean = false,
-): string {
-  const mannequinVariation = this.getMannequinVariationDirective(subject, isPersonRequested);
-  
-  const finalPrompt = `Create a minimalist editorial poster inspired by magazine covers.
-
-SUBJECT
-
-If an image is uploaded:
-Use the uploaded image as the main subject.
-
-If no image is uploaded:
-Generate a realistic professional scene based on:
-
-${subject}
-
-${mannequinVariation}
-
-STYLE
-
-Black and white photography.
-
-High contrast editorial portrait.
-
-The subject must appear professional and iconic.
-
-COMPOSITION
-
-The subject must be centered in the lower half of the image.
-
-Add objects related to the profession around the subject.
-
-Example:
-* bread and flour for a baker
-* house model for a real estate agent
-* tattoo machine for a tattoo artist
-
-BACKGROUND
-
-Minimal light background.
-
-Clean and spacious composition with lots of empty space.
-
-TEXT LAYOUT
-
-Horizontal title at the top:
-
-${titre}
-
-Vertical profession text on the side:
-
-${sousTitre}
-
-Typography must be bold, modern and editorial.
-
-MOOD
-
-Editorial magazine poster
-Professional
-Minimal
-Iconic
-Documentary photography style`;
-
-  return finalPrompt;
-}
-
 /**
- * 🎨 BUILD MONO ACCENT PROMPT FOR DALL-E
- * Minimalist B&W layout with a single color accent.
- */
-private buildMonoAccentPrompt(
+   * 🎨 BUILD MONO ACCENT PROMPT FOR DALL-E
+   * Minimalist B&W layout with a single color accent.
+   */
+  private buildMonoAccentPrompt(
   subject: string = 'modern subject',
   titre: string = '',
   sousTitre: string = '',
@@ -2949,10 +2789,6 @@ MANDATE: Create a VOGUE/NUMÉRO magazine editorial-quality flyer that would ACTU
         jobStr,
         options,
       );
-    }
-
-    if (styleName === 'Profession Icon') {
-      return this.buildProfessionIconPrompt(jobStr);
     }
 
     return `Minimalist professional photo of ${jobStr}. Extreme simplicity, spacious framing. Natural and empty.`;
@@ -4205,9 +4041,6 @@ COMPOSITION ARCHITECTURE:
           );
           magazineStyleDirective = this.buildProfessionIconPrompt(
             customSubject || params.job || 'A professional subject',
-            mainWord,
-            scriptPhrase,
-            isPersonRequested,
           );
         } else if (architecture.layoutType === 'TYPE_MONO_ACCENT') {
           this.logger.log(
