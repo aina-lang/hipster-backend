@@ -439,6 +439,9 @@ ${
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
     const magazineReference = `
 MAGAZINE EDITORIAL REFERENCE:
 Luxury high-fashion editorial cover inspired by Vogue, Numéro, Harper's Bazaar.
@@ -587,7 +590,7 @@ MONOCHROMATIC ENFORCEMENT:
 - Strictly NO secondary accent colors.
 - Use variety in saturation and brightness for depth, but maintain strict hue consistency.`;
 
-    const finalPrompt = `
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 ${magazineReference}
 
 ${subjectRules}
@@ -597,13 +600,19 @@ ${backgroundRules}
 ${typographyRules}
 ${monochromaticDirective}
 
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+${userQuery || 'Professional execution of the selected profession and style.'}
+
 ${technicalQuality}
 
 ${prohibitions}
 `;
 
     this.logger.log(
-      '[buildEditorialCoverPrompt] Generated premium minimalist editorial cover prompt (locked layout)',
+      '[buildEditorialCoverPrompt] Generated premium minimalist editorial cover with 3-layer structure (DA + Profession + User)',
     );
 
     return finalPrompt;
@@ -621,11 +630,14 @@ ${prohibitions}
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
     const texteFond = mainWord || '';
     const texteBadge = textPromo || '';
     const texteBouton = infoLine || '';
 
-    const finalPrompt = `
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 Créer une affiche publicitaire moderne et minimaliste.
 
 Sujet principal : ${customSubject || job}
@@ -649,6 +661,12 @@ Style :
 - Aucune marque
 - Chaque élément textuel mentionné doit être rendu PARFAITEMENT sur l'image.
 
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+${userQuery || 'Professional execution of the selected profession and style.'}
+
 STRICT TYPOGRAPHY RULE:
 - VOUS NE POUVEZ REPRODUIRE QUE LE TEXTE EXACT PRÉVU CI-DESSUS.
 - N'AJOUTEZ AUCUN TEXTE SUPPLÉMENTAIRE, SOUS-TITRE, TITRE DE MÉTIER. AUCUNE IMPROVISATION.
@@ -658,7 +676,7 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
 `;
 
     this.logger.log(
-      `[buildImpactCommercialPrompt] Generated impact commercial prompt — color: ${colorPrincipale}, texteFond: "${texteFond}"`,
+      `[buildImpactCommercialPrompt] Generated impact commercial with 3-layer structure (DA + Profession + User) — color: ${colorPrincipale}`,
     );
 
     return finalPrompt;
@@ -677,11 +695,14 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
     const subject = customSubject || job;
     const environnement = userQuery || 'High-end studio';
     const descriptionSujet = userQuery || job;
 
-    const finalPrompt = `
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 VERTICAL AD POSTER: Dynamic Cinematic Style.
 SCENE: ${environnement}. MAIN SUBJECT: ${subject} (${descriptionSujet}).
 
@@ -707,6 +728,12 @@ TYPOGRAPHY (MANDATORY):
 - VAST NEGATIVE SPACE: Strategic breathing room between each block.
 - LEGIBILITY: All text MUST use contrasting shades to be perfectly readable against speed streaks.
 
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+${userQuery || 'Professional execution of the selected profession and style.'}
+
 PALETTE: Dominant ${colorPrincipale} with its light/dark shades, Accent ${colorSecondaire} with its light/dark shades.
 FORMAT: Vertical 9:16. QUALITY: Professional editorial, HD photorealistic.
 KEYWORDS: inward motion blur, converging streaks, lateral speed lines, crisp bottom, sharp center.
@@ -715,7 +742,7 @@ ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object o
 `;
 
     this.logger.log(
-      `[buildEditorialMotionPrompt] Generated dynamic cinematic vertical poster prompt for subject: ${subject}`,
+      `[buildEditorialMotionPrompt] Generated dynamic cinematic vertical poster with 3-layer structure (DA + Profession + User) for subject: ${subject}`,
     );
 
     return finalPrompt;
@@ -724,8 +751,12 @@ ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object o
   private buildPrestigeBWPosterPrompt(
     subject: string,
     titleText: string,
+    job: string = '',
   ): string {
-    const finalPrompt = `
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 ULTRA MINIMALIST BLACK & WHITE LUXURY ADVERTISING POSTER.
 SUBJECT: ${titleText}, front-facing hero shot, perfectly centered, symmetrical composition, slightly low angle.
 
@@ -779,6 +810,12 @@ TYPOGRAPHY (MANDATORY):
 - No extra words.
 - No additional typography.
 
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+${job ? `Professional execution in the ${job} industry context` : 'Professional execution of luxury campaign'}
+
 COMPOSITION:
 - Minimal.
 - Premium.
@@ -790,7 +827,7 @@ COMPOSITION:
 `;
 
     this.logger.log(
-      `[buildLuxuryBWPosterPrompt] Generated clean white luxury poster prompt for subject: ${titleText}`,
+      `[buildPrestigeBWPosterPrompt] Generated luxury B&W poster with 3-layer structure (DA + Profession + User) for subject: ${titleText}`,
     );
 
     return finalPrompt;
@@ -805,8 +842,13 @@ COMPOSITION:
     subject: string,
     titleText: string,
     subtitleText: string = '',
+    job: string = '',
   ): string {
-    const finalPrompt = `Create an ultra realistic premium advertising poster.
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
+Create an ultra realistic premium advertising poster.
 
 MAIN SUBJECT:
 ${subject}
