@@ -2061,192 +2061,110 @@ private buildMatteProductPrompt(
   sousTitre: string = '',
   colorPrincipale: string = '#1A1A2E',
   colorSecondaire: string = '#FFFFFF',
-): string {
-  const finalPrompt = `Create a premium cinematic editorial advertising poster.
+    job: string = '',
+  ): string {
+    const professionContext = getProfessionContext(job);
 
-FORMAT
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE (MATTE PRODUCT):
+Create a premium cinematic editorial advertising poster.
 
-Vertical poster layout.
-Minimal modern advertising design.
+FORMAT:
+- Vertical poster layout
+- Minimal modern advertising design
 
-COMPOSITION
+COMPOSITION:
+- Place the subject in the LOWER THIRD of the frame
+- Use a medium portrait framing (chest up)
+- The subject should appear large and dominant
+- Position the subject slightly LEFT of center
+- Leave large negative space above the subject for typography
 
-Place the subject in the LOWER THIRD of the frame.
+PHOTOGRAPHY STYLE:
+- Cinematic editorial studio photography
+- Lighting: low key, dramatic shadows, soft directional side light, high contrast, moody atmosphere
+- The subject should be partially in shadow
 
-Use a medium portrait framing (chest up).
+BACKGROUND & GRAPHICS:
+- Use a deep black background
+- Add a colored light glow behind the subject (color: ${colorSecondaire})
+- The colored light must come from the RIGHT side behind the subject
+- Create a strong vignette around the edges (fade into deep black)
+- Add minimal UI: two very small thin white crosses near the top corners
+- Add graphic divider: thin horizontal line on both sides with centered white dot (-----   ●   -----)
 
-The subject should appear large and dominant.
+MOOD:
+- Dark cinematic poster
+- Editorial advertising photography
+- Luxury brand aesthetic
 
-Position the subject slightly LEFT of center.
+COUCHE 2 - CONTEXTE PROFESSIONNEL (VERROUILLAGE PROFESSION):
+${professionContext}
 
-Leave large negative space above the subject for typography.
+COUCHE 3 - SUJET ET CONTENU UTILISATEUR:
+SUBJECT:
+${subject}
 
-PHOTOGRAPHY STYLE
-
-Cinematic editorial studio photography.
-
-Lighting style:
-
-low key lighting  
-dramatic shadows  
-soft directional side light  
-high contrast  
-moody atmosphere  
-
-The subject should be partially in shadow.
-
-BACKGROUND
-
-Use a deep black background.
-
-Add a colored light glow behind the subject.
-
-Primary color:
-black
-
-Secondary color:
-${colorSecondaire}
-
-The colored light must come from the RIGHT side behind the subject.
-
-Create a strong vignette around the edges.
-
-Edges must fade into deep black.
-
-GRAPHIC ELEMENTS
-
-Add minimal UI design elements:
-
-two very small thin white crosses near the top corners.
-
-TYPOGRAPHY
-
-Main title:
-
+TYPOGRAPHY:
+Main title (EXTRA BOLD, ALL CAPS, condensed sans-serif like Druk/Bebas Neue):
 ${titre}
+- Must be EXTREMELY LARGE
+- Should dominate the upper half of the poster
 
-Style:
-
-EXTRA BOLD  
-ALL CAPS  
-condensed sans-serif  
-Druk / Bebas Neue style  
-
-The title must be EXTREMELY LARGE.
-
-The title should dominate the upper half of the poster.
-
-GRAPHIC DIVIDER
-
-Below the title add a thin horizontal line on both sides.
-
-Place a medium white dot exactly in the center between the lines.
-
-Example structure:
-
------   ●   -----
-
-SLOGAN
-
-Below the divider display:
-
+Subtitle/Slogan (small, modern minimalist sans-serif, centered, subtle spacing):
 ${sousTitre}
 
-Style:
+FINAL DIRECTIVE:
+Apply all profession context constraints to ensure the final image stays within ${job || 'professional'} boundaries while maintaining the MATTE PRODUCT visual signature.`;
 
-small  
-modern minimalist sans-serif  
-centered  
-subtle spacing
+    return finalPrompt;
+  }
 
-MOOD
-
-dark cinematic poster  
-editorial advertising photography  
-luxury brand aesthetic`;
-
-  return finalPrompt;
-}
-
-/**
- * 🎨 BUILD NEON EDITORIAL PROMPT FOR DALL-E
- * Modern editorial poster with strong cinematic contrast and futuristic elements
- */
-private buildNeonEditorialPrompt(
+  /**
+   * 🎨 BUILD NEON EDITORIAL PROMPT FOR DALL-E
+   * Modern editorial poster with strong cinematic contrast and futuristic elements
+   */
+  private buildNeonEditorialPrompt(
   subject: string = 'modern subject',
   titre: string = '',
   sousTitre: string = '',
   colorSecondaire: string = '#00FF88',
+  job: string = '',
 ): string {
-  const finalPrompt = `Create a modern editorial poster with a strong cinematic contrast.
+  const professionContext = getProfessionContext(job);
 
-SUBJECT
+  const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE (NEON EDITORIAL):
+Create a modern editorial poster with strong cinematic contrast.
 
-If an image is uploaded:
-Use the uploaded image as the main subject.
+SUBJECT:
+- If image uploaded: use as main subject
+- If no image: generate realistic professional portrait based on: ${subject}
 
-If no image is uploaded:
-Generate a realistic professional portrait based on this description:
+STYLE:
+- High contrast portrait photography
+- Subject appears as dark silhouette with subtle light edges
 
-${subject}
+COMPOSITION & BACKGROUND:
+- Vibrant glowing gradient background color: ${colorSecondaire}
+- Background feels luminous and atmospheric
+- Add subtle futuristic UI elements (thin white lines, micro typography, minimal tech interface, abstract geometric overlays)
 
-STYLE
-
-High contrast portrait photography.
-
-The subject should appear mostly dark, almost black silhouette,
-with subtle light edges.
-
-BACKGROUND
-
-Use a vibrant glowing gradient background color:
-
-${colorSecondaire}
-
-The background should feel luminous and atmospheric.
-
-GRAPHIC DESIGN
-
-Add subtle futuristic UI elements:
-
-* thin white graphic lines
-* micro typography
-* minimal tech interface elements
-* abstract geometric overlays
-
-BACKGROUND TITLE
-
-Use the TITLE as a very large word behind the subject.
-
-Text:
+TYPOGRAPHY & TEXT:
+Background Title (very large, bold, 20-30% opacity, partially hidden behind subject):
 ${titre}
 
-Style:
-* very large typography
-* bold
-* partially hidden behind the subject
-* opacity around 20–30%
-
-FOREGROUND TEXT
-
-Display the subtitle as a small slogan in front.
-
-Text:
+Foreground Slogan (clean modern typography, white text, centered or slightly above lower third, minimal and elegant):
 ${sousTitre}
 
-Style:
-* clean modern typography
-* white text
-* centered or slightly above the lower third
-* minimal and elegant
+MOOD:
+- Editorial poster with modern startup visual
+- High contrast, premium digital design
+- Futuristic and minimal aesthetic
 
-MOOD
+COUCHE 2 - CONTEXTE PROFESSIONNEL (VERROUILLAGE PROFESSION):
+${professionContext}
 
-Editorial poster  
-Modern startup visual  
-High contrast  
-Premium digital design  
-Futuristic and minimal`;
+COUCHE 3 - INTÉGRATION FINALE:
+Ensure all design elements, color palette, and stylistic choices respect the ${job || 'professional'} context while maintaining the NEON EDITORIAL high-contrast visual identity. The subject's profession and industry vocabulary must align with profession lock constraints.`;
 
   return finalPrompt;
 }
@@ -2260,56 +2178,53 @@ private buildEpicBrandPrompt(
   titre: string = '',
   sousTitre: string = '',
   colorSecondaire: string = '#FF9800',
+  job: string = '',
 ): string {
-  const finalPrompt = `Create a cinematic promotional poster with a powerful double-exposure composition.
+  const professionContext = getProfessionContext(job);
+
+  const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE (EPIC BRAND):
+Create a cinematic promotional poster with powerful double-exposure composition.
 
 INPUT TYPE RULES:
-
-If an image is provided by the user:
-- Use the uploaded image as the MAIN SUBJECT.
-- Do NOT generate a new person or subject.
-- Keep the exact face, pose, and identity from the uploaded image.
-- Apply the design and effects around this image only.
-
-If NO image is provided:
-- Generate a realistic professional image based on the subject description.
+- If image provided: use as MAIN SUBJECT, keep exact face/pose/identity, apply design around it
+- If NO image: generate realistic professional image based on subject description
 
 SUBJECT:
 ${subject}
 
 STYLE:
-Modern cinematic poster inspired by movie key art and premium advertising visuals.
+- Modern cinematic poster inspired by movie key art and premium advertising
+- Ultra realistic photography with cinematic lighting
 
 COMPOSITION:
 - Vertical poster layout
-- Main subject placed in the foreground
-- Behind the subject create a large semi-transparent portrait of the same subject
-- This creates a double exposure cinematic effect
-- The background must remain partially white or very light for a clean premium look
+- Main subject in foreground
+- Behind subject: large semi-transparent portrait of same subject (double-exposure effect)
+- Background: partially white or very light for clean premium look
 
-COLOR RULES:
-- The image should be mostly black and white
-- Only ONE strong accent color is used: ${colorSecondaire}
-- Apply this color as dramatic lighting, glow, or gradient overlay
+COLOR PALETTE:
+- Mostly black and white
+- ONE strong accent color: ${colorSecondaire}
+- Apply as dramatic lighting, glow, or gradient overlay
 - High contrast cinematic lighting
 
-TEXT LAYOUT:
-Add bold modern typography.
-
-Main title:
-${titre}
-
-Subtitle:
-${sousTitre}
-
-Do NOT add any additional text.
+TYPOGRAPHY:
+Bold modern typography:
+- Main title: ${titre}
+- Subtitle: ${sousTitre}
+- Do NOT add any additional text
 
 DESIGN STYLE:
 - Premium advertising poster
 - Ultra realistic photography
-- Cinematic lighting
-- Strong contrast
-- Modern clean composition`;
+- Strong cinematic contrast
+- Modern clean composition
+
+COUCHE 2 - CONTEXTE PROFESSIONNEL (VERROUILLAGE PROFESSION):
+${professionContext}
+
+COUCHE 3 - INTÉGRATION FINALE:
+Ensure the entire composition, subject matter, color treatment, and cinematic elements respect the ${job || 'professional'} context. Apply profession lock vocabulary and universe restrictions to maintain brand authenticity while delivering the EPIC BRAND cinematic double-exposure aesthetic.`;
 
   return finalPrompt;
 }
@@ -4078,6 +3993,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             mainWord,
             scriptPhrase,
             colorSecondaire,
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_NEON_EDITORIAL') {
           this.logger.log(
@@ -4088,6 +4004,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             mainWord,
             scriptPhrase,
             colorSecondaire,
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_MATTE_PRODUCT') {
           this.logger.log(
@@ -4099,6 +4016,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             scriptPhrase,
             colorPrincipale,
             colorSecondaire,
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_PROFESSION_ICON') {
           this.logger.log(
