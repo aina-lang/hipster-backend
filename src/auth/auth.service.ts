@@ -296,6 +296,7 @@ export class AuthService {
     if (!isMatch)
       throw new BadRequestException('Ancien mot de passe incorrect.');
 
+
     const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
     await this.userRepo.update(
       { id: userId },
