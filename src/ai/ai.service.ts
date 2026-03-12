@@ -2061,11 +2061,15 @@ private buildMatteProductPrompt(
   sousTitre: string = '',
   colorPrincipale: string = '#1A1A2E',
   colorSecondaire: string = '#FFFFFF',
-    job: string = '',
-  ): string {
+  job: string = '',
+): string {
     const professionContext = getProfessionContext(job);
 
-    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE (MATTE PRODUCT):
+    const finalPrompt = `ABSOLUTE PROFESSION LOCK:
+${professionContext}
+CONSTRAINT: This industry context MUST be applied to every element of the image. No exceptions. No deviations.
+
+DIRECTION ARTISTIQUE - MATTE PRODUCT:
 Create a premium cinematic editorial advertising poster.
 
 FORMAT:
@@ -2097,12 +2101,9 @@ MOOD:
 - Editorial advertising photography
 - Luxury brand aesthetic
 
-COUCHE 2 - CONTEXTE PROFESSIONNEL (VERROUILLAGE PROFESSION):
-${professionContext}
-
-COUCHE 3 - SUJET ET CONTENU UTILISATEUR:
-SUBJECT:
+SUBJECT (MUST RESPECT PROFESSION):
 ${subject}
+⚠️ The subject MUST align with the profession context above. Even if the user input seems unrelated, reinterpret it within the ${job || 'professional'} industry universe.
 
 TYPOGRAPHY:
 Main title (EXTRA BOLD, ALL CAPS, condensed sans-serif like Druk/Bebas Neue):
@@ -2111,10 +2112,7 @@ ${titre}
 - Should dominate the upper half of the poster
 
 Subtitle/Slogan (small, modern minimalist sans-serif, centered, subtle spacing):
-${sousTitre}
-
-FINAL DIRECTIVE:
-Apply all profession context constraints to ensure the final image stays within ${job || 'professional'} boundaries while maintaining the MATTE PRODUCT visual signature.`;
+${sousTitre}`;
 
     return finalPrompt;
   }
@@ -2132,12 +2130,17 @@ Apply all profession context constraints to ensure the final image stays within 
 ): string {
   const professionContext = getProfessionContext(job);
 
-  const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE (NEON EDITORIAL):
+  const finalPrompt = `ABSOLUTE PROFESSION LOCK:
+${professionContext}
+CONSTRAINT: This industry context MUST shape every visual choice. No exceptions.
+
+DIRECTION ARTISTIQUE - NEON EDITORIAL:
 Create a modern editorial poster with strong cinematic contrast.
 
-SUBJECT:
-- If image uploaded: use as main subject
-- If no image: generate realistic professional portrait based on: ${subject}
+SUBJECT (MUST RESPECT PROFESSION):
+- If image uploaded: use as main subject within profession bounds
+- If no image: generate realistic professional subject based on: ${subject}
+⚠️ Reinterpret the subject within the ${job || 'professional'} industry universe. Profession takes absolute priority over raw subject input.
 
 STYLE:
 - High contrast portrait photography
@@ -2158,13 +2161,7 @@ ${sousTitre}
 MOOD:
 - Editorial poster with modern startup visual
 - High contrast, premium digital design
-- Futuristic and minimal aesthetic
-
-COUCHE 2 - CONTEXTE PROFESSIONNEL (VERROUILLAGE PROFESSION):
-${professionContext}
-
-COUCHE 3 - INTÉGRATION FINALE:
-Ensure all design elements, color palette, and stylistic choices respect the ${job || 'professional'} context while maintaining the NEON EDITORIAL high-contrast visual identity. The subject's profession and industry vocabulary must align with profession lock constraints.`;
+- Futuristic and minimal aesthetic`;
 
   return finalPrompt;
 }
@@ -2182,15 +2179,20 @@ private buildEpicBrandPrompt(
 ): string {
   const professionContext = getProfessionContext(job);
 
-  const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE (EPIC BRAND):
+  const finalPrompt = `ABSOLUTE PROFESSION LOCK:
+${professionContext}
+CONSTRAINT: This industry context MUST be applied to the entire composition. No exceptions. No deviations.
+
+DIRECTION ARTISTIQUE - EPIC BRAND:
 Create a cinematic promotional poster with powerful double-exposure composition.
 
 INPUT TYPE RULES:
-- If image provided: use as MAIN SUBJECT, keep exact face/pose/identity, apply design around it
+- If image provided: use as MAIN SUBJECT, keep exact face/pose/identity
 - If NO image: generate realistic professional image based on subject description
 
-SUBJECT:
+SUBJECT (MUST RESPECT PROFESSION):
 ${subject}
+⚠️ CRITICAL: The subject MUST be reinterpreted within the ${job || 'professional'} industry universe. Even if the input seems off-topic, anchor it within the profession context.
 
 STYLE:
 - Modern cinematic poster inspired by movie key art and premium advertising
@@ -2218,13 +2220,7 @@ DESIGN STYLE:
 - Premium advertising poster
 - Ultra realistic photography
 - Strong cinematic contrast
-- Modern clean composition
-
-COUCHE 2 - CONTEXTE PROFESSIONNEL (VERROUILLAGE PROFESSION):
-${professionContext}
-
-COUCHE 3 - INTÉGRATION FINALE:
-Ensure the entire composition, subject matter, color treatment, and cinematic elements respect the ${job || 'professional'} context. Apply profession lock vocabulary and universe restrictions to maintain brand authenticity while delivering the EPIC BRAND cinematic double-exposure aesthetic.`;
+- Modern clean composition`;
 
   return finalPrompt;
 }
