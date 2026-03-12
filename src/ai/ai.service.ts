@@ -23,6 +23,7 @@ import {
 } from './config/visual-architectures-78';
 import { FlyerCategory, VariantStructure } from './types/flyer.types';
 import { FLYER_CATEGORIES } from './constants/flyer-categories';
+import { getProfessionContext } from './profession-prompts';
 
 @Injectable()
 export class AiService implements OnModuleInit {
@@ -3706,7 +3707,21 @@ COMPOSITION ARCHITECTURE:
         ? `IMPORTANT: Include ONLY the exact text explicitly requested: "${cleanedUserQuery}". No other text, logo or watermark. NO OpenAI logo.`
         : 'NO text,NO watermark,NO logo,NO letters,NO numbers,NO words,NO captions,NO overlays,NO unsolicited branding,NO OpenAI logo';
 
-      const finalPrompt = `STYLE: ${styleName}. ${promptBody}. Detailed requirements: ${cleanedUserQuery || ''} QUALITY: ${realismTriggers} ${qualityTags}. RULES: ${noTextRule} NO OpenAI branding.`;
+      // 🎯 COUCHE 2/3: CONTEXTE PROFESSION (Brand lock)
+      const professionContext = getProfessionContext(params.job || '');
+      
+      // 🎯 PROMPT FINAL = COUCHE 1 (DA) + COUCHE 2 (Métier) + COUCHE 3 (Utilisateur)
+      const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE (DA):
+${promptBody}
+QUALITY: ${realismTriggers} ${qualityTags}.
+
+COUCHE 2 - CONTEXTE PROFESSION (MÉTIER LOCK):
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+${cleanedUserQuery || 'Professional execution of the selected profession and style.'}
+
+RULES: ${noTextRule} NO OpenAI branding.`;
 
       let finalBuffer: Buffer;
       if (imageBuffer) {
