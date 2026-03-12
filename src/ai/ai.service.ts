@@ -921,6 +921,12 @@ No badges
 No UI elements
 No watermarks
 
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+${job ? `Professional execution in the ${job} industry context` : 'Premium advertising execution'}
+
 STYLE MOOD:
 Premium
 Luxury
@@ -938,7 +944,7 @@ Appetizing
 `;
 
     this.logger.log(
-      `[buildSignatureSplashPrompt] Generated CLEAN SUBJECT + CINEMATIC SPLASH AROUND prompt for subject: ${subject}`,
+      `[buildSignatureSplashPrompt] Generated ultra-realistic splash with 3-layer structure (DA + Profession + User) for subject: ${subject}`,
     );
 
     return finalPrompt;
@@ -3964,6 +3970,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
           magazineStyleDirective = this.buildPrestigeBWPosterPrompt(
             customSubject || params.job || 'A luxury object',
             mainWord,
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_EDITORIAL') {
           this.logger.log(
@@ -3992,6 +3999,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             customSubject || params.job || 'A premium subject',
             mainWord,
             scriptPhrase,
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_DIAGONAL_SPLIT_DESIGN') {
           this.logger.log(
