@@ -54,8 +54,12 @@ export class AiPaymentService {
       ? 'price_1SzcrqFhrfQ5vRxFsG1jQfGE'
       : 'price_1SzcrqFhrfQ5vRxFMg8ReF0v';
 
-    const studioPrice = hasDiscount ? 22 : 29.9;
-    const studioPriceId = 'price_1SzcrrFhrfQ5vRxFTkRYTkag'; 
+    const studioPrice = hasDiscount ? 22 : (isEarlyBird ? 21 : 29.9);
+    const studioPriceId = hasDiscount 
+      ? 'price_1TB9asFhrfQ5vRxFS0SevRGt' // 22€ (Ambassadeur/Parrainage)
+      : (isEarlyBird 
+        ? 'price_1TB9bxFhrfQ5vRxF8Sy8vrac' // 21€ (Early Bird)
+        : 'price_1SzcrrFhrfQ5vRxFTkRYTkag'); // 29.90€ 
 
     return [
       {
@@ -100,7 +104,7 @@ export class AiPaymentService {
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
-        description: isAmbassador ? 'Tarif Ambassadeur' : (isReferred && discountMonthsCount < 3 ? 'Tarif parrainage (3 mois)' : 'Orienté photo'),
+        description: isAmbassador ? 'Tarif Ambassadeur' : (isReferred && discountMonthsCount < 3 ? 'Tarif parrainage (3 mois)' : (isEarlyBird ? '21€ 30 premiers - ensuite 29,90€ / mois' : 'Orienté photo')),
         features: [
           'Génération de texte',
           "Génération d'image",
