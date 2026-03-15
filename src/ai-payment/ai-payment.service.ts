@@ -55,14 +55,14 @@ export class AiPaymentService {
     this.logger.log(`[getPlans] Params: isAmbassador=${isAmbassador}, discountMonthsCount=${discountMonthsCount}, isReferred=${isReferred}`);
     this.logger.log(`[getPlans] Conditions: isEarlyBird=${isEarlyBird}, isFilleul=${isFilleul}, hasAmbassadorDiscount=${hasAmbassadorDiscount}`);
     
+    // ATELIER: TOUJOURS 17,90€ (aucune promo)
+    const atelierPrice = 17.9;
+    const atelierPriceId = 'price_1SzcrqFhrfQ5vRxFMg8ReF0v';
+
+    // STUDIO: Réductions Ambassadeur/Filleul + Early Bird
     const studioPrice = hasAmbassadorDiscount ? 21 : (hasFilleulDiscount ? 22 : (isEarlyBird ? 21 : 29.9));
     this.logger.log(`[getPlans] Studio Price Selected: ${studioPrice}€`);
-
-    const atelierPrice = (hasAmbassadorDiscount || hasFilleulDiscount) ? 9.9 : (isEarlyBird ? 9.9 : 17.9);
-    const atelierPriceId = (hasAmbassadorDiscount || hasFilleulDiscount) || isEarlyBird
-      ? 'price_1SzcrqFhrfQ5vRxFsG1jQfGE'
-      : 'price_1SzcrqFhrfQ5vRxFMg8ReF0v';
-
+    
     const studioPriceId = hasAmbassadorDiscount
       ? 'price_1TBAtPFhrfQ5vRxF4hPD3det' // 21€ (Ambassadeur)
       : (hasFilleulDiscount
@@ -95,9 +95,7 @@ export class AiPaymentService {
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
-        description: hasAmbassadorDiscount 
-          ? 'Tarif Ambassadeur' 
-          : (hasFilleulDiscount ? 'Tarif parrainage (1er mois)' : (isEarlyBird ? '9,90€ 30 premiers - ensuite 17,90€ / mois' : 'L\'essentiel pour créer')),
+        description: 'L\'essentiel pour créer',
         features: [
           'Génération de texte',
           "Génération d'image",
