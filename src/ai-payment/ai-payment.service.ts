@@ -46,20 +46,30 @@ export class AiPaymentService {
 
     const isEarlyBird = activeSubscribersCount < 30;
     
-    // Ambassador/Referral pricing
-    const hasDiscount = isAmbassador || (isReferred && discountMonthsCount < 3);
+    // Pricing logic
+    const isFilleul = isReferred && discountMonthsCount < 3;
+    const hasAmbassadorDiscount = isAmbassador;
+    const hasFilleulDiscount = isFilleul;
 
-    const atelierPrice = hasDiscount ? 9.9 : (isEarlyBird ? 9.9 : 17.9);
-    const atelierPriceId = hasDiscount || isEarlyBird
+    // DEBUG LOG
+    this.logger.log(`[getPlans] Params: isAmbassador=${isAmbassador}, discountMonthsCount=${discountMonthsCount}, isReferred=${isReferred}`);
+    this.logger.log(`[getPlans] Conditions: isEarlyBird=${isEarlyBird}, isFilleul=${isFilleul}, hasAmbassadorDiscount=${hasAmbassadorDiscount}`);
+    
+    const studioPrice = hasAmbassadorDiscount ? 21 : (hasFilleulDiscount ? 22 : (isEarlyBird ? 21 : 29.9));
+    this.logger.log(`[getPlans] Studio Price Selected: ${studioPrice}€`);
+
+    const atelierPrice = (hasAmbassadorDiscount || hasFilleulDiscount) ? 9.9 : (isEarlyBird ? 9.9 : 17.9);
+    const atelierPriceId = (hasAmbassadorDiscount || hasFilleulDiscount) || isEarlyBird
       ? 'price_1SzcrqFhrfQ5vRxFsG1jQfGE'
       : 'price_1SzcrqFhrfQ5vRxFMg8ReF0v';
 
-    const studioPrice = hasDiscount ? 22 : (isEarlyBird ? 21 : 29.9);
-    const studioPriceId = hasDiscount 
-      ? 'price_1TB9asFhrfQ5vRxFS0SevRGt' // 22€ (Ambassadeur/Parrainage)
-      : (isEarlyBird 
-        ? 'price_1TB9bxFhrfQ5vRxF8Sy8vrac' // 21€ (Early Bird)
-        : 'price_1SzcrrFhrfQ5vRxFTkRYTkag'); // 29.90€ 
+    const studioPriceId = hasAmbassadorDiscount
+      ? 'price_1TBAtPFhrfQ5vRxF4hPD3det' // 21€ (Ambassadeur)
+      : (hasFilleulDiscount
+        ? 'price_1TB9asFhrfQ5vRxFS0SevRGt' // 22€ (Filleul 3 mois)
+        : (isEarlyBird 
+          ? 'price_1TB9bxFhrfQ5vRxF8Sy8vrac' // 21€ (Early Bird)
+          : 'price_1SzcrrFhrfQ5vRxFTkRYTkag')); // 29,90€ (Standard)
 
     return [
       {
@@ -85,9 +95,9 @@ export class AiPaymentService {
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
-        description: isAmbassador 
+        description: hasAmbassadorDiscount 
           ? 'Tarif Ambassadeur' 
-          : (isReferred && discountMonthsCount < 1 ? 'Tarif parrainage (1er mois)' : (isEarlyBird ? '9,90€ 30 premiers - ensuite 17,90€ / mois' : 'L’essentiel pour créer')),
+          : (hasFilleulDiscount ? 'Tarif parrainage (1er mois)' : (isEarlyBird ? '9,90€ 30 premiers - ensuite 17,90€ / mois' : 'L\'essentiel pour créer')),
         features: [
           'Génération de texte',
           "Génération d'image",
@@ -104,7 +114,7 @@ export class AiPaymentService {
         videosLimit: 0,
         audioLimit: 0,
         threeDLimit: 0,
-        description: isAmbassador ? 'Tarif Ambassadeur' : (isReferred && discountMonthsCount < 3 ? 'Tarif parrainage (3 mois)' : (isEarlyBird ? '21€ 30 premiers - ensuite 29,90€ / mois' : 'Orienté photo')),
+        description: hasAmbassadorDiscount ? 'Tarif Ambassadeur' : (hasFilleulDiscount ? 'Tarif parrainage (3 mois)' : (isEarlyBird ? '21€ 30 premiers - ensuite 29,90€ / mois' : 'Orienté photo')),
         features: [
           'Génération de texte',
           "Génération d'image",
@@ -171,7 +181,18 @@ export class AiPaymentService {
       this.logger.log(
         `Creating payment sheet for user ${userId}, price ${priceId}, plan ${planId}`,
       );
-      const plans = await this.getPlans();
+      
+      const user = await this.aiUserRepo.findOneBy({ id: userId });
+      if (!user) throw new BadRequestException('AiUser not found');
+      
+      // DEBUG LOG
+      this.logger.log(`[DEBUG] User data: isAmbassador=${user.isAmbassador}, discountMonthsCount=${user.discountMonthsCount}, referredBy=${user.referredBy}`);
+      
+      const plans = await this.getPlans(
+        user?.isAmbassador || false,
+        user?.discountMonthsCount || 0,
+        !!user?.referredBy
+      );
       let selectedPlan;
 
       if (planId === 'curieux') {
@@ -189,8 +210,6 @@ export class AiPaymentService {
         throw new BadRequestException('Prix invalide');
       }
 
-      const user = await this.aiUserRepo.findOneBy({ id: userId });
-      if (!user) throw new BadRequestException('AiUser not found');
 
       let customerId = user.stripeCustomerId;
       if (!customerId) {
@@ -327,11 +346,6 @@ export class AiPaymentService {
 
         // Apply referral discount if it's the first paid subscription
         if (user.referredBy && !user.hasUsedTrial && user.planType === PlanType.CURIEUX) {
-          // We apply a coupon or discount. 
-          // For now, I'll use a metadata flag to let the webhook know or try to find a coupon.
-          // Ideally, we'd have a coupon ID for parrainage.
-          // Let's assume we have a coupon named 'PARRAINAGE_DISCOUNT'
-          // subParams.coupon = 'PARRAINAGE_DISCOUNT';
           this.logger.log(`Applying referral discount for user ${userId}`);
         }
 
@@ -361,12 +375,16 @@ export class AiPaymentService {
   }
 
   async confirmPlan(userId: number, planId: string, subscriptionId?: string) {
-    const plans = await this.getPlans();
-    const selectedPlan = plans.find((p) => p.id === planId);
-    if (!selectedPlan) throw new BadRequestException('Plan invalide');
-
     const user = await this.aiUserRepo.findOneBy({ id: userId });
     if (!user) throw new BadRequestException('Utilisateur non trouvé');
+
+    const plans = await this.getPlans(
+      user?.isAmbassador || false,
+      user?.discountMonthsCount || 0,
+      !!user?.referredBy
+    );
+    const selectedPlan = plans.find((p) => p.id === planId);
+    if (!selectedPlan) throw new BadRequestException('Plan invalide');
 
     // Apply plan limits and data directly to user
     user.promptsLimit = selectedPlan.promptsLimit;
@@ -577,7 +595,11 @@ export class AiPaymentService {
       throw new BadRequestException('Aucun abonnement actif trouvé');
     }
 
-    const plans = await this.getPlans();
+    const plans = await this.getPlans(
+      user?.isAmbassador || false,
+      user?.discountMonthsCount || 0,
+      !!user?.referredBy
+    );
     const currentPlan = plans.find(
       (p) => p.id === user.planType?.toLowerCase(),
     );

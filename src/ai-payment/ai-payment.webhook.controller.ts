@@ -133,7 +133,11 @@ export class AiPaymentWebhookController {
 
       // Detect plan change (e.g., scheduled downgrade or upgrade)
       const priceId = subscription.items.data[0]?.price.id;
-      const plans = await this.aiPaymentService.getPlans(user.isAmbassador);
+      const plans = await this.aiPaymentService.getPlans(
+        user.isAmbassador,
+        user.discountMonthsCount || 0,
+        !!user.referredBy
+      );
       const newPlan = plans.find((p) => p.stripePriceId === priceId);
 
       if (newPlan && user.planType?.toLowerCase() !== newPlan.id) {
