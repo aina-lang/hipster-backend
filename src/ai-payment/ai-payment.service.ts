@@ -57,19 +57,19 @@ export class AiPaymentService {
     
     // ATELIER: TOUJOURS 17,90€ (aucune promo)
     const atelierPrice = 17.9;
-    const atelierPriceId = 'price_1SzcrqFhrfQ5vRxFMg8ReF0v';
+    const atelierPriceId = 'price_1TCAALK5fB5lGbp8rB3IEJnb';
 
     // STUDIO: Réductions Ambassadeur/Filleul + Early Bird
     const studioPrice = hasAmbassadorDiscount ? 21 : (hasFilleulDiscount ? 22 : (isEarlyBird ? 21 : 29.9));
     this.logger.log(`[getPlans] Studio Price Selected: ${studioPrice}€`);
     
     const studioPriceId = hasAmbassadorDiscount
-      ? 'price_1TBAtPFhrfQ5vRxF4hPD3det' // 21€ (Ambassadeur)
+      ? 'price_1TCA8fK5fB5lGbp8Llm0S0MI' // 21€ (Ambassadeur)
       : (hasFilleulDiscount
-        ? 'price_1TB9asFhrfQ5vRxFS0SevRGt' // 22€ (Filleul 3 mois)
+        ? 'price_1TCA97K5fB5lGbp8JE1J8LIM' // 22€ (Filleul 3 mois)
         : (isEarlyBird 
-          ? 'price_1TB9bxFhrfQ5vRxF8Sy8vrac' // 21€ (Early Bird)
-          : 'price_1SzcrrFhrfQ5vRxFTkRYTkag')); // 29,90€ (Standard)
+          ? 'price_1TCA8yK5fB5lGbp8rYL1wQ1x' // 21€ (Early Bird)
+          : 'price_1TCA9KK5fB5lGbp82YZRJVQ7')); // 29,90€ (Standard)
 
     return [
       {
@@ -125,7 +125,7 @@ export class AiPaymentService {
         id: 'agence',
         name: 'Agence',
         price: 69.99,
-        stripePriceId: 'price_1SzcrsFhrfQ5vRxFDxQQaQwn',
+        stripePriceId: 'price_1TCA6HK5fB5lGbp8z5RzwxiO',
         promptsLimit: 999999,
         imagesLimit: 100,
         videosLimit: 10,
