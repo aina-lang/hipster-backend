@@ -818,8 +818,9 @@ export class AiPaymentService {
       }
 
       // Update dates
-      user.subscriptionStartDate = new Date(subscription.current_period_start * 1000);
-      user.subscriptionEndDate = new Date(subscription.current_period_end * 1000);
+      const sub = subscription as any;
+      user.subscriptionStartDate = new Date(sub.current_period_start * 1000);
+      user.subscriptionEndDate = new Date(sub.current_period_end * 1000);
 
       return await this.aiUserRepo.save(user);
     } catch (error) {
