@@ -351,10 +351,32 @@ export class AiPaymentService {
       }
 
       const invoice = subscription.latest_invoice as any;
-      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+      const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
+
+      // If no payment intent, create one by generating an invoice
+      let clientSecret = paymentIntent?.client_secret;
+      if (!clientSecret && subscription.id) {
+        this.logger.warn(
+          `No payment_intent found in latest_invoice for subscription ${subscription.id}. Creating invoice...`
+        );
+        
+        try {
+          const newInvoice = await this.stripe.invoices.create({
+            customer: customerId,
+            subscription: subscription.id,
+            auto_advance: false,
+          });
+          
+          const newPaymentIntent = (newInvoice as any)?.payment_intent as Stripe.PaymentIntent;
+          clientSecret = newPaymentIntent?.client_secret;
+          this.logger.log(`Created invoice ${newInvoice.id} with payment intent secret`);
+        } catch (invoiceError) {
+          this.logger.error(`Failed to create invoice: ${invoiceError.message}`);
+        }
+      }
 
       const result = {
-        paymentIntentClientSecret: paymentIntent?.client_secret,
+        paymentIntentClientSecret: clientSecret,
         subscriptionId: subscription.id,
         ephemeralKey: ephemeralKey.secret,
         customerId: customerId,
