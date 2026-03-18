@@ -105,78 +105,13 @@ export class AiPaymentWebhookController {
       return;
     }
 
-    // Check previous status vs current status
-    // If it was trialing and now active, it means the user upgraded (or trial ended successfully)
-    if (subscription.status === 'active') {
-      // Check if we should upgrade the plan to ATELIER (if it was Curieux)
-      if (user.planType === PlanType.CURIEUX) {
-        user.planType = PlanType.ATELIER;
-        this.logger.log(
-          `Upgrading user ${user.id} to ATELIER after trial ended/activation.`,
-        );
+    // Use the optimized sync method to handle plan upgrades and state updates
+    await this.aiPaymentService.syncWithStripe(user.id);
 
-        // Handle Parrainage (Referral)
-        if (user.referredBy) {
-          await this.handleReferralReward(user.referredBy);
-        }
-
-        // Send Trial Ended Email
-        try {
-          await this.aiPaymentService.sendTrialEndedEmail(user, 'Atelier');
-        } catch (e) {
-          this.logger.error(
-            `Failed to send trial ended email to ${user.email}`,
-            e.message,
-          );
-        }
-      }
-
-      // Detect plan change (e.g., scheduled downgrade or upgrade)
-      const priceId = subscription.items.data[0]?.price.id;
-      const plans = await this.aiPaymentService.getPlans(
-        user.isAmbassador,
-        user.discountMonthsCount || 0,
-        !!user.referredBy
-      );
-      const newPlan = plans.find((p) => p.stripePriceId === priceId);
-
-      if (newPlan && user.planType?.toLowerCase() !== newPlan.id) {
-        const oldPlan = user.planType;
-        user.planType =
-          PlanType[newPlan.id.toUpperCase() as keyof typeof PlanType];
-        this.logger.log(
-          `Plan changed from ${oldPlan} to ${newPlan.id} for user ${user.id}`,
-        );
-
-        // Apply new limits
-        await this.aiPaymentService.confirmPlan(
-          user.id,
-          newPlan.id,
-          subscription.id,
-        );
-      }
-
-      user.subscriptionStatus = SubscriptionStatus.ACTIVE;
-    } else if (subscription.status === 'trialing') {
-      user.subscriptionStatus = SubscriptionStatus.TRIAL;
-    } else if (
-      subscription.status === 'canceled' ||
-      subscription.status === 'unpaid'
-    ) {
-      user.subscriptionStatus = SubscriptionStatus.CANCELED;
-      // Lose Ambassador status if subscription is canceled
-      if (user.isAmbassador) {
-        user.isAmbassador = false;
-        this.logger.log(`User ${user.id} lost Ambassador status due to cancellation.`);
-      }
+    // Handle referral rewards specifically for webhooks to avoid redundant processing in cron
+    if (subscription.status === 'active' && user.planType === PlanType.CURIEUX && user.referredBy) {
+      await this.handleReferralReward(user.referredBy);
     }
-
-    // Update dates
-    const sub = subscription as any;
-    user.subscriptionStartDate = new Date(sub.current_period_start * 1000);
-    user.subscriptionEndDate = new Date(sub.current_period_end * 1000);
-
-    await this.aiUserRepo.save(user);
   }
 
   private async handleInvoiceSucceeded(invoice: Stripe.Invoice) {

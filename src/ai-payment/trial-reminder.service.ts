@@ -8,6 +8,8 @@ import {
   SubscriptionStatus,
 } from '../ai/entities/ai-user.entity';
 import { MailService } from '../mail/mail.service';
+import { AiPaymentService } from './ai-payment.service';
+import { LessThanOrEqual } from 'typeorm';
 
 @Injectable()
 export class TrialReminderService {
@@ -17,6 +19,7 @@ export class TrialReminderService {
     @InjectRepository(AiUser)
     private readonly aiUserRepo: Repository<AiUser>,
     private readonly mailService: MailService,
+    private readonly aiPaymentService: AiPaymentService,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR)
@@ -65,6 +68,44 @@ export class TrialReminderService {
         this.logger.error(
           `Failed to send trial reminder to ${user.email}`,
           error,
+        );
+      }
+    }
+  }
+
+  @Cron(CronExpression.EVERY_30_MINUTES)
+  async handleTrialExpirations() {
+    this.logger.debug('Checking for expired trials to auto-subscribe...');
+
+    const now = new Date();
+
+    const expiredTrialUsers = await this.aiUserRepo.find({
+      where: {
+        planType: PlanType.CURIEUX,
+        subscriptionStatus: SubscriptionStatus.TRIAL,
+        subscriptionEndDate: LessThanOrEqual(now),
+      },
+    });
+
+    if (expiredTrialUsers.length === 0) return;
+
+    this.logger.log(
+      `Found ${expiredTrialUsers.length} users with expired trial. Attempting auto-subscription/sync...`,
+    );
+
+    for (const user of expiredTrialUsers) {
+      try {
+        const updatedUser = await this.aiPaymentService.syncWithStripe(user.id);
+        
+        if (updatedUser.planType === PlanType.ATELIER) {
+          this.logger.log(`User ${user.email} successfully converted to ATELIER plan.`);
+        } else {
+          this.logger.warn(`User ${user.email} trial expired but no active payment found. Blocking access.`);
+        }
+      } catch (error) {
+        this.logger.error(
+          `Failed to process trial expiration for ${user.email}`,
+          error.stack,
         );
       }
     }

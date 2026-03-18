@@ -760,6 +760,74 @@ export class AiPaymentService {
     this.logger.log(`Trial ended email sent to ${user.email}`);
   }
 
+  async syncWithStripe(userId: number): Promise<AiUser> {
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
+    if (!user) throw new BadRequestException('Utilisateur non trouvé');
+    if (!user.stripeSubscriptionId) return user;
+
+    try {
+      const subscription = await this.stripe.subscriptions.retrieve(
+        user.stripeSubscriptionId,
+      );
+
+      this.logger.log(
+        `[syncWithStripe] User ${userId} subscription ${subscription.id} status: ${subscription.status}`,
+      );
+
+      const priceId = subscription.items.data[0]?.price.id;
+      const plans = await this.getPlans(
+        user.isAmbassador,
+        user.discountMonthsCount || 0,
+        !!user.referredBy,
+      );
+      const currentPlan = plans.find((p) => p.stripePriceId === priceId);
+
+      // Status mapping
+      if (subscription.status === 'active') {
+        // Upgrade/Sync plan if needed
+        if (currentPlan && user.planType?.toLowerCase() !== currentPlan.id) {
+          this.logger.log(
+            `[syncWithStripe] Syncing user ${userId} plan from ${user.planType} to ${currentPlan.id}.`,
+          );
+          user.planType =
+            PlanType[currentPlan.id.toUpperCase() as keyof typeof PlanType];
+          
+          user.promptsLimit = currentPlan.promptsLimit;
+          user.imagesLimit = currentPlan.imagesLimit;
+          user.videosLimit = currentPlan.videosLimit;
+          user.audioLimit = currentPlan.audioLimit;
+          user.threeDLimit = currentPlan.threeDLimit || 0;
+
+          // Send Trial Ended Email if they were on Curieux
+          try {
+            await this.sendTrialEndedEmail(user, currentPlan.name);
+          } catch (e) {
+            this.logger.error(
+              `Failed to send trial ended email to ${user.email} during sync`,
+              e.message,
+            );
+          }
+        }
+        user.subscriptionStatus = SubscriptionStatus.ACTIVE;
+      } else if (subscription.status === 'trialing') {
+        user.subscriptionStatus = SubscriptionStatus.TRIAL;
+      } else if (['canceled', 'unpaid', 'incomplete_expired'].includes(subscription.status)) {
+        user.subscriptionStatus = SubscriptionStatus.CANCELED;
+      } else if (subscription.status === 'past_due') {
+        user.subscriptionStatus = SubscriptionStatus.PAST_DUE;
+      }
+
+      // Update dates
+      user.subscriptionStartDate = new Date(subscription.current_period_start * 1000);
+      user.subscriptionEndDate = new Date(subscription.current_period_end * 1000);
+
+      return await this.aiUserRepo.save(user);
+    } catch (error) {
+      this.logger.error(`[syncWithStripe Error] User ${userId}: ${error.message}`);
+      return user;
+    }
+  }
+
   private getTypeLabel(type: AiGenerationType): string {
     switch (type) {
       case AiGenerationType.TEXT:
