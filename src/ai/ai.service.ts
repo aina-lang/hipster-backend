@@ -4653,8 +4653,19 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     return url;
   }
 
-  async generateDocument(type: string, params: any, userId: number) {
-    return { url: 'doc_url' };
+  async generateDocument(
+    type: 'legal' | 'business',
+    params: any,
+    userId?: number,
+  ) {
+    const baseContext = await this.buildPrompt(params, userId);
+    const prompt = JSON.stringify({ baseContext, type });
+    const { content: resultText, generationId } = await this.generateText(
+      prompt,
+      'business',
+      userId,
+    );
+    return { content: resultText, generationId };
   }
 
   async exportDocument(
