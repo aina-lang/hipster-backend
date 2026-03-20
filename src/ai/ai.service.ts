@@ -4658,14 +4658,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     params: any,
     userId?: number,
   ) {
-    const baseContext = await this.buildPrompt(params, userId);
-    const prompt = JSON.stringify({ baseContext, type });
-    const { content: resultText, generationId } = await this.generateText(
-      prompt,
-      'business',
-      userId,
-    );
-    return { content: resultText, generationId };
+    return this.generateText(params, type, userId);
   }
 
   async exportDocument(
