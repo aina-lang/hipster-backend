@@ -4701,9 +4701,9 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
   async getGroupedConversations(userId: number) {
     try {
-      // Get all chats ordered by creation date desc
+      // Get all items (chats, flyers, social, images, etc.) ordered by creation date desc
       const allItems = await this.aiGenRepo.find({
-        where: { user: { id: userId }, type: AiGenerationType.CHAT },
+        where: { user: { id: userId } },
         order: { createdAt: 'DESC' },
         take: 100,
       });
