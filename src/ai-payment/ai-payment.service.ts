@@ -45,7 +45,7 @@ export class AiPaymentService {
     });
 
     const isEarlyBird = activeSubscribersCount < 30;
-    
+
     // Pricing logic
     const isFilleul = isReferred && discountMonthsCount < 3;
     const hasAmbassadorDiscount = isAmbassador;
@@ -54,22 +54,22 @@ export class AiPaymentService {
     // DEBUG LOG
     this.logger.log(`[getPlans] Params: isAmbassador=${isAmbassador}, discountMonthsCount=${discountMonthsCount}, isReferred=${isReferred}`);
     this.logger.log(`[getPlans] Conditions: isEarlyBird=${isEarlyBird}, isFilleul=${isFilleul}, hasAmbassadorDiscount=${hasAmbassadorDiscount}`);
-    
+
     // ATELIER: TOUJOURS 17,90€ (aucune promo)
     const atelierPrice = 17.9;
-    const atelierPriceId = 'price_1TCAALK5fB5lGbp8rB3IEJnb';
+    const atelierPriceId = 'price_1TE6GaK5fB5lGbp872U9gx1O';
 
     // STUDIO: Réductions Ambassadeur/Filleul + Early Bird
     const studioPrice = hasAmbassadorDiscount ? 21 : (hasFilleulDiscount ? 22 : (isEarlyBird ? 21 : 29.9));
     this.logger.log(`[getPlans] Studio Price Selected: ${studioPrice}€`);
-    
+
     const studioPriceId = hasAmbassadorDiscount
-      ? 'price_1TCA8fK5fB5lGbp8Llm0S0MI' // 21€ (Ambassadeur)
+      ? 'price_1TE6ISK5fB5lGbp8hIaa78Gi' // 21€ (Ambassadeur)
       : (hasFilleulDiscount
-        ? 'price_1TCA97K5fB5lGbp8JE1J8LIM' // 22€ (Filleul 3 mois)
-        : (isEarlyBird 
-          ? 'price_1TCA8yK5fB5lGbp8rYL1wQ1x' // 21€ (Early Bird)
-          : 'price_1TCA9KK5fB5lGbp82YZRJVQ7')); // 29,90€ (Standard)
+        ? 'price_1TE6ILK5fB5lGbp8Rc2G3sNs' // 22€ (Filleul 3 mois)
+        : (isEarlyBird
+          ? 'price_1TE6IaK5fB5lGbp8G5TjnLlA' // 21€ (Early Bird)
+          : 'price_1TE6H2K5fB5lGbp8kXYHMKM4')); // 29,90€ (Standard)
 
     return [
       {
@@ -125,7 +125,7 @@ export class AiPaymentService {
         id: 'agence',
         name: 'Agence',
         price: 69.99,
-        stripePriceId: 'price_1TCA6HK5fB5lGbp8z5RzwxiO',
+        stripePriceId: 'price_1TE6JPK5fB5lGbp84wSiQjW1',
         promptsLimit: 999999,
         imagesLimit: 100,
         videosLimit: 10,
@@ -148,7 +148,7 @@ export class AiPaymentService {
   async getPlansForUser(userId: number) {
     const user = await this.aiUserRepo.findOneBy({ id: userId });
     const plans = await this.getPlans(
-      user?.isAmbassador || false, 
+      user?.isAmbassador || false,
       user?.discountMonthsCount || 0,
       !!user?.referredBy
     );
@@ -179,13 +179,13 @@ export class AiPaymentService {
       this.logger.log(
         `Creating payment sheet for user ${userId}, price ${priceId}, plan ${planId}`,
       );
-      
+
       const user = await this.aiUserRepo.findOneBy({ id: userId });
       if (!user) throw new BadRequestException('AiUser not found');
-      
+
       // DEBUG LOG
       this.logger.log(`[DEBUG] User data: isAmbassador=${user.isAmbassador}, discountMonthsCount=${user.discountMonthsCount}, referredBy=${user.referredBy}`);
-      
+
       const plans = await this.getPlans(
         user?.isAmbassador || false,
         user?.discountMonthsCount || 0,
@@ -270,7 +270,7 @@ export class AiPaymentService {
         // Transitions to ATELIER after trial
         const atelierPriceId =
           plans.find((p) => p.id === 'atelier')?.stripePriceId ||
-          'price_1SzcrqFhrfQ5vRxFsG1jQfGE';
+          'price_1TE6GaK5fB5lGbp872U9gx1O';
 
         subscription = await this.stripe.subscriptions.create({
           customer: customerId,
@@ -359,14 +359,14 @@ export class AiPaymentService {
         this.logger.warn(
           `No payment_intent found in latest_invoice for subscription ${subscription.id}. Creating invoice...`
         );
-        
+
         try {
           const newInvoice = await this.stripe.invoices.create({
             customer: customerId,
             subscription: subscription.id,
             auto_advance: false,
           });
-          
+
           const newPaymentIntent = (newInvoice as any)?.payment_intent as Stripe.PaymentIntent;
           clientSecret = newPaymentIntent?.client_secret;
           this.logger.log(`Created invoice ${newInvoice.id} with payment intent secret`);
@@ -791,7 +791,7 @@ export class AiPaymentService {
           );
           user.planType =
             PlanType[currentPlan.id.toUpperCase() as keyof typeof PlanType];
-          
+
           user.promptsLimit = currentPlan.promptsLimit;
           user.imagesLimit = currentPlan.imagesLimit;
           user.videosLimit = currentPlan.videosLimit;
