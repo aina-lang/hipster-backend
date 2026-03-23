@@ -214,6 +214,7 @@ export class AiPaymentService {
         const customer = await this.stripe.customers.create({
           email: user.email,
           metadata: { userId: user.id.toString() },
+          preferred_locales: ['fr'],
         });
         customerId = customer.id;
         user.stripeCustomerId = customerId;
@@ -239,6 +240,7 @@ export class AiPaymentService {
           const newCustomer = await this.stripe.customers.create({
             email: user.email,
             metadata: { userId: user.id.toString() },
+            preferred_locales: ['fr'],
           });
 
           customerId = newCustomer.id;
