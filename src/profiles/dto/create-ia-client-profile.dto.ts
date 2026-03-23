@@ -141,6 +141,10 @@ export class CreateIaClientProfileDto {
   stripeSubscriptionId?: string;
 
   @IsOptional()
+  @IsBoolean()
+  isStripeVerified?: boolean;
+
+  @IsOptional()
   @IsNumber()
   promptsLimit?: number;
 

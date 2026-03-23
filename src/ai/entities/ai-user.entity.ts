@@ -102,6 +102,9 @@ export class AiUser {
   @Column({ nullable: true })
   stripeSubscriptionId?: string;
 
+  @Column({ default: false })
+  isStripeVerified: boolean;
+
   // Branding & Professional (Merged from AiSubscriptionProfile)
   @Column({ nullable: true })
   isSetupComplete: boolean;
