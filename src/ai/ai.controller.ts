@@ -50,6 +50,21 @@ export class AiController {
     return this.aiService.getFlyerCategories();
   }
 
+  @ApiOperation({ summary: 'Récupérer mes flyers générés' })
+  @Get('flyers')
+  @Roles(Role.AI_USER)
+  async getFlyerHistory(@Req() req) {
+    console.log('[AiController] GET /flyers called by user:', req.user.sub);
+    const flyers = await this.aiService.getFlyerHistory(req.user.sub);
+    console.log(
+      '[AiController] Returning',
+      flyers?.length,
+      'flyers for user',
+      req.user.sub,
+    );
+    return flyers;
+  }
+
   @Public()
   @Get('ping')
   async ping() {

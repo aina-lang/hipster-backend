@@ -44,21 +44,38 @@ export class AiPaymentWebhookController {
     @Headers('stripe-signature') signature: string,
     @Req() req: any,
   ) {
-    if (!this.stripe) return;
+    if (!this.stripe) {
+      this.logger.warn('Stripe client not configured; webhook ignored');
+      return { received: false };
+    }
 
     const webhookSecret = this.configService.get<string>(
       'STRIPE_WEBHOOK_SECRET',
     );
+    if (!webhookSecret) {
+      this.logger.error('STRIPE_WEBHOOK_SECRET is missing');
+      throw new BadRequestException('Webhook not configured');
+    }
+
+    const rawBody = req.rawBody;
+    if (!rawBody || (Buffer.isBuffer(rawBody) && rawBody.length === 0)) {
+      this.logger.error(
+        'Webhook: missing rawBody (check express json verify in main.ts). URL must be POST https://<host>/api/ai/payment/webhook',
+      );
+      throw new BadRequestException('Invalid webhook payload');
+    }
+
     let event: Stripe.Event;
 
     try {
       event = this.stripe.webhooks.constructEvent(
-        req.rawBody,
+        rawBody,
         signature,
         webhookSecret,
       );
+      this.logger.log(`Stripe webhook received: ${event.type} id=${event.id}`);
     } catch (err) {
-      this.logger.error(`Webhook Error: ${err.message}`);
+      this.logger.error(`Webhook signature verification failed: ${err.message}`);
       throw new BadRequestException(`Webhook Error: ${err.message}`);
     }
 

@@ -9,7 +9,16 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.setGlobalPrefix('api');
 
-  app.use(json({ limit: '50mb' }));
+  // Stripe exige le corps brut (octets exacts) pour vérifier stripe-signature.
+  // Sans ce `verify`, express.json() peut empêcher req.rawBody d'être utilisable → échecs silencieux côté Dashboard Stripe.
+  app.use(
+    json({
+      limit: '50mb',
+      verify: (req: { rawBody?: Buffer }, _res, buf: Buffer) => {
+        req.rawBody = buf;
+      },
+    }),
+  );
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 
   app.useGlobalPipes(
