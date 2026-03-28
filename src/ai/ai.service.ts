@@ -4331,7 +4331,6 @@ OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. N
         attributes: {
           style: model,
           async: true,
-          isFlyer: true,
           hasSourceImage: !!imageBuffer,
           architectureUsed: architecture?.name || 'GENERIC',
           layoutType: architecture?.layoutType || 'UNKNOWN',
@@ -4619,7 +4618,6 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
         style: model,
         hasSourceImage: !!file,
         async: true,
-        isFlyer: true,
       },
       undefined,
       existingConversationId,
@@ -4703,31 +4701,27 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
   /**
    * Retrieve all generated flyers for a user
-   * Flyers are stored as type CHAT with imageUrl and isFlyer flag in attributes
+   * Flyers are identified by result='FLYER'
    */
   async getFlyerHistory(userId: number) {
     try {
-      const flyerGenerations = await this.aiGenRepo.find({
+      const flyers = await this.aiGenRepo.find({
         where: {
           user: { id: userId },
-          type: AiGenerationType.CHAT,
+          result: 'FLYER',
         },
         order: { createdAt: 'DESC' },
         take: 100,
       });
 
-      // Filter to ensure we only return flyers (marked with isFlyer flag) with completed images
-      const flyers = flyerGenerations.filter(
-        (gen) =>
-          gen.imageUrl &&
-          gen.attributes?.['isFlyer'] === true,
-      );
+      // Only return flyers with completed images
+      const completedFlyers = flyers.filter((gen) => gen.imageUrl);
 
       this.logger.log(
-        `[getFlyerHistory] Retrieved ${flyers.length} flyers for user ${userId}`,
+        `[getFlyerHistory] Retrieved ${completedFlyers.length} flyers for user ${userId}`,
       );
 
-      return flyers;
+      return completedFlyers;
     } catch (error) {
       this.logger.error(`[getFlyerHistory] Error: ${error.message}`);
       return [];
