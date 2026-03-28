@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { json, urlencoded } from 'express';
+import * as http from 'http';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
@@ -14,8 +15,8 @@ async function bootstrap() {
   app.use(
     json({
       limit: '50mb',
-      verify: (req: { rawBody?: Buffer }, _res, buf: Buffer) => {
-        req.rawBody = buf;
+      verify: (req: http.IncomingMessage & { rawBody?: Buffer }, _res, buf: Buffer) => {
+        (req as any).rawBody = buf;
       },
     }),
   );
