@@ -4331,6 +4331,7 @@ OUTPUT: Publication-ready editorial quality. Perfect photorealistic rendering. N
         attributes: {
           style: model,
           async: true,
+          isFlyer: true,
           hasSourceImage: !!imageBuffer,
           architectureUsed: architecture?.name || 'GENERIC',
           layoutType: architecture?.layoutType || 'UNKNOWN',
@@ -4618,6 +4619,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
         style: model,
         hasSourceImage: !!file,
         async: true,
+        isFlyer: true,
       },
       undefined,
       existingConversationId,
@@ -4701,7 +4703,7 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
 
   /**
    * Retrieve all generated flyers for a user
-   * Flyers are stored as type CHAT with imageUrl and style in attributes
+   * Flyers are stored as type CHAT with imageUrl and isFlyer flag in attributes
    */
   async getFlyerHistory(userId: number) {
     try {
@@ -4714,9 +4716,11 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
         take: 100,
       });
 
-      // Filter to ensure we only return flyers with imageUrl (completed generations)
+      // Filter to ensure we only return flyers (marked with isFlyer flag) with completed images
       const flyers = flyerGenerations.filter(
-        (gen) => gen.imageUrl && gen.attributes?.['style'],
+        (gen) =>
+          gen.imageUrl &&
+          gen.attributes?.['isFlyer'] === true,
       );
 
       this.logger.log(
