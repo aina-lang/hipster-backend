@@ -85,33 +85,65 @@ export class TelegramService implements OnModuleInit {
     // Rendu réel pour les PDF avec Puppeteer (déjà présent dans package.json)
     if (ext === 'pdf') {
       try {
-        this.logger.log(`Génération du thumbnail PDF via Puppeteer pour ${fileName}...`);
+        this.logger.log(`Génération du thumbnail PDF via pdfjs-dist + Puppeteer pour ${fileName}...`);
         const puppeteer = require('puppeteer');
+        const fs = require('fs');
+        const path = require('path');
+        
+        // Localiser pdf.js pour injection
+        const pdfJsPath = path.join(process.cwd(), 'node_modules/pdfjs-dist/build/pdf.js');
+        const pdfJsContent = fs.readFileSync(pdfJsPath, 'utf8');
+
         const browser = await puppeteer.launch({ 
           headless: true, 
           args: ['--no-sandbox', '--disable-setuid-sandbox'] 
         });
         const page = await browser.newPage();
         
-        // Charger le PDF via data URI
+        // HTML minimal pour rendu canvas
+        const html = `
+          <html>
+            <body style="margin:0; padding:0; background:white;">
+              <canvas id="pdf-canvas"></canvas>
+              <script>${pdfJsContent}</script>
+              <script>
+                async function renderPdf(base64) {
+                  const loadingTask = pdfjsLib.getDocument({ data: atob(base64) });
+                  const pdf = await loadingTask.promise;
+                  const page = await pdf.getPage(1);
+                  const viewport = page.getViewport({ scale: 2.0 });
+                  const canvas = document.getElementById('pdf-canvas');
+                  const context = canvas.getContext('2d');
+                  canvas.height = viewport.height;
+                  canvas.width = viewport.width;
+                  await page.render({ canvasContext: context, viewport }).promise;
+                  document.title = "RENDERED";
+                }
+              </script>
+            </body>
+          </html>
+        `;
+
+        await page.setContent(html);
         const base64Pdf = buffer.toString('base64');
-        await page.goto(`data:application/pdf;base64,${base64Pdf}`, { waitUntil: 'load' });
+        await page.evaluate((b64) => (window as any).renderPdf(b64), base64Pdf);
+
+        // Attendre que le titre change (signal de fin de rendu)
+        await page.waitForFunction('document.title === "RENDERED"', { timeout: 10000 });
         
-        // Screenshot de la première page
-        const thumb = await page.screenshot({ 
-          type: 'png',
-          clip: { x: 0, y: 0, width: 800, height: 1100 } // Format portrait standard
-        });
+        const canvasElement = await page.$('#pdf-canvas');
+        if (!canvasElement) throw new Error('Canvas non trouvé');
         
+        const thumb = await canvasElement.screenshot({ type: 'png' });
         await browser.close();
         
-        // Redimensionner avec Sharp
+        // Redimensionner avec Sharp pour uniformisation
         return sharp(thumb)
-          .resize(300, 450, { fit: 'cover' })
+          .resize(300, 450, { fit: 'cover', position: 'top' })
           .png()
           .toBuffer();
       } catch (e) {
-        this.logger.warn(`Échec rendu Puppeteer pour ${fileName}: ${e.message}. Fallback au placeholder.`);
+        this.logger.warn(`Échec rendu pdfjs-dist pour ${fileName}: ${e.message}. Fallback au placeholder.`);
       }
     }
 
