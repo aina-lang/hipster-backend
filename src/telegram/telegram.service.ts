@@ -37,7 +37,7 @@ export class TelegramService implements OnModuleInit {
     }
   }
 
-  async uploadFile(buffer: Buffer, fileName: string): Promise<{ messageId: number; thumbnailMessageId?: number }> {
+  async uploadFile(buffer: Buffer, fileName: string, category?: string): Promise<{ messageId: number; thumbnailMessageId?: number }> {
     if (!this.client || !this.client.connected) {
       throw new Error('Client Telegram non connecté');
     }
@@ -70,7 +70,11 @@ export class TelegramService implements OnModuleInit {
     try {
       const thumbBuffer = await this.generateThumbnail(buffer, fileName);
       if (thumbBuffer) {
-        thumbnailMessageId = await this.sendThumbnail(msgId, thumbBuffer);
+        thumbnailMessageId = await this.sendThumbnail(msgId, thumbBuffer, {
+          category: category || 'Autre',
+          fileName: fileName,
+          size: buffer.length
+        });
       }
     } catch (e) {
       this.logger.warn(`Erreur lors de la génération/envoi du thumbnail pour ${fileName}: ${e.message}`);
@@ -82,40 +86,96 @@ export class TelegramService implements OnModuleInit {
   private async generateThumbnail(buffer: Buffer, fileName: string): Promise<Buffer | null> {
     const ext = fileName.split('.').pop()?.toLowerCase();
     
-    // Rendu réel pour les PDF avec Puppeteer (déjà présent dans package.json)
+    // Images natives (PNG, JPG, JPEG, WEBP) — on génère une vraie miniature
+    if (ext && ['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext)) {
+      try {
+        return sharp(buffer)
+          .resize(300, 450, { fit: 'cover', position: 'top' })
+          .png()
+          .toBuffer();
+      } catch (e) {
+        this.logger.warn(`Échec redimensionnement image ${fileName}: ${e.message}`);
+      }
+    }
+
+    // Rendu réel pour les PDF avec pdfjs-dist + Puppeteer
     if (ext === 'pdf') {
       try {
-        this.logger.log(`Génération du thumbnail PDF via Puppeteer pour ${fileName}...`);
+        this.logger.log(`Génération du thumbnail PDF via pdfjs-dist + Puppeteer pour ${fileName}...`);
         const puppeteer = require('puppeteer');
+        const fs = require('fs');
+        const path = require('path');
+        
         const browser = await puppeteer.launch({ 
           headless: true, 
           args: ['--no-sandbox', '--disable-setuid-sandbox'] 
         });
         const page = await browser.newPage();
         
-        // Charger le PDF via data URI
+        // HTML minimal pour rendu canvas via CDN (plus robuste que les chemins locaux)
+        const html = `
+          <html>
+            <body style="margin:0; padding:0; background:white;">
+              <canvas id="pdf-canvas"></canvas>
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+              <script>
+                // IMPORTANT: Configurer le worker CDN
+                const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+                async function renderPdf(base64) {
+                  try {
+                    const binary = atob(base64);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                    
+                    const loadingTask = pdfjsLib.getDocument({ data: bytes });
+                    const pdf = await loadingTask.promise;
+                    const page = await pdf.getPage(1);
+                    const viewport = page.getViewport({ scale: 2.0 });
+                    const canvas = document.getElementById('pdf-canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    await page.render({ canvasContext: context, viewport }).promise;
+                    document.title = "RENDERED";
+                  } catch (e) {
+                    console.error(e);
+                    document.title = "ERROR: " + e.message;
+                  }
+                }
+              </script>
+            </body>
+          </html>
+        `;
+
+        await page.setContent(html);
         const base64Pdf = buffer.toString('base64');
-        await page.goto(`data:application/pdf;base64,${base64Pdf}`, { waitUntil: 'load' });
+        await page.evaluate((b64) => (window as any).renderPdf(b64), base64Pdf);
+
+        // Attendre que le titre change (signal de fin de rendu)
+        await page.waitForFunction('document.title === "RENDERED" || document.title.startsWith("ERROR")', { timeout: 15000 });
         
-        // Screenshot de la première page
-        const thumb = await page.screenshot({ 
-          type: 'png',
-          clip: { x: 0, y: 0, width: 800, height: 1100 } // Format portrait standard
-        });
+        const title = await page.title();
+        if (title.startsWith("ERROR")) throw new Error(title);
+
+        const canvasElement = await page.$('#pdf-canvas');
+        if (!canvasElement) throw new Error('Canvas non trouvé');
         
+        const thumb = await canvasElement.screenshot({ type: 'png' });
         await browser.close();
         
         // Redimensionner avec Sharp
         return sharp(thumb)
-          .resize(300, 450, { fit: 'cover' })
+          .resize(300, 450, { fit: 'cover', position: 'top' })
           .png()
           .toBuffer();
       } catch (e) {
-        this.logger.warn(`Échec rendu Puppeteer pour ${fileName}: ${e.message}. Fallback au placeholder.`);
+        this.logger.warn(`Échec rendu pdfjs-dist pour ${fileName}: ${e.message}. Fallback au placeholder.`);
       }
     }
 
-    // Placeholder élégant pour les autres formats (Office, EPUB) ou en cas d'échec PDF
+    // Placeholder élégant pour les autres formats (Office, EPUB) ou en cas d'échec PDF/Image
     const width = 300;
     const height = 450;
     
@@ -139,12 +199,18 @@ export class TelegramService implements OnModuleInit {
       .toBuffer();
   }
 
-  private async sendThumbnail(fileMessageId: number, thumbBuffer: Buffer): Promise<number> {
+  private async sendThumbnail(fileMessageId: number, thumbBuffer: Buffer, metadata: any = {}): Promise<number> {
     const customFile = new CustomFile(`thumb_${fileMessageId}.png`, thumbBuffer.length, '', thumbBuffer);
     
+    const payload = {
+      thumb_for: fileMessageId,
+      ...metadata,
+      date_thumb: Math.floor(Date.now() / 1000)
+    };
+
     const result: any = await this.client.sendFile(this.CHAT_ID, {
       file: customFile,
-      caption: `thumb_for:${fileMessageId}`,
+      caption: JSON.stringify(payload),
       forceDocument: false, // Envoyer comme photo
     });
 
@@ -179,8 +245,17 @@ export class TelegramService implements OnModuleInit {
           const fileNameAttr = doc.attributes?.find((attr: any) => attr.fileName);
           const fileName = fileNameAttr ? fileNameAttr.fileName : (msg.message || 'document.pdf');
           
-          // Recherche du thumbnail associé dans les messages récupérés
-          const thumbnailMsg = messages.find(m => m.message === `thumb_for:${msg.id}`);
+          // Recherche du thumbnail associé dans les messages récupérés (support JSON et legacy)
+          const thumbnailMsg = messages.find(m => {
+            if (!m.message) return false;
+            if (m.message === `thumb_for:${msg.id}`) return true;
+            try {
+              const data = JSON.parse(m.message);
+              return data.thumb_for === msg.id;
+            } catch {
+              return false;
+            }
+          });
 
           return {
             id: msg.id,
