@@ -31,6 +31,16 @@ export class TelegramController {
   }
 
   @Public()
+  @Get('list')
+  async getCatalog() {
+    const files = await this.telegramService.getCatalog();
+    return {
+      success: true,
+      files: files
+    };
+  }
+
+  @Public()
   @Get('download/:id')
   async downloadFile(@Param('id') id: string, @Res() res: Response) {
     const messageId = parseInt(id, 10);

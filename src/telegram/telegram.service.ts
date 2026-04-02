@@ -69,6 +69,33 @@ export class TelegramService implements OnModuleInit {
     return msgId;
   }
 
+  async getCatalog(): Promise<any[]> {
+    if (!this.client || !this.client.connected) {
+      throw new Error('Client Telegram non connecté');
+    }
+
+    this.logger.log(`Fetching catalog from Telegram channel: ${this.CHAT_ID}...`);
+    // On récupère les 100 derniers messages
+    const messages = await this.client.getMessages(this.CHAT_ID, { limit: 100 });
+    
+    return messages
+      .filter(msg => msg.media && (msg.media as any).document)
+      .map(msg => {
+        const doc = (msg.media as any).document;
+        // Extraction du nom de fichier depuis les attributs du document
+        const fileNameAttr = doc.attributes?.find((attr: any) => attr.fileName);
+        const fileName = fileNameAttr ? fileNameAttr.fileName : (msg.message || 'document.pdf');
+        
+        return {
+          id: msg.id,
+          fileName: fileName,
+          fileSize: typeof doc.size === 'object' && doc.size.toNumber ? doc.size.toNumber() : Number(doc.size),
+          date: msg.date,
+          caption: msg.message
+        };
+      });
+  }
+
   async downloadFile(messageId: number): Promise<Buffer> {
     if (!this.client || !this.client.connected) {
       throw new Error('Client Telegram non connecté');
