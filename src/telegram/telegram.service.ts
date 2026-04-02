@@ -37,7 +37,13 @@ export class TelegramService implements OnModuleInit {
     }
   }
 
-  async uploadFile(buffer: Buffer, fileName: string, category?: string): Promise<{ messageId: number; thumbnailMessageId?: number }> {
+  async uploadFile(
+    buffer: Buffer, 
+    fileName: string, 
+    category?: string,
+    author?: string,
+    description?: string
+  ): Promise<{ messageId: number; thumbnailMessageId?: number }> {
     if (!this.client || !this.client.connected) {
       throw new Error('Client Telegram non connecté');
     }
@@ -72,6 +78,8 @@ export class TelegramService implements OnModuleInit {
       if (thumbBuffer) {
         thumbnailMessageId = await this.sendThumbnail(msgId, thumbBuffer, {
           category: category || 'Autre',
+          author: author || 'Auteur Inconnu',
+          description: description || '',
           fileName: fileName,
           size: buffer.length
         });
@@ -247,6 +255,8 @@ export class TelegramService implements OnModuleInit {
           
           // Recherche du thumbnail associé dans les messages récupérés (support JSON et legacy)
           let category = 'Autre';
+          let author = 'Auteur Inconnu';
+          let description = '';
           const thumbnailMsg = messages.find(m => {
             if (!m.message) return false;
             if (m.message === `thumb_for:${msg.id}`) return true;
@@ -254,6 +264,8 @@ export class TelegramService implements OnModuleInit {
               const data = JSON.parse(m.message);
               if (data.thumb_for === msg.id) {
                 if (data.category) category = data.category;
+                if (data.author) author = data.author;
+                if (data.description) description = data.description;
                 return true;
               }
             } catch { /* ignoré */ }
@@ -267,6 +279,8 @@ export class TelegramService implements OnModuleInit {
             date: msg.date,
             caption: msg.message,
             category: category,
+            author: author,
+            description: description,
             thumbnailMessageId: thumbnailMsg ? thumbnailMsg.id : undefined,
           };
         });
