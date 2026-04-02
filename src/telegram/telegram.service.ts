@@ -46,14 +46,27 @@ export class TelegramService implements OnModuleInit {
     this.logger.log(`Uploading file ${fileName} (${buffer.length} octets) to Telegram...`);
     const customFile = new CustomFile(fileName, buffer.length, '', buffer);
     
-    // Les bots doivent envoyer dans un Chat ID existant
-    const result = await this.client.sendFile(this.CHAT_ID, {
+    const result: any = await this.client.sendFile(this.CHAT_ID, {
       file: customFile,
       caption: `BookMesh Document: ${fileName}`,
       forceDocument: true,
     });
 
-    return result.id;
+    // Envoi vers un channel peut renvoyer Api.Updates au lieu de Api.Message
+    let msgId = result.id;
+    if (!msgId && result.updates) {
+      const update = result.updates.find((u: any) => u.message && u.message.id);
+      if (update) {
+        msgId = update.message.id;
+      }
+    }
+
+    if (!msgId) {
+      this.logger.error(`Impossible de récupérer l'ID du message. Resultat: ${Object.keys(result)}`);
+      throw new Error("Erreur de récupération de l'ID Telegram");
+    }
+
+    return msgId;
   }
 
   async downloadFile(messageId: number): Promise<Buffer> {
