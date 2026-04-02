@@ -193,6 +193,7 @@ export interface Variant {
 
 export interface FlyerModel {
   label: string;
+  displayName?: string; // Alias for label (backward compatibility)
   image?: string; // URL string for backend
   structure?: VariantStructure; // direct structure without variants
   variants?: Variant[]; // optional sub-variants
