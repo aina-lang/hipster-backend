@@ -25,7 +25,7 @@ import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 
-import { ServeStaticModule } from '@nestjs/serve-static';
+
 import { join } from 'path';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { ReferralModule } from './referral/referral.module';
@@ -37,10 +37,6 @@ import { TelegramModule } from './telegram/telegram.module';
 
 @Module({
   imports: [
-    ServeStaticModule.forRoot({
-      rootPath: '/home/ubuntu/uploads',
-      serveRoot: '/uploads',
-    }),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,

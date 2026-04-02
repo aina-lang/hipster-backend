@@ -3,12 +3,16 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import * as express from 'express';
 import { json, urlencoded } from 'express';
 import * as http from 'http';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.setGlobalPrefix('api');
+
+  // Remplacement de ServeStaticModule (évite le crash avec path-to-regexp de Express v5)
+  app.use('/uploads', express.static('/home/ubuntu/uploads'));
 
   // Stripe exige le corps brut (octets exacts) pour vérifier stripe-signature.
   // Sans ce `verify`, express.json() peut empêcher req.rawBody d'être utilisable → échecs silencieux côté Dashboard Stripe.
