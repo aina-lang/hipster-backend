@@ -72,26 +72,39 @@ export class TelegramService implements OnModuleInit {
       throw new Error('Client Telegram non connecté');
     }
 
-    this.logger.log(`Fetching catalog from Telegram channel: ${this.CHAT_ID}...`);
-    // On récupère les 100 derniers messages
-    const messages = await this.client.getMessages(this.CHAT_ID, { limit: 100 });
-    
-    return messages
-      .filter(msg => msg.media && (msg.media as any).document)
-      .map(msg => {
-        const doc = (msg.media as any).document;
-        // Extraction du nom de fichier depuis les attributs du document
-        const fileNameAttr = doc.attributes?.find((attr: any) => attr.fileName);
-        const fileName = fileNameAttr ? fileNameAttr.fileName : (msg.message || 'document.pdf');
-        
-        return {
-          id: msg.id,
-          fileName: fileName,
-          fileSize: typeof doc.size === 'object' && doc.size.toNumber ? doc.size.toNumber() : Number(doc.size),
-          date: msg.date,
-          caption: msg.message
-        };
-      });
+    try {
+      this.logger.log(`[getCatalog] Début du listing pour CHAT_ID: ${this.CHAT_ID}`);
+      
+      // On résout l'entité explicitement pour éviter les ambiguïtés
+      const entity = await this.client.getEntity(this.CHAT_ID);
+      this.logger.log(`[getCatalog] Entité résolue: ${entity.className} (ID: ${entity.id})`);
+
+      this.logger.log('[getCatalog] Appel à getMessages(limit: 100)...');
+      const messages = await this.client.getMessages(entity, { limit: 100 });
+      this.logger.log(`[getCatalog] Récupéré ${messages.length} messages.`);
+      
+      const files = messages
+        .filter(msg => msg.media && (msg.media as any).document)
+        .map(msg => {
+          const doc = (msg.media as any).document;
+          const fileNameAttr = doc.attributes?.find((attr: any) => attr.fileName);
+          const fileName = fileNameAttr ? fileNameAttr.fileName : (msg.message || 'document.pdf');
+          
+          return {
+            id: msg.id,
+            fileName: fileName,
+            fileSize: typeof doc.size === 'object' && doc.size.toNumber ? doc.size.toNumber() : Number(doc.size),
+            date: msg.date,
+            caption: msg.message
+          };
+        });
+
+      this.logger.log(`[getCatalog] Terminé. ${files.length} fichiers trouvés.`);
+      return files;
+    } catch (error) {
+      this.logger.error(`[getCatalog] Erreur fatale: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   async downloadFile(messageId: number): Promise<Buffer> {
