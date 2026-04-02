@@ -4079,9 +4079,10 @@ RULES: ${noTextRule} NO OpenAI branding.`;
           : false;
 
         // Standard magazine-style prompt for other architectures
+        // NOTE: Pass null instead of undefined for architecture to prevent errors
         magazineStyleDirective = this.buildMagazineStylePrompt(
           model,
-          architecture,
+          null, // Don't pass undefined architecture
           params.job,
           params.userQuery || '',
           brandingColor,
@@ -5297,9 +5298,9 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     // Map displayName to label for backward compatibility
     return FLYER_CATEGORIES.map(cat => ({
       ...cat,
-      models: cat.models.map(model => ({
+      models: (cat.models || []).map(model => ({
         ...model,
-        displayName: model.displayName || model.label,
+        displayName: model?.displayName || model?.label || 'Unnamed',
       })),
     }));
   }
