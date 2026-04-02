@@ -102,41 +102,23 @@ export class TelegramService implements OnModuleInit {
         const fs = require('fs');
         const path = require('path');
         
-        // Localiser pdf.js pour injection — require.resolve est plus robuste
-        let pdfJsPath: string;
-        try {
-          // On cherche d'abord via le package lui-même
-          const pkgPath = require.resolve('pdfjs-dist/package.json');
-          pdfJsPath = path.join(path.dirname(pkgPath), 'build/pdf.js');
-          if (!fs.existsSync(pdfJsPath)) {
-            pdfJsPath = path.join(path.dirname(pkgPath), 'legacy/build/pdf.js');
-          }
-        } catch (e) {
-          // Fallback ultime si resolve échoue
-          const possiblePaths = [
-            path.join(process.cwd(), 'node_modules/pdfjs-dist/build/pdf.js'),
-            path.join(process.cwd(), '../node_modules/pdfjs-dist/build/pdf.js'),
-            '/home/ubuntu/hipster-backend/node_modules/pdfjs-dist/build/pdf.js'
-          ];
-          pdfJsPath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
-        }
-        
-        this.logger.log(`Using pdf.js from: ${pdfJsPath}`);
-        const pdfJsContent = fs.readFileSync(pdfJsPath, 'utf8');
-
         const browser = await puppeteer.launch({ 
           headless: true, 
           args: ['--no-sandbox', '--disable-setuid-sandbox'] 
         });
         const page = await browser.newPage();
         
-        // HTML minimal pour rendu canvas
+        // HTML minimal pour rendu canvas via CDN (plus robuste que les chemins locaux)
         const html = `
           <html>
             <body style="margin:0; padding:0; background:white;">
               <canvas id="pdf-canvas"></canvas>
-              <script>${pdfJsContent}</script>
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
               <script>
+                // IMPORTANT: Configurer le worker CDN
+                const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
                 async function renderPdf(base64) {
                   try {
                     const binary = atob(base64);
