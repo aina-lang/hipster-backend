@@ -105,15 +105,23 @@ export class TelegramService implements OnModuleInit {
         // Localiser pdf.js pour injection — require.resolve est plus robuste
         let pdfJsPath: string;
         try {
-          pdfJsPath = require.resolve('pdfjs-dist/build/pdf.js');
-        } catch (e) {
-          // Fallback manuel si resolve échoue
-          pdfJsPath = path.join(process.cwd(), '../node_modules/pdfjs-dist/build/pdf.js');
+          // On cherche d'abord via le package lui-même
+          const pkgPath = require.resolve('pdfjs-dist/package.json');
+          pdfJsPath = path.join(path.dirname(pkgPath), 'build/pdf.js');
           if (!fs.existsSync(pdfJsPath)) {
-            pdfJsPath = path.join(process.cwd(), 'node_modules/pdfjs-dist/build/pdf.js');
+            pdfJsPath = path.join(path.dirname(pkgPath), 'legacy/build/pdf.js');
           }
+        } catch (e) {
+          // Fallback ultime si resolve échoue
+          const possiblePaths = [
+            path.join(process.cwd(), 'node_modules/pdfjs-dist/build/pdf.js'),
+            path.join(process.cwd(), '../node_modules/pdfjs-dist/build/pdf.js'),
+            '/home/ubuntu/hipster-backend/node_modules/pdfjs-dist/build/pdf.js'
+          ];
+          pdfJsPath = possiblePaths.find(p => fs.existsSync(p)) || possiblePaths[0];
         }
         
+        this.logger.log(`Using pdf.js from: ${pdfJsPath}`);
         const pdfJsContent = fs.readFileSync(pdfJsPath, 'utf8');
 
         const browser = await puppeteer.launch({ 
