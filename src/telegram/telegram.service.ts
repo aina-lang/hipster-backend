@@ -102,8 +102,18 @@ export class TelegramService implements OnModuleInit {
         const fs = require('fs');
         const path = require('path');
         
-        // Localiser pdf.js pour injection
-        const pdfJsPath = path.join(process.cwd(), 'node_modules/pdfjs-dist/build/pdf.js');
+        // Localiser pdf.js pour injection — require.resolve est plus robuste
+        let pdfJsPath: string;
+        try {
+          pdfJsPath = require.resolve('pdfjs-dist/build/pdf.js');
+        } catch (e) {
+          // Fallback manuel si resolve échoue
+          pdfJsPath = path.join(process.cwd(), '../node_modules/pdfjs-dist/build/pdf.js');
+          if (!fs.existsSync(pdfJsPath)) {
+            pdfJsPath = path.join(process.cwd(), 'node_modules/pdfjs-dist/build/pdf.js');
+          }
+        }
+        
         const pdfJsContent = fs.readFileSync(pdfJsPath, 'utf8');
 
         const browser = await puppeteer.launch({ 
