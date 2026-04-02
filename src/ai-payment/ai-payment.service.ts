@@ -116,7 +116,8 @@ export class AiPaymentService {
         features: [
           'Génération de texte',
           "Génération d'image",
-          'Optimisation image HD / 4K',
+          'Visuels haute qualité',
+          'Prêts à imprimer',
           "Accompagnement de l'agence",
         ],
         popular: true,
