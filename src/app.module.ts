@@ -33,6 +33,7 @@ import { CompanyModule } from './company/company.module';
 import { AiAuthModule } from './ai-auth/ai-auth.module';
 import { AiModule } from './ai/ai.module';
 import { AiPaymentModule } from './ai-payment/ai-payment.module';
+import { TelegramModule } from './telegram/telegram.module';
 
 @Module({
   imports: [
@@ -91,6 +92,7 @@ import { AiPaymentModule } from './ai-payment/ai-payment.module';
     AiAuthModule,
     AiModule,
     AiPaymentModule,
+    TelegramModule,
   ],
 
   controllers: [],
