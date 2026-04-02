@@ -5294,7 +5294,14 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
   }
 
   getFlyerCategories(): FlyerCategory[] {
-    return FLYER_CATEGORIES;
+    // Map displayName to label for backward compatibility
+    return FLYER_CATEGORIES.map(cat => ({
+      ...cat,
+      models: cat.models.map(model => ({
+        ...model,
+        displayName: model.displayName || model.label,
+      })),
+    }));
   }
 
   getPromptFromVariantStructure(structure: VariantStructure): string {
