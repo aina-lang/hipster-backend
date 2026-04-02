@@ -1,7 +1,8 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
-import { TelegramClient } from 'telegram';
+import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions';
 import { CustomFile } from 'telegram/client/uploads';
+import * as sharp from 'sharp';
 
 @Injectable()
 export class TelegramService implements OnModuleInit {
@@ -36,7 +37,7 @@ export class TelegramService implements OnModuleInit {
     }
   }
 
-  async uploadFile(buffer: Buffer, fileName: string): Promise<number> {
+  async uploadFile(buffer: Buffer, fileName: string): Promise<{ messageId: number; thumbnailMessageId?: number }> {
     if (!this.client || !this.client.connected) {
       throw new Error('Client Telegram non connecté');
     }
@@ -64,6 +65,94 @@ export class TelegramService implements OnModuleInit {
       throw new Error("Erreur de récupération de l'ID Telegram");
     }
 
+    // Génération et envoi du thumbnail
+    let thumbnailMessageId: number | undefined;
+    try {
+      const thumbBuffer = await this.generateThumbnail(buffer, fileName);
+      if (thumbBuffer) {
+        thumbnailMessageId = await this.sendThumbnail(msgId, thumbBuffer);
+      }
+    } catch (e) {
+      this.logger.warn(`Erreur lors de la génération/envoi du thumbnail pour ${fileName}: ${e.message}`);
+    }
+
+    return { messageId: msgId, thumbnailMessageId };
+  }
+
+  private async generateThumbnail(buffer: Buffer, fileName: string): Promise<Buffer | null> {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    
+    // Rendu réel pour les PDF avec Puppeteer (déjà présent dans package.json)
+    if (ext === 'pdf') {
+      try {
+        this.logger.log(`Génération du thumbnail PDF via Puppeteer pour ${fileName}...`);
+        const puppeteer = require('puppeteer');
+        const browser = await puppeteer.launch({ 
+          headless: true, 
+          args: ['--no-sandbox', '--disable-setuid-sandbox'] 
+        });
+        const page = await browser.newPage();
+        
+        // Charger le PDF via data URI
+        const base64Pdf = buffer.toString('base64');
+        await page.goto(`data:application/pdf;base64,${base64Pdf}`, { waitUntil: 'load' });
+        
+        // Screenshot de la première page
+        const thumb = await page.screenshot({ 
+          type: 'png',
+          clip: { x: 0, y: 0, width: 800, height: 1100 } // Format portrait standard
+        });
+        
+        await browser.close();
+        
+        // Redimensionner avec Sharp
+        return sharp(thumb)
+          .resize(300, 450, { fit: 'cover' })
+          .png()
+          .toBuffer();
+      } catch (e) {
+        this.logger.warn(`Échec rendu Puppeteer pour ${fileName}: ${e.message}. Fallback au placeholder.`);
+      }
+    }
+
+    // Placeholder élégant pour les autres formats (Office, EPUB) ou en cas d'échec PDF
+    const width = 300;
+    const height = 450;
+    
+    let bgColor = '#8E8E93'; // Gris par défaut
+    if (ext === 'pdf') bgColor = '#FF453A';
+    else if (ext === 'epub') bgColor = '#BF5AF2';
+    else if (ext?.includes('doc')) bgColor = '#2b579a';
+    else if (ext?.includes('ppt')) bgColor = '#d24726';
+    else if (ext?.includes('xls')) bgColor = '#217346';
+
+    const svg = `
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <rect width="100%" height="100%" fill="${bgColor}" />
+        <text x="50%" y="45%" text-anchor="middle" fill="white" font-family="Arial" font-size="80" font-weight="bold">${ext?.toUpperCase() || '?'}</text>
+        <text x="50%" y="65%" text-anchor="middle" fill="white" font-family="Arial" font-size="20" opacity="0.8">BookMesh</text>
+      </svg>
+    `;
+
+    return sharp(Buffer.from(svg))
+      .png()
+      .toBuffer();
+  }
+
+  private async sendThumbnail(fileMessageId: number, thumbBuffer: Buffer): Promise<number> {
+    const customFile = new CustomFile(`thumb_${fileMessageId}.png`, thumbBuffer.length, '', thumbBuffer);
+    
+    const result: any = await this.client.sendFile(this.CHAT_ID, {
+      file: customFile,
+      caption: `thumb_for:${fileMessageId}`,
+      forceDocument: false, // Envoyer comme photo
+    });
+
+    let msgId = result.id;
+    if (!msgId && result.updates) {
+      const update = result.updates.find((u: any) => u.message && (u.message.id || u.id));
+      msgId = update?.message?.id || update?.id;
+    }
     return msgId;
   }
 
@@ -90,12 +179,16 @@ export class TelegramService implements OnModuleInit {
           const fileNameAttr = doc.attributes?.find((attr: any) => attr.fileName);
           const fileName = fileNameAttr ? fileNameAttr.fileName : (msg.message || 'document.pdf');
           
+          // Recherche du thumbnail associé dans les messages récupérés
+          const thumbnailMsg = messages.find(m => m.message === `thumb_for:${msg.id}`);
+
           return {
             id: msg.id,
             fileName: fileName,
             fileSize: typeof doc.size === 'object' && doc.size.toNumber ? doc.size.toNumber() : Number(doc.size),
             date: msg.date,
-            caption: msg.message
+            caption: msg.message,
+            thumbnailMessageId: thumbnailMsg ? thumbnailMsg.id : undefined,
           };
         });
 

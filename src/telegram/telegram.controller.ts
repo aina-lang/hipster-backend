@@ -20,11 +20,12 @@ export class TelegramController {
     const finalName = customName || file.originalname;
 
     console.log(`Requête d'upload pour le fichier : ${finalName}`);
-    const messageId = await this.telegramService.uploadFile(file.buffer, finalName);
+    const { messageId, thumbnailMessageId } = await this.telegramService.uploadFile(file.buffer, finalName);
     
     return { 
       success: true, 
       messageId: messageId,
+      thumbnailMessageId: thumbnailMessageId,
       fileName: finalName,
       size: file.size
     };
@@ -58,6 +59,23 @@ export class TelegramController {
       res.send(buffer);
     } catch (e) {
       console.error('Erreur au payload download:', e);
+      throw new BadRequestException(e.message);
+    }
+  }
+
+  @Public()
+  @Get('thumbnail/:id')
+  async getThumbnail(@Param('id') id: string, @Res() res: Response) {
+    const messageId = parseInt(id, 10);
+    if (isNaN(messageId)) {
+      throw new BadRequestException('ID invalide');
+    }
+
+    try {
+      const { buffer } = await this.telegramService.downloadFile(messageId);
+      res.setHeader('Content-Type', 'image/png');
+      res.send(buffer);
+    } catch (e) {
       throw new BadRequestException(e.message);
     }
   }
