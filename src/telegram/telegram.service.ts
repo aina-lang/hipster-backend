@@ -11,28 +11,26 @@ export class TelegramService implements OnModuleInit {
   // Constantes API Telegram
   private readonly API_ID = 32864624;
   private readonly API_HASH = "7d8c05d23b32de6deee14ae008ed3b25";
-  private readonly BOT_TOKEN = "8672989345:AAFVOgPq6zrlmyflb_M5sWjVYurVaxPRlUw";
+  private readonly STRING_SESSION = "1BAAOMTQ5LjE1NC4xNjcuOTEAUEci0fjVAGxcyB0ir4/YGED5I4/suKbY1a4J2JZuA1FCf1hEOiozMeuQ66qaw5+/g8OI3oMYa8kOO2XiYdMCoc9kDlQlGqUIgWjPuV8Ul94Ji5WAFlPvd4V28QPMXx0DHV74oJsWS+UVxVKjMPnaHU+uASgTnfB26B3CUm9sIF1LJYcDbX8f/PElEXDEVfxTZyteby/KKTaWmz6Ce/ydsY1Cznvh0Ta8EH/k+h0k4kXuvLIWUifr/ttBuPzVlB6HSf2snAwvplvCTyd9DjjjdcX73zuLjr8hrB6K1KHP92y5WL8nK9SuQeGUNXXCL4YdAxXIHg0E7vkcVIoJE87Gtf0=";
 
-  // L'ID du chat où les fichiers seront stockés. Les Bots ne peuvent pas s'envoyer des messages à eux-mêmes ("me").
+  // L'ID du chat où les fichiers seront stockés.
   // Crée un canal privé sur Telegram, ajoute le bot en tant qu'admin, puis met l'ID du canal ici (ex: -100123456789)
   // Ou utilise ton propre Chat ID utilisateur (ex: 123456789) si tu as déjà démarré une conversation avec le bot.
   private readonly CHAT_ID = "-1003883098558";
 
   async onModuleInit() {
-    this.logger.log('Initialisation du client Telegram (Bot)...');
+    this.logger.log('Initialisation du client Telegram (User Session)...');
     
-    // StringSession vide par défaut car Bot Token Auth n'as pas de session String pérenne native
-    const stringSession = new StringSession("");
+    // Utilisation de la StringSession générée pour agir en tant qu'utilisateur (permet le listage)
+    const stringSession = new StringSession(this.STRING_SESSION);
     
     this.client = new TelegramClient(stringSession, this.API_ID, this.API_HASH, {
       connectionRetries: 5,
     });
 
     try {
-      await this.client.start({
-        botAuthToken: this.BOT_TOKEN,
-      });
-      this.logger.log('Telegram connecté avec succès en tant que Bot !');
+      await this.client.start({} as any);
+      this.logger.log('Telegram connecté avec succès via StringSession !');
     } catch (error) {
       this.logger.error('Erreur lors de la connexion à Telegram', error);
     }
