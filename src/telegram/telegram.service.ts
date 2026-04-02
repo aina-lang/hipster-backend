@@ -246,15 +246,18 @@ export class TelegramService implements OnModuleInit {
           const fileName = fileNameAttr ? fileNameAttr.fileName : (msg.message || 'document.pdf');
           
           // Recherche du thumbnail associé dans les messages récupérés (support JSON et legacy)
+          let category = 'Autre';
           const thumbnailMsg = messages.find(m => {
             if (!m.message) return false;
             if (m.message === `thumb_for:${msg.id}`) return true;
             try {
               const data = JSON.parse(m.message);
-              return data.thumb_for === msg.id;
-            } catch {
-              return false;
-            }
+              if (data.thumb_for === msg.id) {
+                if (data.category) category = data.category;
+                return true;
+              }
+            } catch { /* ignoré */ }
+            return false;
           });
 
           return {
@@ -263,6 +266,7 @@ export class TelegramService implements OnModuleInit {
             fileSize: typeof doc.size === 'object' && doc.size.toNumber ? doc.size.toNumber() : Number(doc.size),
             date: msg.date,
             caption: msg.message,
+            category: category,
             thumbnailMessageId: thumbnailMsg ? thumbnailMsg.id : undefined,
           };
         });
