@@ -37,7 +37,7 @@ export class TelegramService implements OnModuleInit {
     }
   }
 
-  async uploadFile(buffer: Buffer, fileName: string): Promise<{ messageId: number; thumbnailMessageId?: number }> {
+  async uploadFile(buffer: Buffer, fileName: string, category?: string): Promise<{ messageId: number; thumbnailMessageId?: number }> {
     if (!this.client || !this.client.connected) {
       throw new Error('Client Telegram non connecté');
     }
@@ -70,7 +70,11 @@ export class TelegramService implements OnModuleInit {
     try {
       const thumbBuffer = await this.generateThumbnail(buffer, fileName);
       if (thumbBuffer) {
-        thumbnailMessageId = await this.sendThumbnail(msgId, thumbBuffer);
+        thumbnailMessageId = await this.sendThumbnail(msgId, thumbBuffer, {
+          category: category || 'Autre',
+          fileName: fileName,
+          size: buffer.length
+        });
       }
     } catch (e) {
       this.logger.warn(`Erreur lors de la génération/envoi du thumbnail pour ${fileName}: ${e.message}`);
@@ -195,12 +199,18 @@ export class TelegramService implements OnModuleInit {
       .toBuffer();
   }
 
-  private async sendThumbnail(fileMessageId: number, thumbBuffer: Buffer): Promise<number> {
+  private async sendThumbnail(fileMessageId: number, thumbBuffer: Buffer, metadata: any = {}): Promise<number> {
     const customFile = new CustomFile(`thumb_${fileMessageId}.png`, thumbBuffer.length, '', thumbBuffer);
     
+    const payload = {
+      thumb_for: fileMessageId,
+      ...metadata,
+      date_thumb: Math.floor(Date.now() / 1000)
+    };
+
     const result: any = await this.client.sendFile(this.CHAT_ID, {
       file: customFile,
-      caption: `thumb_for:${fileMessageId}`,
+      caption: JSON.stringify(payload),
       forceDocument: false, // Envoyer comme photo
     });
 
@@ -235,8 +245,17 @@ export class TelegramService implements OnModuleInit {
           const fileNameAttr = doc.attributes?.find((attr: any) => attr.fileName);
           const fileName = fileNameAttr ? fileNameAttr.fileName : (msg.message || 'document.pdf');
           
-          // Recherche du thumbnail associé dans les messages récupérés
-          const thumbnailMsg = messages.find(m => m.message === `thumb_for:${msg.id}`);
+          // Recherche du thumbnail associé dans les messages récupérés (support JSON et legacy)
+          const thumbnailMsg = messages.find(m => {
+            if (!m.message) return false;
+            if (m.message === `thumb_for:${msg.id}`) return true;
+            try {
+              const data = JSON.parse(m.message);
+              return data.thumb_for === msg.id;
+            } catch {
+              return false;
+            }
+          });
 
           return {
             id: msg.id,
