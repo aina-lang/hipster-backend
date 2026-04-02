@@ -13,6 +13,11 @@ export class TelegramService implements OnModuleInit {
   private readonly API_HASH = "7d8c05d23b32de6deee14ae008ed3b25";
   private readonly BOT_TOKEN = "8672989345:AAFVOgPq6zrlmyflb_M5sWjVYurVaxPRlUw";
 
+  // L'ID du chat où les fichiers seront stockés. Les Bots ne peuvent pas s'envoyer des messages à eux-mêmes ("me").
+  // Crée un canal privé sur Telegram, ajoute le bot en tant qu'admin, puis met l'ID du canal ici (ex: -100123456789)
+  // Ou utilise ton propre Chat ID utilisateur (ex: 123456789) si tu as déjà démarré une conversation avec le bot.
+  private readonly CHAT_ID = "-1003883098558";
+
   async onModuleInit() {
     this.logger.log('Initialisation du client Telegram (Bot)...');
     
@@ -41,8 +46,8 @@ export class TelegramService implements OnModuleInit {
     this.logger.log(`Uploading file ${fileName} (${buffer.length} octets) to Telegram...`);
     const customFile = new CustomFile(fileName, buffer.length, '', buffer);
     
-    // Upload dans "Saved Messages" du bot
-    const result = await this.client.sendFile("me", {
+    // Les bots doivent envoyer dans un Chat ID existant
+    const result = await this.client.sendFile(this.CHAT_ID, {
       file: customFile,
       caption: `BookMesh Document: ${fileName}`,
       forceDocument: true,
@@ -57,7 +62,7 @@ export class TelegramService implements OnModuleInit {
     }
 
     this.logger.log(`Downloading Telegram document with message ID: ${messageId}...`);
-    const messages = await this.client.getMessages("me", { ids: [messageId] });
+    const messages = await this.client.getMessages(this.CHAT_ID, { ids: [messageId] });
     const message = messages[0];
 
     if (!message || !message.media) {
