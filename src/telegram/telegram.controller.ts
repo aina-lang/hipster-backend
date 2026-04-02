@@ -50,10 +50,10 @@ export class TelegramController {
 
     console.log(`Requête de download pour le message ID : ${messageId}`);
     try {
-      const buffer = await this.telegramService.downloadFile(messageId);
+      const { buffer, fileName } = await this.telegramService.downloadFile(messageId);
       
       res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="bookmesh_doc_${id}.pdf"`); // Par défaut pdf mais l'app mobile gère
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
       res.setHeader('Content-Length', buffer.length.toString());
       res.send(buffer);
     } catch (e) {

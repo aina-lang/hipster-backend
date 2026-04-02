@@ -107,7 +107,7 @@ export class TelegramService implements OnModuleInit {
     }
   }
 
-  async downloadFile(messageId: number): Promise<Buffer> {
+  async downloadFile(messageId: number): Promise<{ buffer: Buffer, fileName: string }> {
     if (!this.client || !this.client.connected) {
       throw new Error('Client Telegram non connecté');
     }
@@ -126,6 +126,10 @@ export class TelegramService implements OnModuleInit {
       throw new Error('Le buffer téléchargé est vide.');
     }
 
-    return buffer as Buffer;
+    const doc = (message.media as any).document;
+    const fileNameAttr = doc?.attributes?.find((attr: any) => 'fileName' in attr);
+    const fileName = fileNameAttr ? (fileNameAttr as any).fileName : (message.message || `document_${messageId}.bin`);
+ 
+    return { buffer: buffer as Buffer, fileName };
   }
 }
