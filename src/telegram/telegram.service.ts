@@ -82,7 +82,19 @@ export class TelegramService implements OnModuleInit {
   private async generateThumbnail(buffer: Buffer, fileName: string): Promise<Buffer | null> {
     const ext = fileName.split('.').pop()?.toLowerCase();
     
-    // Rendu réel pour les PDF avec Puppeteer (déjà présent dans package.json)
+    // Images natives (PNG, JPG, JPEG, WEBP) — on génère une vraie miniature
+    if (ext && ['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext)) {
+      try {
+        return sharp(buffer)
+          .resize(300, 450, { fit: 'cover', position: 'top' })
+          .png()
+          .toBuffer();
+      } catch (e) {
+        this.logger.warn(`Échec redimensionnement image ${fileName}: ${e.message}`);
+      }
+    }
+
+    // Rendu réel pour les PDF avec pdfjs-dist + Puppeteer
     if (ext === 'pdf') {
       try {
         this.logger.log(`Génération du thumbnail PDF via pdfjs-dist + Puppeteer pour ${fileName}...`);
@@ -108,16 +120,25 @@ export class TelegramService implements OnModuleInit {
               <script>${pdfJsContent}</script>
               <script>
                 async function renderPdf(base64) {
-                  const loadingTask = pdfjsLib.getDocument({ data: atob(base64) });
-                  const pdf = await loadingTask.promise;
-                  const page = await pdf.getPage(1);
-                  const viewport = page.getViewport({ scale: 2.0 });
-                  const canvas = document.getElementById('pdf-canvas');
-                  const context = canvas.getContext('2d');
-                  canvas.height = viewport.height;
-                  canvas.width = viewport.width;
-                  await page.render({ canvasContext: context, viewport }).promise;
-                  document.title = "RENDERED";
+                  try {
+                    const binary = atob(base64);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                    
+                    const loadingTask = pdfjsLib.getDocument({ data: bytes });
+                    const pdf = await loadingTask.promise;
+                    const page = await pdf.getPage(1);
+                    const viewport = page.getViewport({ scale: 2.0 });
+                    const canvas = document.getElementById('pdf-canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    await page.render({ canvasContext: context, viewport }).promise;
+                    document.title = "RENDERED";
+                  } catch (e) {
+                    console.error(e);
+                    document.title = "ERROR: " + e.message;
+                  }
                 }
               </script>
             </body>
@@ -129,15 +150,18 @@ export class TelegramService implements OnModuleInit {
         await page.evaluate((b64) => (window as any).renderPdf(b64), base64Pdf);
 
         // Attendre que le titre change (signal de fin de rendu)
-        await page.waitForFunction('document.title === "RENDERED"', { timeout: 10000 });
+        await page.waitForFunction('document.title === "RENDERED" || document.title.startsWith("ERROR")', { timeout: 15000 });
         
+        const title = await page.title();
+        if (title.startsWith("ERROR")) throw new Error(title);
+
         const canvasElement = await page.$('#pdf-canvas');
         if (!canvasElement) throw new Error('Canvas non trouvé');
         
         const thumb = await canvasElement.screenshot({ type: 'png' });
         await browser.close();
         
-        // Redimensionner avec Sharp pour uniformisation
+        // Redimensionner avec Sharp
         return sharp(thumb)
           .resize(300, 450, { fit: 'cover', position: 'top' })
           .png()
@@ -147,7 +171,7 @@ export class TelegramService implements OnModuleInit {
       }
     }
 
-    // Placeholder élégant pour les autres formats (Office, EPUB) ou en cas d'échec PDF
+    // Placeholder élégant pour les autres formats (Office, EPUB) ou en cas d'échec PDF/Image
     const width = 300;
     const height = 450;
     
