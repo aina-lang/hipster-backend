@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, UseInterceptors, UploadedFile, Res, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Param, UseInterceptors, UploadedFile, Res, BadRequestException, Body } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { TelegramService } from './telegram.service';
 import { Response } from 'express';
@@ -11,18 +11,21 @@ export class TelegramController {
   @Public()
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Body('name') customName?: string) {
     if (!file) {
       throw new BadRequestException('Aucun fichier reçu (clé fom-data: "file")');
     }
     
-    console.log(`Requête d'upload pour le fichier : ${file.originalname}`);
-    const messageId = await this.telegramService.uploadFile(file.buffer, file.originalname);
+    // Expo FileSystem assigne souvent un UUID à originalname. On privilégie le champ 'name' fourni par le client.
+    const finalName = customName || file.originalname;
+
+    console.log(`Requête d'upload pour le fichier : ${finalName}`);
+    const messageId = await this.telegramService.uploadFile(file.buffer, finalName);
     
     return { 
       success: true, 
       messageId: messageId,
-      fileName: file.originalname,
+      fileName: finalName,
       size: file.size
     };
   }
