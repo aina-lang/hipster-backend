@@ -4699,6 +4699,35 @@ STYLE: Professional, impactful, punchy. Output ONLY the final text.`,
     }
   }
 
+  /**
+   * Retrieve all generated flyers for a user
+   * Flyers are identified by result='FLYER'
+   */
+  async getFlyerHistory(userId: number) {
+    try {
+      const flyers = await this.aiGenRepo.find({
+        where: {
+          user: { id: userId },
+          result: 'FLYER',
+        },
+        order: { createdAt: 'DESC' },
+        take: 100,
+      });
+
+      // Only return flyers with completed images
+      const completedFlyers = flyers.filter((gen) => gen.imageUrl);
+
+      this.logger.log(
+        `[getFlyerHistory] Retrieved ${completedFlyers.length} flyers for user ${userId}`,
+      );
+
+      return completedFlyers;
+    } catch (error) {
+      this.logger.error(`[getFlyerHistory] Error: ${error.message}`);
+      return [];
+    }
+  }
+
   async getGroupedConversations(userId: number) {
     try {
       // Get all items (chats, flyers, social, images, etc.) ordered by creation date desc

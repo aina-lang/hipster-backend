@@ -688,6 +688,9 @@ export class AiPaymentService {
       // Appliquer les nouvelles limites (force le reset car billing_cycle_anchor est 'now')
       await this.confirmPlan(userId, newPlanId, user.stripeSubscriptionId);
 
+      // Relecture Stripe pour aligner avec facture / webhook (paiement prorata, etc.)
+      await this.syncWithStripe(userId);
+
       this.logger.log(
         `User ${userId} ${isSamePlan ? 'refilled' : 'upgraded to'} ${newPlanId}`,
       );

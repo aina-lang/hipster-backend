@@ -4,12 +4,22 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { json, urlencoded } from 'express';
+import * as http from 'http';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.setGlobalPrefix('api');
 
-  app.use(json({ limit: '50mb' }));
+  // Stripe exige le corps brut (octets exacts) pour vérifier stripe-signature.
+  // Sans ce `verify`, express.json() peut empêcher req.rawBody d'être utilisable → échecs silencieux côté Dashboard Stripe.
+  app.use(
+    json({
+      limit: '50mb',
+      verify: (req: http.IncomingMessage & { rawBody?: Buffer }, _res, buf: Buffer) => {
+        (req as any).rawBody = buf;
+      },
+    }),
+  );
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 
   app.useGlobalPipes(

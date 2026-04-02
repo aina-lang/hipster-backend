@@ -98,6 +98,16 @@ export class AiPaymentController {
   }
 
   @ApiOperation({
+    summary:
+      'Synchroniser abonnement depuis Stripe (après paiement / webhook — à appeler avant redirection client)',
+  })
+  @Post('sync-from-stripe')
+  async syncFromStripe(@Req() req) {
+    await this.aiPaymentService.syncWithStripe(req.user.sub);
+    return { ok: true };
+  }
+
+  @ApiOperation({
     summary: "Confirmer un plan et appliquer les limites d'utilisation",
   })
   @Post('confirm-plan')
