@@ -25,7 +25,7 @@ import { PermissionsModule } from './permissions/permissions.module';
 import { RolesModule } from './roles/roles.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 
-import { ServeStaticModule } from '@nestjs/serve-static';
+
 import { join } from 'path';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { ReferralModule } from './referral/referral.module';
@@ -33,13 +33,10 @@ import { CompanyModule } from './company/company.module';
 import { AiAuthModule } from './ai-auth/ai-auth.module';
 import { AiModule } from './ai/ai.module';
 import { AiPaymentModule } from './ai-payment/ai-payment.module';
+import { TelegramModule } from './telegram/telegram.module';
 
 @Module({
   imports: [
-    ServeStaticModule.forRoot({
-      rootPath: '/home/ubuntu/uploads',
-      serveRoot: '/uploads',
-    }),
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
@@ -91,6 +88,7 @@ import { AiPaymentModule } from './ai-payment/ai-payment.module';
     AiAuthModule,
     AiModule,
     AiPaymentModule,
+    TelegramModule,
   ],
 
   controllers: [],
