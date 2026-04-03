@@ -34,6 +34,7 @@ import { AiAuthModule } from './ai-auth/ai-auth.module';
 import { AiModule } from './ai/ai.module';
 import { AiPaymentModule } from './ai-payment/ai-payment.module';
 import { TelegramModule } from './telegram/telegram.module';
+import { AppUpdateModule } from './app-update/app-update.module';
 
 @Module({
   imports: [
@@ -89,6 +90,7 @@ import { TelegramModule } from './telegram/telegram.module';
     AiModule,
     AiPaymentModule,
     TelegramModule,
+    AppUpdateModule,
   ],
 
   controllers: [],

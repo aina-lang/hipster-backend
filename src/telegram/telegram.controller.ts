@@ -14,7 +14,9 @@ export class TelegramController {
   async uploadFile(
     @UploadedFile() file: Express.Multer.File, 
     @Body('name') customName?: string,
-    @Body('category') category?: string
+    @Body('author') author?: string,
+    @Body('category') category?: string,
+    @Body('description') description?: string
   ) {
     if (!file) {
       throw new BadRequestException('Aucun fichier reçu (clé fom-data: "file")');
@@ -23,8 +25,14 @@ export class TelegramController {
     // Expo FileSystem assigne souvent un UUID à originalname. On privilégie le champ 'name' fourni par le client.
     const finalName = customName || file.originalname;
 
-    console.log(`Requête d'upload pour le fichier : ${finalName} (Category: ${category})`);
-    const { messageId, thumbnailMessageId } = await this.telegramService.uploadFile(file.buffer, finalName, category);
+    console.log(`Requête d'upload pour le fichier : ${finalName} (Category: ${category}, Author: ${author})`);
+    const { messageId, thumbnailMessageId } = await this.telegramService.uploadFile(
+      file.buffer, 
+      finalName, 
+      category,
+      author,
+      description
+    );
     
     return { 
       success: true, 
