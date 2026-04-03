@@ -42,7 +42,8 @@ export class TelegramService implements OnModuleInit {
     fileName: string, 
     category?: string,
     author?: string,
-    description?: string
+    description?: string,
+    explicitCaption?: string
   ): Promise<{ messageId: number; thumbnailMessageId?: number }> {
     if (!this.client || !this.client.connected) {
       throw new Error('Client Telegram non connecté');
@@ -53,7 +54,7 @@ export class TelegramService implements OnModuleInit {
     
     const result: any = await this.client.sendFile(this.CHAT_ID, {
       file: customFile,
-      caption: `BookMesh Document: ${fileName}`,
+      caption: explicitCaption ?? `BookMesh Document: ${fileName}`,
       forceDocument: true,
     });
 
@@ -73,19 +74,21 @@ export class TelegramService implements OnModuleInit {
 
     // Génération et envoi du thumbnail
     let thumbnailMessageId: number | undefined;
-    try {
-      const thumbBuffer = await this.generateThumbnail(buffer, fileName);
-      if (thumbBuffer) {
-        thumbnailMessageId = await this.sendThumbnail(msgId, thumbBuffer, {
-          category: category || 'Autre',
-          author: author || 'Auteur Inconnu',
-          description: description || '',
-          fileName: fileName,
-          size: buffer.length
-        });
+    if (!explicitCaption) {
+      try {
+        const thumbBuffer = await this.generateThumbnail(buffer, fileName);
+        if (thumbBuffer) {
+          thumbnailMessageId = await this.sendThumbnail(msgId, thumbBuffer, {
+            category: category || 'Autre',
+            author: author || 'Auteur Inconnu',
+            description: description || '',
+            fileName: fileName,
+            size: buffer.length
+          });
+        }
+      } catch (e) {
+        this.logger.warn(`Erreur lors de la génération/envoi du thumbnail pour ${fileName}: ${e.message}`);
       }
-    } catch (e) {
-      this.logger.warn(`Erreur lors de la génération/envoi du thumbnail pour ${fileName}: ${e.message}`);
     }
 
     return { messageId: msgId, thumbnailMessageId };
@@ -317,5 +320,38 @@ export class TelegramService implements OnModuleInit {
     const fileName = fileNameAttr ? (fileNameAttr as any).fileName : (message.message || `document_${messageId}.bin`);
  
     return { buffer: buffer as Buffer, fileName };
+  }
+
+  async getLatestAppUpdate(): Promise<any> {
+    if (!this.client || !this.client.connected) {
+      throw new Error('Client Telegram non connecté');
+    }
+
+    try {
+      const entity = await this.client.getEntity(this.CHAT_ID);
+      const messages = await this.client.getMessages(entity, { limit: 50 });
+
+      for (const msg of messages) {
+        if (msg.media && (msg.media as any).document && msg.message) {
+          try {
+            const data = JSON.parse(msg.message);
+            if (data.type === 'app_update' && data.version) {
+              return {
+                version: data.version,
+                description: data.description,
+                telegramMessageId: msg.id,
+                downloadUrl: `https://hipster-api.fr/api/telegram/download/${msg.id}`
+              };
+            }
+          } catch (e) {
+            // Pas un JSON valide ou pas notre type
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      this.logger.error(`Erreur getLatestAppUpdate: ${e.message}`);
+      return null;
+    }
   }
 }
