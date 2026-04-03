@@ -33,7 +33,6 @@ import { CompanyModule } from './company/company.module';
 import { AiAuthModule } from './ai-auth/ai-auth.module';
 import { AiModule } from './ai/ai.module';
 import { AiPaymentModule } from './ai-payment/ai-payment.module';
-import { AppUpdateModule } from './app-update/app-update.module';
 
 @Module({
   imports: [
@@ -88,7 +87,7 @@ import { AppUpdateModule } from './app-update/app-update.module';
     AiAuthModule,
     AiModule,
     AiPaymentModule,
-    AppUpdateModule,
+   
   ],
 
   controllers: [],
