@@ -62,9 +62,11 @@ export class AiPaymentController {
 
       const userId = body.userId || req.user?.sub;
 
-      if (!userId) {
-        console.error('[AiPaymentController] No userId found - body.userId:', body.userId, 'req.user.sub:', req.user?.sub);
-        throw new BadRequestException('userId is required in body or as authenticated user');
+      try {
+        await this.aiPaymentService.validateUserForPayment(userId);
+      } catch (validationError: any) {
+        console.error('[AiPaymentController] User validation failed:', validationError.message);
+        throw validationError;
       }
 
       console.log('[AiPaymentController] Using userId:', userId, ', priceId:', body.priceId, ', planId:', body.planId);

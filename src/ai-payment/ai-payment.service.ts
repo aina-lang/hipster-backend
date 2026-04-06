@@ -175,14 +175,46 @@ export class AiPaymentService {
     return Math.round(priceNum * 100);
   }
 
+  async validateUserForPayment(userId: number): Promise<AiUser> {
+    this.logger.log(`[validateUserForPayment] Checking userId: ${userId}`);
+    
+    if (!userId || typeof userId !== 'number') {
+      this.logger.error(
+        `[validateUserForPayment] Invalid userId: ${userId} (type: ${typeof userId})`
+      );
+      throw new BadRequestException(
+        'userId is required and must be a valid number'
+      );
+    }
+
+    const user = await this.aiUserRepo.findOneBy({ id: userId });
+    if (!user) {
+      this.logger.error(`[validateUserForPayment] AiUser ${userId} not found in database`);
+      throw new BadRequestException(
+        'User not found. Please complete registration and verify your email.'
+      );
+    }
+
+    if (!user.isEmailVerified) {
+      this.logger.warn(
+        `[validateUserForPayment] User ${userId} email not verified, email: ${user.email}`
+      );
+      throw new BadRequestException(
+        'Email not verified. Please confirm your email address before making a payment.'
+      );
+    }
+
+    this.logger.log(`[validateUserForPayment] User ${userId} validated successfully`);
+    return user;
+  }
+
   async createPaymentSheet(userId: number, priceId?: string, planId?: string) {
     try {
       this.logger.log(
         `Creating payment sheet for user ${userId}, price ${priceId}, plan ${planId}`,
       );
 
-      const user = await this.aiUserRepo.findOneBy({ id: userId });
-      if (!user) throw new BadRequestException('AiUser not found');
+      const user = await this.validateUserForPayment(userId);
 
       // DEBUG LOG
       this.logger.log(`[DEBUG] User data: isAmbassador=${user.isAmbassador}, discountMonthsCount=${user.discountMonthsCount}, referredBy=${user.referredBy}`);
