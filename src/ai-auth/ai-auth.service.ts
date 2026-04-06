@@ -122,22 +122,13 @@ export class AiAuthService {
       },
     });
 
-    let stripeData = null;
-    if (dto.planId && dto.planId !== 'curieux') {
-      const plan = plans.find((p) => p.id === dto.planId);
-      if (plan && plan.stripePriceId) {
-        stripeData = await this.aiPaymentService.createPaymentSheet(
-          user.id,
-          plan.stripePriceId,
-        );
-      }
-    }
+    // ✅ Ne pas gérer le paiement ici - l'utilisateur doit d'abord vérifier son email
+    // Le paiement est géré dans packs.tsx après la vérification d'email
 
     return {
       message: 'Inscription AI réussie. Un code OTP a été envoyé.',
       email: user.email,
       userId: user.id,
-      stripe: stripeData,
     };
   }
 
