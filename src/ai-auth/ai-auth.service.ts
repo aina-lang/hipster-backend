@@ -277,6 +277,12 @@ export class AiAuthService {
         brandingColor: user.brandingColor,
         logoUrl: user.logoUrl,
         job: user.job,
+        promptsLimit: user.promptsLimit,
+        imagesLimit: user.imagesLimit,
+        videosLimit: user.videosLimit,
+        audioLimit: user.audioLimit,
+        threeDLimit: user.threeDLimit,
+        subscriptionEndDate: user.subscriptionEndDate,
         type: 'ai',
       },
     };
