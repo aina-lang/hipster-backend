@@ -2698,7 +2698,6 @@ MANDATE: Create a VOGUE/NUMÉRO magazine editorial-quality flyer that would ACTU
     if (styleName === 'Smoke') {
       return `portrait of ${options?.primaryObject || jobStr}, clean white background, soft studio lighting, minimalistic composition, subject sharp and highly detailed, black ink dispersion effect, smoke-like particles dissolving from the subject, organic fluid motion, double exposure effect, subject partially fading into ink and smoke, monochrome black and white, artistic and ethereal style, ultra realistic, high detail, fine art photography, 8k`;
     }
-    const jobStr = job || 'professional';
 
     // Premium Style: Realistic Photography with Sharp Backgrounds
     if (styleName === 'Premium') {
