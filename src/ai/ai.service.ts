@@ -2688,6 +2688,18 @@ MANDATE: Create a VOGUE/NUMÉRO magazine editorial-quality flyer that would ACTU
   ): string {
     const jobStr = job || 'professional';
 
+    if (styleName === 'Noir Dominance') {
+      return `close-up shot of ${options?.primaryObject || jobStr}, low angle perspective, subject slightly turned to the side, chin up, confident and dominant attitude, high fashion editorial style, black background, dramatic hard lighting, strong shadows, ultra high contrast, black and white, glossy highlights, hyper-detailed textures, sharp focus, cinematic lighting, premium luxury aesthetic, studio photography, ultra realistic, 8k, high definition, professional fashion photography, editorial magazine cover quality, award-winning photography, perfect exposure, depth and contrast balance`;
+    }
+    if (styleName === 'Digital Drift') {
+      const color = options?.accentColor || 'vibrant modern colors';
+      return `portrait of ${options?.primaryObject || jobStr}, clean studio lighting, soft shadows, subject sharp and detailed, horizontal motion blur stretching from the subject, speed trail effect, digital distortion, pixel smear effect, subject partially dissolving into horizontal lines, minimalistic composition, smooth gradient background in ${color}, modern aesthetic, cinematic composition, ultra realistic, high detail, 8k, professional photography`;
+    }
+    if (styleName === 'Smoke') {
+      return `portrait of ${options?.primaryObject || jobStr}, clean white background, soft studio lighting, minimalistic composition, subject sharp and highly detailed, black ink dispersion effect, smoke-like particles dissolving from the subject, organic fluid motion, double exposure effect, subject partially fading into ink and smoke, monochrome black and white, artistic and ethereal style, ultra realistic, high detail, fine art photography, 8k`;
+    }
+    const jobStr = job || 'professional';
+
     // Premium Style: Realistic Photography with Sharp Backgrounds
     if (styleName === 'Premium') {
       const accent =
