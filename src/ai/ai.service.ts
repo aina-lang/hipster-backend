@@ -320,6 +320,9 @@ export class AiService implements OnModuleInit {
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
     const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
     // 🔒 ABSOLUTE LOCKED POSE OR CUSTOM SUBJECT
@@ -401,7 +404,8 @@ export class AiService implements OnModuleInit {
 - NO stock-photo style. UNIQUE editorial aesthetic only.`;
 
     // FINAL PROMPT
-    const finalPrompt = `${magazineReference}
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
+${magazineReference}
 
 ${subjectCinematography}
 
@@ -411,6 +415,10 @@ ${textContextGuide}
 
 ${technicalQuality}
 
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR & EXECUTION:
 ${prohibitions}
 
 EXECUTION MANDATE:
@@ -421,7 +429,7 @@ ${
 }`;
 
     this.logger.log(
-      '[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E with ABSOLUTE pose lock',
+      '[buildFashionVerticalPrompt] Generated fashion vertical prompt for DALL-E with 3-layer structure (DA + Profession + User) - professionContext FULLY INTEGRATED',
     );
 
     return finalPrompt;
@@ -960,7 +968,11 @@ Appetizing
     subtitleText: string = '',
     colorPrincipale: string = '#1a3a52',
     colorSecondaire: string = '#ffffff',
+    job: string = '',
   ): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
     const finalPrompt = `Create a high-end luxury promotional poster with a bold asymmetrical editorial layout featuring a realistic ${subject} at sunset with elegant reflection.
 
 IMPORTANT STRUCTURE:
@@ -1017,6 +1029,12 @@ STYLE:
 – Bold.
 – Ultra sharp.
 – High resolution.
+
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+Professional execution of editorial grid layout for the selected profession.
 `;
     return finalPrompt;
   }
@@ -1033,8 +1051,12 @@ STYLE:
     colorPrincipale: string = '#FF9800',
     colorSecondaire: string = '#FFFFFF',
     brandingName: string = '',
+    job: string = '',
   ): string {
-    const finalPrompt = `
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 CREATE A HIGH-END MODERN MONOCHROMATIC EDITORIAL POSTER.
 LUXURY PODCAST / MAGAZINE ADVERTISING STYLE.
 SWISS DESIGN INFLUENCE. CLEAN. POWERFUL. PRECISE.
@@ -1156,6 +1178,12 @@ IMPORTANT:
 The subject must stay on the RIGHT side.
 The text must stay fully readable.
 The vertical line must NEVER cut through typography.
+
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+Professional execution of focus circle layout for the selected profession.
 `;
 
     return finalPrompt;
@@ -1175,8 +1203,12 @@ The vertical line must NEVER cut through typography.
     colorPrincipale: string = '#FF9800',
     colorSecondaire: string = '#FFFFFF',
     brandingName: string = '',
+    job: string = '',
   ): string {
-    const finalPrompt = `
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 CREATE A HIGH-END MODERN DIAGONAL SPLIT DESIGN POSTER.
 DYNAMIC SPORTS / ACTION ADVERTISING STYLE.
 CLEAN. POWERFUL. PRECISE. MODERN.
@@ -1382,6 +1414,12 @@ CRITICAL EXECUTION RULES:
 - Band color MUST be ${colorPrincipale} (user-selected primary color).
 - All text 100% opaque and fully readable.
 - Create distinct visual balance: subject upward (top-right), text downward (bottom-left).
+
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+Professional execution of diagonal split design for the selected profession.
 `;
 
     return finalPrompt;
@@ -1398,8 +1436,12 @@ CRITICAL EXECUTION RULES:
     subtitleText: string = '',
     colorPrincipale: string = '#FF9800',
     colorSecondaire: string = '#FFFFFF',
+    job: string = '',
   ): string {
-    const finalPrompt = `
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 CREATE A MODERN EDITORIAL PROMOTIONAL POSTER.
 MINIMAL GRAPHIC DESIGN STYLE.
 CLEAN. PROFESSIONAL. MINIMALIST.
@@ -1532,6 +1574,12 @@ EXECUTION RULES:
 - Background MUST remain clean white/light grey.
 - NO clutter, NO extra elements, NO unnecessary details.
 - Professional minimal poster design quality.
+
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+Professional execution of studio poster layout for the selected profession.
 `;
 
     return finalPrompt;
@@ -1547,8 +1595,11 @@ EXECUTION RULES:
    * Minimalist editorial poster style for profession icons
    * Black and white aesthetics with high contrast
    */
-  private buildProfessionIconPrompt(subject: string = 'professional'): string {
-    const finalPrompt = `Create an ultra-stylized Swiss modernist editorial poster. VISUAL STYLE Strict black and white photography. Ultra high contrast monochrome image. Swiss International Typographic Style. Avant-garde editorial design aesthetic. Premium European graphic design magazine cover. The image should feel like a poster from a high-end design exhibition or a Swiss graphic design book. Extremely clean layout. Minimal but visually striking. COLOR Pure black and white only. No grey tones except natural photographic shadows. Deep blacks and bright whites. Strong dramatic contrast. SUBJECT If an image is uploaded: Use the uploaded image as the subject. If no image is uploaded: Generate a realistic artisan baker kneading bread dough on a flour-covered wooden table. The baker must be actively working. Clothing must feel authentic: artisan apron rolled sleeves work clothes Hands covered with flour. Flour dust visible in the air. SUBJECT SCALE The subject must appear small compared to the environment. The baker should occupy only about 20% to 25% of the collage height. The bakery environment must dominate visually. The subject must feel embedded inside the environment, not the main focus. SCENE DESIGN Behind the subject build a dense vertical bakery environment. Elements may include: bread loaves baguettes wooden bakery racks flour sacks baking trays bread baskets wooden tables The environment should feel like a sculptural stack of bakery elements. COLLAGE STRUCTURE The collage must be: tall narrow vertical Objects must stack upward like an architectural tower. The bakery elements should feel monumental and graphic. Avoid wide scenes. Avoid horizontal layouts. The collage should resemble a cut-out editorial collage from a design magazine. Edges slightly soft. The bottom of the collage must fade organically into the white background. SCALE RELATIONSHIP The environment must be significantly larger than the baker. Bread racks and bakery shelves should extend far above the subject. The environment should feel towering and sculptural. POSTER COMPOSITION Vertical poster orientation. Divide the poster into three visual zones. BOTTOM AREA (35%) The collage begins exactly at the bottom edge. Bread, flour, and bakery tools may spread slightly outward. CENTER AREA (40%) The baker appears inside the environment working on dough. The bakery environment continues far above the subject. The environment visually dominates the composition. TOP AREA (25%) Large empty white space. Very strong Swiss poster negative space. BACKGROUND Pure white poster background. Subtle paper grain texture. The collage must softly dissolve into the white background. No visible background edges. CRITICAL LAYOUT RULE The collage must occupy ONLY the left third of the poster. The subject must NOT be centered. Composition must feel asymmetrical and modernist. Layered layout: LEFT → bakery environment CENTER LEFT → baker working RIGHT → typography TYPOGRAPHY (VERY IMPORTANT) Add ONLY two text elements. TYPOGRAPHY CASE RULE All typography must be written in FULL UPPERCASE. Never use lowercase letters. Both titles must appear in uppercase only. The typography must feel bold, graphic and typical of Swiss modernist posters. VERTICAL TITLE ARTISAN Large ultra bold condensed sans-serif typography. Swiss grotesk style. Black text. The title must be vertical. The title must sit very close to the collage column. Typography height must match the collage height. Do NOT place it near the poster edge. LAYERING RULE The vertical typography must appear behind the baker. Parts of the letters must be hidden by the subject. The baker slightly overlaps the typography. Typography must feel physically integrated into the scene. HORIZONTAL TITLE BOULANGER Small horizontal text above the subject. Very minimal spacing. Clean Swiss grid alignment. TYPOGRAPHY STYLE Bold condensed grotesk typography. Extremely clean kerning. Graphic designer style typography. Black only. LIGHTING Studio photography lighting. Soft top lighting. Strong shadows. Flour particles visible in the air. High texture on bread and wood surfaces. DESIGN PRINCIPLES Swiss grid system radical asymmetry strong negative space architectural collage composition editorial cut-out photography modernist poster design minimal graphic layout MOOD Elegant Modernist Editorial Craftsmanship Design exhibition poster KEYWORDS Swiss graphic design poster modernist editorial collage architectural vertical composition asymmetrical layout avant-garde typography design magazine cover Swiss modernist poster high-end editorial design minimalist graphic poster subject off-center typography behind subject sculptural collage composition environment dominant small subject scale uppercase typography all caps typography swiss poster uppercase type bold uppercase grotesk typography`;
+  private buildProfessionIconPrompt(subject: string = 'professional', job: string = ''): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE: VISUAL STYLE Strict black and white photography. Ultra high contrast monochrome image. Swiss International Typographic Style. Avant-garde editorial design aesthetic. Premium European graphic design magazine cover. The image should feel like a poster from a high-end design exhibition or a Swiss graphic design book. Extremely clean layout. Minimal but visually striking. COLOR Pure black and white only. No grey tones except natural photographic shadows. Deep blacks and bright whites. Strong dramatic contrast. SUBJECT If an image is uploaded: Use the uploaded image as the subject. If no image is uploaded: Generate a realistic artisan baker kneading bread dough on a flour-covered wooden table. The baker must be actively working. Clothing must feel authentic: artisan apron rolled sleeves work clothes Hands covered with flour. Flour dust visible in the air. SUBJECT SCALE The subject must appear small compared to the environment. The baker should occupy only about 20% to 25% of the collage height. The bakery environment must dominate visually. The subject must feel embedded inside the environment, not the main focus. SCENE DESIGN Behind the subject build a dense vertical bakery environment. Elements may include: bread loaves baguettes wooden bakery racks flour sacks baking trays bread baskets wooden tables The environment should feel like a sculptural stack of bakery elements. COLLAGE STRUCTURE The collage must be: tall narrow vertical Objects must stack upward like an architectural tower. The bakery elements should feel monumental and graphic. Avoid wide scenes. Avoid horizontal layouts. The collage should resemble a cut-out editorial collage from a design magazine. Edges slightly soft. The bottom of the collage must fade organically into the white background. SCALE RELATIONSHIP The environment must be significantly larger than the baker. Bread racks and bakery shelves should extend far above the subject. The environment should feel towering and sculptural. POSTER COMPOSITION Vertical poster orientation. Divide the poster into three visual zones. BOTTOM AREA (35%) The collage begins exactly at the bottom edge. Bread, flour, and bakery tools may spread slightly outward. CENTER AREA (40%) The baker appears inside the environment working on dough. The bakery environment continues far above the subject. The environment visually dominates the composition. TOP AREA (25%) Large empty white space. Very strong Swiss poster negative space. BACKGROUND Pure white poster background. Subtle paper grain texture. The collage must softly dissolve into the white background. No visible background edges. CRITICAL LAYOUT RULE The collage must occupy ONLY the left third of the poster. The subject must NOT be centered. Composition must feel asymmetrical and modernist. Layered layout: LEFT → bakery environment CENTER LEFT → baker working RIGHT → typography TYPOGRAPHY (VERY IMPORTANT) Add ONLY two text elements. TYPOGRAPHY CASE RULE All typography must be written in FULL UPPERCASE. Never use lowercase letters. Both titles must appear in uppercase only. The typography must feel bold, graphic and typical of Swiss modernist posters. VERTICAL TITLE ARTISAN Large ultra bold condensed sans-serif typography. Swiss grotesk style. Black text. The title must be vertical. The title must sit very close to the collage column. Typography height must match the collage height. Do NOT place it near the poster edge. LAYERING RULE The vertical typography must appear behind the baker. Parts of the letters must be hidden by the subject. The baker slightly overlaps the typography. Typography must feel physically integrated into the scene. HORIZONTAL TITLE BOULANGER Small horizontal text above the subject. Very minimal spacing. Clean Swiss grid alignment. TYPOGRAPHY STYLE Bold condensed grotesk typography. Extremely clean kerning. Graphic designer style typography. Black only. LIGHTING Studio photography lighting. Soft top lighting. Strong shadows. Flour particles visible in the air. High texture on bread and wood surfaces. DESIGN PRINCIPLES Swiss grid system radical asymmetry strong negative space architectural collage composition editorial cut-out photography modernist poster design minimal graphic layout MOOD Elegant Modernist Editorial Craftsmanship Design exhibition poster KEYWORDS Swiss graphic design poster modernist editorial collage architectural vertical composition asymmetrical layout avant-garde typography design magazine cover Swiss modernist poster high-end editorial design minimalist graphic poster subject off-center typography behind subject sculptural collage composition environment dominant small subject scale uppercase typography all caps typography swiss poster uppercase type bold uppercase grotesk typography`;
 
     return finalPrompt;
   }
@@ -1630,7 +1681,13 @@ minimalist graphic poster
 subject off-center
 environment dominant
 sculptural collage composition
-small subject scale`;
+small subject scale
+
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+Professional execution of Swiss modernist icon for the selected profession.`;
 
     return finalPrompt;
   }
@@ -1645,7 +1702,11 @@ small subject scale`;
     titre: string = '',
     sousTitre: string = '',
     isPersonRequested: boolean = false,
+    job: string = '',
   ): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
     const mannequinVariation = this.getMannequinVariationDirective(subject, isPersonRequested);
     
     const finalPrompt = `Create a minimalist editorial poster inspired by magazine covers.
@@ -1705,7 +1766,13 @@ Editorial magazine poster
 Professional
 Minimal
 Iconic
-Documentary photography style`;
+Documentary photography style
+
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+Professional execution of profession flyer for the selected profession.`;
 
     return finalPrompt;
   }
@@ -1895,7 +1962,11 @@ Documentary photography style`;
     subtitleText: string = '',
     colorPrincipale: string = '#FF9800',
     colorSecondaire: string = '#000000',
+    job: string = '',
   ): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
     let textSections = '';
 
     if (titleText) {
@@ -1953,7 +2024,13 @@ IMPORTANT RULES:
 - No other decorative elements or clutter.
 
 OUTPUT:
-High resolution. Professional publication-ready marketing poster.`;
+High resolution. Professional publication-ready marketing poster.
+
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+Professional execution of diagonal split design for the selected profession.`;
 
     return finalPrompt;
   }
@@ -1966,8 +2043,12 @@ High resolution. Professional publication-ready marketing poster.`;
     subject: string = 'modern subject',
     colorPrincipale: string = '#FFFFFF',
     colorSecondaire: string = '#000000',
+    job: string = '',
   ): string {
-    const finalPrompt = `CREATE A MODERN EDITORIAL PROMOTIONAL POSTER.
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 
 THE SUBJECT:
 Generate a striking visual element - a modern subject.
@@ -1993,6 +2074,12 @@ TECHNICAL DETAILS:
 High-end studio lighting. Professional editorial quality. 8K resolution.
 
 IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the image. These will be added in post-production. Simply generate the centered subject in FULL COLOR and SHARP FOCUS.
+
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+Professional execution of editorial reveal layout for the selected profession.
 `;
     return finalPrompt;
   }
@@ -2240,7 +2327,10 @@ DESIGN STYLE:
   colorPrincipale: string = '#000000',
   colorSecondaire: string = '#FFFFFF',
   isPersonRequested: boolean = false,
+  job: string = '',
 ): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
 
 const sceneDescription = isPersonRequested
   ? 'A carpenter working on wood craftsmanship - building, assembling, or crafting wooden structures.'
@@ -2292,7 +2382,13 @@ Industrial advertising photography, documentary realism, high contrast subject, 
 Output:
 Professional poster style, high resolution, cinematic lighting.
 
-fluorescent workwear color grading`;
+fluorescent workwear color grading
+
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - DEMANDE UTILISATEUR:
+Professional execution of mono accent design for the selected profession.`;
 
 return finalPrompt;
 }
@@ -2311,6 +2407,9 @@ return finalPrompt;
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
+    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
+    const professionContext = getProfessionContext(job);
+
     if (modelName?.toUpperCase() === 'EDITORIAL MOTION') {
       return this.buildEditorialMotionPrompt(
         architecture,
@@ -2461,7 +2560,8 @@ ARCHITECTURE DIRECTIVES FROM MODEL '${modelName}':
 - NO colors that don't exist in real materials.`;
 
     // FINAL INTEGRATED PROMPT
-    const finalPrompt = `${subjectEnhancer}
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
+${subjectEnhancer}
 
 ${cinematicDirectives}
 
@@ -2469,7 +2569,11 @@ ${typographyMastery}
 
 ${architectureRules}
 
-CONTEXT & BRAND: Model="${modelName}", Job="${job}", User intent: "${userQuery || 'professional flyer'}"
+COUCHE 2 - CONTEXTE PROFESSION:
+${professionContext}
+
+COUCHE 3 - CONTEXTE & DEMANDE UTILISATEUR:
+Context & Brand: Model="${modelName}", Job="${job}", User intent: "${userQuery || 'professional flyer'}"
 ${brandingColor ? `Brand accent color: ${brandingColor}` : ''}
 
 ${technicalSpecs}
@@ -2479,7 +2583,7 @@ ${prohibitions}
 MANDATE: Create a VOGUE/NUMÉRO magazine editorial-quality flyer that would ACTUALLY be published. Maximum professional sophistication. ZERO compromise on authenticity.`;
 
     this.logger.log(
-      `[buildMagazineStylePrompt] Generated elite prompt for model: ${modelName}`,
+      `[buildMagazineStylePrompt] Generated elite prompt with 3-layer structure (DA + Profession + User) for model: ${modelName}`,
     );
     return finalPrompt;
   }
@@ -3935,6 +4039,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             colorPrincipale,
             colorSecondaire,
             user?.name || '',
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_STUDIO_POSTER') {
           this.logger.log(
@@ -3946,6 +4051,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             params.scriptPhrase || params.subtitle || '',
             colorPrincipale,
             colorSecondaire,
+            params.job || '',
           );
         } else if (
           model.toLowerCase().includes('diagonal split design') ||
@@ -3962,6 +4068,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             colorPrincipale,
             colorSecondaire,
             user?.name || '',
+            params.job || '',
           );
         } else if (model.toLowerCase().includes('diagonal split')) {
           this.logger.log(
@@ -3973,6 +4080,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             params.scriptPhrase || params.subtitle || '',
             colorPrincipale,
             colorSecondaire,
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_EDITORIAL_GRID') {
           magazineStyleDirective = this.buildEditorialGridPrompt(
@@ -3981,6 +4089,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             scriptPhrase,
             colorPrincipale,
             colorSecondaire,
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_EDITORIAL_REVEAL') {
           this.logger.log(
@@ -3990,6 +4099,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             customSubject || params.job || 'A premium subject',
             colorPrincipale,
             colorSecondaire,
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_EPIC_BRAND') {
           this.logger.log(
@@ -4031,6 +4141,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
           );
           magazineStyleDirective = this.buildProfessionIconPrompt(
             customSubject || params.job || 'A professional subject',
+            params.job || '',
           );
         } else if (architecture.layoutType === 'TYPE_MONO_ACCENT') {
           this.logger.log(
@@ -4043,6 +4154,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             colorPrincipale,
             colorSecondaire,
             isPersonRequested,
+            params.job || '',
           );
         } else if (model.toLowerCase().includes('focus circle')) {
           this.logger.log(
@@ -4056,6 +4168,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             colorPrincipale,
             colorSecondaire,
             user?.name || '',
+            params.job || '',
           );
         } else if (model.toLowerCase().includes('editorial reveal')) {
           this.logger.log(
@@ -4065,6 +4178,7 @@ RULES: ${noTextRule} NO OpenAI branding.`;
             customSubject || params.job || 'A premium subject',
             colorPrincipale,
             colorSecondaire,
+            params.job || '',
           );
         } else {
           // Standard magazine-style prompt for other architectures
