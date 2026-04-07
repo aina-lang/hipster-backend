@@ -23,7 +23,7 @@ import {
 } from './config/visual-architectures-78';
 import { FlyerCategory, VariantStructure } from './types/flyer.types';
 import { FLYER_CATEGORIES } from './constants/flyer-categories';
-import { getProfessionContext } from './profession-prompts';
+import { getProfessionContext, getProfessionContextCompact } from './profession-prompts';
 
 @Injectable()
 export class AiService implements OnModuleInit {
@@ -320,8 +320,8 @@ export class AiService implements OnModuleInit {
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT (minimal guidance, doesn't interfere with subject)
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const magazineReference = `MAGAZINE EDITORIAL REFERENCE: Editorial-quality fashion photography from Vogue, Numéro, or Harper's Bazaar. High-fashion magazine cover and inner spread standards. Professional magazine photography, NOT advertorial.`;
 
@@ -416,7 +416,7 @@ ${textContextGuide}
 ${technicalQuality}
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR & EXECUTION:
 ${prohibitions}
@@ -447,8 +447,8 @@ ${
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const magazineReference = `
 MAGAZINE EDITORIAL REFERENCE:
@@ -609,7 +609,7 @@ ${typographyRules}
 ${monochromaticDirective}
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 ${userQuery || 'Professional execution of the selected profession and style.'}
@@ -638,8 +638,8 @@ ${prohibitions}
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const texteFond = mainWord || '';
     const texteBadge = textPromo || '';
@@ -670,7 +670,7 @@ Style :
 - Chaque élément textuel mentionné doit être rendu PARFAITEMENT sur l'image.
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 ${userQuery || 'Professional execution of the selected profession and style.'}
@@ -703,8 +703,8 @@ ${customSubject && !isPersonRequested ? 'STRICT PROHIBITION: NO humans, NO peopl
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const subject = customSubject || job;
     const environnement = userQuery || 'High-end studio';
@@ -737,7 +737,7 @@ TYPOGRAPHY (MANDATORY):
 - LEGIBILITY: All text MUST use contrasting shades to be perfectly readable against speed streaks.
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 ${userQuery || 'Professional execution of the selected profession and style.'}
@@ -761,8 +761,8 @@ ${customSubject && !isPersonRequested ? 'PROHIBITION: NO humans/people. Object o
     titleText: string,
     job: string = '',
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 ULTRA MINIMALIST BLACK & WHITE LUXURY ADVERTISING POSTER.
@@ -819,7 +819,7 @@ TYPOGRAPHY (MANDATORY):
 - No additional typography.
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 ${job ? `Professional execution in the ${job} industry context` : 'Professional execution of luxury campaign'}
@@ -852,8 +852,8 @@ COMPOSITION:
     subtitleText: string = '',
     job: string = '',
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 Create an ultra realistic premium advertising poster.
@@ -930,7 +930,7 @@ No UI elements
 No watermarks
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 ${job ? `Professional execution in the ${job} industry context` : 'Premium advertising execution'}
@@ -970,10 +970,11 @@ Appetizing
     colorSecondaire: string = '#ffffff',
     job: string = '',
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
-    const finalPrompt = `Create a high-end luxury promotional poster with a bold asymmetrical editorial layout featuring a realistic ${subject} at sunset with elegant reflection.
+    const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
+Create a high-end luxury promotional poster with a bold asymmetrical editorial layout featuring a realistic ${subject} at sunset with elegant reflection.
 
 IMPORTANT STRUCTURE:
 
@@ -1031,7 +1032,7 @@ STYLE:
 – High resolution.
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 Professional execution of editorial grid layout for the selected profession.
@@ -1053,8 +1054,8 @@ Professional execution of editorial grid layout for the selected profession.
     brandingName: string = '',
     job: string = '',
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 CREATE A HIGH-END MODERN MONOCHROMATIC EDITORIAL POSTER.
@@ -1180,7 +1181,7 @@ The text must stay fully readable.
 The vertical line must NEVER cut through typography.
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 Professional execution of focus circle layout for the selected profession.
@@ -1205,8 +1206,8 @@ Professional execution of focus circle layout for the selected profession.
     brandingName: string = '',
     job: string = '',
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 CREATE A HIGH-END MODERN DIAGONAL SPLIT DESIGN POSTER.
@@ -1416,7 +1417,7 @@ CRITICAL EXECUTION RULES:
 - Create distinct visual balance: subject upward (top-right), text downward (bottom-left).
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 Professional execution of diagonal split design for the selected profession.
@@ -1438,8 +1439,8 @@ Professional execution of diagonal split design for the selected profession.
     colorSecondaire: string = '#FFFFFF',
     job: string = '',
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 CREATE A MODERN EDITORIAL PROMOTIONAL POSTER.
@@ -1576,7 +1577,7 @@ EXECUTION RULES:
 - Professional minimal poster design quality.
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 Professional execution of studio poster layout for the selected profession.
@@ -1596,8 +1597,8 @@ Professional execution of studio poster layout for the selected profession.
    * Black and white aesthetics with high contrast
    */
   private buildProfessionIconPrompt(subject: string = 'professional', job: string = ''): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE: VISUAL STYLE Strict black and white photography. Ultra high contrast monochrome image. Swiss International Typographic Style. Avant-garde editorial design aesthetic. Premium European graphic design magazine cover. The image should feel like a poster from a high-end design exhibition or a Swiss graphic design book. Extremely clean layout. Minimal but visually striking. COLOR Pure black and white only. No grey tones except natural photographic shadows. Deep blacks and bright whites. Strong dramatic contrast. SUBJECT If an image is uploaded: Use the uploaded image as the subject. If no image is uploaded: Generate a realistic artisan baker kneading bread dough on a flour-covered wooden table. The baker must be actively working. Clothing must feel authentic: artisan apron rolled sleeves work clothes Hands covered with flour. Flour dust visible in the air. SUBJECT SCALE The subject must appear small compared to the environment. The baker should occupy only about 20% to 25% of the collage height. The bakery environment must dominate visually. The subject must feel embedded inside the environment, not the main focus. SCENE DESIGN Behind the subject build a dense vertical bakery environment. Elements may include: bread loaves baguettes wooden bakery racks flour sacks baking trays bread baskets wooden tables The environment should feel like a sculptural stack of bakery elements. COLLAGE STRUCTURE The collage must be: tall narrow vertical Objects must stack upward like an architectural tower. The bakery elements should feel monumental and graphic. Avoid wide scenes. Avoid horizontal layouts. The collage should resemble a cut-out editorial collage from a design magazine. Edges slightly soft. The bottom of the collage must fade organically into the white background. SCALE RELATIONSHIP The environment must be significantly larger than the baker. Bread racks and bakery shelves should extend far above the subject. The environment should feel towering and sculptural. POSTER COMPOSITION Vertical poster orientation. Divide the poster into three visual zones. BOTTOM AREA (35%) The collage begins exactly at the bottom edge. Bread, flour, and bakery tools may spread slightly outward. CENTER AREA (40%) The baker appears inside the environment working on dough. The bakery environment continues far above the subject. The environment visually dominates the composition. TOP AREA (25%) Large empty white space. Very strong Swiss poster negative space. BACKGROUND Pure white poster background. Subtle paper grain texture. The collage must softly dissolve into the white background. No visible background edges. CRITICAL LAYOUT RULE The collage must occupy ONLY the left third of the poster. The subject must NOT be centered. Composition must feel asymmetrical and modernist. Layered layout: LEFT → bakery environment CENTER LEFT → baker working RIGHT → typography TYPOGRAPHY (VERY IMPORTANT) Add ONLY two text elements. TYPOGRAPHY CASE RULE All typography must be written in FULL UPPERCASE. Never use lowercase letters. Both titles must appear in uppercase only. The typography must feel bold, graphic and typical of Swiss modernist posters. VERTICAL TITLE ARTISAN Large ultra bold condensed sans-serif typography. Swiss grotesk style. Black text. The title must be vertical. The title must sit very close to the collage column. Typography height must match the collage height. Do NOT place it near the poster edge. LAYERING RULE The vertical typography must appear behind the baker. Parts of the letters must be hidden by the subject. The baker slightly overlaps the typography. Typography must feel physically integrated into the scene. HORIZONTAL TITLE BOULANGER Small horizontal text above the subject. Very minimal spacing. Clean Swiss grid alignment. TYPOGRAPHY STYLE Bold condensed grotesk typography. Extremely clean kerning. Graphic designer style typography. Black only. LIGHTING Studio photography lighting. Soft top lighting. Strong shadows. Flour particles visible in the air. High texture on bread and wood surfaces. DESIGN PRINCIPLES Swiss grid system radical asymmetry strong negative space architectural collage composition editorial cut-out photography modernist poster design minimal graphic layout MOOD Elegant Modernist Editorial Craftsmanship Design exhibition poster KEYWORDS Swiss graphic design poster modernist editorial collage architectural vertical composition asymmetrical layout avant-garde typography design magazine cover Swiss modernist poster high-end editorial design minimalist graphic poster subject off-center typography behind subject sculptural collage composition environment dominant small subject scale uppercase typography all caps typography swiss poster uppercase type bold uppercase grotesk typography`;
 
@@ -1684,7 +1685,7 @@ sculptural collage composition
 small subject scale
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 Professional execution of Swiss modernist icon for the selected profession.`;
@@ -1704,8 +1705,8 @@ Professional execution of Swiss modernist icon for the selected profession.`;
     isPersonRequested: boolean = false,
     job: string = '',
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const mannequinVariation = this.getMannequinVariationDirective(subject, isPersonRequested);
     
@@ -1769,7 +1770,7 @@ Iconic
 Documentary photography style
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 Professional execution of profession flyer for the selected profession.`;
@@ -1964,8 +1965,8 @@ Professional execution of profession flyer for the selected profession.`;
     colorSecondaire: string = '#000000',
     job: string = '',
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     let textSections = '';
 
@@ -2027,7 +2028,7 @@ OUTPUT:
 High resolution. Professional publication-ready marketing poster.
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 Professional execution of diagonal split design for the selected profession.`;
@@ -2045,8 +2046,8 @@ Professional execution of diagonal split design for the selected profession.`;
     colorSecondaire: string = '#000000',
     job: string = '',
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE:
 
@@ -2076,7 +2077,7 @@ High-end studio lighting. Professional editorial quality. 8K resolution.
 IMPORTANT: Do NOT generate any rectangles, borders, or "focus windows" in the image. These will be added in post-production. Simply generate the centered subject in FULL COLOR and SHARP FOCUS.
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 Professional execution of editorial reveal layout for the selected profession.
@@ -2150,10 +2151,10 @@ private buildMatteProductPrompt(
   colorSecondaire: string = '#FFFFFF',
   job: string = '',
 ): string {
-    const professionContext = getProfessionContext(job);
+    const professionContextGuide = getProfessionContextCompact(job);
 
     const finalPrompt = `ABSOLUTE PROFESSION LOCK:
-${professionContext}
+${professionContextGuide}
 CONSTRAINT: This industry context MUST be applied to every element of the image. No exceptions. No deviations.
 
 DIRECTION ARTISTIQUE - MATTE PRODUCT:
@@ -2215,10 +2216,11 @@ ${sousTitre}`;
   colorSecondaire: string = '#00FF88',
   job: string = '',
 ): string {
-  const professionContext = getProfessionContext(job);
+  // 🎯 SUBTLE PROFESSION CONTEXT
+  const professionContextGuide = getProfessionContextCompact(job);
 
   const finalPrompt = `ABSOLUTE PROFESSION LOCK:
-${professionContext}
+${professionContextGuide}
 CONSTRAINT: This industry context MUST shape every visual choice. No exceptions.
 
 DIRECTION ARTISTIQUE - NEON EDITORIAL:
@@ -2264,10 +2266,11 @@ private buildEpicBrandPrompt(
   colorSecondaire: string = '#FF9800',
   job: string = '',
 ): string {
-  const professionContext = getProfessionContext(job);
+  // 🎯 SUBTLE PROFESSION CONTEXT
+  const professionContextGuide = getProfessionContextCompact(job);
 
   const finalPrompt = `ABSOLUTE PROFESSION LOCK:
-${professionContext}
+${professionContextGuide}
 CONSTRAINT: This industry context MUST be applied to the entire composition. No exceptions. No deviations.
 
 DIRECTION ARTISTIQUE - EPIC BRAND:
@@ -2329,8 +2332,8 @@ DESIGN STYLE:
   isPersonRequested: boolean = false,
   job: string = '',
 ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
 const sceneDescription = isPersonRequested
   ? 'A carpenter working on wood craftsmanship - building, assembling, or crafting wooden structures.'
@@ -2385,7 +2388,7 @@ Professional poster style, high resolution, cinematic lighting.
 fluorescent workwear color grading
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 Professional execution of mono accent design for the selected profession.`;
@@ -2407,8 +2410,8 @@ return finalPrompt;
     customSubject: string = '',
     isPersonRequested: boolean = false,
   ): string {
-    // 🎯 COUCHE 2/3: CONTEXTE PROFESSION
-    const professionContext = getProfessionContext(job);
+    // 🎯 SUBTLE PROFESSION CONTEXT
+    const professionContextGuide = getProfessionContextCompact(job);
 
     if (modelName?.toUpperCase() === 'EDITORIAL MOTION') {
       return this.buildEditorialMotionPrompt(
@@ -2570,7 +2573,7 @@ ${typographyMastery}
 ${architectureRules}
 
 COUCHE 2 - CONTEXTE PROFESSION:
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - CONTEXTE & DEMANDE UTILISATEUR:
 Context & Brand: Model="${modelName}", Job="${job}", User intent: "${userQuery || 'professional flyer'}"
@@ -3785,12 +3788,13 @@ COMPOSITION ARCHITECTURE:
       const professionContext = getProfessionContext(params.job || '');
       
       // 🎯 PROMPT FINAL = COUCHE 1 (DA) + COUCHE 2 (Métier) + COUCHE 3 (Utilisateur)
+      const professionContextGuide = getProfessionContextCompact(params.job || '');
       const finalPrompt = `COUCHE 1 - DIRECTION ARTISTIQUE (DA):
 ${promptBody}
 QUALITY: ${realismTriggers} ${qualityTags}.
 
 COUCHE 2 - CONTEXTE PROFESSION (MÉTIER LOCK):
-${professionContext}
+${professionContextGuide}
 
 COUCHE 3 - DEMANDE UTILISATEUR:
 ${cleanedUserQuery || 'Professional execution of the selected profession and style.'}

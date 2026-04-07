@@ -10,6 +10,9 @@
  * pour chaque profession, même si l'utilisateur essaie de sortir du cadre.
  */
 
+/**
+ * VERSION COMPLÈTE - Pour la guidance interne
+ */
 export const PROFESSION_CONTEXT_PROMPTS: Record<string, string> = {
   // Coiffure & Esthétique
   "Coiffure & Esthétique": `The visual must stay exclusively in the professional world of hairdressing, beauty salons, hair care, styling, beauty treatments, and cosmetic products. Include elements like: salon chairs, mirrors, hair styling tools, beauty products, hair textures, professional cuts, colors, and beauty services. The aesthetic should radiate professionalism, luxury, and beauty expertise.`,
@@ -37,7 +40,22 @@ export const PROFESSION_CONTEXT_PROMPTS: Record<string, string> = {
 };
 
 /**
- * Récupère le contexte profession pour un métier donné
+ * VERSION COMPACTE - Pour les prompts (subtile et courte)
+ * 1-2 lignes max, ne surpasse PAS le sujet
+ */
+export const PROFESSION_CONTEXT_COMPACT: Record<string, string> = {
+  "Coiffure & Esthétique": `Keep aesthetic grounded in beauty/salon professionalism.`,
+  "Restaurant / Bar": `Keep aesthetic grounded in hospitality/culinary world.`,
+  "Commerce / Boutique": `Keep aesthetic grounded in retail/commercial professionalism.`,
+  "Artisans du bâtiment": `Keep aesthetic grounded in construction/skilled trades world.`,
+  "Service local": `Keep aesthetic grounded in local service professionalism.`,
+  "Profession libérale": `Keep aesthetic grounded in professional services world.`,
+  "Bien-être / Santé alternative": `Keep aesthetic grounded in wellness/holistic professionalism.`,
+  "Autre": `Keep aesthetic grounded in the profession's world.`,
+};
+
+/**
+ * Récupère le contexte profession COMPLET pour un métier donné
  * @param profession - Le nom du métier/profession
  * @returns Le texte de contexte profession ou un texte par défaut
  */
@@ -49,7 +67,7 @@ export function getProfessionContext(profession: string): string {
     return PROFESSION_CONTEXT_PROMPTS[profession];
   }
   
-  // Recherche partiellement intelligente (cas où l'user a écrit une variation)
+  // Recherche partiellement intelligente
   const profLower = profession.toLowerCase();
   const matchedKey = Object.keys(PROFESSION_CONTEXT_PROMPTS).find(
     key => key.toLowerCase().includes(profLower) || profLower.includes(key.toLowerCase())
@@ -58,4 +76,29 @@ export function getProfessionContext(profession: string): string {
   return matchedKey 
     ? PROFESSION_CONTEXT_PROMPTS[matchedKey]
     : PROFESSION_CONTEXT_PROMPTS["Autre"];
+}
+
+/**
+ * Récupère le contexte profession COMPACTE pour un métier donné
+ * VERSION LÉGÈRE: 1-2 lignes, subtile, ne surpasse pas le sujet
+ * @param profession - Le nom du métier/profession
+ * @returns Le texte compacte ou un texte par défaut
+ */
+export function getProfessionContextCompact(profession: string): string {
+  if (!profession) return PROFESSION_CONTEXT_COMPACT["Autre"];
+  
+  // Recherche exacte d'abord
+  if (PROFESSION_CONTEXT_COMPACT[profession]) {
+    return PROFESSION_CONTEXT_COMPACT[profession];
+  }
+  
+  // Recherche partiellement intelligente
+  const profLower = profession.toLowerCase();
+  const matchedKey = Object.keys(PROFESSION_CONTEXT_COMPACT).find(
+    key => key.toLowerCase().includes(profLower) || profLower.includes(key.toLowerCase())
+  );
+  
+  return matchedKey 
+    ? PROFESSION_CONTEXT_COMPACT[matchedKey]
+    : PROFESSION_CONTEXT_COMPACT["Autre"];
 }
