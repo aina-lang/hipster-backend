@@ -27,8 +27,6 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
 
 
 import { join } from 'path';
-import { LoyaltyModule } from './loyalty/loyalty.module';
-import { ReferralModule } from './referral/referral.module';
 import { CompanyModule } from './company/company.module';
 import { AiAuthModule } from './ai-auth/ai-auth.module';
 import { AiModule } from './ai/ai.module';
@@ -80,8 +78,6 @@ import { AiPaymentModule } from './ai-payment/ai-payment.module';
     CampaignsModule,
     PermissionsModule,
     RolesModule,
-    LoyaltyModule,
-    ReferralModule,
     CompanyModule,
     MaintenanceModule,
     AiAuthModule,

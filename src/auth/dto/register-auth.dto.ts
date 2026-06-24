@@ -56,7 +56,5 @@ export class RegisterAuthDto {
   @IsString({ message: 'L\'URL de l\'avatar doit être une chaîne de caractères' })
   avatarUrl?: string;
 
-  @IsOptional()
-  @IsString({ message: 'Le code de parrainage doit être une chaîne de caractères' })
-  referralCode?: string;
+
 }

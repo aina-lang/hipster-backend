@@ -19,9 +19,7 @@ import { Task, TaskStatus } from 'src/tasks/entities/task.entity';
 import { FindProjectsQueryDto } from './dto/find-projects-query.dto';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
 import { MailService } from 'src/mail/mail.service';
-import { LoyaltyService } from 'src/loyalty/loyalty.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
-import { LOYALTY_RULES } from 'src/loyalty/loyalty.types';
 import { Role } from 'src/common/enums/role.enum';
 
 import { Invoice } from 'src/invoices/entities/invoice.entity';
@@ -64,7 +62,6 @@ export class ProjectsService {
     private readonly permissionRepo: Repository<Permission>,
 
     private readonly mailService: MailService,
-    private readonly loyaltyService: LoyaltyService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -1064,28 +1061,8 @@ export class ProjectsService {
     await this.projectRepo.save(project);
     console.log(`[Project #${projectId}] Status updated to: ${project.status}`);
 
-    // 🎯 Si le projet vient d'être complété, mettre à jour la fidélité et envoyer les emails
+    // 🎯 Si le projet vient d'être complété, envoyer l'email
     if (isNowCompleted && !wasCompleted) {
-      // 1. Mise à jour fidélité
-      let loyaltyUpdate;
-      try {
-        loyaltyUpdate =
-          await this.loyaltyService.updateClientLoyaltyOnProjectCompletion(
-            projectId,
-          );
-
-        // Si le tier a changé, créer une notification interne
-        if (loyaltyUpdate.tierUpgraded) {
-          await this.notificationsService.createTierUpgradeNotification(
-            project.client.id,
-            loyaltyUpdate.oldTier,
-            loyaltyUpdate.newTier,
-          );
-        }
-      } catch (error) {
-        console.error('[Project] Error updating loyalty:', error);
-      }
-
       // 2. Email Projet Terminé
       if (project.client?.user?.email) {
         try {
@@ -1109,31 +1086,6 @@ export class ProjectsService {
           );
         } catch (error) {
           console.error('Failed to send project completed email:', error);
-        }
-      }
-
-      // 3. Email Récompense Fidélité (si tier amélioré)
-      if (loyaltyUpdate?.tierUpgraded && project.client?.user?.email) {
-        try {
-          const newStatus = await this.loyaltyService.getLoyaltyStatus(
-            project.client.id,
-          );
-          await this.mailService.sendLoyaltyRewardEmail(
-            project.client.user.email,
-            {
-              clientName: `${project.client.user.firstName} ${project.client.user.lastName}`,
-              oldTier: loyaltyUpdate.oldTier,
-              newTier: loyaltyUpdate.newTier,
-              reward: LOYALTY_RULES[loyaltyUpdate.newTier].reward,
-              projectCount: newStatus.projectCount,
-              nextTier: newStatus.nextTier,
-              projectsToNextTier: newStatus.projectsToNextTier,
-              loyaltyUrl: `${process.env.FRONTEND_URL}/app/loyalty/detail?clientId=${project.client.id}`,
-            },
-            project.client.user.roles,
-          );
-        } catch (error) {
-          console.error('Failed to send loyalty reward email:', error);
         }
       }
     }

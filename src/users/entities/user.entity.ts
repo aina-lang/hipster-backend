@@ -66,11 +66,7 @@ export class User {
   @Column({ nullable: true, type: 'timestamp' })
   refreshTokenExpiresAt?: Date | null;
 
-  @Column({ nullable: true })
-  referralCode?: string;
 
-  @Column({ nullable: true })
-  referredBy?: string;
 
   @CreateDateColumn()
   createdAt: Date;

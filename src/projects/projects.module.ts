@@ -13,7 +13,7 @@ import { User } from 'src/users/entities/user.entity';
 import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
 import { Permission } from 'src/permissions/entities/permission.entity';
 
-import { LoyaltyModule } from 'src/loyalty/loyalty.module';
+
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { MailModule } from 'src/mail/mail.module';
 
@@ -35,7 +35,6 @@ import { Payment } from 'src/payments/entities/payment.entity';
       ClientWebsite,
       Permission,
     ]),
-    LoyaltyModule,
     NotificationsModule,
     MailModule,
   ],

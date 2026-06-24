@@ -8,7 +8,7 @@ import { User } from 'src/users/entities/user.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { QueryNotificationsDto } from './dto/query-notifications.dto';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
-import { LoyaltyTier, LOYALTY_RULES } from 'src/loyalty/loyalty.types';
+
 import { NotificationsGateway } from './notifications.gateway';
 import { Role } from 'src/common/enums/role.enum';
 
@@ -40,40 +40,6 @@ export class NotificationsService {
     return this.notificationRepo.save(notification);
   }
 
-  async createTierUpgradeNotification(
-    clientId: number,
-    oldTier: LoyaltyTier,
-    newTier: LoyaltyTier,
-  ): Promise<Notification> {
-    // Récupérer le client avec l'utilisateur
-    const client = await this.clientRepo.findOne({
-      where: { id: clientId },
-      relations: ['user'],
-    });
-
-    if (!client || !client.user) {
-      throw new NotFoundException('Client or user not found');
-    }
-
-    // Récupérer la récompense du nouveau tier
-    const reward = LOYALTY_RULES[newTier].reward;
-
-    // Créer la notification
-    const notification = this.notificationRepo.create({
-      user: client.user,
-      type: 'loyalty_tier_upgrade',
-      title: `🎉 Nouveau tier de fidélité: ${newTier}!`,
-      message: `Félicitations ! Vous avez atteint le tier ${newTier}. Votre nouvelle récompense: ${reward}`,
-      data: {
-        oldTier,
-        newTier,
-        reward,
-        clientId,
-      },
-    });
-
-    return await this.notificationRepo.save(notification);
-  }
 
   async findPaginated(
     query: QueryNotificationsDto,

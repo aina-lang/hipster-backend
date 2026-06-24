@@ -10,7 +10,6 @@ import { Project } from 'src/projects/entities/project.entity';
 import { CompanyModule } from 'src/company/company.module';
 import { MailModule } from 'src/mail/mail.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
-import { LoyaltyModule } from 'src/loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -18,7 +17,6 @@ import { LoyaltyModule } from 'src/loyalty/loyalty.module';
     CompanyModule,
     MailModule,
     NotificationsModule,
-    LoyaltyModule,
   ],
   controllers: [InvoicesController],
   providers: [InvoicesService],

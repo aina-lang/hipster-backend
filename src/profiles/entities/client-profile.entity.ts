@@ -53,14 +53,7 @@ export class ClientProfile {
   @Column({ nullable: true })
   country?: string;
 
-  @Column({ default: 0 })
-  loyaltyPoints: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  cashbackTotal: number;
-
-  @Column({ default: false })
-  hasUsedBronzeDiscount: boolean;
 
   // Relations
   @OneToOne(() => User, (u) => u.clientProfile, { onDelete: 'CASCADE' })
