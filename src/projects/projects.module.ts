@@ -11,8 +11,6 @@ import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
 import { User } from 'src/users/entities/user.entity';
 import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
-import { Permission } from 'src/permissions/entities/permission.entity';
-
 
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { MailModule } from 'src/mail/mail.module';
@@ -33,7 +31,6 @@ import { Payment } from 'src/payments/entities/payment.entity';
       Invoice,
       Payment,
       ClientWebsite,
-      Permission,
     ]),
     NotificationsModule,
     MailModule,

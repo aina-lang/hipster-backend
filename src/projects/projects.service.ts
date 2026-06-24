@@ -12,7 +12,7 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
-import { Permission } from 'src/permissions/entities/permission.entity';
+
 import { User } from 'src/users/entities/user.entity';
 import { File } from 'src/files/entities/file.entity';
 import { Task, TaskStatus } from 'src/tasks/entities/task.entity';
@@ -58,8 +58,6 @@ export class ProjectsService {
     @InjectRepository(ClientWebsite)
     private readonly websiteRepo: Repository<ClientWebsite>,
 
-    @InjectRepository(Permission)
-    private readonly permissionRepo: Repository<Permission>,
 
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
@@ -189,7 +187,7 @@ export class ProjectsService {
 
     await this.projectRepo.save(project);
     await this.updateProjectStatus(project.id);
-    await this.assignMaintenancePermissionToMembers(project.id);
+
 
     // ✅ Send email to client (ONLY if client exists)
     if (clientUser && clientUser.email) {
@@ -533,63 +531,7 @@ export class ProjectsService {
     return this.findOne(project.id);
   }
 
-  // ------------------------------------------------------------
-  // 🔹 ASSIGN MAINTENANCE PERMISSION
-  // ------------------------------------------------------------
-  private async assignMaintenancePermissionToMembers(projectId: number) {
-    const project = await this.projectRepo.findOne({
-      where: { id: projectId },
-      relations: [
-        'members',
-        'members.employee',
-        'members.employee.permissions',
-      ],
-    });
 
-    if (!project || project.name !== 'Maintenance Sites Web') return;
-
-    const maintenancePerm = await this.permissionRepo.findOneBy({
-      slug: 'manage:maintenance',
-    });
-
-    if (!maintenancePerm) return;
-
-    for (const member of project.members) {
-      const user = member.employee;
-      const hasPerm = user.permissions?.some(
-        (p) => p.id === maintenancePerm.id,
-      );
-
-      if (!hasPerm) {
-        if (!user.permissions) user.permissions = [];
-        user.permissions.push(maintenancePerm);
-        await this.userRepo.save(user);
-        console.log(
-          `[Maintenance] Assigned permission to ${user.firstName} ${user.lastName}`,
-        );
-
-        // ✅ Send maintenance assignment email
-        if (user.email) {
-          try {
-            await this.mailService.sendMaintenanceAssignedEmail(user.email, {
-              assigneeName: `${user.firstName} ${user.lastName}`,
-              websiteUrl: 'Sites WordPress clients',
-              projectName: project.name,
-              taskDescription:
-                'Vous êtes maintenant membre de l’équipe de maintenance. Vous recevrez des tâches de maintenance pour les différents sites web de nos clients.',
-              recurrenceInfo: project.recurrenceType || 'Selon planification',
-            });
-            console.log(`[Maintenance] Sent assignment email to ${user.email}`);
-          } catch (error) {
-            console.error(
-              `Failed to send maintenance assignment email to ${user.email}:`,
-              error,
-            );
-          }
-        }
-      }
-    }
-  }
 
   // ------------------------------------------------------------
   // 🔹 FIND ALL
@@ -747,7 +689,7 @@ export class ProjectsService {
       await this.updateProjectStatus(project.id);
     }
 
-    await this.assignMaintenancePermissionToMembers(id);
+
 
     const updatedProject = await this.findOne(id);
 
@@ -1132,41 +1074,27 @@ export class ProjectsService {
     }
 
     const user = userId
-      ? await this.userRepo.findOne({
-          where: { id: userId },
-          relations: ['permissions'],
-        })
+      ? await this.userRepo.findOne({ where: { id: userId } })
       : null;
 
     if (user) {
       const isAdmin = user.roles.includes('admin' as any);
-      const hasManagePermission = user.permissions?.some(
-        (p) => p.slug === 'projects:manage',
-      );
 
-      console.log(
-        `[ProjectsService] findPaginated internal: user found, isAdmin=${isAdmin}, hasManagePermission=${hasManagePermission}`,
-      );
-
-      // If not admin and doesn't have manage permission, apply filters
-      if (!isAdmin && !hasManagePermission) {
+      // If not admin, apply role-based filters
+      if (!isAdmin) {
         const isClient =
           user.roles.includes('client_marketing' as any) ||
           user.roles.includes('client_ai' as any);
 
         if (isClient) {
-          // Si c'est un client, il ne voit que ses projets
           qb.andWhere('clientUser.id = :userId', { userId });
         } else {
-          // Sinon c'est un employé, il ne voit que les projets où il est membre
-          // On utilise un subquery pour éviter les problèmes de jointures multiples
           qb.andWhere(
             'project.id IN (SELECT pm.projectId FROM project_members pm WHERE pm.employeeId = :userId)',
             { userId },
           );
         }
 
-        // 🚫 Exclure le projet Maintenance pour les clients et employés
         qb.andWhere('project.name != :maintenanceName', {
           maintenanceName: 'Maintenance Sites Web',
         });
@@ -1244,35 +1172,24 @@ export class ProjectsService {
       .leftJoinAndSelect('project.tasks', 'tasks');
 
     // 🔐 RBAC: Check user permissions (same as findPaginated but WITHOUT Maintenance exclusion)
-    const user = await this.userRepo.findOne({
-      where: { id: userId },
-      relations: ['permissions'],
-    });
+    const user = await this.userRepo.findOne({ where: { id: userId } });
 
     if (user) {
       const isAdmin = user.roles.includes('admin' as any);
-      const hasManagePermission = user.permissions?.some(
-        (p) => p.slug === 'projects:manage',
-      );
 
-      // If not admin and doesn't have manage permission, apply filters
-      if (!isAdmin && !hasManagePermission) {
+      if (!isAdmin) {
         const isClient =
           user.roles.includes('client_marketing' as any) ||
           user.roles.includes('client_ai' as any);
 
         if (isClient) {
-          // Si c'est un client, il ne voit que ses projets
           qb.andWhere('clientUser.id = :userId', { userId });
         } else {
-          // Sinon c'est un employé, il ne voit que les projets où il est membre
           qb.andWhere(
             'project.id IN (SELECT pm.projectId FROM project_members pm WHERE pm.employeeId = :userId)',
             { userId },
           );
         }
-
-        // ⚠️ NOTE: On N'exclut PAS le projet Maintenance ici (pour le backoffice)
       }
     }
 

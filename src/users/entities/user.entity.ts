@@ -16,7 +16,7 @@ import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
 import { Notification } from 'src/notifications/entities/notification.entity';
 import { Otp } from 'src/otp/enitities/otp.entity';
-import { Permission } from 'src/permissions/entities/permission.entity';
+
 
 /**
  * 🧩 USER ENTITY
@@ -109,15 +109,4 @@ export class User {
   @OneToMany(() => Otp, (otp) => otp.user)
   otps: Otp[];
 
-  // -----------------------------
-  // 🔗 Permissions - Fine-grained access control
-  // -----------------------------
-
-  @ManyToMany(() => Permission)
-  @JoinTable({
-    name: 'user_permissions',
-    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'permission_id', referencedColumnName: 'id' },
-  })
-  permissions: Permission[];
 }

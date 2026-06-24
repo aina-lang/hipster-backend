@@ -129,7 +129,7 @@ export class AuthService {
 
     const user = await this.userRepo.findOne({
       where: { email },
-      relations: ['clientProfile', 'employeeProfile', 'permissions'],
+      relations: ['clientProfile', 'employeeProfile'],
     });
 
     if (!user) {
@@ -181,7 +181,6 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles: user.roles,
-        permissions: user.permissions,
         profiles: {
           client: user.clientProfile,
           employee: user.employeeProfile,
@@ -247,7 +246,6 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         roles: user.roles,
-        permissions: user.permissions,
         profiles: {
           client: user.clientProfile,
           employee: user.employeeProfile,

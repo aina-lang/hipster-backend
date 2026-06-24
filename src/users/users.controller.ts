@@ -205,20 +205,7 @@ export class UsersController {
     return this.usersService.remove(+id);
   }
 
-  // 🔹 Assign roles and permissions to user
-  @ApiOperation({ summary: 'Assigner des accès à un utilisateur' })
-  @ResponseMessage('Accès assignés avec succès')
-  @Post(':id/access')
-  async assignAccess(@Param('id') id: string, @Body() dto: any) {
-    return this.usersService.assignAccess(+id, dto);
-  }
 
-  // 🔹 Get user access details
-  @ApiOperation({ summary: 'Récupérer les accès d’un utilisateur' })
-  @Get(':id/access')
-  async getUserAccess(@Param('id') id: string) {
-    return this.usersService.getUserAccess(+id);
-  }
 
   // 🔹 Upload Avatar
   @ApiOperation({ summary: 'Uploader un avatar' })

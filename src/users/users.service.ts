@@ -12,17 +12,12 @@ import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { AssignAccessDto } from './dto/assign-access.dto';
-import { Role } from 'src/common/enums/role.enum';
 import { FindUsersQueryDto } from './dto/find-users-query.dto';
+import { Role } from 'src/common/enums/role.enum';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
-import { Permission } from 'src/permissions/entities/permission.entity';
 import { MailService } from 'src/mail/mail.service';
 import { deleteFile } from 'src/common/utils/file.utils';
-import {
-  POSTE_PERMISSIONS,
-  DEFAULT_EMPLOYEE_PERMISSIONS,
-} from 'src/permissions/poste-permissions.config';
+
 
 @Injectable()
 export class UsersService {
@@ -30,8 +25,6 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
-    @InjectRepository(Permission)
-    private readonly permissionRepo: Repository<Permission>,
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
   ) {}
@@ -105,54 +98,7 @@ export class UsersService {
           dto.employeeProfile,
         );
 
-        // 🔹 PERMISSIONS ASSIGNMENT
-        // 1. Manual assignment (overrides everything)
-        if (dto.permissions && dto.permissions.length > 0) {
-          console.log(
-            `[UsersService] Manual permissions provided:`,
-            dto.permissions,
-          );
-          const permissions = await this.permissionRepo.findBy({
-            slug: In(dto.permissions),
-          });
-          user.permissions = permissions;
-          console.log(
-            `[UsersService] Assigned ${permissions.length} manual permissions`,
-          );
-        }
-        // 2. Auto-assignment based on Poste (default behavior)
-        else {
-          const poste = user.employeeProfile.poste?.toLowerCase() || '';
-          console.log(
-            `[UsersService] Auto-assigning permissions for poste: '${poste}'...`,
-          );
 
-          const permissionSlugs =
-            POSTE_PERMISSIONS[poste] || DEFAULT_EMPLOYEE_PERMISSIONS;
-
-          console.log(
-            `[UsersService] Default slugs to assign:`,
-            permissionSlugs,
-          );
-
-          if (permissionSlugs.length > 0) {
-            const permissions = await this.permissionRepo.findBy({
-              slug: In(permissionSlugs),
-            });
-
-            if (permissions.length === 0) {
-              console.warn(
-                `[UsersService] WARNING: No permissions found in DB for slugs:`,
-                permissionSlugs,
-              );
-            }
-
-            user.permissions = permissions;
-            console.log(
-              `[UsersService] Assigned ${permissions.length} permissions (poste: '${poste || 'none'}')`,
-            );
-          }
-        }
       }
 
       // Save user (cascades to profiles)
@@ -187,7 +133,7 @@ export class UsersService {
   async findOne(id: number): Promise<User> {
     const user = await this.userRepo.findOne({
       where: { id },
-      relations: ['clientProfile', 'employeeProfile', 'permissions'],
+      relations: ['clientProfile', 'employeeProfile'],
     });
 
     if (!user) throw new NotFoundException(`Utilisateur #${id} introuvable`);
@@ -205,8 +151,7 @@ export class UsersService {
     const qb: SelectQueryBuilder<User> = this.userRepo
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.clientProfile', 'clientProfile')
-      .leftJoinAndSelect('user.employeeProfile', 'employeeProfile')
-      .leftJoinAndSelect('user.permissions', 'permissions');
+      .leftJoinAndSelect('user.employeeProfile', 'employeeProfile');
 
     // Filter by role
     if (role) {
@@ -338,53 +283,7 @@ export class UsersService {
           Object.assign(user.employeeProfile, dto.employeeProfile);
         }
 
-        // 🔹 PERMISSIONS ASSIGNMENT (Update)
-        // 1. Manual assignment overrides everything
-        // 🔹 PERMISSIONS ASSIGNMENT (Update)
-        // 1. Manual assignment overrides everything
-        if (dto.permissions) {
-          console.log(
-            `[UsersService] UPDATE: Manual permissions provided:`,
-            dto.permissions,
-          );
-          if (dto.permissions.length > 0) {
-            const permissions = await this.permissionRepo.findBy({
-              slug: In(dto.permissions),
-            });
-            user.permissions = permissions;
-            console.log(
-              `[UsersService] Updated permissions manually: ${permissions.length} assigned`,
-            );
-          } else {
-            user.permissions = [];
-            console.log(`[UsersService] Cleared all permissions manually`);
-          }
-        }
-        // 2. Auto-assignment only if NO manual override provided AND poste changed
-        else if (posteChanged) {
-          const poste = user.employeeProfile.poste?.toLowerCase() || '';
-          console.log(
-            `[UsersService] UPDATE: Poste changed to '${poste}', auto-assigning...`,
-          );
 
-          const permissionSlugs =
-            POSTE_PERMISSIONS[poste] || DEFAULT_EMPLOYEE_PERMISSIONS;
-
-          console.log(
-            `[UsersService] UPDATE: Slugs to assign:`,
-            permissionSlugs,
-          );
-
-          if (permissionSlugs.length > 0) {
-            const permissions = await this.permissionRepo.findBy({
-              slug: In(permissionSlugs),
-            });
-            user.permissions = permissions;
-            console.log(
-              `[UsersService] Re-assigned ${permissions.length} permissions for new poste '${poste || 'none'}'`,
-            );
-          }
-        }
       }
 
       // Save user (cascades to profiles)
@@ -410,47 +309,7 @@ export class UsersService {
     return this.userRepo.findOne({ where: { email } });
   }
 
-  // --------------------------------------------------------
-  // 🔐 ASSIGN PERMISSIONS
-  // --------------------------------------------------------
-  async assignAccess(userId: number, dto: AssignAccessDto): Promise<User> {
-    const user = await this.userRepo.findOne({
-      where: { id: userId },
-      relations: ['permissions'],
-    });
 
-    if (!user) {
-      throw new NotFoundException('Utilisateur introuvable');
-    }
-
-    // Assign permissions
-    if (dto.permissionIds !== undefined) {
-      if (dto.permissionIds.length > 0) {
-        const permissions = await this.permissionRepo.findBy({
-          id: In(dto.permissionIds),
-        });
-        user.permissions = permissions;
-      } else {
-        user.permissions = [];
-      }
-    }
-
-    return await this.userRepo.save(user);
-  }
-
-  // Get user with permissions
-  async getUserAccess(userId: number): Promise<User> {
-    const user = await this.userRepo.findOne({
-      where: { id: userId },
-      relations: ['permissions'],
-    });
-
-    if (!user) {
-      throw new NotFoundException('Utilisateur introuvable');
-    }
-
-    return user;
-  }
 
   // --------------------------------------------------------
   // 🔐 REGENERATE PASSWORD

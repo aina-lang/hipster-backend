@@ -21,7 +21,7 @@ import { TicketsModule } from './tickets/tickets.module';
 import { FilesModule } from './files/files.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
-import { PermissionsModule } from './permissions/permissions.module';
+
 import { RolesModule } from './roles/roles.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 
@@ -76,7 +76,6 @@ import { AiPaymentModule } from './ai-payment/ai-payment.module';
     FilesModule,
     ProfilesModule,
     CampaignsModule,
-    PermissionsModule,
     RolesModule,
     CompanyModule,
     MaintenanceModule,

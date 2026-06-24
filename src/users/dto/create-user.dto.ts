@@ -104,9 +104,4 @@ export class CreateUserDto {
   @ValidateNested()
   @Type(() => CreateEmployeeProfileDto)
   employeeProfile?: CreateEmployeeProfileDto;
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  permissions?: string[];
 }

@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
-import { Permission } from 'src/permissions/entities/permission.entity';
+
 
 import { MailModule } from 'src/mail/mail.module';
 import { AuthModule } from 'src/auth/auth.module';
@@ -17,7 +17,6 @@ import { AiAuthModule } from 'src/ai-auth/ai-auth.module';
       User,
       ClientProfile,
       EmployeeProfile,
-      Permission,
     ]),
     MailModule,
     forwardRef(() => AuthModule),
