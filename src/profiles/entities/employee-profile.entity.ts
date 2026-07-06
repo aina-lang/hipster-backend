@@ -50,7 +50,8 @@ export class EmployeeProfile {
   @JoinColumn()
   user: User;
 
-  // ✅ ManyToMany avec Task (symétrique)
+
+  // ✅ Tâches assignées
   @ManyToMany(() => Task, (t) => t.assignees)
   tasks: Task[];
 

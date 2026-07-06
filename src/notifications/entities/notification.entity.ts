@@ -24,6 +24,19 @@ export class Notification {
   @Column({ type: 'json', nullable: true })
   data?: any;
 
+  // 🔹 Client Portal Fields (Phase 1)
+  @Column({ type: 'int', nullable: true })
+  projectId?: number; // Associer notification à un projet
+
+  @Column({ type: 'int', nullable: true })
+  ticketId?: number; // Associer notification à une demande client
+
+  @Column({ type: 'int', nullable: true })
+  documentId?: number; // Associer notification à un document
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  actionUrl?: string; // URL pour action rapide (ex: /projects/123/requests/456)
+
   @Column({ default: false })
   isRead: boolean;
 

@@ -1,17 +1,27 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
 export class AddIsStripeVerifiedToAiUser1769000000000
   implements MigrationInterface
 {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "ai_users" ADD COLUMN IF NOT EXISTS "isStripeVerified" boolean NOT NULL DEFAULT false`,
-    );
+    const table = await queryRunner.getTable('ai_users');
+    if (!table?.findColumnByName('isStripeVerified')) {
+      await queryRunner.addColumn(
+        'ai_users',
+        new TableColumn({
+          name: 'isStripeVerified',
+          type: 'boolean',
+          isNullable: false,
+          default: false,
+        }),
+      );
+    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "ai_users" DROP COLUMN IF EXISTS "isStripeVerified"`,
-    );
+    const table = await queryRunner.getTable('ai_users');
+    if (table?.findColumnByName('isStripeVerified')) {
+      await queryRunner.dropColumn('ai_users', 'isStripeVerified');
+    }
   }
 }

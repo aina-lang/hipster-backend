@@ -9,7 +9,6 @@ import { Project } from 'src/projects/entities/project.entity';
 import { Invoice } from 'src/invoices/entities/invoice.entity';
 import { ConfigModule } from '@nestjs/config';
 import { StripeService } from './stripe.service';
-import { AiUser } from 'src/ai/entities/ai-user.entity';
 
 @Module({
   imports: [
@@ -20,7 +19,6 @@ import { AiUser } from 'src/ai/entities/ai-user.entity';
       ClientProfile,
       Project,
       Invoice,
-      AiUser,
     ]),
   ],
   controllers: [PaymentsController],

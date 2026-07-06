@@ -14,6 +14,7 @@ import { Project } from 'src/projects/entities/project.entity';
 import { Task } from 'src/tasks/entities/task.entity';
 import { ChatMessage } from 'src/chats/entities/chat-message.entity';
 import { File } from 'src/files/entities/file.entity';
+import { RequestCategory } from 'src/common/enums/request-category.enum';
 
 /**
  * 🎟️ ENUMS
@@ -66,6 +67,14 @@ export class Ticket {
   @Column({ type: 'text', nullable: true })
   rejectionReason?: string;
 
+  // 🔹 Client Portal Fields (Phase 1)
+  @Column({
+    type: 'enum',
+    enum: RequestCategory,
+    default: RequestCategory.ANOMALY,
+  })
+  category?: RequestCategory; // Type de demande: anomaly, modification, evolution
+
   // -------------------------------
   // 🔗 RELATIONS
   // -------------------------------
@@ -94,17 +103,11 @@ export class Ticket {
   })
   messages?: ChatMessage[];
 
+
   /** Tâche créée quand le ticket est accepté */
-  @OneToOne(() => Task, (task) => task.ticket, {
-    nullable: true,
-    onDelete: 'SET NULL',
-  })
+  @OneToOne(() => Task, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   task?: Task;
-
-  // -------------------------------
-  // 🕒 MÉTADONNÉES
-  // -------------------------------
   @CreateDateColumn()
   createdAt: Date;
 

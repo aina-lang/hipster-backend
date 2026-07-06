@@ -15,7 +15,7 @@ import { PaginatedResult } from 'src/common/types/paginated-result.type';
 import { User } from 'src/users/entities/user.entity';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { MailService } from 'src/mail/mail.service';
-import { TasksService } from 'src/tasks/tasks.service';
+
 import { ValidateTicketDto } from './dto/validate-ticket.dto';
 import { TicketStatus } from './entities/ticket.entity';
 
@@ -32,7 +32,6 @@ export class TicketsService {
     private readonly userRepo: Repository<User>,
     private readonly notificationsService: NotificationsService,
     private readonly mailService: MailService,
-    private readonly tasksService: TasksService,
   ) {}
 
   async validateTicket(
@@ -48,26 +47,10 @@ export class TicketsService {
           'Le ticket doit être lié à un projet pour être accepté.',
         );
       }
-
-      // 1. Créer la tâche
-      const task = await this.tasksService.create(
-        {
-          title: `[TICKET #${ticket.id}] ${ticket.subject}`,
-          description: ticket.description,
-          projectId: ticket.project.id,
-          assigneeIds: dto.assigneeIds,
-          priority: ticket.priority as any,
-        },
-        adminId,
-      );
-
-      // 2. Lier le ticket à la tâche
-      ticket.task = task;
       ticket.status = TicketStatus.ACCEPTED;
     } else if (dto.status === TicketStatus.REJECTED) {
-      // Update ticket status & reason
       ticket.status = dto.status;
-      if (dto.status === TicketStatus.REJECTED && dto.reason) {
+      if (dto.reason) {
         ticket.rejectionReason = dto.reason;
       }
     }
@@ -139,38 +122,6 @@ export class TicketsService {
         }
       }
 
-      // 3. Notify Employees (Task Assigned)
-      if (dto.status === TicketStatus.ACCEPTED && t.task?.assignees) {
-        for (const employeeProfile of t.task.assignees) {
-          const employeeUser = employeeProfile.user;
-          if (!employeeUser) continue;
-
-          // Push
-          await this.notificationsService.create({
-            userId: employeeUser.id,
-            title: '📋 Nouvelle tâche (Ticket)',
-            message: `Une nouvelle tâche a été créée pour vous à partir du ticket #${t.id}: "${t.subject}"`,
-            type: 'task_assigned',
-            data: { taskId: t.task.id, ticketId: t.id },
-          });
-
-          // Email
-          if (employeeUser.email) {
-            await this.mailService.sendTaskAssignedEmail(
-              employeeUser.email,
-              {
-                assigneeName: `${employeeUser.firstName} ${employeeUser.lastName}`,
-                taskTitle: t.task.title,
-                projectName: t.project?.name,
-                taskPriority: t.task.priority,
-                taskDescription: t.task.description,
-                clientName: `${t.client.user.firstName} ${t.client.user.lastName}`,
-              },
-              employeeUser.roles,
-            );
-          }
-        }
-      }
     } catch (e) {
       console.error('Failed to send ticket validation notifications:', e);
     }

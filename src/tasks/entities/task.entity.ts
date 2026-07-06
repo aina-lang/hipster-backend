@@ -65,11 +65,11 @@ export class Task {
   updatedAt: Date;
 
   // 🔗 Relations
-  @ManyToOne(() => Project, (p) => p.tasks, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Project, { onDelete: 'CASCADE' })
   project: Project;
 
   // ✅ Plusieurs employés peuvent être assignés à la même tâche
-  @ManyToMany(() => EmployeeProfile, (e) => e.tasks, { cascade: true })
+  @ManyToMany(() => EmployeeProfile, { cascade: true })
   @JoinTable({
     name: 'task_assignees',
     joinColumn: { name: 'task_id', referencedColumnName: 'id' },
@@ -78,7 +78,7 @@ export class Task {
   assignees: EmployeeProfile[];
 
   // 🔗 Si cette tâche vient d'un ticket
-  @OneToOne(() => Ticket, (t) => t.task, { nullable: true })
+  @ManyToOne(() => Ticket, { nullable: true, onDelete: 'SET NULL' })
   ticket?: Ticket;
 
   // 🔗 Si cette tâche représente un site web (pour maintenance)

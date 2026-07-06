@@ -6,8 +6,6 @@ import { ClientProfile } from './entities/client-profile.entity';
 import { EmployeeProfile } from './entities/employee-profile.entity';
 import { ClientWebsite } from './entities/client-website.entity';
 import { User } from 'src/users/entities/user.entity';
-import { AiUser } from 'src/ai/entities/ai-user.entity';
-import { Task } from 'src/tasks/entities/task.entity';
 import { MailModule } from 'src/mail/mail.module';
 import { ClientWebsitesService } from './client-websites.service';
 import { ClientWebsitesController } from './client-websites.controller';
@@ -19,8 +17,6 @@ import { ClientWebsitesController } from './client-websites.controller';
       EmployeeProfile,
       ClientWebsite,
       User,
-      AiUser,
-      Task,
     ]),
     MailModule,
   ],

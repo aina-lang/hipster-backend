@@ -1,6 +1,6 @@
 import { Invoice } from 'src/invoices/entities/invoice.entity';
 import { Project } from 'src/projects/entities/project.entity';
-import { AiUser } from 'src/ai/entities/ai-user.entity';
+
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
@@ -74,10 +74,7 @@ export class Payment {
   @ManyToOne(() => ClientProfile, (c) => c.payments, { onDelete: 'CASCADE' })
   client?: ClientProfile;
 
-  @ManyToOne(() => AiUser, (a) => a.payments, {
-    onDelete: 'CASCADE',
-  })
-  aiUser?: AiUser;
+
 
   @OneToOne(() => Project, (p) => p.payment, { onDelete: 'CASCADE' })
   @JoinColumn()

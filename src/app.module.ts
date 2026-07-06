@@ -12,7 +12,6 @@ import { OtpModule } from './otp/otp.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TasksModule } from './tasks/tasks.module';
 
-import { PaymentsModule } from './payments/payments.module';
 import { ProjectsModule } from './projects/projects.module';
 import { InvoicesModule } from './invoices/invoices.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -20,24 +19,18 @@ import { ChatsModule } from './chats/chats.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { FilesModule } from './files/files.module';
 import { ProfilesModule } from './profiles/profiles.module';
-import { CampaignsModule } from './campaigns/campaigns.module';
-
 import { RolesModule } from './roles/roles.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
-
+import { CompanyModule } from './company/company.module';
 
 import { join } from 'path';
-import { CompanyModule } from './company/company.module';
-import { AiAuthModule } from './ai-auth/ai-auth.module';
-import { AiModule } from './ai/ai.module';
-import { AiPaymentModule } from './ai-payment/ai-payment.module';
 
 @Module({
   imports: [
-    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forFeature([User]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -65,9 +58,6 @@ import { AiPaymentModule } from './ai-payment/ai-payment.module';
     MailModule,
     OtpModule,
     TasksModule,
-    // test
-    // Legacy subscriptions (keep for backwards compatibility)
-    PaymentsModule,
     ProjectsModule,
     InvoicesModule,
     NotificationsModule,
@@ -75,14 +65,9 @@ import { AiPaymentModule } from './ai-payment/ai-payment.module';
     TicketsModule,
     FilesModule,
     ProfilesModule,
-    CampaignsModule,
     RolesModule,
     CompanyModule,
     MaintenanceModule,
-    AiAuthModule,
-    AiModule,
-    AiPaymentModule,
-   
   ],
 
   controllers: [],
@@ -97,6 +82,4 @@ import { AiPaymentModule } from './ai-payment/ai-payment.module';
     },
   ],
 })
-export class AppModule {
-  // constructor(private dataSource: DataSource) { }
-}
+export class AppModule {}

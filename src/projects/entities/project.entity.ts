@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { Task } from 'src/tasks/entities/task.entity';
+
 import { Ticket } from 'src/tickets/entities/ticket.entity';
 import { File } from 'src/files/entities/file.entity';
 import { Payment } from 'src/payments/entities/payment.entity';
@@ -65,6 +66,13 @@ export class Project {
 
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   budget: number;
+
+  // 🔹 Client Portal Fields (Phase 1)
+  @Column({ type: 'int', default: 3, nullable: true })
+  modifications_restantes?: number; // Compteur modifications incluses (règle des 3)
+
+  @Column({ type: 'boolean', default: false })
+  maintenance_active?: boolean; // Indique si le client a un contrat de maintenance actif
 
   @Column({ type: 'json', nullable: true })
   maintenanceConfig?: MaintenanceConfig;

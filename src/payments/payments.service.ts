@@ -21,11 +21,6 @@ import {
   PaymentType,
 } from './entities/payment.entity';
 import { ConfigService } from '@nestjs/config';
-import {
-  AiUser,
-  PlanType,
-  SubscriptionStatus,
-} from 'src/ai/entities/ai-user.entity';
 
 @Injectable()
 export class PaymentsService {
@@ -40,8 +35,6 @@ export class PaymentsService {
     private readonly projectRepo: Repository<Project>,
     @InjectRepository(Invoice)
     private readonly invoiceRepo: Repository<Invoice>,
-    @InjectRepository(AiUser)
-    private readonly aiUserRepo: Repository<AiUser>,
     private readonly stripeService: StripeService,
     private readonly configService: ConfigService,
   ) {}
@@ -128,96 +121,9 @@ export class PaymentsService {
       throw new BadRequestException(`Webhook Error: ${err.message}`);
     }
 
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object;
-      await this.updatePaymentStatus(paymentIntent.id, PaymentStatus.SUCCEEDED);
-    } else if (event.type === 'payment_intent.payment_failed') {
-      const paymentIntent = event.data.object;
-      await this.updatePaymentStatus(paymentIntent.id, PaymentStatus.FAILED);
-    } else if (
-      event.type === 'customer.subscription.created' ||
-      event.type === 'customer.subscription.updated' ||
-      event.type === 'customer.subscription.deleted'
-    ) {
-      const subscription = event.data.object;
-      await this.syncAiSubscription(subscription.id);
-    } else if (event.type === 'invoice.payment_succeeded') {
-      const invoice = event.data.object;
-      if (invoice.subscription) {
-        await this.syncAiSubscription(invoice.subscription as string);
-      }
-    }
-
     return { received: true };
   }
 
-  private async syncAiSubscription(stripeSubscriptionId: string) {
-    const subscription =
-      await this.stripeService.instance.subscriptions.retrieve(
-        stripeSubscriptionId,
-      );
-    const customerId = subscription.customer as string;
-
-    const user = await this.aiUserRepo.findOne({
-      where: { stripeCustomerId: customerId },
-    });
-
-    if (!user) {
-      console.warn(`No AI user found for Stripe customer ${customerId}`);
-      return;
-    }
-
-    // Map Stripe status to local status
-    let status: SubscriptionStatus;
-    switch (subscription.status) {
-      case 'active':
-        status = SubscriptionStatus.ACTIVE;
-        break;
-      case 'trialing':
-        status = SubscriptionStatus.TRIAL;
-        break;
-      case 'past_due':
-      case 'unpaid':
-        status = SubscriptionStatus.PAUSED;
-        break;
-      case 'canceled':
-      case 'incomplete_expired':
-        status = SubscriptionStatus.CANCELED;
-        break;
-      default:
-        status = SubscriptionStatus.PAUSED;
-    }
-
-    // Determine Plan Type from Stripe Price ID
-    let planType = PlanType.CURIEUX;
-    const priceId = subscription.items.data[0].price.id;
-
-    if (priceId === 'price_Atelier1790') {
-      planType = PlanType.ATELIER;
-    } else if (priceId === 'price_Studio2990') {
-      planType = PlanType.STUDIO;
-    } else if (priceId === 'price_Agence6990') {
-      planType = PlanType.AGENCE;
-    }
-
-    user.subscriptionStatus = status;
-    user.planType = planType;
-    user.subscriptionStartDate = new Date(
-      (subscription as any).current_period_start * 1000,
-    );
-    user.subscriptionEndDate = new Date(
-      (subscription as any).current_period_end * 1000,
-    );
-
-    // Update Limits based on plan upgrade
-    if (status === SubscriptionStatus.ACTIVE) {
-      if (planType === PlanType.ATELIER) user.promptsLimit = 999999;
-      if (planType === PlanType.STUDIO) user.promptsLimit = 999999;
-      if (planType === PlanType.AGENCE) user.promptsLimit = 999999;
-    }
-
-    await this.aiUserRepo.save(user);
-  }
 
   private async updatePaymentStatus(
     paymentIntentId: string,

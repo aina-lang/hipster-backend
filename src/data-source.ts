@@ -1,10 +1,5 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { AiUser } from './ai/entities/ai-user.entity';
-import { User } from './users/entities/user.entity';
-import { Otp } from './otp/enitities/otp.entity';
-import { Payment } from './payments/entities/payment.entity';
-import { AiUsageLog } from './ai/entities/ai-usage-log.entity';
 
 export const AppDataSource = new DataSource({
   type: 'mysql',
@@ -13,9 +8,9 @@ export const AppDataSource = new DataSource({
   username: 'hipsteruser',
   password: 'MotDePasseFort',
   database: 'hipsterdb',
-  synchronize: false, // Force false for CLI usage
+  synchronize: false,
   logging: true,
-  entities: [AiUser, User, Otp, Payment, AiUsageLog],
+  entities: [__dirname + '/**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/migrations/*.ts'],
   subscribers: [],
 });

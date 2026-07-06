@@ -5,15 +5,13 @@ import * as bcrypt from 'bcrypt';
 import { ClientWebsite } from './entities/client-website.entity';
 import { CreateClientWebsiteDto } from './dto/create-client-website.dto';
 import { UpdateClientWebsiteDto } from './dto/update-client-website.dto';
-import { Task } from '../tasks/entities/task.entity';
+
 
 @Injectable()
 export class ClientWebsitesService {
   constructor(
     @InjectRepository(ClientWebsite)
     private readonly websiteRepo: Repository<ClientWebsite>,
-    @InjectRepository(Task)
-    private readonly taskRepo: Repository<Task>,
   ) {}
 
   async create(
@@ -75,49 +73,10 @@ export class ClientWebsitesService {
     }
 
     Object.assign(website, dto);
-    website.plainPassword = plainPassword; // Update plain password field
-
-    const updatedWebsite = await this.websiteRepo.save(website);
-
-    // Update associated maintenance task if exists
-    await this.updateMaintenanceTask(updatedWebsite, clientId);
-
-    return updatedWebsite;
+    website.plainPassword = plainPassword;
+    return this.websiteRepo.save(website);
   }
 
-  private async updateMaintenanceTask(
-    website: ClientWebsite,
-    clientId: number,
-  ): Promise<void> {
-    try {
-      // Find maintenance task for this website
-      const task = await this.taskRepo.findOne({
-        where: { websiteId: website.id },
-        relations: ['project'],
-      });
-
-      if (task) {
-        // Get client info for description
-        const clientWebsite = await this.websiteRepo.findOne({
-          where: { id: website.id },
-          relations: ['client', 'client.user'],
-        });
-
-        const clientName = clientWebsite?.client?.user
-          ? `${clientWebsite.client.user.firstName} ${clientWebsite.client.user.lastName}`
-          : 'Client inconnu';
-
-        // Update task title and description
-        task.title = `${website.url} - ${clientName}`;
-        task.description = `Maintenance du site WordPress\nURL: ${website.url}\nLogin: ${website.adminLogin}\nPassword: ${website.plainPassword || '[Non modifié]'}\nClient: ${clientName}`;
-
-        await this.taskRepo.save(task);
-      }
-    } catch (error) {
-      console.error('Error updating maintenance task:', error);
-      // Don't throw error, just log it
-    }
-  }
 
   async remove(id: number, clientId: number): Promise<{ message: string }> {
     const website = await this.findOne(id, clientId);

@@ -14,10 +14,7 @@ import { CreateClientProfileDto } from './dto/create-client-profile.dto';
 import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
 import { CreateEmployeeProfileDto } from './dto/create-employee-profile.dto';
 import { UpdateEmployeeProfileDto } from './dto/update-employee-profile.dto';
-import { UpdateAiProfileDto } from './dto/update-ai-profile.dto';
-import { CreateIaClientProfileDto } from './dto/create-ia-client-profile.dto';
 import { User } from 'src/users/entities/user.entity';
-import { AiUser } from 'src/ai/entities/ai-user.entity';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/common/enums/role.enum';
 import { ClientType } from 'src/common/enums/client.enum';
@@ -35,8 +32,7 @@ export class ProfilesService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
 
-    @InjectRepository(AiUser)
-    private readonly aiUserRepo: Repository<AiUser>,
+
 
     private readonly dataSource: DataSource,
     private readonly mailService: MailService,
@@ -312,14 +308,14 @@ export class ProfilesService {
 
   async findAllEmployees(): Promise<EmployeeProfile[]> {
     return this.employeeRepo.find({
-      relations: ['user', 'tasks', 'projectMemberships', 'chatMessages'],
+      relations: ['user', 'projectMemberships', 'chatMessages'],
     });
   }
 
   async findEmployeeById(id: number): Promise<EmployeeProfile> {
     const profile = await this.employeeRepo.findOne({
       where: { id },
-      relations: ['user', 'tasks'],
+      relations: ['user'],
     });
     if (!profile)
       throw new NotFoundException(`EmployeeProfile #${id} introuvable`);
@@ -348,54 +344,5 @@ export class ProfilesService {
     };
   }
 
-  // ----------------------------
-  // AI PROFILE (Unified in AiUser)
-  // ----------------------------
-  async createAiProfile(dto: CreateIaClientProfileDto): Promise<AiUser> {
-    const { userId, ...profileData } = dto;
-    if (!userId) {
-      throw new BadRequestException(
-        'userId mandatory for creating AI profile data',
-      );
-    }
-
-    const aiUser = await this.aiUserRepo.findOneBy({ id: userId });
-    if (!aiUser) throw new NotFoundException(`AiUser #${userId} introuvable`);
-
-    Object.assign(aiUser, profileData);
-    return this.aiUserRepo.save(aiUser);
-  }
-
-  async findAllAiProfiles(): Promise<AiUser[]> {
-    return this.aiUserRepo.find();
-  }
-
-  async findAiProfileById(id: number): Promise<AiUser> {
-    const user = await this.aiUserRepo.findOneBy({ id: id });
-    if (!user) throw new NotFoundException(`AiUser #${id} introuvable`);
-    return user;
-  }
-
-  async updateAiProfile(id: number, dto: UpdateAiProfileDto): Promise<AiUser> {
-    this.logger.log(`[updateAiProfile] Updating AI Data for User #${id}`);
-    this.logger.log(`[updateAiProfile] DTO keys: ${Object.keys(dto).join(', ')}`);
-    this.logger.log(`[updateAiProfile] DTO values: ${JSON.stringify(dto)}`);
-    
-    const user = await this.findAiProfileById(id);
-
-    if (dto.logoUrl && user.logoUrl && dto.logoUrl !== user.logoUrl) {
-      deleteFile(user.logoUrl);
-    }
-
-    Object.assign(user, dto);
-    const saved = await this.aiUserRepo.save(user);
-    this.logger.log(`[updateAiProfile] AI User #${id} updated successfully`);
-    return saved;
-  }
-
-  async removeAiProfile(id: number): Promise<{ message: string }> {
-    const user = await this.findAiProfileById(id);
-    await this.aiUserRepo.remove(user);
-    return { message: `AiUser #${id} supprimé avec succès` };
-  }
 }
+

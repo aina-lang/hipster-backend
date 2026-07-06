@@ -18,8 +18,7 @@ import { UpdateClientProfileDto } from './dto/update-client-profile.dto';
 import { CreateEmployeeProfileDto } from './dto/create-employee-profile.dto';
 import { UpdateEmployeeProfileDto } from './dto/update-employee-profile.dto';
 
-import { UpdateAiProfileDto } from './dto/update-ai-profile.dto';
-import { CreateIaClientProfileDto } from './dto/create-ia-client-profile.dto';
+
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { User } from 'src/common/decorators/user.decorator';
@@ -160,88 +159,6 @@ export class ProfilesController {
     return this.profilesService.removeEmployeeProfile(+id);
   }
 
-  // --------------------
-  // AI SUBSCRIPTION PROFILE
-  // --------------------
-  @ApiOperation({ summary: 'Créer un profil IA / abonnement (Admin)' })
-  @ResponseMessage('Profil IA créé avec succès')
-  @Post('ai')
-  createAi(@Body() dto: CreateIaClientProfileDto) {
-    return this.profilesService.createAiProfile(dto);
-  }
-
-  @ApiOperation({ summary: 'Activer le profil IA pour l’utilisateur connecté' })
-  @UseGuards(AuthGuard)
-  @ResponseMessage('Profil IA activé avec succès')
-  @Post('ai/activate')
-  activateAi(@User() user: any, @Body() dto: CreateIaClientProfileDto) {
-    return this.profilesService.createAiProfile({ ...dto, userId: user.sub });
-  }
-
-  @ApiOperation({ summary: 'Lister tous les profils IA' })
-  @Get('ai')
-  findAllAi() {
-    return this.profilesService.findAllAiProfiles();
-  }
-
-  @ApiOperation({ summary: 'Récupérer un profil IA' })
-  @Get('ai/:id')
-  findAi(@Param('id') id: string) {
-    return this.profilesService.findAiProfileById(+id);
-  }
-
-  @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'Mettre à jour un profil IA' })
-  @ResponseMessage('Profil IA mis à jour avec succès')
-  @Patch('ai/:id')
-  updateAi(@Param('id') id: string, @Body() dto: UpdateAiProfileDto) {
-    console.log(
-      '[ProfilesController] updateAi called with id:',
-      id,
-      'DTO:',
-      JSON.stringify(dto, null, 2),
-    );
-    return this.profilesService.updateAiProfile(+id, dto);
-  }
-
-  @ApiOperation({ summary: 'Supprimer un profil IA' })
-  @ResponseMessage('Profil IA supprimé avec succès')
-  @Delete('ai/:id')
-  removeAi(@Param('id') id: string) {
-    return this.profilesService.removeAiProfile(+id);
-  }
-
-  @UseGuards(AuthGuard)
-  @ApiOperation({ summary: 'Uploader un logo pour le profil IA' })
-  @ResponseMessage('Logo mis à jour avec succès')
-  @Post('ai/:id/logo')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (req, file, cb) => {
-          cb(null, '/home/ubuntu/uploads');
-        },
-        filename: (req, file, cb) => {
-          const randomName = Array(32)
-            .fill(null)
-            .map(() => Math.round(Math.random() * 16).toString(16))
-            .join('');
-          cb(null, `${randomName}${extname(file.originalname)}`);
-        },
-      }),
-    }),
-  )
-  async uploadAiLogo(
-    @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    if (!file) {
-      throw new BadRequestException('Fichier manquant');
-    }
-
-    const logoUrl = `/uploads/${file.filename}`;
-    return this.profilesService.updateAiProfile(+id, { logoUrl } as any);
-  }
 
   // --------------------
   // GLOBAL WEBSITES
