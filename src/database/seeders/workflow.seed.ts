@@ -83,8 +83,11 @@ async function seed() {
       country: 'France',
     } as ClientProfile,
   });
-  await userRepo.save(client1);
-  const profile1 = await clientProfileRepo.findOne({ where: { userId: client1.id } });
+  const saved1 = await userRepo.save(client1);
+  const profile1 = await clientProfileRepo.findOne({
+    where: { user: { id: saved1.id } },
+  });
+  if (!profile1) throw new Error('ClientProfile 1 not found');
   console.log('✓ Client 1 created: client.maintenance@hypster.com / password123');
 
   // Projects for Client 1
@@ -226,7 +229,7 @@ async function seed() {
     } as ClientProfile,
   });
   await userRepo.save(client2);
-  const profile2 = await clientProfileRepo.findOne({ where: { userId: client2.id } });
+  const profile2 = await clientProfileRepo.findOne({ where: { user: { id: client2.id } } });
   console.log('✓ Client 2 created: client.nomaintenance@hypster.com / password123');
 
   const project2_1 = projectRepo.create({
@@ -291,7 +294,7 @@ async function seed() {
     } as ClientProfile,
   });
   await userRepo.save(client3);
-  const profile3 = await clientProfileRepo.findOne({ where: { userId: client3.id } });
+  const profile3 = await clientProfileRepo.findOne({ where: { user: { id: client3.id } } });
   console.log('✓ Client 3 created: client.nomodif@hypster.com / password123');
 
   const project3_1 = projectRepo.create({
