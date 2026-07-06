@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -11,6 +12,7 @@ import { ChatMessage } from './chat-message.entity';
  * 📎 MESSAGE ATTACHMENT ENTITY
  * Pièces jointes aux messages de chat
  */
+@Index('IDX_message_attachments_messageId', ['messageId'], { synchronize: false } as any)
 @Entity('message_attachments')
 export class MessageAttachment {
   @PrimaryGeneratedColumn()

@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -19,6 +20,8 @@ export enum ProjectUpdateType {
  * 📜 PROJECT UPDATE ENTITY
  * Enregistre l'historique des modifications d'un projet (timeline)
  */
+@Index('IDX_project_updates_projectId', ['projectId'], { synchronize: false } as any)
+@Index('IDX_project_updates_projectId_createdAt', ['projectId', 'createdAt'], { synchronize: false } as any)
 @Entity('project_updates')
 export class ProjectUpdate {
   @PrimaryGeneratedColumn()

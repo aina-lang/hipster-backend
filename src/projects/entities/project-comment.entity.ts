@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -13,6 +14,9 @@ import { User } from 'src/users/entities/user.entity';
  * 💬 PROJECT COMMENT ENTITY
  * Commentaires et notes sur un projet (utilisé pour historique interne)
  */
+@Index('IDX_project_comments_projectId', ['projectId'], { synchronize: false } as any)
+@Index('IDX_project_comments_projectId_createdAt', ['projectId', 'createdAt'], { synchronize: false } as any)
+@Index('IDX_project_comments_userId', ['userId'], { synchronize: false } as any)
 @Entity('project_comments')
 export class ProjectComment {
   @PrimaryGeneratedColumn()
