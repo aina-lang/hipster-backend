@@ -21,6 +21,7 @@ import { FilesModule } from './files/files.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { RolesModule } from './roles/roles.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
+import { ClientPortalModule } from './client-portal/client-portal.module';
 import { CompanyModule } from './company/company.module';
 
 import { join } from 'path';
@@ -68,6 +69,7 @@ import { join } from 'path';
     RolesModule,
     CompanyModule,
     MaintenanceModule,
+    ClientPortalModule,
   ],
 
   controllers: [],
