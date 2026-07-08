@@ -56,7 +56,7 @@ export class CompanyController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          cb(null, '/home/ubuntu/uploads');
+          cb(null, process.env.UPLOAD_PATH || join(process.cwd(), 'uploads'));
         },
         filename: (req, file, cb) => {
           const randomName = Array(32)

@@ -741,21 +741,6 @@ export class InvoicesService {
     invoice.status = status;
     const saved = await this.invoiceRepo.save(invoice);
 
-    // Notification logic for Quote Acceptance
-    if (
-      invoice.type === InvoiceType.QUOTE &&
-      status === InvoiceStatus.ACCEPTED
-    ) {
-      console.log(
-        `Quote ${invoice.reference} accepted by client. Generating invoice...`,
-      );
-      try {
-        await this.convertQuoteToInvoice(invoice.id);
-      } catch (error) {
-        console.error('Failed to automatically generate invoice:', error);
-      }
-    }
-
     return saved;
   }
 

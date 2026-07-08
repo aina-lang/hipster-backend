@@ -50,7 +50,9 @@ import { join } from 'path';
         extra: {
           connectionLimit: 10,
           enableKeepAlive: true,
-          keepAliveInitialDelay: 0,
+          keepAliveInitialDelay: 10000,
+          waitForConnections: true,
+          queueLimit: 0,
         },
       }),
     }),

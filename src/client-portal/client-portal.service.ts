@@ -32,6 +32,7 @@ export class ClientPortalService {
       where: { id: userId },
       relations: ['clientProfile'],
     });
+    console.log(`[findClient] userId=${userId}, user=${!!user}, profile=${!!user?.clientProfile}`);
     if (!user?.clientProfile) {
       throw new NotFoundException('Profil client introuvable');
     }

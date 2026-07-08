@@ -1,28 +1,171 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { In, Repository } from 'typeorm';
+import { ChatRoom } from './entities/chat-room.entity';
+import { ChatMessage } from './entities/chat-message.entity';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { User } from 'src/users/entities/user.entity';
+import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
+import { Role } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class ChatsService {
-  create(createChatDto: CreateChatDto) {
-    void createChatDto;
-    return 'This action adds a new chat';
+  constructor(
+    @InjectRepository(ChatRoom)
+    private readonly chatRoomRepository: Repository<ChatRoom>,
+    @InjectRepository(ChatMessage)
+    private readonly chatMessageRepository: Repository<ChatMessage>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(ClientProfile)
+    private readonly clientProfileRepository: Repository<ClientProfile>,
+  ) {}
+
+  async createRoom(dto: CreateChatDto): Promise<ChatRoom> {
+    const existing = await this.chatRoomRepository.findOne({
+      where: { clientProfileId: dto.clientProfileId },
+      relations: ['participants'],
+    });
+    if (existing) return existing;
+
+    const clientProfile = await this.clientProfileRepository.findOne({
+      where: { id: dto.clientProfileId },
+      relations: ['user'],
+    });
+    if (!clientProfile) throw new NotFoundException('Profil client introuvable');
+
+    const admins = await this.userRepository.find({
+      where: { roles: In([Role.ADMIN]), isActive: true },
+    });
+
+    const participants = [clientProfile.user, ...admins];
+
+    if (dto.participantIds && dto.participantIds.length > 0) {
+      const extraUsers = await this.userRepository.findBy({
+        id: In(dto.participantIds),
+      });
+      for (const u of extraUsers) {
+        if (!participants.find((p) => p.id === u.id)) {
+          participants.push(u);
+        }
+      }
+    }
+
+    const room = this.chatRoomRepository.create({
+      name: dto.name || null,
+      client: clientProfile,
+      clientProfileId: dto.clientProfileId,
+      participants,
+    });
+    return this.chatRoomRepository.save(room);
   }
 
-  findAll() {
-    return `This action returns all chats`;
+  async findUserRooms(userId: number): Promise<ChatRoom[]> {
+    return this.chatRoomRepository
+      .createQueryBuilder('room')
+      .leftJoinAndSelect('room.participants', 'participant')
+      .leftJoinAndSelect('room.client', 'client')
+      .leftJoinAndSelect('client.user', 'clientUser')
+      .leftJoinAndSelect('room.messages', 'message')
+      .leftJoinAndSelect('message.user', 'messageUser')
+      .where('participant.id = :userId', { userId })
+      .orderBy('message.createdAt', 'DESC')
+      .getMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} chat`;
+  async findRoomByClient(clientProfileId: number): Promise<ChatRoom | null> {
+    return this.chatRoomRepository.findOne({
+      where: { clientProfileId },
+      relations: ['participants', 'client', 'client.user'],
+    });
   }
 
-  update(id: number, updateChatDto: UpdateChatDto) {
-    void updateChatDto;
-    return `This action updates a #${id} chat`;
+  async findOne(id: number): Promise<ChatRoom> {
+    const room = await this.chatRoomRepository.findOne({
+      where: { id },
+      relations: ['participants', 'client', 'client.user'],
+    });
+    if (!room) throw new NotFoundException(`ChatRoom #${id} introuvable`);
+    return room;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} chat`;
+  async getMessages(
+    roomId: number,
+    userId: number,
+    userRoles: string[],
+    page = 1,
+    limit = 50,
+  ): Promise<{ data: ChatMessage[]; total: number }> {
+    const room = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ['participants', 'client', 'client.user'],
+    });
+    if (!room) throw new NotFoundException(`ChatRoom #${roomId} introuvable`);
+
+    const isAdmin = userRoles.includes(Role.ADMIN);
+    const isOwner = room.client.user.id === userId;
+    const isParticipant = room.participants.some((p) => p.id === userId);
+
+    if (!isAdmin && !isOwner && !isParticipant) {
+      throw new ForbiddenException("Vous n'êtes pas membre de cette conversation");
+    }
+
+    const [data, total] = await this.chatMessageRepository.findAndCount({
+      where: { room: { id: roomId } },
+      relations: ['user'],
+      order: { createdAt: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return { data, total };
+  }
+
+  async sendMessage(
+    roomId: number,
+    userId: number,
+    dto: CreateMessageDto,
+    userRoles: string[],
+  ): Promise<ChatMessage> {
+    const room = await this.chatRoomRepository.findOne({
+      where: { id: roomId },
+      relations: ['participants', 'client', 'client.user'],
+    });
+    if (!room) throw new NotFoundException(`ChatRoom #${roomId} introuvable`);
+
+    const isAdmin = userRoles.includes(Role.ADMIN);
+    const isOwner = room.client.user.id === userId;
+    const isParticipant = room.participants.some((p) => p.id === userId);
+
+    if (!isAdmin && !isOwner && !isParticipant) {
+      throw new ForbiddenException("Vous n'êtes pas membre de cette conversation");
+    }
+
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    const message = this.chatMessageRepository.create({
+      content: dto.content,
+      senderType: dto.senderType,
+      attachments: dto.attachments,
+      user,
+      room,
+    });
+    return this.chatMessageRepository.save(message);
+  }
+
+  async findAll(): Promise<ChatRoom[]> {
+    return this.chatRoomRepository.find({
+      relations: ['participants', 'client', 'client.user'],
+    });
+  }
+
+  async removeRoom(id: number): Promise<void> {
+    await this.chatRoomRepository.delete(id);
   }
 }
