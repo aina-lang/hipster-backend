@@ -6,6 +6,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import * as express from 'express';
 import { json, urlencoded } from 'express';
 import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import * as http from 'http';
 
 async function bootstrap() {
@@ -13,6 +14,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const uploadsPath = process.env.UPLOAD_PATH || join(process.cwd(), 'uploads');
+  if (!existsSync(uploadsPath)) mkdirSync(uploadsPath, { recursive: true });
   app.use('/uploads', express.static(uploadsPath));
 
   // Stripe exige le corps brut (octets exacts) pour vérifier stripe-signature.
