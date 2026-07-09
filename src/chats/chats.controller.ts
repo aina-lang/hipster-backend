@@ -37,6 +37,12 @@ export class ChatsController {
     return this.chatsService.findUserRooms(userId);
   }
 
+  @ApiOperation({ summary: 'Toutes les conversations (admin/employee)' })
+  @Get('all')
+  findAll() {
+    return this.chatsService.findAll();
+  }
+
   @ApiOperation({ summary: 'Récupérer la room d\'un client (par clientProfileId)' })
   @Get('by-client/:clientProfileId')
   findRoomByClient(@Param('clientProfileId') clientProfileId: string) {

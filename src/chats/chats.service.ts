@@ -5,7 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { ChatRoom } from './entities/chat-room.entity';
 import { ChatMessage } from './entities/chat-message.entity';
 import { CreateChatDto } from './dto/create-chat.dto';
@@ -41,7 +41,7 @@ export class ChatsService {
     if (!clientProfile) throw new NotFoundException('Profil client introuvable');
 
     const admins = await this.userRepository.find({
-      where: { roles: In([Role.ADMIN]), isActive: true },
+      where: { roles: Like(`%${Role.ADMIN}%`) as any, isActive: true },
     });
 
     const participants = [clientProfile.user, ...admins];
@@ -75,7 +75,7 @@ export class ChatsService {
       .leftJoinAndSelect('room.messages', 'message')
       .leftJoinAndSelect('message.user', 'messageUser')
       .where('participant.id = :userId', { userId })
-      .orderBy('message.createdAt', 'DESC')
+      .orderBy('room.updatedAt', 'DESC')
       .getMany();
   }
 
@@ -149,20 +149,31 @@ export class ChatsService {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
 
-    const message = this.chatMessageRepository.create({
+    const msg = this.chatMessageRepository.create({
       content: dto.content,
       senderType: dto.senderType,
       attachments: dto.attachments,
       user,
       room,
     });
-    return this.chatMessageRepository.save(message);
+    const saved = await this.chatMessageRepository.save(msg);
+    await this.chatRoomRepository.update(room.id, { updatedAt: new Date() });
+    return this.chatMessageRepository.findOne({
+      where: { id: saved.id },
+      relations: ['user', 'room'],
+    });
   }
 
   async findAll(): Promise<ChatRoom[]> {
-    return this.chatRoomRepository.find({
-      relations: ['participants', 'client', 'client.user'],
-    });
+    return this.chatRoomRepository
+      .createQueryBuilder('room')
+      .leftJoinAndSelect('room.participants', 'participant')
+      .leftJoinAndSelect('room.client', 'client')
+      .leftJoinAndSelect('client.user', 'clientUser')
+      .leftJoinAndSelect('room.messages', 'message')
+      .leftJoinAndSelect('message.user', 'messageUser')
+      .orderBy('room.updatedAt', 'DESC')
+      .getMany();
   }
 
   async removeRoom(id: number): Promise<void> {

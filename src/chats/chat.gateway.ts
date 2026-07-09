@@ -8,9 +8,12 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { ChatsService } from './chats.service';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from 'src/users/entities/user.entity';
 
 @WebSocketGateway({
   cors: {
@@ -30,7 +33,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
   private userSockets = new Map<number, string[]>();
 
-  constructor(private readonly chatsService: ChatsService) {}
+  constructor(
+    private readonly chatsService: ChatsService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
   handleConnection(@ConnectedSocket() client: Socket) {
     this.logger.log(`Chat client connected: ${client.id}`);
@@ -98,15 +105,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     },
   ) {
     try {
-      const dto: CreateMessageDto = {
-        content: data.content,
-        senderType: data.senderType,
-      };
+      const user = await this.userRepository.findOne({
+        where: { id: data.userId },
+      });
+      if (!user) throw new NotFoundException('Utilisateur introuvable');
       const message = await this.chatsService.sendMessage(
         data.roomId,
         data.userId,
-        dto,
-        [],
+        { content: data.content, senderType: data.senderType },
+        user.roles || [],
       );
       this.server.to(`chat:${data.roomId}`).emit('chat:newMessage', message);
       this.logger.log(

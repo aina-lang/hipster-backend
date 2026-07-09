@@ -209,11 +209,22 @@ export class ClientPortalService {
       relations: ['websites'],
     });
 
-    return projects.map(p => ({
-      id: p.id,
-      name: p.name,
-      status: p.status,
-      websites: p.websites || [],
-    }));
+    const result: any[] = [];
+    for (const project of projects) {
+      if (project.websites) {
+        for (const website of project.websites) {
+          result.push({
+            id: website.id,
+            url: website.url,
+            adminLogin: website.adminLogin,
+            plainPassword: website.plainPassword,
+            adminPassword: website.adminPassword,
+            projectId: project.id,
+            projectName: project.name,
+          });
+        }
+      }
+    }
+    return result;
   }
 }
