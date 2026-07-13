@@ -13,7 +13,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PartnersService, RequestUser } from './partners.service';
 import {
   UpdateCommissionDto,
@@ -24,6 +24,7 @@ import { Role } from 'src/common/enums/role.enum';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 
 @ApiTags('Partner Commissions')
+@ApiBearerAuth()
 @Controller('partner-commissions')
 export class CommissionsController {
   constructor(private readonly partnersService: PartnersService) {}
@@ -71,6 +72,7 @@ export class CommissionsController {
 
   /** 📎 Justificatif de commission (admin) */
   @ApiOperation({ summary: 'Uploader un justificatif de commission (admin)' })
+  @ApiConsumes('multipart/form-data')
   @ResponseMessage('Justificatif ajouté')
   @Roles(Role.ADMIN)
   @Post(':id/justificatif')

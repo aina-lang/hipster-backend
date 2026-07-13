@@ -15,7 +15,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PartnersService, RequestUser } from './partners.service';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto, UpdateDealStatusDto } from './dto/update-deal.dto';
@@ -40,6 +40,7 @@ const uploadInterceptor = FileInterceptor('file', {
 });
 
 @ApiTags('Partner Deals')
+@ApiBearerAuth()
 @Controller('partner-deals')
 export class PartnerDealsController {
   constructor(private readonly partnersService: PartnersService) {}
@@ -94,6 +95,7 @@ export class PartnerDealsController {
 
   /** 📎 Uploader un document sur l'affaire */
   @ApiOperation({ summary: 'Ajouter un document à une affaire' })
+  @ApiConsumes('multipart/form-data')
   @ResponseMessage('Document ajouté')
   @Post(':id/documents')
   @UseInterceptors(uploadInterceptor)

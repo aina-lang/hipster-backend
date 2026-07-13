@@ -7,7 +7,7 @@ import {
   Param,
   Request,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PartnersService, RequestUser } from './partners.service';
 import { CreatePartnerDto } from './dto/create-partner.dto';
 import { UpdatePartnerDto } from './dto/update-partner.dto';
@@ -16,6 +16,7 @@ import { Role } from 'src/common/enums/role.enum';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 
 @ApiTags('Partners')
+@ApiBearerAuth()
 @Controller('partners')
 export class PartnersController {
   constructor(private readonly partnersService: PartnersService) {}
