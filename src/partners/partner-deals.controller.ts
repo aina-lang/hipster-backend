@@ -21,6 +21,9 @@ import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto, UpdateDealStatusDto } from './dto/update-deal.dto';
 import { QueryDealsDto } from './dto/query-deals.dto';
 import { DealDocumentType } from './entities/deal-document.entity';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { Role } from 'src/common/enums/role.enum';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 
 const uploadInterceptor = FileInterceptor('file', {
@@ -133,5 +136,23 @@ export class PartnerDealsController {
   @Delete('documents/:docId')
   removeDocument(@Param('docId') docId: string, @Request() req) {
     return this.partnersService.removeDocument(+docId, this.ctx(req));
+  }
+
+  /** 🗑️ Supprimer plusieurs affaires (admin) */
+  @ApiOperation({ summary: 'Supprimer plusieurs affaires' })
+  @ResponseMessage('Affaires supprimées avec succès')
+  @Roles(Role.ADMIN)
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.partnersService.removeManyDeals(dto.ids);
+  }
+
+  /** 🗑️ Supprimer une affaire (admin) */
+  @ApiOperation({ summary: 'Supprimer une affaire' })
+  @ResponseMessage('Affaire supprimée avec succès')
+  @Roles(Role.ADMIN)
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.partnersService.removeDeal(+id);
   }
 }

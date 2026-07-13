@@ -5,12 +5,14 @@ import {
   Body,
   Patch,
   Param,
+  Delete,
   Request,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PartnersService, RequestUser } from './partners.service';
 import { CreatePartnerDto } from './dto/create-partner.dto';
 import { UpdatePartnerDto } from './dto/update-partner.dto';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
@@ -97,5 +99,23 @@ export class PartnersController {
   @Patch(':id/toggle-access')
   toggleAccess(@Param('id') id: string) {
     return this.partnersService.toggleAccess(+id);
+  }
+
+  /** 🗑️ Supprimer plusieurs partenaires (admin) */
+  @ApiOperation({ summary: 'Supprimer plusieurs partenaires' })
+  @ResponseMessage('Partenaires supprimés avec succès')
+  @Roles(Role.ADMIN)
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.partnersService.removeManyPartners(dto.ids);
+  }
+
+  /** 🗑️ Supprimer un partenaire (admin) */
+  @ApiOperation({ summary: 'Supprimer un partenaire' })
+  @ResponseMessage('Partenaire supprimé avec succès')
+  @Roles(Role.ADMIN)
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.partnersService.removePartner(+id);
   }
 }

@@ -1,10 +1,11 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Partner } from './entities/partner.entity';
 import { PartnerClient } from './entities/partner-client.entity';
 import { Deal, DealStatus } from './entities/deal.entity';
@@ -663,6 +664,54 @@ export class PartnersService {
     ) {
       await this.notify(deal.realisateur, payload);
     }
+  }
+
+  private readonly logger = new Logger(PartnersService.name);
+
+  // =========================================================
+  // Partner CRUD — Delete
+  // =========================================================
+
+  async removePartner(id: number): Promise<{ message: string }> {
+    const partner = await this.partnerRepo.findOneBy({ id });
+    if (!partner) throw new NotFoundException('Partenaire introuvable');
+    await this.partnerRepo.remove(partner);
+    return { message: `Partenaire #${id} supprimé avec succès` };
+  }
+
+  async removeManyPartners(
+    ids: number[],
+  ): Promise<{ deleted: number; notFound: number[] }> {
+    const partners = await this.partnerRepo.find({
+      where: { id: In(ids) },
+    });
+    const foundIds = partners.map((p) => p.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (partners.length) await this.partnerRepo.remove(partners);
+    return { deleted: partners.length, notFound };
+  }
+
+  // =========================================================
+  // Deal CRUD — Delete
+  // =========================================================
+
+  async removeDeal(id: number): Promise<{ message: string }> {
+    const deal = await this.dealRepo.findOneBy({ id });
+    if (!deal) throw new NotFoundException('Affaire introuvable');
+    await this.dealRepo.remove(deal);
+    return { message: `Affaire #${id} supprimée avec succès` };
+  }
+
+  async removeManyDeals(
+    ids: number[],
+  ): Promise<{ deleted: number; notFound: number[] }> {
+    const deals = await this.dealRepo.find({
+      where: { id: In(ids) },
+    });
+    const foundIds = deals.map((d) => d.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (deals.length) await this.dealRepo.remove(deals);
+    return { deleted: deals.length, notFound };
   }
 }
 
