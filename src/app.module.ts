@@ -23,6 +23,7 @@ import { RolesModule } from './roles/roles.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { ClientPortalModule } from './client-portal/client-portal.module';
 import { CompanyModule } from './company/company.module';
+import { PartnersModule } from './partners/partners.module';
 
 import { join } from 'path';
 
@@ -72,6 +73,7 @@ import { join } from 'path';
     CompanyModule,
     MaintenanceModule,
     ClientPortalModule,
+    PartnersModule,
   ],
 
   controllers: [],

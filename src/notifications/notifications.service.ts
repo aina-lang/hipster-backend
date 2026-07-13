@@ -40,6 +40,35 @@ export class NotificationsService {
     return this.notificationRepo.save(notification);
   }
 
+  /**
+   * 🔔 Notification générique (type + data + actionUrl) + push temps réel.
+   * Utilisée par le module Partners. Ne lève pas si l'utilisateur est introuvable.
+   */
+  async notifyUser(params: {
+    userId: number;
+    title: string;
+    message: string;
+    type?: string;
+    data?: any;
+    actionUrl?: string;
+  }): Promise<Notification | null> {
+    const user = await this.userRepo.findOneBy({ id: params.userId });
+    if (!user) return null;
+
+    const notification = this.notificationRepo.create({
+      user,
+      title: params.title,
+      message: params.message,
+      type: params.type,
+      data: params.data,
+      actionUrl: params.actionUrl,
+    });
+
+    const saved = await this.notificationRepo.save(notification);
+    this.notificationsGateway.emitToUser(params.userId, 'notification:new', saved);
+    return saved;
+  }
+
 
   async findPaginated(
     query: QueryNotificationsDto,
