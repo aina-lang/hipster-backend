@@ -15,6 +15,7 @@ import { QueryNotificationsDto } from './dto/query-notifications.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 import { User } from 'src/common/decorators/user.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { User as UserEntity } from 'src/users/entities/user.entity';
@@ -77,5 +78,12 @@ export class NotificationsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.notificationsService.remove(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs notifications' })
+  @ResponseMessage('Notifications supprimées avec succès')
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.notificationsService.removeMany(dto.ids);
   }
 }

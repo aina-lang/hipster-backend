@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { Payment } from './entities/payment.entity';
@@ -305,5 +305,14 @@ export class PaymentsService {
     if (!payment) throw new NotFoundException(`Paiement #${id} introuvable`);
     await this.paymentRepo.remove(payment);
     return { message: `Paiement #${id} supprimé` };
+  }
+
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const payments = await this.paymentRepo.find({ where: { id: In(ids) } });
+    const foundIds = payments.map((p) => p.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (payments.length) await this.paymentRepo.remove(payments);
+    return { deleted: payments.length, notFound };
   }
 }

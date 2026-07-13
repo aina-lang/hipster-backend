@@ -15,6 +15,7 @@ import { CreateChatDto } from './dto/create-chat.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @ApiTags('Chats')
 @ApiBearerAuth()
@@ -87,5 +88,12 @@ export class ChatsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.chatsService.removeRoom(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs conversations' })
+  @ResponseMessage('Conversations supprimées avec succès')
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.chatsService.removeManyRooms(dto.ids);
   }
 }

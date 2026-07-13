@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 const parser = require('cron-parser');
@@ -75,6 +75,15 @@ export class RecurringTasksService {
 
   async remove(id: number) {
     return this.recurringTaskRepo.delete(id);
+  }
+
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const tasks = await this.recurringTaskRepo.find({ where: { id: In(ids) } });
+    const foundIds = tasks.map((t) => t.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (tasks.length) await this.recurringTaskRepo.remove(tasks);
+    return { deleted: tasks.length, notFound };
   }
 
   // ----------------------------------------------------------------

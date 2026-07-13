@@ -36,4 +36,13 @@ export class RolesService {
   remove(id: number) {
     return this.roleRepo.delete(id);
   }
+
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const roles = await this.roleRepo.find({ where: { id: In(ids) } });
+    const foundIds = roles.map((r) => r.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (roles.length) await this.roleRepo.remove(roles);
+    return { deleted: roles.length, notFound };
+  }
 }

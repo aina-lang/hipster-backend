@@ -313,4 +313,13 @@ export class TicketsService {
     await this.ticketRepo.remove(ticket);
     return { message: `Ticket #${id} supprimé` };
   }
+
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const tickets = await this.ticketRepo.find({ where: { id: In(ids) } });
+    const foundIds = tickets.map((t) => t.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (tickets.length) await this.ticketRepo.remove(tickets);
+    return { deleted: tickets.length, notFound };
+  }
 }

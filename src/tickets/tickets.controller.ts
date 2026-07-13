@@ -16,6 +16,8 @@ import { TicketPriority, TicketStatus } from './entities/ticket.entity';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 import { ValidateTicketDto } from './dto/validate-ticket.dto';
 import { User } from 'src/common/decorators/user.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -75,5 +77,12 @@ export class TicketsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.ticketsService.remove(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs tickets' })
+  @ResponseMessage('Tickets supprimés avec succès')
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.ticketsService.removeMany(dto.ids);
   }
 }

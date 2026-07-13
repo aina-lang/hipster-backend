@@ -20,6 +20,7 @@ import { ProjectStatus } from './entities/project.entity';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @ApiTags('Projects')
 @Controller('projects')
@@ -158,6 +159,13 @@ export class ProjectsController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.projectsService.remove(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs projets' })
+  @ResponseMessage('Projets supprimés avec succès')
+  @Delete('bulk')
+  async removeMany(@Body() dto: BulkDeleteDto) {
+    return this.projectsService.removeMany(dto.ids);
   }
   /**
    * 🌐 Ajouter un site web au projet

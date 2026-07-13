@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository, Like, In } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Project, ProjectStatus } from 'src/projects/entities/project.entity';
 import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
@@ -162,6 +162,23 @@ export class MaintenanceService implements OnModuleInit {
     if (task) {
       await this.taskRepository.remove(task);
     }
+  }
+
+  // 🔹 DELETE MULTIPLE WEBSITES FROM MAINTENANCE
+  async removeWebsitesFromMaintenance(
+    websiteIds: number[],
+  ): Promise<{ deleted: number; notFound: number[] }> {
+    const notFound: number[] = [];
+    let deleted = 0;
+    for (const websiteId of websiteIds) {
+      try {
+        await this.removeWebsiteFromMaintenance(websiteId);
+        deleted++;
+      } catch {
+        notFound.push(websiteId);
+      }
+    }
+    return { deleted, notFound };
   }
 
   /**

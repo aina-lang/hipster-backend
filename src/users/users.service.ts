@@ -302,6 +302,15 @@ export class UsersService {
     return { message: `Utilisateur #${id} supprimé avec succès` };
   }
 
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const users = await this.userRepo.find({ where: { id: In(ids) } });
+    const foundIds = users.map((u) => u.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (users.length) await this.userRepo.remove(users);
+    return { deleted: users.length, notFound };
+  }
+
   // --------------------------------------------------------
   // 🔧 UTILS
   // --------------------------------------------------------

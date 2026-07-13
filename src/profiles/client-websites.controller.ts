@@ -11,6 +11,8 @@ import {
 import { ClientWebsitesService } from './client-websites.service';
 import { CreateClientWebsiteDto } from './dto/create-client-website.dto';
 import { UpdateClientWebsiteDto } from './dto/update-client-website.dto';
+import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @Controller('profiles/clients/:clientId/websites')
 export class ClientWebsitesController {
@@ -52,5 +54,14 @@ export class ClientWebsitesController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.websitesService.remove(id, clientId);
+  }
+
+  @ResponseMessage('Websites supprimés avec succès')
+  @Delete('bulk')
+  removeMany(
+    @Param('clientId', ParseIntPipe) clientId: number,
+    @Body() dto: BulkDeleteDto,
+  ) {
+    return this.websitesService.removeMany(clientId, dto.ids);
   }
 }

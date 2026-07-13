@@ -13,6 +13,7 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { User } from 'src/common/decorators/user.decorator';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @ApiTags('Maintenance')
 @ApiBearerAuth()
@@ -42,6 +43,13 @@ export class MaintenanceController {
   @Delete('websites/:id')
   removeWebsiteFromMaintenance(@Param('id', ParseIntPipe) id: number) {
     return this.maintenanceService.removeWebsiteFromMaintenance(id);
+  }
+
+  @ApiOperation({ summary: 'Retirer plusieurs sites web de la maintenance' })
+  @ResponseMessage('Sites retirés de la maintenance')
+  @Delete('websites/bulk')
+  removeManyWebsitesFromMaintenance(@Body() dto: BulkDeleteDto) {
+    return this.maintenanceService.removeWebsitesFromMaintenance(dto.ids);
   }
 
   @ApiOperation({ summary: 'Lister tous les sites en maintenance' })

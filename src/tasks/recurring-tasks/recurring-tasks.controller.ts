@@ -16,7 +16,9 @@ import { UpdateRecurringTaskDto } from './dto/update-recurring-task.dto';
 import { QueryRecurringTasksDto } from './dto/query-recurring-tasks.dto';
 import { User } from 'src/common/decorators/user.decorator';
 import { AuthGuard } from 'src/common/guards/auth.guard';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @ApiTags('Recurring Tasks')
 @ApiBearerAuth()
@@ -54,5 +56,12 @@ export class RecurringTasksController {
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.recurringTasksService.remove(id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs tâches récurrentes' })
+  @ResponseMessage('Tâches récurrentes supprimées avec succès')
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.recurringTasksService.removeMany(dto.ids);
   }
 }

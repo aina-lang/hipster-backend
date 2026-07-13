@@ -344,5 +344,35 @@ export class ProfilesService {
     };
   }
 
+  // 🔹 DELETE MULTIPLE (CLIENTS)
+  async removeManyClientProfiles(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const notFound: number[] = [];
+    let deleted = 0;
+    for (const id of ids) {
+      try {
+        await this.removeClientProfile(id);
+        deleted++;
+      } catch {
+        notFound.push(id);
+      }
+    }
+    return { deleted, notFound };
+  }
+
+  // 🔹 DELETE MULTIPLE (EMPLOYEES)
+  async removeManyEmployeeProfiles(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const notFound: number[] = [];
+    let deleted = 0;
+    for (const id of ids) {
+      try {
+        await this.removeEmployeeProfile(id);
+        deleted++;
+      } catch {
+        notFound.push(id);
+      }
+    }
+    return { deleted, notFound };
+  }
+
 }
 

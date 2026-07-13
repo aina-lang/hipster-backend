@@ -179,4 +179,13 @@ export class ChatsService {
   async removeRoom(id: number): Promise<void> {
     await this.chatRoomRepository.delete(id);
   }
+
+  // 🔹 DELETE MULTIPLE
+  async removeManyRooms(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const rooms = await this.chatRoomRepository.find({ where: { id: In(ids) } });
+    const foundIds = rooms.map((r) => r.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (rooms.length) await this.chatRoomRepository.remove(rooms);
+    return { deleted: rooms.length, notFound };
+  }
 }

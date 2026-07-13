@@ -19,6 +19,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
 import { InvoiceStatus, InvoiceType } from './entities/invoice.entity';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @ApiTags('Invoices')
 @Controller('invoices')
@@ -90,5 +91,12 @@ export class InvoicesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.invoicesService.remove(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs factures' })
+  @ResponseMessage('Factures supprimées avec succès')
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.invoicesService.removeMany(dto.ids);
   }
 }

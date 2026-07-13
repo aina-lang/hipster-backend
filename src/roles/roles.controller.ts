@@ -12,6 +12,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @ApiTags('Roles')
 @Controller('roles')
@@ -49,5 +50,12 @@ export class RolesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.rolesService.remove(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs rôles' })
+  @ResponseMessage('Rôles supprimés avec succès')
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.rolesService.removeMany(dto.ids);
   }
 }

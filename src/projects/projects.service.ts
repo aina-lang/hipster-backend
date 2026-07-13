@@ -915,6 +915,21 @@ export class ProjectsService {
     };
   }
 
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const notFound: number[] = [];
+    let deleted = 0;
+    for (const id of ids) {
+      try {
+        await this.remove(id);
+        deleted++;
+      } catch {
+        notFound.push(id);
+      }
+    }
+    return { deleted, notFound };
+  }
+
   // ------------------------------------------------------------
   // 🔹 CALCUL AUTOMATIQUE DU STATUT
   // ------------------------------------------------------------

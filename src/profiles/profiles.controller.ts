@@ -23,6 +23,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { User } from 'src/common/decorators/user.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -110,6 +111,13 @@ export class ProfilesController {
     return this.profilesService.removeClientProfile(+id);
   }
 
+  @ApiOperation({ summary: 'Supprimer plusieurs profils client' })
+  @ResponseMessage('Profils client supprimés avec succès')
+  @Delete('client/bulk')
+  removeManyClients(@Body() dto: BulkDeleteDto) {
+    return this.profilesService.removeManyClientProfiles(dto.ids);
+  }
+
   // --------------------
   // EMPLOYEE PROFILE
   // --------------------
@@ -157,6 +165,13 @@ export class ProfilesController {
   @Delete('employee/:id')
   removeEmployee(@Param('id') id: string) {
     return this.profilesService.removeEmployeeProfile(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs profils employé' })
+  @ResponseMessage('Profils employé supprimés avec succès')
+  @Delete('employee/bulk')
+  removeManyEmployees(@Body() dto: BulkDeleteDto) {
+    return this.profilesService.removeManyEmployeeProfiles(dto.ids);
   }
 
 

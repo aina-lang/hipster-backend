@@ -21,6 +21,7 @@ import { QueryFilesDto } from './dto/query-files.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @ApiTags('Files')
 @Controller('files')
@@ -104,5 +105,12 @@ export class FilesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.filesService.remove(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs fichiers' })
+  @ResponseMessage('Fichiers supprimés avec succès')
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.filesService.removeMany(dto.ids);
   }
 }

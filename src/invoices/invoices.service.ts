@@ -750,4 +750,13 @@ export class InvoicesService {
     await this.invoiceRepo.remove(invoice);
     return { message: `Facture #${id} supprimée` };
   }
+
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const invoices = await this.invoiceRepo.find({ where: { id: In(ids) } });
+    const foundIds = invoices.map((i) => i.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (invoices.length) await this.invoiceRepo.remove(invoices);
+    return { deleted: invoices.length, notFound };
+  }
 }

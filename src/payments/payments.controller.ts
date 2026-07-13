@@ -19,6 +19,7 @@ import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { QueryPaymentsDto } from './dto/query-payments.dto';
 import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 import { AuthGuard } from '@nestjs/passport';
 import * as express from 'express';
 import {
@@ -95,5 +96,12 @@ export class PaymentsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.paymentsService.remove(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs paiements' })
+  @ResponseMessage('Paiements supprimés avec succès')
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.paymentsService.removeMany(dto.ids);
   }
 }

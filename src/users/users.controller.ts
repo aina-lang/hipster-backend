@@ -23,9 +23,9 @@ import { Role } from 'src/common/enums/role.enum';
 import { FindUsersQueryDto } from './dto/find-users-query.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 import { Public } from 'src/common/decorators/public.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
-
 import { User } from 'src/common/decorators/user.decorator';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 
@@ -187,6 +187,13 @@ export class UsersController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs utilisateurs' })
+  @ResponseMessage('Utilisateurs supprimés avec succès')
+  @Delete('bulk')
+  async removeMany(@Body() dto: BulkDeleteDto) {
+    return this.usersService.removeMany(dto.ids);
   }
 
 

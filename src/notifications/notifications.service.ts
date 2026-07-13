@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { Notification } from './entities/notification.entity';
@@ -129,6 +129,17 @@ export class NotificationsService {
     await this.notificationRepo.remove(notification);
 
     return { message: `Notification #${id} supprimée` };
+  }
+
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const notifications = await this.notificationRepo.find({
+      where: { id: In(ids) },
+    });
+    const foundIds = notifications.map((n) => n.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (notifications.length) await this.notificationRepo.remove(notifications);
+    return { deleted: notifications.length, notFound };
   }
 
   /**

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ClientWebsite } from './entities/client-website.entity';
 import { CreateClientWebsiteDto } from './dto/create-client-website.dto';
@@ -82,5 +82,17 @@ export class ClientWebsitesService {
     const website = await this.findOne(id, clientId);
     await this.websiteRepo.remove(website);
     return { message: `Website #${id} deleted successfully` };
+  }
+
+  // 🔹 DELETE MULTIPLE
+  async removeMany(
+    clientId: number,
+    ids: number[],
+  ): Promise<{ deleted: number; notFound: number[] }> {
+    const websites = await this.websiteRepo.find({ where: { id: In(ids), clientId } });
+    const foundIds = websites.map((w) => w.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (websites.length) await this.websiteRepo.remove(websites);
+    return { deleted: websites.length, notFound };
   }
 }

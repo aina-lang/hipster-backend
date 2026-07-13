@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { File } from './entities/file.entity';
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileDto } from './dto/update-file.dto';
@@ -169,6 +169,18 @@ export class FilesService {
 
     await this.fileRepo.remove(file);
     return { message: `Fichier #${id} supprimé avec succès` };
+  }
+
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const files = await this.fileRepo.find({ where: { id: In(ids) } });
+    const foundIds = files.map((f) => f.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    for (const file of files) {
+      deleteFile(file.url);
+    }
+    if (files.length) await this.fileRepo.remove(files);
+    return { deleted: files.length, notFound };
   }
 
   // ----------------------------

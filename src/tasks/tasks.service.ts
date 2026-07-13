@@ -407,6 +407,15 @@ export class TasksService {
     return { message: `Tâche #${id} supprimée avec succès` };
   }
 
+  // 🔹 DELETE MULTIPLE
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+    const tasks = await this.taskRepo.find({ where: { id: In(ids) } });
+    const foundIds = tasks.map((t) => t.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (tasks.length) await this.taskRepo.remove(tasks);
+    return { deleted: tasks.length, notFound };
+  }
+
   // 🔹 FIND BY PROJECT (for Kanban)
   async findByProject(projectId: number): Promise<Task[]> {
     const project = await this.projectRepo.findOneBy({ id: projectId });

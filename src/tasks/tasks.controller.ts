@@ -19,6 +19,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
 import { TaskPriority, TaskStatus } from './entities/task.entity';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @ApiTags('Tasks')
 @Controller('tasks')
@@ -86,5 +87,12 @@ export class TasksController {
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.tasksService.remove(id);
+  }
+
+  @ApiOperation({ summary: 'Supprimer plusieurs tâches' })
+  @ResponseMessage('Tâches supprimées avec succès')
+  @Delete('bulk')
+  async removeMany(@Body() dto: BulkDeleteDto) {
+    return this.tasksService.removeMany(dto.ids);
   }
 }
