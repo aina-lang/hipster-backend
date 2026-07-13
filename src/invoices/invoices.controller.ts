@@ -86,17 +86,17 @@ export class InvoicesController {
     return this.invoicesService.updateStatus(+id, status);
   }
 
-  @ApiOperation({ summary: 'Supprimer une facture' })
-  @ResponseMessage('Facture supprimée avec succès')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.invoicesService.remove(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs factures' })
   @ResponseMessage('Factures supprimées avec succès')
   @Delete('bulk')
   removeMany(@Body() dto: BulkDeleteDto) {
     return this.invoicesService.removeMany(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer une facture' })
+  @ResponseMessage('Facture supprimée avec succès')
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.invoicesService.remove(+id);
   }
 }

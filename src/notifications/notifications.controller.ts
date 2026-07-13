@@ -73,17 +73,17 @@ export class NotificationsController {
     return this.notificationsService.update(+id, updateNotificationDto);
   }
 
-  @ApiOperation({ summary: 'Supprimer une notification' })
-  @ResponseMessage('Notification supprimée avec succès')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.notificationsService.remove(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs notifications' })
   @ResponseMessage('Notifications supprimées avec succès')
   @Delete('bulk')
   removeMany(@Body() dto: BulkDeleteDto) {
     return this.notificationsService.removeMany(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer une notification' })
+  @ResponseMessage('Notification supprimée avec succès')
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.notificationsService.remove(+id);
   }
 }

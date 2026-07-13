@@ -100,17 +100,17 @@ export class FilesController {
     });
   }
 
-  @ApiOperation({ summary: 'Supprimer un fichier' })
-  @ResponseMessage('Fichier supprimé avec succès')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.filesService.remove(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs fichiers' })
   @ResponseMessage('Fichiers supprimés avec succès')
   @Delete('bulk')
   removeMany(@Body() dto: BulkDeleteDto) {
     return this.filesService.removeMany(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer un fichier' })
+  @ResponseMessage('Fichier supprimé avec succès')
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.filesService.remove(+id);
   }
 }

@@ -91,17 +91,17 @@ export class PaymentsController {
     return this.paymentsService.update(+id, updatePaymentDto);
   }
 
-  @ApiOperation({ summary: 'Supprimer un paiement' })
-  @ResponseMessage('Paiement supprimé avec succès')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.paymentsService.remove(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs paiements' })
   @ResponseMessage('Paiements supprimés avec succès')
   @Delete('bulk')
   removeMany(@Body() dto: BulkDeleteDto) {
     return this.paymentsService.removeMany(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer un paiement' })
+  @ResponseMessage('Paiement supprimé avec succès')
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.paymentsService.remove(+id);
   }
 }

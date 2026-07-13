@@ -48,14 +48,6 @@ export class ClientWebsitesController {
     return this.websitesService.update(id, clientId, updateDto);
   }
 
-  @Delete(':id')
-  remove(
-    @Param('clientId', ParseIntPipe) clientId: number,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    return this.websitesService.remove(id, clientId);
-  }
-
   @ResponseMessage('Websites supprimés avec succès')
   @Delete('bulk')
   removeMany(
@@ -63,5 +55,13 @@ export class ClientWebsitesController {
     @Body() dto: BulkDeleteDto,
   ) {
     return this.websitesService.removeMany(clientId, dto.ids);
+  }
+
+  @Delete(':id')
+  remove(
+    @Param('clientId', ParseIntPipe) clientId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.websitesService.remove(id, clientId);
   }
 }

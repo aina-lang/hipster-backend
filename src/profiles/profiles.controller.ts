@@ -104,18 +104,18 @@ export class ProfilesController {
     return this.profilesService.updateClientProfile(+id, dto);
   }
 
-  @ApiOperation({ summary: 'Supprimer un profil client' })
-  @ResponseMessage('Profil client supprimé avec succès')
-  @Delete('client/:id')
-  removeClient(@Param('id') id: string) {
-    return this.profilesService.removeClientProfile(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs profils client' })
   @ResponseMessage('Profils client supprimés avec succès')
   @Delete('client/bulk')
   removeManyClients(@Body() dto: BulkDeleteDto) {
     return this.profilesService.removeManyClientProfiles(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer un profil client' })
+  @ResponseMessage('Profil client supprimé avec succès')
+  @Delete('client/:id')
+  removeClient(@Param('id') id: string) {
+    return this.profilesService.removeClientProfile(+id);
   }
 
   // --------------------
@@ -160,18 +160,18 @@ export class ProfilesController {
     return this.profilesService.updateEmployeeProfile(+id, dto);
   }
 
-  @ApiOperation({ summary: 'Supprimer un profil employé' })
-  @ResponseMessage('Profil employé supprimé avec succès')
-  @Delete('employee/:id')
-  removeEmployee(@Param('id') id: string) {
-    return this.profilesService.removeEmployeeProfile(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs profils employé' })
   @ResponseMessage('Profils employé supprimés avec succès')
   @Delete('employee/bulk')
   removeManyEmployees(@Body() dto: BulkDeleteDto) {
     return this.profilesService.removeManyEmployeeProfiles(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer un profil employé' })
+  @ResponseMessage('Profil employé supprimé avec succès')
+  @Delete('employee/:id')
+  removeEmployee(@Param('id') id: string) {
+    return this.profilesService.removeEmployeeProfile(+id);
   }
 
 

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, In } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -12,6 +12,8 @@ const MAINTENANCE_PROJECT_NAME = 'Maintenance Sites Web';
 
 @Injectable()
 export class MaintenanceService implements OnModuleInit {
+  private readonly logger = new Logger(MaintenanceService.name);
+
   constructor(
     @InjectRepository(Project)
     private projectRepository: Repository<Project>,
@@ -167,18 +169,25 @@ export class MaintenanceService implements OnModuleInit {
   // 🔹 DELETE MULTIPLE WEBSITES FROM MAINTENANCE
   async removeWebsitesFromMaintenance(
     websiteIds: number[],
-  ): Promise<{ deleted: number; notFound: number[] }> {
+  ): Promise<{ deleted: number; notFound: number[]; errors?: { id: number; error: string }[] }> {
     const notFound: number[] = [];
+    const errors: { id: number; error: string }[] = [];
     let deleted = 0;
     for (const websiteId of websiteIds) {
       try {
         await this.removeWebsiteFromMaintenance(websiteId);
         deleted++;
-      } catch {
-        notFound.push(websiteId);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        if (msg.includes('introuvable')) {
+          notFound.push(websiteId);
+        } else {
+          this.logger.error(`Erreur suppression maintenance #${websiteId}: ${msg}`);
+          errors.push({ id: websiteId, error: msg });
+        }
       }
     }
-    return { deleted, notFound };
+    return { deleted, notFound, errors: errors.length ? errors : undefined };
   }
 
   /**

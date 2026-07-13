@@ -182,18 +182,18 @@ export class UsersController {
   }
 
   // 🔹 Suppression
-  @ApiOperation({ summary: 'Supprimer un utilisateur' })
-  @ResponseMessage('Utilisateur supprimé avec succès')
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs utilisateurs' })
   @ResponseMessage('Utilisateurs supprimés avec succès')
   @Delete('bulk')
   async removeMany(@Body() dto: BulkDeleteDto) {
     return this.usersService.removeMany(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer un utilisateur' })
+  @ResponseMessage('Utilisateur supprimé avec succès')
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    return this.usersService.remove(+id);
   }
 
 

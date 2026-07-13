@@ -82,17 +82,17 @@ export class TasksController {
     return this.tasksService.updateStatus(id, status, req.user.userId);
   }
 
-  @ApiOperation({ summary: 'Supprimer une tâche' })
-  @ResponseMessage('Tâche supprimée avec succès')
-  @Delete(':id')
-  async remove(@Param('id', ParseIntPipe) id: number) {
-    return this.tasksService.remove(id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs tâches' })
   @ResponseMessage('Tâches supprimées avec succès')
   @Delete('bulk')
   async removeMany(@Body() dto: BulkDeleteDto) {
     return this.tasksService.removeMany(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer une tâche' })
+  @ResponseMessage('Tâche supprimée avec succès')
+  @Delete(':id')
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return this.tasksService.remove(id);
   }
 }

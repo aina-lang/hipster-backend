@@ -53,15 +53,15 @@ export class RecurringTasksController {
     return this.recurringTasksService.update(id, updateRecurringTaskDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.recurringTasksService.remove(id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs tâches récurrentes' })
   @ResponseMessage('Tâches récurrentes supprimées avec succès')
   @Delete('bulk')
   removeMany(@Body() dto: BulkDeleteDto) {
     return this.recurringTasksService.removeMany(dto.ids);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.recurringTasksService.remove(id);
   }
 }

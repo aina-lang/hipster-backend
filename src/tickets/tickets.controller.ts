@@ -72,17 +72,17 @@ export class TicketsController {
     return this.ticketsService.validateTicket(+id, dto, adminId);
   }
 
-  @ApiOperation({ summary: 'Supprimer un ticket' })
-  @ResponseMessage('Ticket supprimé avec succès')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.ticketsService.remove(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs tickets' })
   @ResponseMessage('Tickets supprimés avec succès')
   @Delete('bulk')
   removeMany(@Body() dto: BulkDeleteDto) {
     return this.ticketsService.removeMany(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer un ticket' })
+  @ResponseMessage('Ticket supprimé avec succès')
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.ticketsService.remove(+id);
   }
 }

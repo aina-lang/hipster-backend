@@ -83,17 +83,17 @@ export class ChatsController {
     return this.chatsService.sendMessage(+id, userId, dto, req.user.roles);
   }
 
-  @ApiOperation({ summary: 'Supprimer une conversation' })
-  @ResponseMessage('Conversation supprimée avec succès')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.chatsService.removeRoom(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs conversations' })
   @ResponseMessage('Conversations supprimées avec succès')
   @Delete('bulk')
   removeMany(@Body() dto: BulkDeleteDto) {
     return this.chatsService.removeManyRooms(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer une conversation' })
+  @ResponseMessage('Conversation supprimée avec succès')
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.chatsService.removeRoom(+id);
   }
 }

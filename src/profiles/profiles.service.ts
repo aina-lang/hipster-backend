@@ -261,11 +261,29 @@ export class ProfilesService {
 
   async removeClientProfile(id: number): Promise<{ message: string }> {
     const profile = await this.findClientById(id);
-    // ✅ Delete the User, which will cascade delete the ClientProfile and all related data
     if (profile.user) {
+      // Nettoyer les ManyToMany join tables avant la cascade DB
+      await this.dataSource
+        .createQueryBuilder()
+        .delete()
+        .from('chat_room_participants')
+        .where('chat_room_id IN (SELECT id FROM chat_rooms WHERE client_profile_id = :id)', { id })
+        .execute();
+      await this.dataSource
+        .createQueryBuilder()
+        .delete()
+        .from('chat_room_participants')
+        .where('user_id = :uid', { uid: profile.user.id })
+        .execute();
+      await this.dataSource
+        .createQueryBuilder()
+        .delete()
+        .from('task_assignees')
+        .where('task_id IN (SELECT t.id FROM tasks t JOIN projects p ON p.id = t.projectId WHERE p.clientId = :id)', { id })
+        .execute();
+      // Supprimer l'utilisateur (cascade DB -> client_profile -> projets, factures, etc.)
       await this.userRepo.remove(profile.user);
     } else {
-      // Fallback if no user (should not happen given logic)
       await this.clientRepo.remove(profile);
     }
     return {
@@ -345,33 +363,47 @@ export class ProfilesService {
   }
 
   // 🔹 DELETE MULTIPLE (CLIENTS)
-  async removeManyClientProfiles(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+  async removeManyClientProfiles(ids: number[]): Promise<{ deleted: number; notFound: number[]; errors?: { id: number; error: string }[] }> {
     const notFound: number[] = [];
+    const errors: { id: number; error: string }[] = [];
     let deleted = 0;
     for (const id of ids) {
       try {
         await this.removeClientProfile(id);
         deleted++;
-      } catch {
-        notFound.push(id);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        if (msg.includes('introuvable')) {
+          notFound.push(id);
+        } else {
+          this.logger.error(`Erreur suppression client #${id}: ${msg}`);
+          errors.push({ id, error: msg });
+        }
       }
     }
-    return { deleted, notFound };
+    return { deleted, notFound, errors: errors.length ? errors : undefined };
   }
 
   // 🔹 DELETE MULTIPLE (EMPLOYEES)
-  async removeManyEmployeeProfiles(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+  async removeManyEmployeeProfiles(ids: number[]): Promise<{ deleted: number; notFound: number[]; errors?: { id: number; error: string }[] }> {
     const notFound: number[] = [];
+    const errors: { id: number; error: string }[] = [];
     let deleted = 0;
     for (const id of ids) {
       try {
         await this.removeEmployeeProfile(id);
         deleted++;
-      } catch {
-        notFound.push(id);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        if (msg.includes('introuvable')) {
+          notFound.push(id);
+        } else {
+          this.logger.error(`Erreur suppression employé #${id}: ${msg}`);
+          errors.push({ id, error: msg });
+        }
       }
     }
-    return { deleted, notFound };
+    return { deleted, notFound, errors: errors.length ? errors : undefined };
   }
 
 }

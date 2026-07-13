@@ -154,18 +154,18 @@ export class ProjectsController {
   /**
    * ❌ Suppression d’un projet
    */
-  @ApiOperation({ summary: 'Supprimer un projet' })
-  @ResponseMessage('Projet supprimé avec succès')
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return this.projectsService.remove(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs projets' })
   @ResponseMessage('Projets supprimés avec succès')
   @Delete('bulk')
   async removeMany(@Body() dto: BulkDeleteDto) {
     return this.projectsService.removeMany(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer un projet' })
+  @ResponseMessage('Projet supprimé avec succès')
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    return this.projectsService.remove(+id);
   }
   /**
    * 🌐 Ajouter un site web au projet

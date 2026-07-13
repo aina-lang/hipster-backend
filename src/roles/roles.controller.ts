@@ -45,17 +45,17 @@ export class RolesController {
     return this.rolesService.update(+id, updateRoleDto);
   }
 
-  @ApiOperation({ summary: 'Supprimer un rôle' })
-  @ResponseMessage('Rôle supprimé avec succès')
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.rolesService.remove(+id);
-  }
-
   @ApiOperation({ summary: 'Supprimer plusieurs rôles' })
   @ResponseMessage('Rôles supprimés avec succès')
   @Delete('bulk')
   removeMany(@Body() dto: BulkDeleteDto) {
     return this.rolesService.removeMany(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Supprimer un rôle' })
+  @ResponseMessage('Rôle supprimé avec succès')
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.rolesService.remove(+id);
   }
 }

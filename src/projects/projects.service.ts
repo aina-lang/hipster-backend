@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
@@ -27,6 +28,8 @@ import { Payment } from 'src/payments/entities/payment.entity';
 
 @Injectable()
 export class ProjectsService {
+  private readonly logger = new Logger(ProjectsService.name);
+
   constructor(
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
@@ -916,18 +919,25 @@ export class ProjectsService {
   }
 
   // 🔹 DELETE MULTIPLE
-  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
+  async removeMany(ids: number[]): Promise<{ deleted: number; notFound: number[]; errors?: { id: number; error: string }[] }> {
     const notFound: number[] = [];
+    const errors: { id: number; error: string }[] = [];
     let deleted = 0;
     for (const id of ids) {
       try {
         await this.remove(id);
         deleted++;
-      } catch {
-        notFound.push(id);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Unknown error';
+        if (msg.includes('introuvable')) {
+          notFound.push(id);
+        } else {
+          this.logger.error(`Erreur suppression projet #${id}: ${msg}`);
+          errors.push({ id, error: msg });
+        }
       }
     }
-    return { deleted, notFound };
+    return { deleted, notFound, errors: errors.length ? errors : undefined };
   }
 
   // ------------------------------------------------------------

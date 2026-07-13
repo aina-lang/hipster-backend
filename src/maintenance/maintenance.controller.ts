@@ -38,18 +38,18 @@ export class MaintenanceController {
     return this.maintenanceService.addWebsiteToMaintenance(id, user.sub);
   }
 
-  @ApiOperation({ summary: 'Retirer un site web de la maintenance' })
-  @ResponseMessage('Site retiré de la maintenance')
-  @Delete('websites/:id')
-  removeWebsiteFromMaintenance(@Param('id', ParseIntPipe) id: number) {
-    return this.maintenanceService.removeWebsiteFromMaintenance(id);
-  }
-
   @ApiOperation({ summary: 'Retirer plusieurs sites web de la maintenance' })
   @ResponseMessage('Sites retirés de la maintenance')
   @Delete('websites/bulk')
   removeManyWebsitesFromMaintenance(@Body() dto: BulkDeleteDto) {
     return this.maintenanceService.removeWebsitesFromMaintenance(dto.ids);
+  }
+
+  @ApiOperation({ summary: 'Retirer un site web de la maintenance' })
+  @ResponseMessage('Site retiré de la maintenance')
+  @Delete('websites/:id')
+  removeWebsiteFromMaintenance(@Param('id', ParseIntPipe) id: number) {
+    return this.maintenanceService.removeWebsiteFromMaintenance(id);
   }
 
   @ApiOperation({ summary: 'Lister tous les sites en maintenance' })
