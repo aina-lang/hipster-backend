@@ -9,7 +9,6 @@ import { Project, ProjectStatus } from 'src/projects/entities/project.entity';
 import { Ticket, TicketStatus, TicketPriority } from 'src/tickets/entities/ticket.entity';
 import { RequestCategory } from 'src/common/enums/request-category.enum';
 import { Invoice, InvoiceType, InvoiceStatus } from 'src/invoices/entities/invoice.entity';
-import { InvoiceItem } from 'src/invoices/entities/invoice-item.entity';
 import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
 
 async function seed() {
@@ -21,7 +20,6 @@ async function seed() {
   const projectRepo = dataSource.getRepository(Project);
   const ticketRepo = dataSource.getRepository(Ticket);
   const invoiceRepo = dataSource.getRepository(Invoice);
-  const invoiceItemRepo = dataSource.getRepository(InvoiceItem);
   const websiteRepo = dataSource.getRepository(ClientWebsite);
 
   const password = await bcrypt.hash('password123', 10);
@@ -155,10 +153,7 @@ async function seed() {
     reference: 'DEV-2025-001',
     type: InvoiceType.QUOTE,
     status: InvoiceStatus.ACCEPTED,
-    amount: 2500,
-    subTotal: 2500,
-    taxRate: 20,
-    taxAmount: 500,
+    amount: '2500',
     issueDate: new Date('2025-01-10'),
     client: profile1,
     project: project1_1,
@@ -169,10 +164,7 @@ async function seed() {
     reference: 'FAC-2025-001',
     type: InvoiceType.INVOICE,
     status: InvoiceStatus.PAID,
-    amount: 2500,
-    subTotal: 2500,
-    taxRate: 20,
-    taxAmount: 500,
+    amount: '2500',
     issueDate: new Date('2025-04-01'),
     paymentDate: new Date('2025-04-15'),
     client: profile1,
@@ -184,10 +176,7 @@ async function seed() {
     reference: 'DEV-2025-002',
     type: InvoiceType.QUOTE,
     status: InvoiceStatus.PENDING,
-    amount: 8500,
-    subTotal: 8500,
-    taxRate: 20,
-    taxAmount: 1700,
+    amount: '8500',
     issueDate: new Date('2025-05-20'),
     client: profile1,
     project: project1_2,
@@ -259,10 +248,7 @@ async function seed() {
     reference: 'DEV-2025-003',
     type: InvoiceType.QUOTE,
     status: InvoiceStatus.PENDING,
-    amount: 1800,
-    subTotal: 1800,
-    taxRate: 20,
-    taxAmount: 360,
+    amount: '1800',
     issueDate: new Date('2025-06-15'),
     client: profile2,
     project: project2_1,
@@ -324,10 +310,7 @@ async function seed() {
     reference: 'DEV-2025-004',
     type: InvoiceType.QUOTE,
     status: InvoiceStatus.DRAFT,
-    amount: 15000,
-    subTotal: 15000,
-    taxRate: 20,
-    taxAmount: 3000,
+    amount: '15000',
     issueDate: new Date('2025-07-10'),
     client: profile3,
     project: project3_1,

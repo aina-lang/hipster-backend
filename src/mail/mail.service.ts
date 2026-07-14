@@ -217,14 +217,13 @@ export class MailService {
   async sendInvoiceEmail(
     to: string,
     invoice: any,
-    pdfBuffer: Buffer,
+    fileBuffer?: Buffer,
+    fileName?: string,
     roles?: string[],
   ): Promise<void> {
     const isQuote = invoice.type === 'quote';
     const typeLabel = isQuote ? 'Devis' : 'Facture';
-    const filename = `${typeLabel}_${invoice.reference}.pdf`;
 
-    // Format date for display
     const formatDate = (date: Date | string) => {
       if (!date) return '';
       try {
@@ -234,62 +233,40 @@ export class MailService {
       }
     };
 
-    // Prepare items for email display
-    const items =
-      invoice.items?.map((item: any) => ({
-        description: item.description || '',
-        quantity: item.quantity || 0,
-        unitPrice: item.unitPrice || 0,
-        unit: item.unit || '',
-      })) || [];
-
-    // Calculate totals - ensure they are numbers
-    const subtotal = Number(invoice.subTotal || invoice.amount || 0);
-    const tax = Number(invoice.taxAmount || 0);
-
-    // TODO: Replace with actual URLs from environment variables or config
     const baseUrl = process.env.FRONTEND_URL || 'https://hipster-ia.fr';
-    const apiUrl = process.env.API_URL || 'https://hipster-api.fr';
-
     const invoiceUrl = `${baseUrl}/invoices/${invoice.id}`;
-    const pdfDownloadUrl = `${apiUrl}/api/invoices/${invoice.id}/pdf`;
 
-    // Mobile app URL - can be configured via environment variable
-    // Format: hypster://invoice/{id} or https://app.hipster-studio.com/invoice/{id}
-    const mobileAppUrl = process.env.MOBILE_APP_URL
-      ? `${process.env.MOBILE_APP_URL}/invoice/${invoice.id}`
-      : undefined;
+    const context: any = {
+      clientName:
+        invoice.client?.user?.firstName ||
+        invoice.client?.companyName ||
+        'Client',
+      typeLabel,
+      invoiceReference: invoice.reference,
+      projectName: invoice.project?.name || '',
+      amount: Number(invoice.amount || 0).toFixed(2),
+      dueDate: formatDate(invoice.dueDate),
+      status: invoice.status,
+      notes: invoice.notes || '',
+      invoiceUrl,
+      hasFile: !!fileBuffer,
+    };
+
+    const attachments: any[] = [];
+    if (fileBuffer) {
+      attachments.push({
+        filename: fileName || `${typeLabel}_${invoice.reference}`,
+        content: fileBuffer,
+      });
+    }
 
     await this.sendEmail({
       to,
       userRoles: roles,
       subject: `📄 Votre ${typeLabel} ${invoice.reference} est disponible`,
       template: 'invoice-created',
-      context: {
-        clientName:
-          invoice.clientSnapshot?.name ||
-          invoice.client?.user?.firstName ||
-          'Client',
-        typeLabel,
-        invoiceReference: invoice.reference,
-        projectName: invoice.projectSnapshot?.name || invoice.project?.name,
-        amount: Number(invoice.amount || 0).toFixed(2),
-        dueDate: formatDate(invoice.dueDate),
-        status: invoice.status,
-        items,
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        notes: invoice.notes,
-        invoiceUrl,
-        pdfDownloadUrl,
-        mobileAppUrl,
-      },
-      attachments: [
-        {
-          filename,
-          content: pdfBuffer,
-        },
-      ],
+      context,
+      attachments,
     });
   }
 

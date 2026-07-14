@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload Devis / Facture</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        background: #f4f6f8;
+        color: #1f2937;
+        margin: 0;
+        padding: 32px;
+      }
+      .card {
+        max-width: 480px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        padding: 28px;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 4px;
+      }
+      p.sub {
+        color: #6b7280;
+        font-size: 13px;
+        margin: 0 0 20px;
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        margin: 14px 0 6px;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      button {
+        margin-top: 22px;
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #2563eb;
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #1d4ed8;
+      }
+      #result {
+        margin-top: 18px;
+        font-size: 13px;
+        white-space: pre-wrap;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Upload d'un document</h1>
+      <p class="sub">Devis ou facture lié à un projet client.</p>
+
+      <label for="token">Token (Bearer)</label>
+      <input id="token" type="text" placeholder="coller le JWT" />
+
+      <label for="type">Catégorie</label>
+      <select id="type">
+        <option value="quote">Devis</option>
+        <option value="invoice">Facture</option>
+      </select>
+
+      <label for="projectId">ID du projet</label>
+      <input id="projectId" type="number" placeholder="ex: 1" />
+
+      <label for="amount">Montant (texte libre)</label>
+      <input id="amount" type="text" placeholder="ex: 1500 € TTC" />
+
+      <label for="status">Statut</label>
+      <select id="status">
+        <option value="draft">Brouillon</option>
+        <option value="pending" selected>En attente</option>
+        <option value="accepted">Accepté</option>
+        <option value="paid">Payé</option>
+        <option value="canceled">Annulé</option>
+      </select>
+
+      <label for="notes">Notes</label>
+      <textarea id="notes" rows="2" placeholder="optionnel"></textarea>
+
+      <label for="file">Fichier (devis / facture)</label>
+      <input id="file" type="file" />
+
+      <button id="submit">Envoyer</button>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      const API = 'http://localhost:4000/api/invoices/upload';
+
+      document.getElementById('submit').addEventListener('click', async () => {
+        const result = document.getElementById('result');
+        const token = document.getElementById('token').value.trim();
+        const file = document.getElementById('file').files[0];
+
+        if (!file) {
+          result.textContent = 'Veuillez choisir un fichier.';
+          return;
+        }
+
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('type', document.getElementById('type').value);
+        fd.append('projectId', document.getElementById('projectId').value);
+        fd.append('amount', document.getElementById('amount').value);
+        fd.append('status', document.getElementById('status').value);
+        fd.append('notes', document.getElementById('notes').value);
+
+        try {
+          const res = await fetch(API, {
+            method: 'POST',
+            headers: token ? { Authorization: 'Bearer ' + token } : {},
+            body: fd,
+          });
+          const data = await res.json();
+          result.textContent = JSON.stringify(data, null, 2);
+        } catch (e) {
+          result.textContent = 'Erreur: ' + e.message;
+        }
+      });
+    </script>
+  </body>
+</html>

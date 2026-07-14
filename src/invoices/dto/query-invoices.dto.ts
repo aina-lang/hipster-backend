@@ -6,9 +6,10 @@ import { InvoiceStatus, InvoiceType } from '../entities/invoice.entity';
 const INVOICE_SORTABLE_FIELDS = [
   'id',
   'createdAt',
-  'dueDate',
+  'issueDate',
   'amount',
   'status',
+  'type',
 ] as const;
 
 export class QueryInvoicesDto extends PaginationQueryDto {
@@ -24,11 +25,6 @@ export class QueryInvoicesDto extends PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   clientId?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  projectId?: number;
 
   @IsOptional()
   @IsIn(INVOICE_SORTABLE_FIELDS)

@@ -85,7 +85,7 @@ export class PaymentsService {
 
     // Create a pending payment record
     const payment = this.paymentRepo.create({
-      amount: invoice.amount,
+      amount: Number(invoice.amount) || 0,
       currency: 'EUR',
       paymentType: PaymentType.PROJECT, // Assuming project for now or add a generic one
       provider: PaymentProvider.STRIPE,
