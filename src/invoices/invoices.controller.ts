@@ -15,8 +15,9 @@ import {
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname } from 'path';
 import { User } from 'src/common/decorators/user.decorator';
+import { getUploadPath } from 'src/common/utils/upload-path';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
@@ -39,7 +40,7 @@ export class InvoicesController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          cb(null, process.env.UPLOAD_PATH || join(process.cwd(), 'uploads'));
+          cb(null, getUploadPath());
         },
         filename: (req, file, cb) => {
           const randomName = Array(32)

@@ -20,7 +20,8 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname } from 'path';
+import { getUploadPath } from 'src/common/utils/upload-path';
 
 @ApiTags('Company')
 @Controller('company')
@@ -56,7 +57,7 @@ export class CompanyController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          cb(null, process.env.UPLOAD_PATH || join(process.cwd(), 'uploads'));
+          cb(null, getUploadPath());
         },
         filename: (req, file, cb) => {
           const randomName = Array(32)

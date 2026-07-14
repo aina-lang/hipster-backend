@@ -5,15 +5,20 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import * as express from 'express';
 import { json, urlencoded } from 'express';
-import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import * as http from 'http';
+import { config } from 'dotenv';
+import { join } from 'path';
+import { getUploadPath } from './common/utils/upload-path';
+
+const envPath = [join(__dirname, '..', '.env'), join(__dirname, '..', '..', '.env')].find(existsSync);
+if (envPath) config({ path: envPath });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   app.setGlobalPrefix('api');
 
-  const uploadsPath = process.env.UPLOAD_PATH || join(process.cwd(), 'uploads');
+  const uploadsPath = getUploadPath();
   if (!existsSync(uploadsPath)) mkdirSync(uploadsPath, { recursive: true });
   app.use('/uploads', express.static(uploadsPath));
 

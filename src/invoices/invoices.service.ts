@@ -10,8 +10,8 @@ import { PaginatedResult } from 'src/common/types/paginated-result.type';
 import { User } from 'src/users/entities/user.entity';
 import { MailService } from 'src/mail/mail.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
-import { join } from 'path';
 import { readFileSync, existsSync } from 'fs';
+import { getUploadPath } from 'src/common/utils/upload-path';
 
 @Injectable()
 export class InvoicesService {
@@ -66,7 +66,7 @@ export class InvoicesService {
       const emailTo = client.user?.email || client.contactEmail;
       let fileBuffer: Buffer | undefined;
       let fileName: string | undefined;
-      const uploadDir = process.env.UPLOAD_PATH || join(process.cwd(), 'uploads');
+      const uploadDir = getUploadPath();
       if (savedInvoice.fileName && existsSync(join(uploadDir, savedInvoice.fileName))) {
         fileBuffer = readFileSync(join(uploadDir, savedInvoice.fileName));
         fileName = savedInvoice.originalName || savedInvoice.fileName;

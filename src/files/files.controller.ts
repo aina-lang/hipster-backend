@@ -13,8 +13,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname } from 'path';
 import { FilesService } from './files.service';
+import { getUploadPath } from 'src/common/utils/upload-path';
 import { CreateFileDto } from './dto/create-file.dto';
 import { UpdateFileDto } from './dto/update-file.dto';
 import { QueryFilesDto } from './dto/query-files.dto';
@@ -62,7 +63,7 @@ export class FilesController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          cb(null, process.env.UPLOAD_PATH || join(process.cwd(), 'uploads'));
+          cb(null, getUploadPath());
         },
         filename: (req, file, cb) => {
           const randomName = Array(32)

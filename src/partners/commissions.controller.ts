@@ -12,7 +12,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
+import { extname } from 'path';
+import { getUploadPath } from 'src/common/utils/upload-path';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PartnersService, RequestUser } from './partners.service';
 import {
@@ -80,7 +81,7 @@ export class CommissionsController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          cb(null, process.env.UPLOAD_PATH || join(process.cwd(), 'uploads'));
+          cb(null, getUploadPath());
         },
         filename: (req, file, cb) => {
           const randomName = Array(32)
