@@ -67,6 +67,79 @@ export class ProjectsService {
   ) {}
 
   // ------------------------------------------------------------
+  // 🔹 PROJETS D'UN EMPLOYÉ (fiche employé : en cours / réalisés)
+  // ------------------------------------------------------------
+  async findProjectsByEmployee(employeeId: number) {
+    const employee = await this.userRepo.findOne({
+      where: { id: employeeId },
+      relations: ['employeeProfile'],
+    });
+    if (!employee) {
+      throw new NotFoundException(`Employé #${employeeId} introuvable`);
+    }
+
+    const memberships = await this.memberRepo.find({
+      where: { employee: { id: employeeId } },
+      // ProjectMember.employee est eager -> project.members.employee est auto-chargé
+      relations: ['project', 'project.client', 'project.client.user', 'project.members'],
+      order: { joinedAt: 'DESC' },
+    });
+
+    const clientName = (project: Project): string | null => {
+      const c = project.client;
+      if (!c) return null;
+      const person = `${c.user?.firstName ?? ''} ${c.user?.lastName ?? ''}`.trim();
+      return c.companyName || person || null;
+    };
+
+    const projects = memberships
+      .filter((m) => m.project)
+      .map((m) => ({
+        id: m.project.id,
+        name: m.project.name,
+        status: m.project.status,
+        start_date: m.project.start_date,
+        end_date: m.project.end_date,
+        real_end_date: m.project.real_end_date,
+        role: m.role, // rôle de l'employé sur ce projet
+        joinedAt: m.joinedAt,
+        client: m.project.client
+          ? { id: m.project.client.id, name: clientName(m.project) }
+          : null,
+        // Équipe du projet (hors l'employé courant)
+        team: (m.project.members || [])
+          .filter((pm) => pm.employee && pm.employee.id !== employeeId)
+          .map((pm) => ({
+            id: pm.employee.id,
+            firstName: pm.employee.firstName,
+            lastName: pm.employee.lastName,
+            avatarUrl: pm.employee.avatarUrl,
+            role: pm.role,
+          })),
+      }));
+
+    const CURRENT_STATUSES = [
+      ProjectStatus.IN_PROGRESS,
+      ProjectStatus.PLANNED,
+      ProjectStatus.PENDING,
+      ProjectStatus.ON_HOLD,
+    ];
+
+    return {
+      employee: {
+        id: employee.id,
+        firstName: employee.firstName,
+        lastName: employee.lastName,
+        email: employee.email,
+        avatarUrl: employee.avatarUrl,
+        poste: employee.employeeProfile?.poste ?? null,
+      },
+      current: projects.filter((p) => CURRENT_STATUSES.includes(p.status)),
+      completed: projects.filter((p) => p.status === ProjectStatus.COMPLETED),
+    };
+  }
+
+  // ------------------------------------------------------------
   // 🔹 CREATE PROJECT
   // ------------------------------------------------------------
   async create(dto: CreateProjectDto, userId: number): Promise<Project> {

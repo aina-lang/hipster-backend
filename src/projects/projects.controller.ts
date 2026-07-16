@@ -91,6 +91,15 @@ export class ProjectsController {
   }
 
   /**
+   * 👤 Projets d'un employé (fiche employé : en cours / réalisés)
+   */
+  @ApiOperation({ summary: "Projets d'un employé (en cours / réalisés)" })
+  @Get('employee/:employeeId')
+  async findByEmployee(@Param('employeeId') employeeId: string) {
+    return this.projectsService.findProjectsByEmployee(+employeeId);
+  }
+
+  /**
    * 🔍 Obtenir un projet par ID
    */
   @ApiOperation({ summary: 'Consulter un projet' })
