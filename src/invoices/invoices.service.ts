@@ -11,6 +11,7 @@ import { User } from 'src/users/entities/user.entity';
 import { MailService } from 'src/mail/mail.service';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import { getUploadPath } from 'src/common/utils/upload-path';
 
 @Injectable()
