@@ -39,9 +39,9 @@ export class Invoice {
   })
   type: InvoiceType;
 
-  // Montant saisi librement (champ texte)
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  amount?: string;
+  // Montant en euros (2 décimales)
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  amount?: number;
 
   @Column({
     type: 'enum',

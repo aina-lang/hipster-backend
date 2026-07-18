@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  IsNumber,
 } from 'class-validator';
 import { InvoiceStatus, InvoiceType } from '../entities/invoice.entity';
 
@@ -20,10 +21,11 @@ export class CreateInvoiceDto {
   @IsPositive()
   projectId: number;
 
-  // Montant saisi librement (champ texte)
-  @IsString()
+  // Montant en euros (2 décimales)
+  @Type(() => Number)
+  @IsNumber()
   @IsOptional()
-  amount?: string;
+  amount?: number;
 
   @IsEnum(InvoiceStatus)
   @IsOptional()

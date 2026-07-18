@@ -97,6 +97,18 @@ export class InvoicesController {
     return this.invoicesService.findPaginated(query);
   }
 
+  @ApiOperation({ summary: 'Récupérer les stats globales de CA' })
+  @Get('stats/global')
+  getGlobalStats() {
+    return this.invoicesService.getGlobalStats();
+  }
+
+  @ApiOperation({ summary: 'Récupérer les stats de CA pour un client' })
+  @Get('stats/client/:clientId')
+  getClientStats(@Param('clientId') clientId: string) {
+    return this.invoicesService.getClientStats(+clientId);
+  }
+
   @ApiOperation({ summary: 'Récupérer un document par ID' })
   @Get(':id')
   findOne(@Param('id') id: string) {

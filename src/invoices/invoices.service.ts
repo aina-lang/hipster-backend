@@ -4,6 +4,7 @@ import { Repository, In } from 'typeorm';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { Invoice, InvoiceType, InvoiceStatus } from './entities/invoice.entity';
+import { InvoiceStatsDto } from './dto/invoice-stats.dto';
 import { Project } from 'src/projects/entities/project.entity';
 import { QueryInvoicesDto } from './dto/query-invoices.dto';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
@@ -203,5 +204,63 @@ export class InvoicesService {
     const notFound = ids.filter((id) => !foundIds.includes(id));
     if (invoices.length) await this.invoiceRepo.remove(invoices);
     return { deleted: invoices.length, notFound };
+  }
+
+  async getGlobalStats(): Promise<InvoiceStatsDto> {
+    const result = await this.invoiceRepo
+      .createQueryBuilder('invoice')
+      .select('SUM(CASE WHEN invoice.status = :paid AND invoice.type = :invoice THEN invoice.amount ELSE 0 END)', 'totalPaid')
+      .addSelect('SUM(CASE WHEN invoice.status = :pending AND invoice.type = :invoice THEN invoice.amount ELSE 0 END)', 'totalPending')
+      .addSelect('SUM(CASE WHEN invoice.type = :quote THEN invoice.amount ELSE 0 END)', 'totalQuotes')
+      .addSelect('COUNT(DISTINCT invoice.client.id)', 'clientCount')
+      .setParameters({
+        paid: InvoiceStatus.PAID,
+        pending: InvoiceStatus.PENDING,
+        invoice: InvoiceType.INVOICE,
+        quote: InvoiceType.QUOTE,
+      })
+      .getRawOne();
+
+    const totalPaid = parseFloat(result.totalPaid) || 0;
+    const totalPending = parseFloat(result.totalPending) || 0;
+    const totalQuotes = parseFloat(result.totalQuotes) || 0;
+    const clientCount = parseInt(result.clientCount) || 0;
+
+    return {
+      totalPaid: Math.round(totalPaid * 100) / 100,
+      totalPending: Math.round(totalPending * 100) / 100,
+      totalQuotes: Math.round(totalQuotes * 100) / 100,
+      totalInvoices: totalPaid + totalPending,
+      clientCount,
+      averagePerClient: clientCount > 0 ? Math.round(((totalPaid + totalPending) / clientCount) * 100) / 100 : 0,
+    };
+  }
+
+  async getClientStats(clientId: number): Promise<InvoiceStatsDto> {
+    const result = await this.invoiceRepo
+      .createQueryBuilder('invoice')
+      .where('invoice.client.id = :clientId', { clientId })
+      .select('SUM(CASE WHEN invoice.status = :paid AND invoice.type = :invoice THEN invoice.amount ELSE 0 END)', 'totalPaid')
+      .addSelect('SUM(CASE WHEN invoice.status = :pending AND invoice.type = :invoice THEN invoice.amount ELSE 0 END)', 'totalPending')
+      .addSelect('SUM(CASE WHEN invoice.type = :quote THEN invoice.amount ELSE 0 END)', 'totalQuotes')
+      .setParameters({
+        paid: InvoiceStatus.PAID,
+        pending: InvoiceStatus.PENDING,
+        invoice: InvoiceType.INVOICE,
+        quote: InvoiceType.QUOTE,
+        clientId,
+      })
+      .getRawOne();
+
+    const totalPaid = parseFloat(result?.totalPaid) || 0;
+    const totalPending = parseFloat(result?.totalPending) || 0;
+    const totalQuotes = parseFloat(result?.totalQuotes) || 0;
+
+    return {
+      totalPaid: Math.round(totalPaid * 100) / 100,
+      totalPending: Math.round(totalPending * 100) / 100,
+      totalQuotes: Math.round(totalQuotes * 100) / 100,
+      totalInvoices: totalPaid + totalPending,
+    };
   }
 }
