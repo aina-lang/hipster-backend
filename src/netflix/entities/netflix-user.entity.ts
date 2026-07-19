@@ -12,15 +12,15 @@ export enum NetflixPlan {
 
 /**
  * 🎬 NETFLIX USER (isolé de tous les autres modules)
- * Entité dédiée à l'app Netflix Gasy. Authentification par numéro de téléphone.
+ * Entité dédiée à l'app Netflix Gasy. Authentification par email.
  */
 @Entity('netflix_users')
 export class NetflixUser {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 20 })
-  phone: string;
+  @Column({ type: 'varchar', length: 255, unique: true })
+  email: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   firstName?: string;
@@ -47,7 +47,7 @@ export class NetflixUser {
   plan: NetflixPlan;
 
   @Column({ default: false })
-  isPhoneVerified: boolean;
+  isEmailVerified: boolean;
 
   @Column({ type: 'text', nullable: true, select: false })
   refreshToken?: string | null;

@@ -1,9 +1,9 @@
-import { IsString, IsNotEmpty, Matches } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class RefreshNetflixDto {
-  @IsString()
+  @IsEmail()
   @IsNotEmpty()
-  phone: string;
+  email: string;
 
   @IsString()
   @IsNotEmpty()

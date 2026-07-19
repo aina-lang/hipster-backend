@@ -1,11 +1,10 @@
-import { IsString, IsNotEmpty, Matches, IsOptional, IsIn } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, IsIn } from 'class-validator';
 import { NetflixUserType } from '../entities/netflix-user.entity';
 
 export class RegisterNetflixDto {
-  @IsString()
+  @IsEmail()
   @IsNotEmpty()
-  @Matches(/^\+?[0-9]{8,15}$/, { message: 'Numéro de téléphone invalide.' })
-  phone: string;
+  email: string;
 
   @IsOptional()
   @IsString()

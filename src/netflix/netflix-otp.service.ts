@@ -7,7 +7,7 @@ import { NetflixUser } from './entities/netflix-user.entity';
 
 /**
  * Service OTP isolé pour Netflix (aucune dépendance au module otp global).
- * Ici l'envoi se fait via le canal téléphone (à brancher sur Mobile Money / SMS Gateway).
+ * Ici l'envoi se fait par email (à brancher sur un service d'envoi d'email).
  */
 @Injectable()
 export class NetflixOtpService {
@@ -25,7 +25,7 @@ export class NetflixOtpService {
     otp.expiresAt = expiresAt;
     await this.otpRepo.save(otp);
 
-    // TODO: intégrer la passerelle SMS / WhatsApp / Mobile Money pour envoyer `code`.
+    // TODO: intégrer le service d'envoi d'email pour envoyer `code`.
     return code;
   }
 

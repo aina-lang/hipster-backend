@@ -1,10 +1,9 @@
-import { IsString, IsNotEmpty, Matches } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class VerifyOtpNetflixDto {
-  @IsString()
+  @IsEmail()
   @IsNotEmpty()
-  @Matches(/^\+?[0-9]{8,15}$/, { message: 'Numéro de téléphone invalide.' })
-  phone: string;
+  email: string;
 
   @IsString()
   @IsNotEmpty()

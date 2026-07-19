@@ -16,7 +16,7 @@ import { RefreshNetflixDto } from './dto/refresh-netflix.dto';
 import { NetflixOtpService } from './netflix-otp.service';
 
 /**
- * Auth isolée Netflix : inscription / connexion par numéro de téléphone.
+ * Auth isolée Netflix : inscription / connexion par email.
  * Aucune dépendance vers users/auth/profiles/mail des autres apps.
  */
 @Injectable()
@@ -33,7 +33,7 @@ export class NetflixAuthService {
   private buildTokens(user: NetflixUser) {
     const payload = {
       sub: user.id,
-      phone: user.phone,
+      email: user.email,
       userType: user.userType,
       type: 'netflix',
     };
@@ -45,35 +45,35 @@ export class NetflixAuthService {
 
   /** Étape 1 : demande de code (inscription ou connexion). */
   async requestCode(dto: RegisterNetflixDto) {
-    const phone = dto.phone.trim();
-    let user = await this.userRepo.findOne({ where: { phone } });
+    const email = dto.email.trim().toLowerCase();
+    let user = await this.userRepo.findOne({ where: { email } });
 
     if (!user) {
       user = this.userRepo.create({
-        phone,
+        email,
         firstName: dto.firstName,
         lastName: dto.lastName,
         userType: dto.userType || NetflixUserType.VIEWER,
-        isPhoneVerified: false,
+        isEmailVerified: false,
       });
       user = await this.userRepo.save(user);
     }
 
     const code = await this.otpService.generateOtp(user, NetflixOtpType.LOGIN);
-    this.logger.debug(`[NETFLIX] code for ${phone}: ${code}`);
-    return { message: 'Code envoyé par SMS.', phone };
+    this.logger.debug(`[NETFLIX] code for ${email}: ${code}`);
+    return { message: 'Code envoyé par email.', email };
   }
 
   /** Étape 2 : vérification du code -> login ou création de compte. */
   async verifyCode(dto: VerifyOtpNetflixDto) {
-    const phone = dto.phone.trim();
-    const user = await this.userRepo.findOne({ where: { phone } });
+    const email = dto.email.trim().toLowerCase();
+    const user = await this.userRepo.findOne({ where: { email } });
     if (!user) throw new NotFoundException('Utilisateur introuvable.');
 
     const ok = await this.otpService.verifyOtp(user, dto.code, NetflixOtpType.LOGIN);
     if (!ok) throw new UnauthorizedException('Code invalide ou expiré.');
 
-    user.isPhoneVerified = true;
+    user.isEmailVerified = true;
     await this.userRepo.save(user);
 
     const tokens = this.buildTokens(user);
@@ -87,7 +87,7 @@ export class NetflixAuthService {
   }
 
   async refresh(dto: RefreshNetflixDto) {
-    const user = await this.userRepo.findOne({ where: { phone: dto.phone.trim() } });
+    const user = await this.userRepo.findOne({ where: { email: dto.email.trim().toLowerCase() } });
     if (!user || user.refreshToken !== dto.refreshToken) {
       throw new UnauthorizedException('Refresh token invalide.');
     }
@@ -113,12 +113,12 @@ export class NetflixAuthService {
   private serialize(user: NetflixUser) {
     return {
       id: user.id,
-      phone: user.phone,
+      email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       userType: user.userType,
       plan: user.plan,
-      isPhoneVerified: user.isPhoneVerified,
+      isEmailVerified: user.isEmailVerified,
     };
   }
 }

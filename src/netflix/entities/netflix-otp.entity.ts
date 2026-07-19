@@ -15,8 +15,7 @@ export enum NetflixOtpType {
 }
 
 /**
- * 🔐 NETFLIX OTP (isolé). Code à usage unique envoyé par SMS/téléphone.
- * Ne dépend d'aucun autre module (pas de mail externe).
+ * 🔐 NETFLIX OTP (isolé). Code à usage unique envoyé par email.
  */
 @Entity('netflix_otps')
 export class NetflixOtp {

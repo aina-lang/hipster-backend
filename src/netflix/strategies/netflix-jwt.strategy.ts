@@ -26,7 +26,7 @@ export class NetflixJwtStrategy extends PassportStrategy(Strategy, 'netflix-jwt'
       id: payload.sub,
       userId: payload.sub,
       sub: payload.sub,
-      phone: payload.phone,
+      email: payload.email,
       userType: payload.userType,
     };
   }
