@@ -53,7 +53,7 @@ export class NetflixAuthService {
         email,
         firstName: dto.firstName,
         lastName: dto.lastName,
-        userType: dto.userType || NetflixUserType.VIEWER,
+        userType: NetflixUserType.CREATOR,
         isEmailVerified: false,
       });
       user = await this.userRepo.save(user);

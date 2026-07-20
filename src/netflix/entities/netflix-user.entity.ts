@@ -36,7 +36,7 @@ export class NetflixUser {
 
   @Column({
     type: 'varchar',
-    default: NetflixUserType.VIEWER,
+    default: NetflixUserType.CREATOR,
   })
   userType: NetflixUserType;
 
