@@ -9,13 +9,13 @@ import { KookUser } from '../entities/kook-user.entity';
 @Injectable()
 export class KookJwtStrategy extends PassportStrategy(Strategy, 'kook-jwt') {
   constructor(
-    config: ConfigService,
+    private readonly config: ConfigService,
     @InjectRepository(KookUser)
     private readonly userRepo: Repository<KookUser>,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: 'kook-secret-change-me-in-production',
+      secretOrKey: config.get<string>('KOOK_JWT_SECRET') || config.get<string>('JWT_SECRET') || 'kook-secret-change-me-in-production',
     });
   }
 
