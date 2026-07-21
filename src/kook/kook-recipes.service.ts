@@ -124,7 +124,7 @@ export class KookRecipesService {
     if (!recipe) throw new NotFoundException('Recette introuvable');
 
     const existing = await this.likeRepo.findOne({ where: { user: { id: userId }, recipe: { id } } });
-    if (existing) throw new ConflictException('Vous aimez déjà cette recette');
+    if (existing) return recipe;
 
     await this.likeRepo.save(this.likeRepo.create({ user: { id: userId } as any, recipe: { id } as any }));
 
@@ -148,7 +148,7 @@ export class KookRecipesService {
     if (!recipe) throw new NotFoundException('Recette introuvable');
 
     const existing = await this.likeRepo.findOne({ where: { user: { id: userId }, recipe: { id } } });
-    if (!existing) throw new NotFoundException('Vous n\'avez pas aimé cette recette');
+    if (!existing) return recipe;
 
     await this.likeRepo.remove(existing);
 
