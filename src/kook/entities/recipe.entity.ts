@@ -51,6 +51,9 @@ export class Recipe {
   @Column({ default: 0 })
   likesCount: number;
 
+  @Column({ default: 0 })
+  commentsCount: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

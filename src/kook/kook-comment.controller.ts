@@ -27,8 +27,8 @@ export class KookCommentController {
   @Public()
   @UseGuards(KookAuthGuard)
   @Delete(':commentId')
-  async delete(@KookUser() user: any, @Param('commentId') commentId: string) {
-    return this.comments.delete(+commentId, user.id);
+  async delete(@KookUser() user: any, @Param('recipeId') recipeId: string, @Param('commentId') commentId: string) {
+    return this.comments.delete(+commentId, +recipeId, user.id);
   }
 
   @Public()

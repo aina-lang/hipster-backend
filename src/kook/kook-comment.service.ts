@@ -43,6 +43,9 @@ export class KookCommentService {
     });
     await this.commentRepo.save(comment);
 
+    recipe.commentsCount += 1;
+    await this.recipeRepo.save(recipe);
+
     if (parent) {
       if (parent.author.id !== author.id) {
         const notif = await this.notifService.create({
@@ -79,7 +82,7 @@ export class KookCommentService {
     });
   }
 
-  async delete(commentId: number, userId: number) {
+  async delete(commentId: number, recipeId: number, userId: number) {
     const comment = await this.commentRepo.findOne({
       where: { id: commentId },
       relations: ['author'],
@@ -88,6 +91,13 @@ export class KookCommentService {
     if (comment.author.id !== userId) throw new ForbiddenException('Vous n\'êtes pas l\'auteur');
 
     await this.commentRepo.remove(comment);
+
+    const recipe = await this.recipeRepo.findOne({ where: { id: recipeId } });
+    if (recipe) {
+      recipe.commentsCount = Math.max(0, recipe.commentsCount - 1);
+      await this.recipeRepo.save(recipe);
+    }
+
     return { message: 'Commentaire supprimé' };
   }
 
