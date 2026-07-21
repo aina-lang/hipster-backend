@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  div(style="text-align: center; margin-bottom: 32px;")
+    div(style="width: 64px; height: 64px; background-color: #FFF7ED; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; border: 1px solid #FED7AA;")
+      span(style="font-size: 24px;") 🍳
+    h2(style="color: #1C1917;") Bienvenue sur Kook !
+    p(style="color: #78716C; font-size: 15px;") Votre compte a été créé avec succès. Commencez à partager vos meilleures recettes !
+
+  div(style="background-color: #FFFFFF; border-radius: 16px; padding: 32px; margin: 32px 0; border: 1px solid #E7E5E4;")
+    p(style="color: #57534E; font-size: 15px; line-height: 1.7; margin: 0;") 
+      | Bonjour #{name || 'chef'},
+      br
+      br
+      | Nous sommes ravis de vous accueillir dans la communauté Kook. Partagez vos recettes, découvrez celles des autres et échangez avec des passionnés de cuisine.
+      br
+      br
+      | Connectez-vous dès maintenant pour commencer l'aventure.
+
+  div(style="background-color: #FFFBEB; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #FED7AA; text-align: center;")
+    p(style="color: #92400E; font-size: 14px; margin: 0; font-weight: 600;") 👨‍🍳 Astuce : Complétez votre profil pour une meilleure expérience !
+
+  div.divider
+
+  p(style="color: #A8A29E; font-size: 13px; text-align: center; line-height: 1.6;") 
+    | Vous avez reçu cet email car vous vous êtes inscrit sur Kook.
+    br
+    | Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer cet email.

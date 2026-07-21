@@ -1,0 +1,27 @@
+extends layout
+
+block content
+  div(style="text-align: center; margin-bottom: 32px;")
+    div(style="width: 64px; height: 64px; background-color: #FFF7ED; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; border: 1px solid #FED7AA;")
+      span(style="font-size: 24px;") 🍳
+    h2(style="color: #1C1917;") Votre code de vérification Kook
+    p(style="color: #78716C; font-size: 15px;") Bonjour #{name || 'chef'}, utilisez le code ci-dessous pour vous connecter à Kook.
+
+  div(style="background-color: #FFFFFF; border-radius: 16px; padding: 40px 20px; margin: 32px 0; border: 1px solid #E7E5E4; text-align: center;")
+    p(style="font-size: 13px; color: #78716C; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; font-weight: 600;") Votre code
+    div(style="font-size: 42px; font-weight: 800; letter-spacing: 12px; color: #D97706; font-family: monospace; display: inline-block; padding: 10px 20px; border: 2px dashed #FED7AA; border-radius: 8px; background-color: #FFFBEB;") #{code || '******'}
+    p(style="font-size: 13px; color: #A8A29E; margin-top: 24px;") Ce code expirera dans 5 minutes.
+
+  p(style="color: #78716C; font-size: 14px; text-align: center; line-height: 1.6;") 
+    | Si vous n'avez pas demandé ce code, ignorez cet email. 
+    br
+    | Ne partagez jamais ce code avec qui que ce soit.
+
+  div.divider
+
+  div(style="background-color: #FFFBEB; border: 1px solid #FED7AA; padding: 20px; border-radius: 8px;")
+    h3(style="font-size: 14px; color: #92400E; margin-top: 0; margin-bottom: 12px;") 🔒 Sécurité
+    ul(style="padding-left: 20px; margin: 0; font-size: 13px; color: #78716C;")
+      li(style="margin-bottom: 8px;") Ne partagez jamais votre code OTP.
+      li(style="margin-bottom: 8px;") Nous ne vous demanderons jamais votre mot de passe par email.
+      li Si vous suspectez une fraude, contactez immédiatement notre support.

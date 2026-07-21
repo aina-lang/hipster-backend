@@ -5,7 +5,6 @@ import { memoryStorage } from 'multer';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { MailModule } from '../mail/mail.module';
 import { KookUser } from './entities/kook-user.entity';
 import { KookOtp } from './entities/kook-otp.entity';
 import { Recipe } from './entities/recipe.entity';
@@ -37,10 +36,11 @@ import { KookBookmarksController } from './kook-bookmarks.controller';
 import { KookBookmarksService } from './kook-bookmarks.service';
 import { KookFollowsController } from './kook-follows.controller';
 import { KookFollowsService } from './kook-follows.service';
+import { KookMailModule } from './kook-mail.module';
 
 @Module({
   imports: [
-    MailModule,
+    KookMailModule,
     TypeOrmModule.forFeature([KookUser, KookOtp, Recipe, KookComment, KookNotification, KookLike, KookCommentLike, RecipeCategory, Bookmark, Follow]),
     MulterModule.register({ storage: memoryStorage() }),
     PassportModule,

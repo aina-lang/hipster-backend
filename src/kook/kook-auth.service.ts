@@ -16,7 +16,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { KookOtpService } from './kook-otp.service';
-import { MailService } from '../mail/mail.service';
+import { KookMailService } from './services/kook-mail.service';
 
 @Injectable()
 export class KookAuthService {
@@ -28,7 +28,7 @@ export class KookAuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly otp: KookOtpService,
-    private readonly mailService: MailService,
+    private readonly kookMailService: KookMailService,
   ) {}
 
   async requestCode(dto: RegisterKookDto) {
@@ -47,7 +47,7 @@ export class KookAuthService {
     const code = await this.otp.generateOtp(user, KookOtpType.LOGIN);
 
     try {
-      await this.mailService.sendOtpEmail(dto.email, {
+      await this.kookMailService.sendOtpEmail(dto.email, {
         name: dto.firstName || dto.email,
         code,
       });
@@ -112,7 +112,7 @@ export class KookAuthService {
     const code = await this.otp.generateOtp(user, KookOtpType.REGISTER);
 
     try {
-      await this.mailService.sendOtpEmail(dto.email, {
+      await this.kookMailService.sendOtpEmail(dto.email, {
         name: dto.pseudo,
         code,
       });
@@ -201,7 +201,7 @@ export class KookAuthService {
     const code = await this.otp.generateOtp(user, KookOtpType.PASSWORD_RESET);
 
     try {
-      await this.mailService.sendOtpEmail(dto.email, {
+      await this.kookMailService.sendOtpEmail(dto.email, {
         name: user.pseudo || user.email,
         code,
       });
