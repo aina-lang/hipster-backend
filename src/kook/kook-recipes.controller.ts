@@ -1,5 +1,5 @@
 import {
-  Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards,
+  Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, Logger,
 } from '@nestjs/common';
 import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
@@ -10,12 +10,22 @@ import { UpdateRecipeDto } from './dto/update-recipe.dto';
 
 @Controller('kook/recipes')
 export class KookRecipesController {
+  private readonly logger = new Logger(KookRecipesController.name);
+
   constructor(private readonly recipes: KookRecipesService) {}
 
   @UseGuards(KookAuthGuard)
   @Post()
   async create(@KookUser() user: any, @Body() dto: CreateRecipeDto) {
-    return this.recipes.create(user, dto);
+    this.logger.log(`[create] user=${user?.id} ${user?.email} title="${dto?.title}"`);
+    try {
+      const result = await this.recipes.create(user, dto);
+      this.logger.log(`[create] success id=${result.id}`);
+      return result;
+    } catch (e: any) {
+      this.logger.error(`[create] error: ${e?.message}`, e?.stack);
+      throw e;
+    }
   }
 
   @Public()

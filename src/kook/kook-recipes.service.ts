@@ -24,6 +24,7 @@ export class KookRecipesService {
   ) {}
 
   async create(creator: KookUser, dto: CreateRecipeDto): Promise<Recipe> {
+    this.logger.log(`[create] creator.id=${creator?.id} title="${dto?.title}"`);
     const recipe = this.recipeRepo.create({
       creator,
       title: dto.title,
@@ -35,7 +36,10 @@ export class KookRecipesService {
       difficulty: dto.difficulty,
       imageUrl: dto.imageUrl,
     });
-    return this.recipeRepo.save(recipe);
+    this.logger.log(`[create] entity created, saving...`);
+    const saved = await this.recipeRepo.save(recipe);
+    this.logger.log(`[create] saved id=${saved.id}`);
+    return saved;
   }
 
   async findAll(query: {
