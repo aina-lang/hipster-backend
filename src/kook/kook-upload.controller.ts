@@ -1,6 +1,7 @@
 import {
   Controller, Post, UploadedFile, UseGuards, UseInterceptors, BadRequestException,
 } from '@nestjs/common';
+import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { KookTelegramService } from './services/kook-telegram.service';
@@ -9,6 +10,7 @@ import { KookTelegramService } from './services/kook-telegram.service';
 export class KookUploadController {
   constructor(private readonly telegram: KookTelegramService) {}
 
+  @Public()
   @UseGuards(KookAuthGuard)
   @Post('image')
   @UseInterceptors(FileInterceptor('file'))

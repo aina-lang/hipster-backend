@@ -14,6 +14,7 @@ export class KookRecipesController {
 
   constructor(private readonly recipes: KookRecipesService) {}
 
+  @Public()
   @UseGuards(KookAuthGuard)
   @Post()
   async create(@KookUser() user: any, @Body() dto: CreateRecipeDto) {
@@ -53,32 +54,37 @@ export class KookRecipesController {
     return this.recipes.findOne(+id);
   }
 
-  @Patch(':id')
+  @Public()
   @UseGuards(KookAuthGuard)
+  @Patch(':id')
   async update(@Param('id') id: string, @KookUser() user: any, @Body() dto: UpdateRecipeDto) {
     return this.recipes.update(+id, user.id, dto);
   }
 
-  @Delete(':id')
+  @Public()
   @UseGuards(KookAuthGuard)
+  @Delete(':id')
   async delete(@Param('id') id: string, @KookUser() user: any) {
     return this.recipes.delete(+id, user.id);
   }
 
-  @Post('bulk-delete')
+  @Public()
   @UseGuards(KookAuthGuard)
+  @Post('bulk-delete')
   async bulkDelete(@KookUser() user: any, @Body('ids') ids: number[]) {
     return this.recipes.bulkDelete(ids, user.id);
   }
 
-  @Post(':id/like')
+  @Public()
   @UseGuards(KookAuthGuard)
+  @Post(':id/like')
   async like(@Param('id') id: string, @KookUser() user: any) {
     return this.recipes.like(+id, user.id);
   }
 
-  @Post(':id/unlike')
+  @Public()
   @UseGuards(KookAuthGuard)
+  @Post(':id/unlike')
   async unlike(@Param('id') id: string, @KookUser() user: any) {
     return this.recipes.unlike(+id, user.id);
   }

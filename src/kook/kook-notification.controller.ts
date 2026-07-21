@@ -1,10 +1,12 @@
 import {
   Controller, Get, Post, Patch, Param, UseGuards, Delete,
 } from '@nestjs/common';
+import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { KookNotificationService } from './kook-notification.service';
 import { KookUser } from './kook-user.decorator';
 
+@Public()
 @UseGuards(KookAuthGuard)
 @Controller('kook/notifications')
 export class KookNotificationController {

@@ -65,6 +65,7 @@ export class KookAuthController {
     return this.auth.resetPassword(dto);
   }
 
+  @Public()
   @UseGuards(KookAuthGuard)
   @Post('change-password')
   async changePassword(@KookUser() user: any, @Body() dto: ChangePasswordDto) {
@@ -77,6 +78,7 @@ export class KookAuthController {
     return this.auth.refresh(dto);
   }
 
+  @Public()
   @UseGuards(KookAuthGuard)
   @Post('logout')
   async logout(@KookUser() user: any) {

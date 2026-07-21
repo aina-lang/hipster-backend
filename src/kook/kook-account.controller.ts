@@ -2,6 +2,7 @@ import {
   Body, Controller, Get, Patch, Post, Param, Delete, UseGuards, Req,
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
+import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { KookAccountService } from './kook-account.service';
@@ -9,6 +10,7 @@ import { UpdateAccountDto } from './dto/update-account.dto';
 import { KookTelegramService } from './services/kook-telegram.service';
 import { KookUser } from './kook-user.decorator';
 
+@Public()
 @UseGuards(KookAuthGuard)
 @Controller('kook/account')
 export class KookAccountController {

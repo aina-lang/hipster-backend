@@ -17,24 +17,28 @@ export class KookCommentController {
     return this.comments.findByRecipe(+recipeId);
   }
 
+  @Public()
   @UseGuards(KookAuthGuard)
   @Post()
   async create(@KookUser() user: any, @Param('recipeId') recipeId: string, @Body() dto: CreateCommentDto) {
     return this.comments.create(user, +recipeId, dto);
   }
 
+  @Public()
   @UseGuards(KookAuthGuard)
   @Delete(':commentId')
   async delete(@KookUser() user: any, @Param('commentId') commentId: string) {
     return this.comments.delete(+commentId, user.id);
   }
 
+  @Public()
   @UseGuards(KookAuthGuard)
   @Post(':commentId/like')
   async like(@KookUser() user: any, @Param('commentId') commentId: string) {
     return this.comments.like(+commentId, user.id);
   }
 
+  @Public()
   @UseGuards(KookAuthGuard)
   @Post(':commentId/unlike')
   async unlike(@KookUser() user: any, @Param('commentId') commentId: string) {
