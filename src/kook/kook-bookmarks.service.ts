@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Bookmark } from './entities/bookmark.entity';
 import { Recipe } from './entities/recipe.entity';
+import { KookComment } from './entities/kook-comment.entity';
 
 @Injectable()
 export class KookBookmarksService {
@@ -11,14 +12,30 @@ export class KookBookmarksService {
     private readonly repo: Repository<Bookmark>,
     @InjectRepository(Recipe)
     private readonly recipeRepo: Repository<Recipe>,
+    @InjectRepository(KookComment)
+    private readonly commentRepo: Repository<KookComment>,
   ) {}
 
   async findUserBookmarks(userId: number) {
-    return this.repo.find({
+    const bookmarks = await this.repo.find({
       where: { user: { id: userId } },
       relations: ['recipe', 'recipe.creator'],
       order: { createdAt: 'DESC' },
     });
+    const ids = bookmarks.map(b => b.recipe.id).filter(Boolean);
+    if (ids.length > 0) {
+      const counts = await this.commentRepo
+        .createQueryBuilder('c')
+        .select('c.recipeId', 'recipeId')
+        .addSelect('COUNT(*)', 'count')
+        .where('c.recipeId IN (:...ids)', { ids })
+        .groupBy('c.recipeId')
+        .getRawMany<{ recipeId: number; count: number }>();
+      const countMap: Record<number, number> = {};
+      for (const row of counts) countMap[row.recipeId] = Number(row.count);
+      for (const bm of bookmarks) (bm.recipe as any).commentsCount = countMap[bm.recipe.id] || 0;
+    }
+    return bookmarks;
   }
 
   async toggle(userId: number, recipeId: number) {
