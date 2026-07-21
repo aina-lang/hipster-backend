@@ -49,6 +49,13 @@ export class KookRecipesController {
   }
 
   @Public()
+  @UseGuards(KookAuthGuard)
+  @Get('likes')
+  async getUserLikes(@KookUser() user: any) {
+    return this.recipes.getUserLikes(user.id);
+  }
+
+  @Public()
   @Get(':id')
   async getOne(@Param('id') id: string) {
     return this.recipes.findOne(+id);

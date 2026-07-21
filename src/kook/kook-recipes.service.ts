@@ -112,6 +112,14 @@ export class KookRecipesService {
     return { deleted: count };
   }
 
+  async getUserLikes(userId: number): Promise<number[]> {
+    const likes = await this.likeRepo.find({
+      where: { user: { id: userId } },
+      relations: ['recipe'],
+    });
+    return likes.map(l => l.recipe.id);
+  }
+
   async getMyRecipes(userId: number): Promise<Recipe[]> {
     return this.recipeRepo.find({
       where: { creator: { id: userId } } as any,
