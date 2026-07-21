@@ -48,8 +48,7 @@ import { KookFollowsService } from './kook-follows.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const secret = config.get<string>('KOOK_JWT_SECRET');
-        if (!secret) throw new Error('KOOK_JWT_SECRET environment variable is required');
+        const secret = config.get<string>('KOOK_JWT_SECRET') || config.get<string>('JWT_SECRET') || 'change-me-jwt-secret';
         return { secret, signOptions: { expiresIn: '4h' } };
       },
     }),
