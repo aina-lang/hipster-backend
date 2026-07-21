@@ -1,14 +1,22 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
 import { KookUser, KookUserType } from './entities/kook-user.entity';
 import { KookOtpType } from './entities/kook-otp.entity';
 import { RegisterKookDto } from './dto/register-kook.dto';
 import { VerifyOtpKookDto } from './dto/verify-otp-kook.dto';
 import { RefreshKookDto } from './dto/refresh-kook.dto';
+import { RegisterAuthDto } from './dto/register-auth.dto';
+import { LoginAuthDto } from './dto/login-auth.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { VerifyCodeDto } from './dto/verify-code.dto';
 import { KookOtpService } from './kook-otp.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class KookAuthService {
@@ -20,6 +28,7 @@ export class KookAuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly otp: KookOtpService,
+    private readonly mailService: MailService,
   ) {}
 
   async requestCode(dto: RegisterKookDto) {
@@ -35,8 +44,16 @@ export class KookAuthService {
       user = await this.userRepo.save(user);
     }
 
-    await this.otp.generateOtp(user, KookOtpType.LOGIN);
-    this.logger.debug(`Code OTP envoyé à ${dto.email}`);
+    const code = await this.otp.generateOtp(user, KookOtpType.LOGIN);
+
+    try {
+      await this.mailService.sendOtpEmail(dto.email, {
+        name: dto.firstName || dto.email,
+        code,
+      });
+    } catch (e) {
+      this.logger.warn(`Impossible d\'envoyer l\'email OTP à ${dto.email}: ${e.message}`);
+    }
 
     return { message: 'Code de vérification envoyé', email: dto.email };
   }
@@ -65,6 +82,7 @@ export class KookAuthService {
       user: {
         id: user.id,
         email: user.email,
+        pseudo: user.pseudo,
         firstName: user.firstName,
         lastName: user.lastName,
         userType: user.userType,
@@ -72,6 +90,183 @@ export class KookAuthService {
         isEmailVerified: user.isEmailVerified,
       },
     };
+  }
+
+  async registerWithPassword(dto: RegisterAuthDto) {
+    const existing = await this.userRepo.findOne({ where: [{ email: dto.email }, { pseudo: dto.pseudo }] });
+    if (existing) {
+      if (existing.email === dto.email) throw new ConflictException('Cet email est déjà utilisé');
+      throw new ConflictException('Ce pseudo est déjà utilisé');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    const user = this.userRepo.create({
+      pseudo: dto.pseudo,
+      email: dto.email,
+      password: hashedPassword,
+      userType: KookUserType.CREATOR,
+    });
+    await this.userRepo.save(user);
+
+    const code = await this.otp.generateOtp(user, KookOtpType.REGISTER);
+
+    try {
+      await this.mailService.sendOtpEmail(dto.email, {
+        name: dto.pseudo,
+        code,
+      });
+    } catch (e) {
+      this.logger.warn(`Impossible d\'envoyer l\'email OTP à ${dto.email}: ${e.message}`);
+    }
+
+    return { message: 'Inscription réussie, code de vérification envoyé', email: dto.email };
+  }
+
+  async verifyRegistration(dto: VerifyCodeDto) {
+    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
+
+    const valid = await this.otp.verifyOtp(user, dto.code, KookOtpType.REGISTER, true);
+    if (!valid) throw new UnauthorizedException('Code invalide ou expiré');
+
+    user.isEmailVerified = true;
+    await this.userRepo.save(user);
+
+    const payload = { sub: user.id, email: user.email, type: 'kook' };
+    const access_token = this.jwt.sign(payload, { expiresIn: '4h' });
+    const refresh_token = this.jwt.sign(payload, { expiresIn: '30d' });
+
+    user.refreshToken = refresh_token;
+    user.refreshTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await this.userRepo.save(user);
+
+    return {
+      access_token,
+      refresh_token,
+      user: {
+        id: user.id,
+        email: user.email,
+        pseudo: user.pseudo,
+        userType: user.userType,
+        plan: user.plan,
+        isEmailVerified: user.isEmailVerified,
+      },
+    };
+  }
+
+  async loginWithPassword(dto: LoginAuthDto) {
+    const user = await this.userRepo.findOne({
+      where: [
+        { email: dto.emailOrPseudo },
+        { pseudo: dto.emailOrPseudo },
+      ],
+      select: ['id', 'email', 'pseudo', 'password', 'userType', 'plan', 'isEmailVerified', 'firstName', 'lastName', 'avatarUrl'],
+    });
+
+    if (!user || !user.password) throw new UnauthorizedException('Email/Pseudo ou mot de passe incorrect');
+
+    const valid = await bcrypt.compare(dto.password, user.password);
+    if (!valid) throw new UnauthorizedException('Email/Pseudo ou mot de passe incorrect');
+
+    const payload = { sub: user.id, email: user.email, type: 'kook' };
+    const access_token = this.jwt.sign(payload, { expiresIn: '4h' });
+    const refresh_token = this.jwt.sign(payload, { expiresIn: '30d' });
+
+    user.refreshToken = refresh_token;
+    user.refreshTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await this.userRepo.save(user);
+
+    return {
+      access_token,
+      refresh_token,
+      user: {
+        id: user.id,
+        email: user.email,
+        pseudo: user.pseudo,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
+        userType: user.userType,
+        plan: user.plan,
+        isEmailVerified: user.isEmailVerified,
+      },
+    };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+    if (!user) throw new UnauthorizedException('Aucun compte trouvé avec cet email');
+
+    const code = await this.otp.generateOtp(user, KookOtpType.PASSWORD_RESET);
+
+    try {
+      await this.mailService.sendOtpEmail(dto.email, {
+        name: user.pseudo || user.email,
+        code,
+      });
+    } catch (e) {
+      this.logger.warn(`Impossible d\'envoyer l\'email de réinitialisation à ${dto.email}: ${e.message}`);
+    }
+
+    return { message: 'Code de réinitialisation envoyé', email: dto.email };
+  }
+
+  async verifyResetCode(dto: VerifyCodeDto) {
+    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
+
+    const valid = await this.otp.verifyOtp(user, dto.code, KookOtpType.PASSWORD_RESET, true);
+    if (!valid) throw new UnauthorizedException('Code invalide ou expiré');
+
+    const resetToken = this.jwt.sign(
+      { sub: user.id, email: user.email, purpose: 'password_reset' },
+      { expiresIn: '15m' },
+    );
+
+    return { message: 'Code vérifié', resetToken, email: dto.email };
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    let payload: { sub: number; email: string; purpose: string };
+    try {
+      payload = this.jwt.verify(dto.token);
+    } catch {
+      throw new UnauthorizedException('Token de réinitialisation invalide ou expiré');
+    }
+
+    if (payload.purpose !== 'password_reset' || payload.email !== dto.email) {
+      throw new UnauthorizedException('Token de réinitialisation invalide');
+    }
+
+    const user = await this.userRepo.findOne({
+      where: { email: dto.email },
+      select: ['id', 'email', 'password'],
+    });
+    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
+
+    user.password = await bcrypt.hash(dto.newPassword, 10);
+    await this.userRepo.save(user);
+
+    return { message: 'Mot de passe réinitialisé avec succès' };
+  }
+
+  async changePassword(userId: number, dto: ChangePasswordDto) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      select: ['id', 'email', 'password'],
+    });
+    if (!user) throw new UnauthorizedException('Utilisateur introuvable');
+
+    if (!user.password) throw new BadRequestException('Aucun mot de passe défini');
+
+    const valid = await bcrypt.compare(dto.currentPassword, user.password);
+    if (!valid) throw new UnauthorizedException('Mot de passe actuel incorrect');
+
+    user.password = await bcrypt.hash(dto.newPassword, 10);
+    await this.userRepo.save(user);
+
+    return { message: 'Mot de passe modifié avec succès' };
   }
 
   async refresh(dto: RefreshKookDto) {

@@ -21,6 +21,9 @@ export class KookUser {
   email: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
+  pseudo?: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
   firstName?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -28,6 +31,9 @@ export class KookUser {
 
   @Column({ type: 'varchar', length: 512, nullable: true })
   avatarUrl?: string;
+
+  @Column({ type: 'varchar', length: 512, nullable: true })
+  coverUrl?: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true, select: false })
   password?: string;

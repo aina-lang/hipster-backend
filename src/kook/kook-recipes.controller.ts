@@ -1,6 +1,7 @@
 import {
   Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards,
 } from '@nestjs/common';
+import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { KookUser } from './kook-user.decorator';
 import { KookRecipesService } from './kook-recipes.service';
@@ -17,22 +18,26 @@ export class KookRecipesController {
     return this.recipes.create(user, dto);
   }
 
+  @Public()
   @Get()
   async list(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
     @Query('difficulty') difficulty?: string,
+    @Query('categoryId') categoryId?: string,
   ) {
-    return this.recipes.findAll({ page, limit, search, difficulty });
+    return this.recipes.findAll({ page, limit, search, difficulty, categoryId: categoryId ? +categoryId : undefined });
   }
 
+  @Public()
   @Get('my')
   @UseGuards(KookAuthGuard)
   async myRecipes(@KookUser() user: any) {
     return this.recipes.getMyRecipes(user.id);
   }
 
+  @Public()
   @Get(':id')
   async getOne(@Param('id') id: string) {
     return this.recipes.findOne(+id);
@@ -50,15 +55,21 @@ export class KookRecipesController {
     return this.recipes.delete(+id, user.id);
   }
 
+  @Post('bulk-delete')
+  @UseGuards(KookAuthGuard)
+  async bulkDelete(@KookUser() user: any, @Body('ids') ids: number[]) {
+    return this.recipes.bulkDelete(ids, user.id);
+  }
+
   @Post(':id/like')
   @UseGuards(KookAuthGuard)
-  async like(@Param('id') id: string) {
-    return this.recipes.like(+id);
+  async like(@Param('id') id: string, @KookUser() user: any) {
+    return this.recipes.like(+id, user.id);
   }
 
   @Post(':id/unlike')
   @UseGuards(KookAuthGuard)
-  async unlike(@Param('id') id: string) {
-    return this.recipes.unlike(+id);
+  async unlike(@Param('id') id: string, @KookUser() user: any) {
+    return this.recipes.unlike(+id, user.id);
   }
 }
