@@ -24,6 +24,7 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
 import { ClientPortalModule } from './client-portal/client-portal.module';
 import { CompanyModule } from './company/company.module';
 import { PartnersModule } from './partners/partners.module';
+import { KookModule } from './kook/kook.module';
 
 import { join } from 'path';
 
@@ -74,6 +75,7 @@ import { join } from 'path';
     MaintenanceModule,
     ClientPortalModule,
     PartnersModule,
+    KookModule,
   ],
 
   controllers: [],
