@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { KookUser } from '../entities/kook-user.entity';
@@ -8,12 +9,13 @@ import { KookUser } from '../entities/kook-user.entity';
 @Injectable()
 export class KookJwtStrategy extends PassportStrategy(Strategy, 'kook-jwt') {
   constructor(
+    config: ConfigService,
     @InjectRepository(KookUser)
     private readonly userRepo: Repository<KookUser>,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: 'kook-secret-change-me-in-production',
+      secretOrKey: config.get<string>('KOOK_JWT_SECRET') || config.get<string>('JWT_SECRET') || 'kook-secret-change-me-in-production',
     });
   }
 

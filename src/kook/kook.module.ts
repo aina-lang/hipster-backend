@@ -48,7 +48,7 @@ import { KookMailModule } from './kook-mail.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const secret = config.get<string>('KOOK_JWT_SECRET') || config.get<string>('JWT_SECRET') || 'change-me-jwt-secret';
+        const secret = config.get<string>('KOOK_JWT_SECRET') || config.get<string>('JWT_SECRET') || 'kook-secret-change-me-in-production';
         return { secret, signOptions: { expiresIn: '4h' } };
       },
     }),
