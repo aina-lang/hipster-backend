@@ -153,10 +153,25 @@ export class KookRecipesService {
   }
 
   async getMyRecipes(userId: number): Promise<Recipe[]> {
-    return this.recipeRepo.find({
+    const recipes = await this.recipeRepo.find({
       where: { creator: { id: userId } } as any,
+      relations: ['creator'],
       order: { createdAt: 'DESC' },
     });
+    const ids = recipes.map(r => r.id);
+    if (ids.length > 0) {
+      const counts = await this.commentRepo
+        .createQueryBuilder('c')
+        .select('c.recipeId', 'recipeId')
+        .addSelect('COUNT(*)', 'count')
+        .where('c.recipeId IN (:...ids)', { ids })
+        .groupBy('c.recipeId')
+        .getRawMany<{ recipeId: number; count: number }>();
+      const countMap: Record<number, number> = {};
+      for (const row of counts) countMap[row.recipeId] = Number(row.count);
+      for (const recipe of recipes) (recipe as any).commentsCount = countMap[recipe.id] || 0;
+    }
+    return recipes;
   }
 
   async like(id: number, userId: number): Promise<Recipe> {
