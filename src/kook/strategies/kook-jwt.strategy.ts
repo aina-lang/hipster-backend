@@ -15,7 +15,7 @@ export class KookJwtStrategy extends PassportStrategy(Strategy, 'kook-jwt') {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: config.get<string>('KOOK_JWT_SECRET') || config.get<string>('JWT_SECRET') || 'kook-secret-change-me-in-production',
+      secretOrKey: 'kook-secret-change-me-in-production',
     });
   }
 
