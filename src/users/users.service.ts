@@ -340,8 +340,9 @@ export class UsersService {
     }
     const hashedPassword = await bcrypt.hash(temporaryPassword, 10);
 
-    // Update user password
+    // Update user password AND mark email as verified so they can login
     user.password = hashedPassword;
+    user.isEmailVerified = true;
     await this.userRepo.save(user);
 
     console.log(
