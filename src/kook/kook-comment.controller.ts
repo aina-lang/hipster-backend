@@ -33,6 +33,13 @@ export class KookCommentController {
 
   @Public()
   @UseGuards(KookAuthGuard)
+  @Get('likes')
+  async getUserLikes(@KookUser() user: any, @Param('recipeId') recipeId: string) {
+    return this.comments.getUserLikes(+recipeId, user.id);
+  }
+
+  @Public()
+  @UseGuards(KookAuthGuard)
   @Post(':commentId/like')
   async like(@KookUser() user: any, @Param('commentId') commentId: string) {
     return this.comments.like(+commentId, user.id);

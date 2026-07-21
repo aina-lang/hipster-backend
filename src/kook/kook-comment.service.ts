@@ -74,6 +74,16 @@ export class KookCommentService {
     });
   }
 
+  async getUserLikes(recipeId: number, userId: number): Promise<number[]> {
+    const likes = await this.commentLikeRepo
+      .createQueryBuilder('cl')
+      .innerJoinAndSelect('cl.comment', 'c')
+      .where('cl.userId = :userId', { userId })
+      .andWhere('c.recipeId = :recipeId', { recipeId })
+      .getMany();
+    return likes.map(l => l.comment.id);
+  }
+
   async findByRecipe(recipeId: number) {
     return this.commentRepo.find({
       where: { recipe: { id: recipeId } },
@@ -108,7 +118,7 @@ export class KookCommentService {
     const existing = await this.commentLikeRepo.findOne({
       where: { user: { id: userId }, comment: { id: commentId } },
     });
-    if (existing) throw new ConflictException('Vous avez déjà aimé ce commentaire');
+    if (existing) return comment;
 
     await this.commentLikeRepo.save(this.commentLikeRepo.create({
       user: { id: userId } as any,
@@ -126,7 +136,7 @@ export class KookCommentService {
     const existing = await this.commentLikeRepo.findOne({
       where: { user: { id: userId }, comment: { id: commentId } },
     });
-    if (!existing) throw new NotFoundException('Vous n\'avez pas aimé ce commentaire');
+    if (!existing) return comment;
 
     await this.commentLikeRepo.remove(existing);
     comment.likesCount = Math.max(0, comment.likesCount - 1);
