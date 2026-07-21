@@ -219,14 +219,14 @@ export class KookAuthService {
     const valid = await this.otp.verifyOtp(user, dto.code, KookOtpType.PASSWORD_RESET, true);
     if (!valid) throw new UnauthorizedException('Code invalide ou expiré');
 
-    const resetToken = this.jwt.sign(
+    const token = this.jwt.sign(
       { sub: user.id, email: user.email, purpose: 'password_reset' },
       { expiresIn: '15m' },
     );
 
-    this.logger.log(`[reset-password] token genere pour ${dto.email}, token=${resetToken}`);
+    this.logger.log(`[reset-password] token genere pour ${dto.email}, token=${token}`);
 
-    return { message: 'Code vérifié', resetToken, email: dto.email };
+    return { message: 'Code vérifié', token, email: dto.email };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
