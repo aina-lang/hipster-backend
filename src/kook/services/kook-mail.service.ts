@@ -39,7 +39,7 @@ export class KookMailService {
 
       await this.transporter.sendMail({
         to,
-        subject: '🔑 Votre code de vérification Kook',
+        subject: 'Votre code de vérification Kook',
         from: '"Kook - Recettes" <merciaaina@gmail.com>',
         html,
       });
