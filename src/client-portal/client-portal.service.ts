@@ -9,6 +9,7 @@ import { User } from 'src/users/entities/user.entity';
 import { CreateClientTicketDto } from './dto/create-client-ticket.dto';
 import { RequestCategory } from 'src/common/enums/request-category.enum';
 import { TicketStatus, TicketPriority } from 'src/tickets/entities/ticket.entity';
+import { InvoiceStatus, InvoiceType } from 'src/invoices/entities/invoice.entity';
 import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
@@ -226,5 +227,34 @@ export class ClientPortalService {
       }
     }
     return result;
+  }
+
+  async getInvoiceStats(userId: number) {
+    const client = await this.findClient(userId);
+
+    const result = await this.invoiceRepo
+      .createQueryBuilder('invoice')
+      .where('invoice.client.id = :clientId', { clientId: client.id })
+      .select('SUM(CASE WHEN invoice.status = :paid AND invoice.type = :invoice THEN invoice.amount ELSE 0 END)', 'totalPaid')
+      .addSelect('SUM(CASE WHEN invoice.status = :pending AND invoice.type = :invoice THEN invoice.amount ELSE 0 END)', 'totalPending')
+      .addSelect('SUM(CASE WHEN invoice.type = :quote THEN invoice.amount ELSE 0 END)', 'totalQuotes')
+      .setParameters({
+        paid: InvoiceStatus.PAID,
+        pending: InvoiceStatus.PENDING,
+        invoice: InvoiceType.INVOICE,
+        quote: InvoiceType.QUOTE,
+      })
+      .getRawOne();
+
+    const totalPaid = parseFloat(result?.totalPaid) || 0;
+    const totalPending = parseFloat(result?.totalPending) || 0;
+    const totalQuotes = parseFloat(result?.totalQuotes) || 0;
+
+    return {
+      totalPaid: Math.round(totalPaid * 100) / 100,
+      totalPending: Math.round(totalPending * 100) / 100,
+      totalQuotes: Math.round(totalQuotes * 100) / 100,
+      totalInvoices: totalPaid + totalPending,
+    };
   }
 }

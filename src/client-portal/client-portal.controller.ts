@@ -60,6 +60,12 @@ export class ClientPortalController {
     return this.clientPortalService.getInvoices(userId);
   }
 
+  @ApiOperation({ summary: 'Stats de CA du client' })
+  @Get('invoices/stats')
+  getInvoiceStats(@User('id') userId: number) {
+    return this.clientPortalService.getInvoiceStats(userId);
+  }
+
   @ApiOperation({ summary: 'Accès aux sites web / WordPress' })
   @Get('websites')
   getWebsites(@User('id') userId: number) {
