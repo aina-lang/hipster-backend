@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository, Like, MoreThanOrEqual, LessThanOrEqual, Between } from 'typeorm';
 import { Recipe } from './entities/recipe.entity';
 import { KookUser } from './entities/kook-user.entity';
 import { KookLike } from './entities/kook-like.entity';
@@ -51,6 +51,8 @@ export class KookRecipesService {
     search?: string;
     difficulty?: string;
     categoryId?: number;
+    minCookingTime?: number;
+    maxCookingTime?: number;
   }): Promise<{ items: Recipe[]; total: number }> {
     const page = query.page || 1;
     const limit = query.limit || 20;
@@ -58,6 +60,13 @@ export class KookRecipesService {
 
     if (query.difficulty) where.difficulty = query.difficulty;
     if (query.categoryId) where.categoryId = query.categoryId;
+    if (query.minCookingTime !== undefined && query.maxCookingTime !== undefined) {
+      where.cookingTime = Between(query.minCookingTime, query.maxCookingTime);
+    } else if (query.minCookingTime !== undefined) {
+      where.cookingTime = MoreThanOrEqual(query.minCookingTime);
+    } else if (query.maxCookingTime !== undefined) {
+      where.cookingTime = LessThanOrEqual(query.maxCookingTime);
+    }
 
     const findOptions: any = {
       where,

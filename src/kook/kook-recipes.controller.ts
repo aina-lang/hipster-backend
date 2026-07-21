@@ -37,8 +37,10 @@ export class KookRecipesController {
     @Query('search') search?: string,
     @Query('difficulty') difficulty?: string,
     @Query('categoryId') categoryId?: string,
+    @Query('minCookingTime') minCookingTime?: string,
+    @Query('maxCookingTime') maxCookingTime?: string,
   ) {
-    return this.recipes.findAll({ page, limit, search, difficulty, categoryId: categoryId ? +categoryId : undefined });
+    return this.recipes.findAll({ page, limit, search, difficulty, categoryId: categoryId ? +categoryId : undefined, minCookingTime: minCookingTime ? +minCookingTime : undefined, maxCookingTime: maxCookingTime ? +maxCookingTime : undefined });
   }
 
   @Public()
