@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -49,6 +49,7 @@ import { KookMailModule } from './kook-mail.module';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const secret = config.get<string>('KOOK_JWT_SECRET') || config.get<string>('JWT_SECRET') || 'kook-secret-change-me-in-production';
+        Logger.log(`[JwtModule] signing secret: "${secret}"`, 'KookModule');
         return { secret, signOptions: { expiresIn: '4h' } };
       },
     }),
