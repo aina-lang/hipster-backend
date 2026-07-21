@@ -85,6 +85,8 @@ export class KookAuthService {
         pseudo: user.pseudo,
         firstName: user.firstName,
         lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
+        coverUrl: user.coverUrl,
         userType: user.userType,
         plan: user.plan,
         isEmailVerified: user.isEmailVerified,
@@ -148,6 +150,10 @@ export class KookAuthService {
         id: user.id,
         email: user.email,
         pseudo: user.pseudo,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatarUrl: user.avatarUrl,
+        coverUrl: user.coverUrl,
         userType: user.userType,
         plan: user.plan,
         isEmailVerified: user.isEmailVerified,
@@ -161,7 +167,7 @@ export class KookAuthService {
         { email: dto.emailOrPseudo },
         { pseudo: dto.emailOrPseudo },
       ],
-      select: ['id', 'email', 'pseudo', 'password', 'userType', 'plan', 'isEmailVerified', 'firstName', 'lastName', 'avatarUrl'],
+      select: ['id', 'email', 'pseudo', 'password', 'userType', 'plan', 'isEmailVerified', 'firstName', 'lastName', 'avatarUrl', 'coverUrl'],
     });
 
     if (!user || !user.password) throw new UnauthorizedException('Email/Pseudo ou mot de passe incorrect');
@@ -187,6 +193,7 @@ export class KookAuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         avatarUrl: user.avatarUrl,
+        coverUrl: user.coverUrl,
         userType: user.userType,
         plan: user.plan,
         isEmailVerified: user.isEmailVerified,
