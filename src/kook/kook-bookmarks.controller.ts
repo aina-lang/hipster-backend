@@ -17,6 +17,14 @@ export class KookBookmarksController {
 
   @Public()
   @UseGuards(KookAuthGuard)
+  @Get('ids')
+  async getIds(@KookUser() user: any) {
+    const bookmarks = await this.service.findUserBookmarks(user.id);
+    return bookmarks.map(b => b.recipe.id);
+  }
+
+  @Public()
+  @UseGuards(KookAuthGuard)
   @Post(':recipeId')
   async toggle(@KookUser() user: any, @Param('recipeId') recipeId: string) {
     return this.service.toggle(user.id, +recipeId);
