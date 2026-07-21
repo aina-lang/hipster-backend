@@ -4,6 +4,7 @@ import { Repository, Like } from 'typeorm';
 import { Recipe } from './entities/recipe.entity';
 import { KookUser } from './entities/kook-user.entity';
 import { KookLike } from './entities/kook-like.entity';
+import { KookComment } from './entities/kook-comment.entity';
 import { KookNotificationService } from './kook-notification.service';
 import { KookNotificationGateway } from './gateways/kook-notification.gateway';
 import { NotificationType } from './entities/kook-notification.entity';
@@ -19,6 +20,8 @@ export class KookRecipesService {
     private readonly recipeRepo: Repository<Recipe>,
     @InjectRepository(KookLike)
     private readonly likeRepo: Repository<KookLike>,
+    @InjectRepository(KookComment)
+    private readonly commentRepo: Repository<KookComment>,
     private readonly notifService: KookNotificationService,
     private readonly notifGateway: KookNotificationGateway,
   ) {}
@@ -72,6 +75,25 @@ export class KookRecipesService {
     }
 
     const [items, total] = await this.recipeRepo.findAndCount(findOptions);
+
+    const recipeIds = items.map(r => r.id);
+    if (recipeIds.length > 0) {
+      const counts = await this.commentRepo
+        .createQueryBuilder('c')
+        .select('c.recipeId', 'recipeId')
+        .addSelect('COUNT(*)', 'count')
+        .where('c.recipeId IN (:...ids)', { ids: recipeIds })
+        .groupBy('c.recipeId')
+        .getRawMany<{ recipeId: number; count: number }>();
+      const countMap: Record<number, number> = {};
+      for (const row of counts) {
+        countMap[row.recipeId] = Number(row.count);
+      }
+      for (const recipe of items) {
+        (recipe as any).commentsCount = countMap[recipe.id] || 0;
+      }
+    }
+
     return { items, total };
   }
 
@@ -81,6 +103,7 @@ export class KookRecipesService {
       relations: ['creator'],
     });
     if (!recipe) throw new NotFoundException('Recette introuvable');
+    (recipe as any).commentsCount = await this.commentRepo.count({ where: { recipe: { id } } });
     return recipe;
   }
 
