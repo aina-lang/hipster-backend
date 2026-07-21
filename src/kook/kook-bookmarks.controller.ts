@@ -18,15 +18,8 @@ export class KookBookmarksController {
   @Public()
   @UseGuards(KookAuthGuard)
   @Post(':recipeId')
-  async add(@KookUser() user: any, @Param('recipeId') recipeId: string) {
-    return this.service.add(user.id, +recipeId);
-  }
-
-  @Public()
-  @UseGuards(KookAuthGuard)
-  @Delete(':recipeId')
-  async remove(@KookUser() user: any, @Param('recipeId') recipeId: string) {
-    return this.service.remove(user.id, +recipeId);
+  async toggle(@KookUser() user: any, @Param('recipeId') recipeId: string) {
+    return this.service.toggle(user.id, +recipeId);
   }
 
   @Public()

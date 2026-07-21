@@ -21,30 +21,24 @@ export class KookBookmarksService {
     });
   }
 
-  async add(userId: number, recipeId: number) {
+  async toggle(userId: number, recipeId: number) {
     const recipe = await this.recipeRepo.findOne({ where: { id: recipeId } });
     if (!recipe) throw new NotFoundException('Recette introuvable');
 
     const existing = await this.repo.findOne({
       where: { user: { id: userId }, recipe: { id: recipeId } },
     });
-    if (existing) throw new ForbiddenException('Recette déjà sauvegardée');
 
-    const bookmark = this.repo.create({
+    if (existing) {
+      await this.repo.remove(existing);
+      return { bookmarked: false };
+    }
+
+    await this.repo.save(this.repo.create({
       user: { id: userId } as any,
       recipe: { id: recipeId } as any,
-    });
-    return this.repo.save(bookmark);
-  }
-
-  async remove(userId: number, recipeId: number) {
-    const bookmark = await this.repo.findOne({
-      where: { user: { id: userId }, recipe: { id: recipeId } },
-    });
-    if (!bookmark) throw new NotFoundException('Sauvegarde introuvable');
-
-    await this.repo.remove(bookmark);
-    return { message: 'Sauvegarde supprimée' };
+    }));
+    return { bookmarked: true };
   }
 
   async isBookmarked(userId: number, recipeId: number) {
