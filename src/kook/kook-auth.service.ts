@@ -224,18 +224,24 @@ export class KookAuthService {
       { expiresIn: '15m' },
     );
 
+    this.logger.log(`[reset-password] token genere pour ${dto.email}, token=${resetToken}`);
+
     return { message: 'Code vérifié', resetToken, email: dto.email };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
+    this.logger.log(`[reset-password] tentative verification token pour ${dto.email}, token=${dto.token}`);
     let payload: { sub: number; email: string; purpose: string };
     try {
       payload = this.jwt.verify(dto.token);
-    } catch {
+      this.logger.log(`[reset-password] payload decode: ${JSON.stringify(payload)}`);
+    } catch (e: any) {
+      this.logger.error(`[reset-password] echec verification token: ${e?.message || e}`);
       throw new UnauthorizedException('Token de réinitialisation invalide ou expiré');
     }
 
     if (payload.purpose !== 'password_reset' || payload.email !== dto.email) {
+      this.logger.error(`[reset-password] payload invalide: purpose=${payload.purpose}, email=${payload.email}, attendu email=${dto.email}`);
       throw new UnauthorizedException('Token de réinitialisation invalide');
     }
 
