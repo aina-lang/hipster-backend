@@ -23,13 +23,15 @@ export class KookNotificationService {
     return this.notifRepo.save(notif);
   }
 
-  async findByUser(userId: number) {
-    return this.notifRepo.find({
+  async findByUser(userId: number, page = 1, limit = 20) {
+    const [items, total] = await this.notifRepo.findAndCount({
       where: { recipient: { id: userId } },
       relations: ['actor'],
       order: { createdAt: 'DESC' },
-      take: 50,
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return { items, total, page, limit };
   }
 
   async getUnreadCount(userId: number) {

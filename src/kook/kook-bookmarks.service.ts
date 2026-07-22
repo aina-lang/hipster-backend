@@ -16,11 +16,13 @@ export class KookBookmarksService {
     private readonly commentRepo: Repository<KookComment>,
   ) {}
 
-  async findUserBookmarks(userId: number) {
-    const bookmarks = await this.repo.find({
+  async findUserBookmarks(userId: number, page = 1, limit = 20) {
+    const [bookmarks, total] = await this.repo.findAndCount({
       where: { user: { id: userId } },
       relations: ['recipe', 'recipe.creator'],
       order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
     const ids = bookmarks.map(b => b.recipe.id).filter(Boolean);
     if (ids.length > 0) {
@@ -35,7 +37,7 @@ export class KookBookmarksService {
       for (const row of counts) countMap[row.recipeId] = Number(row.count);
       for (const bm of bookmarks) (bm.recipe as any).commentsCount = countMap[bm.recipe.id] || 0;
     }
-    return bookmarks;
+    return { items: bookmarks, total, page, limit };
   }
 
   async toggle(userId: number, recipeId: number) {

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import * as pug from 'pug';
 import { join } from 'path';
@@ -8,14 +9,14 @@ export class KookMailService {
   private readonly logger = new Logger(KookMailService.name);
   private readonly transporter: nodemailer.Transporter;
 
-  constructor() {
+  constructor(configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
+      host: configService.get('KOOK_MAIL_HOST', 'smtp.gmail.com'),
+      port: configService.get('KOOK_MAIL_PORT', 587),
       secure: false,
       auth: {
-        user: 'merciaaina@gmail.com',
-        pass: 'ajtq epxx oqkm asir',
+        user: configService.getOrThrow('KOOK_MAIL_USER'),
+        pass: configService.getOrThrow('KOOK_MAIL_PASS'),
       },
       tls: {
         rejectUnauthorized: false,

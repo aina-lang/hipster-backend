@@ -4,6 +4,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { KookUser } from './entities/kook-user.entity';
 import { KookOtp } from './entities/kook-otp.entity';
 import { Recipe } from './entities/recipe.entity';
@@ -43,9 +44,13 @@ import { KookMailModule } from './kook-mail.module';
     TypeOrmModule.forFeature([KookUser, KookOtp, Recipe, KookComment, KookNotification, KookLike, KookCommentLike, RecipeCategory, Bookmark, Follow]),
     MulterModule.register({ storage: memoryStorage() }),
     PassportModule,
-    JwtModule.register({
-      secret: 'kook-jwt-secret-change-in-production',
-      signOptions: { expiresIn: '4h' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('KOOK_JWT_SECRET', 'kook-jwt-secret-change-in-production'),
+        signOptions: { expiresIn: '4h' },
+      }),
     }),
   ],
   controllers: [

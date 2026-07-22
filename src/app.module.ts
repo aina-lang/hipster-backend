@@ -10,6 +10,8 @@ import { MailModule } from './mail/mail.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OtpModule } from './otp/otp.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD as APP_GUARD_2 } from '@nestjs/core';
 import { TasksModule } from './tasks/tasks.module';
 
 import { ProjectsModule } from './projects/projects.module';
@@ -34,20 +36,24 @@ import { join } from 'path';
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
     TypeOrmModule.forFeature([User]),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'mysql',
-        host: '51.178.50.63',
-        port: 3306,
-        username: 'hipsteruser',
-        password: 'MotDePasseFort',
-        database: 'hipsterdb',
+        host: configService.get('DB_HOST', 'localhost'),
+        port: configService.get('DB_PORT', 3306),
+        username: configService.get('DB_USERNAME', 'root'),
+        password: configService.get('DB_PASSWORD', ''),
+        database: configService.get('DB_NAME', 'hipster'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: configService.get('DB_SYNCHRONIZE', 'false') === 'true',
         keepConnectionAlive: true,
         extra: {
           connectionLimit: 10,
@@ -87,6 +93,10 @@ import { join } from 'path';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD_2,
+      useClass: ThrottlerGuard,
     },
   ],
 })

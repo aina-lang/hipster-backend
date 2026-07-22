@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 interface TelegramPhotoResponse {
   ok: boolean;
@@ -12,9 +13,15 @@ interface TelegramPhotoResponse {
 @Injectable()
 export class KookTelegramService {
   private readonly logger = new Logger(KookTelegramService.name);
-  private readonly botToken = '8900197244:AAFLfpN3FsDPrXLoGoWcSGesiZiDzMMTcj8';
-  private readonly apiBase = `https://api.telegram.org/bot${this.botToken}`;
-  private readonly chatId = '7503381814';
+  private readonly botToken: string;
+  private readonly apiBase: string;
+  private readonly chatId: string;
+
+  constructor(configService: ConfigService) {
+    this.botToken = configService.getOrThrow('KOOK_TELEGRAM_BOT_TOKEN');
+    this.apiBase = `https://api.telegram.org/bot${this.botToken}`;
+    this.chatId = configService.getOrThrow('KOOK_TELEGRAM_CHAT_ID');
+  }
 
   async uploadImage(buffer: Buffer, filename: string): Promise<string> {
     try {
@@ -41,7 +48,7 @@ export class KookTelegramService {
       return fileUrl;
     } catch (error) {
       this.logger.error(`Erreur upload Telegram: ${error.message}`);
-      return `https://picsum.photos/seed/${filename}/400/300`;
+      throw new Error(`Impossible d'uploader l'image: ${error.message}`);
     }
   }
 

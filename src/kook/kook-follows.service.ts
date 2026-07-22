@@ -11,20 +11,26 @@ export class KookFollowsService {
     private readonly repo: Repository<Follow>,
   ) {}
 
-  async findFollowers(userId: number) {
-    return this.repo.find({
+  async findFollowers(userId: number, page = 1, limit = 20) {
+    const [items, total] = await this.repo.findAndCount({
       where: { following: { id: userId } },
       relations: ['follower'],
       order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return { items, total, page, limit };
   }
 
-  async findFollowing(userId: number) {
-    return this.repo.find({
+  async findFollowing(userId: number, page = 1, limit = 20) {
+    const [items, total] = await this.repo.findAndCount({
       where: { follower: { id: userId } },
       relations: ['following'],
       order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return { items, total, page, limit };
   }
 
   async follow(followerId: number, followingId: number) {

@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { KookUser } from '../entities/kook-user.entity';
@@ -12,9 +13,9 @@ export class KookJwtStrategy extends PassportStrategy(Strategy, 'kook-jwt') {
   constructor(
     @InjectRepository(KookUser)
     private readonly userRepo: Repository<KookUser>,
+    configService: ConfigService,
   ) {
-    const jwtSecret = 'kook-jwt-secret-change-in-production';
-    Logger.log(`[KookJwtStrategy] secret used: "${jwtSecret}"`, KookJwtStrategy.name);
+    const jwtSecret = configService.get('KOOK_JWT_SECRET', 'kook-jwt-secret-change-in-production');
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: jwtSecret,
@@ -22,19 +23,15 @@ export class KookJwtStrategy extends PassportStrategy(Strategy, 'kook-jwt') {
   }
 
   async validate(payload: { sub: number; type: string }) {
-    this.logger.log(`[KookJwtStrategy] validate payload: ${JSON.stringify(payload)}`);
     if (payload.type !== 'kook') {
-      this.logger.warn(`[KookJwtStrategy] rejete: type=${payload.type} !== 'kook'`);
       throw new UnauthorizedException('Token invalide pour cette application');
     }
 
     const user = await this.userRepo.findOne({ where: { id: payload.sub } });
     if (!user) {
-      this.logger.warn(`[KookJwtStrategy] utilisateur ${payload.sub} introuvable`);
       throw new UnauthorizedException('Utilisateur introuvable');
     }
 
-    this.logger.log(`[KookJwtStrategy] valide: user=${user.id} ${user.email}`);
     return user;
   }
 }

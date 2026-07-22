@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Patch, Param, UseGuards, Delete,
+  Controller, Get, Post, Patch, Param, Query, UseGuards, Delete,
 } from '@nestjs/common';
 import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
@@ -13,8 +13,8 @@ export class KookNotificationController {
   constructor(private readonly notifs: KookNotificationService) {}
 
   @Get()
-  async list(@KookUser() user: any) {
-    return this.notifs.findByUser(user.id);
+  async list(@KookUser() user: any, @Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.notifs.findByUser(user.id, page ? +page : 1, limit ? +limit : 20);
   }
 
   @Get('unread-count')
@@ -35,7 +35,7 @@ export class KookNotificationController {
 
   @Delete(':id')
   async delete(@KookUser() user: any, @Param('id') id: string) {
-    await this.notifs.markAsRead(+id, user.id);
+    await this.notifs.delete(+id, user.id);
     return { message: 'Notification supprimée' };
   }
 }

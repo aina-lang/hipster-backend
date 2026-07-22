@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { KookCategoriesService } from './kook-categories.service';
 import { KookUser } from './kook-user.decorator';
@@ -7,11 +8,13 @@ import { KookUser } from './kook-user.decorator';
 export class KookCategoriesController {
   constructor(private readonly service: KookCategoriesService) {}
 
+  @Public()
   @Get()
   async list() {
     return this.service.findAll();
   }
 
+  @Public()
   @Get(':id')
   async get(@Param('id') id: string) {
     return this.service.findOne(+id);

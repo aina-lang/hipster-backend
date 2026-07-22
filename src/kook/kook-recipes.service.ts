@@ -38,6 +38,7 @@ export class KookRecipesService {
       cookingTime: dto.cookingTime || 0,
       difficulty: dto.difficulty,
       imageUrl: dto.imageUrl,
+      category: dto.categoryId ? { id: dto.categoryId } as any : undefined,
     });
     this.logger.log(`[create] entity created, saving...`);
     const saved = await this.recipeRepo.save(recipe);

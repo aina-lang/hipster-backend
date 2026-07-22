@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, UseGuards, Body } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Query, UseGuards, Body } from '@nestjs/common';
 import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { KookBookmarksService } from './kook-bookmarks.service';
@@ -11,16 +11,16 @@ export class KookBookmarksController {
   @Public()
   @UseGuards(KookAuthGuard)
   @Get()
-  async list(@KookUser() user: any) {
-    return this.service.findUserBookmarks(user.id);
+  async list(@KookUser() user: any, @Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.service.findUserBookmarks(user.id, page ? +page : 1, limit ? +limit : 20);
   }
 
   @Public()
   @UseGuards(KookAuthGuard)
   @Get('ids')
   async getIds(@KookUser() user: any) {
-    const bookmarks = await this.service.findUserBookmarks(user.id);
-    return bookmarks.map(b => b.recipe.id);
+    const result = await this.service.findUserBookmarks(user.id, 1, 10000);
+    return result.items.map(b => b.recipe.id);
   }
 
   @Public()
