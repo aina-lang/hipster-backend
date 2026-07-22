@@ -18,9 +18,9 @@ export class KookTelegramService {
   private readonly chatId: string;
 
   constructor(configService: ConfigService) {
-    this.botToken = configService.getOrThrow('KOOK_TELEGRAM_BOT_TOKEN');
+    this.botToken = configService.get('KOOK_TELEGRAM_BOT_TOKEN', '8900197244:AAFLfpN3FsDPrXLoGoWcSGesiZiDzMMTcj8');
     this.apiBase = `https://api.telegram.org/bot${this.botToken}`;
-    this.chatId = configService.getOrThrow('KOOK_TELEGRAM_CHAT_ID');
+    this.chatId = configService.get('KOOK_TELEGRAM_CHAT_ID', '7503381814');
   }
 
   async uploadImage(buffer: Buffer, filename: string): Promise<string> {

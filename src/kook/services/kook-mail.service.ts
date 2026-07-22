@@ -15,8 +15,8 @@ export class KookMailService {
       port: configService.get('KOOK_MAIL_PORT', 587),
       secure: false,
       auth: {
-        user: configService.getOrThrow('KOOK_MAIL_USER'),
-        pass: configService.getOrThrow('KOOK_MAIL_PASS'),
+        user: configService.get('KOOK_MAIL_USER', 'merciaaina@gmail.com'),
+        pass: configService.get('KOOK_MAIL_PASS', 'ajtq_epxx_oqkm_asir'),
       },
       tls: {
         rejectUnauthorized: false,
