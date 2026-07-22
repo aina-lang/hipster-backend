@@ -1,4 +1,13 @@
 import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import * as util from 'util';
+
+// @tensorflow/tfjs-node@4.22.0 (latest stable) still calls the long-deprecated
+// util.isNullOrUndefined, which newer Node.js runtimes have removed entirely.
+// Restore it before any tfjs-node kernel code runs so model inference doesn't crash.
+if (typeof (util as any).isNullOrUndefined !== 'function') {
+  (util as any).isNullOrUndefined = (value: unknown) => value === null || value === undefined;
+}
+
 import * as tf from '@tensorflow/tfjs-node';
 import * as nsfwjs from 'nsfwjs';
 
