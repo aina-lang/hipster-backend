@@ -8,6 +8,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { KookAccountService } from './kook-account.service';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { KookTelegramService } from './services/kook-telegram.service';
+import { KookNsfwService } from './services/kook-nsfw.service';
 import { KookUser } from './kook-user.decorator';
 
 @Public()
@@ -17,6 +18,7 @@ export class KookAccountController {
   constructor(
     private readonly account: KookAccountService,
     private readonly telegram: KookTelegramService,
+    private readonly nsfw: KookNsfwService,
   ) {}
 
   @Get('profile')
@@ -33,6 +35,7 @@ export class KookAccountController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(@KookUser() user: any, @UploadedFile() file: any) {
     if (!file) throw new BadRequestException('Aucun fichier fourni');
+    await this.nsfw.assertSafe(file.buffer);
     const url = await this.telegram.uploadImage(file.buffer, file.originalname);
     return this.account.uploadAvatar(user.id, url);
   }
@@ -41,6 +44,7 @@ export class KookAccountController {
   @UseInterceptors(FileInterceptor('file'))
   async uploadCover(@KookUser() user: any, @UploadedFile() file: any) {
     if (!file) throw new BadRequestException('Aucun fichier fourni');
+    await this.nsfw.assertSafe(file.buffer);
     const url = await this.telegram.uploadImage(file.buffer, file.originalname);
     return this.account.uploadCover(user.id, url);
   }

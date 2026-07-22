@@ -5,10 +5,14 @@ import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { KookTelegramService } from './services/kook-telegram.service';
+import { KookNsfwService } from './services/kook-nsfw.service';
 
 @Controller('kook/upload')
 export class KookUploadController {
-  constructor(private readonly telegram: KookTelegramService) {}
+  constructor(
+    private readonly telegram: KookTelegramService,
+    private readonly nsfw: KookNsfwService,
+  ) {}
 
   @Public()
   @UseGuards(KookAuthGuard)
@@ -17,6 +21,7 @@ export class KookUploadController {
   async uploadImage(@UploadedFile() file: any) {
     if (!file) throw new BadRequestException('Aucun fichier fourni');
 
+    await this.nsfw.assertSafe(file.buffer);
     const url = await this.telegram.uploadImage(file.buffer, file.originalname);
 
     return { url, message: 'Image uploadée avec succès' };

@@ -23,6 +23,7 @@ import { KookRecipesController } from './kook-recipes.controller';
 import { KookRecipesService } from './kook-recipes.service';
 import { KookUploadController } from './kook-upload.controller';
 import { KookTelegramService } from './services/kook-telegram.service';
+import { KookNsfwService } from './services/kook-nsfw.service';
 import { KookAccountController } from './kook-account.controller';
 import { KookAccountService } from './kook-account.service';
 import { KookCommentController } from './kook-comment.controller';
@@ -70,6 +71,7 @@ import { KookMailModule } from './kook-mail.module';
     KookJwtStrategy,
     KookRecipesService,
     KookTelegramService,
+    KookNsfwService,
     KookAccountService,
     KookCommentService,
     KookNotificationService,
