@@ -65,9 +65,10 @@ export class KookNsfwService implements OnModuleInit {
         score('Sexy') >= SEXY_THRESHOLD;
 
       if (isFlagged) {
-        throw new BadRequestException(
-          'Cette image contient du contenu inapproprié (nudité) et ne peut pas être publiée.',
-        );
+        throw new BadRequestException({
+          message: 'Cette image contient du contenu inapproprié (nudité) et ne peut pas être publiée.',
+          code: 'NSFW_CONTENT',
+        });
       }
     } catch (e) {
       if (e instanceof BadRequestException) throw e;
