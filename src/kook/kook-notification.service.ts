@@ -70,6 +70,11 @@ export class KookNotificationService {
     return { message: 'Notification supprimée' };
   }
 
+  async deleteAll(userId: number) {
+    await this.notifRepo.delete({ recipient: { id: userId } });
+    return { message: 'Toutes les notifications supprimées' };
+  }
+
   // Reshapes the entity into the flat structure the mobile app actually reads
   // (actorName/actorAvatar/read/recipeTitle/commentText), instead of the raw
   // entity (nested actor relation, isRead) it was previously sent.

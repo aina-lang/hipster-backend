@@ -35,6 +35,11 @@ export class KookNotificationController {
     return this.notifs.markAllAsRead(user.id);
   }
 
+  @Delete()
+  async deleteAll(@KookUser() user: any) {
+    return this.notifs.deleteAll(user.id);
+  }
+
   @Delete(':id')
   async delete(@KookUser() user: any, @Param('id') id: string) {
     await this.notifs.delete(+id, user.id);
