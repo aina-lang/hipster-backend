@@ -95,6 +95,21 @@ export class KookCommentService {
     });
   }
 
+  async update(commentId: number, recipeId: number, userId: number, text: string) {
+    const comment = await this.commentRepo.findOne({
+      where: { id: commentId },
+      relations: ['author', 'parent'],
+    });
+    if (!comment) throw new NotFoundException('Commentaire introuvable');
+    if (comment.author.id !== userId) throw new ForbiddenException('Vous n\'êtes pas l\'auteur');
+
+    comment.text = text;
+    await this.commentRepo.save(comment);
+    this.notifGateway.broadcastCommentUpdated(recipeId, comment);
+
+    return comment;
+  }
+
   async delete(commentId: number, recipeId: number, userId: number) {
     const comment = await this.commentRepo.findOne({
       where: { id: commentId },
