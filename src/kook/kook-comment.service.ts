@@ -131,7 +131,7 @@ export class KookCommentService {
 
     comment.likesCount += 1;
     const saved = await this.commentRepo.save(comment);
-    this.notifGateway.broadcastCommentLiked(comment.recipe.id, commentId, saved.likesCount);
+    this.notifGateway.broadcastCommentLiked(comment.recipe.id, commentId, saved.likesCount, userId, true);
     return saved;
   }
 
@@ -147,7 +147,7 @@ export class KookCommentService {
     await this.commentLikeRepo.remove(existing);
     comment.likesCount = Math.max(0, comment.likesCount - 1);
     const saved = await this.commentRepo.save(comment);
-    this.notifGateway.broadcastCommentLiked(comment.recipe.id, commentId, saved.likesCount);
+    this.notifGateway.broadcastCommentLiked(comment.recipe.id, commentId, saved.likesCount, userId, false);
     return saved;
   }
 }

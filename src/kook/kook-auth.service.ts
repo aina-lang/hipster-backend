@@ -280,7 +280,8 @@ export class KookAuthService {
       throw new UnauthorizedException('Token de réinitialisation invalide ou expiré');
     }
 
-    if (payload.purpose !== 'password_reset' || payload.email !== dto.email) {
+    const sameEmail = payload.email.trim().toLowerCase() === dto.email.trim().toLowerCase();
+    if (payload.purpose !== 'password_reset' || !sameEmail) {
       this.logger.warn(`[reset-password] payload invalide: purpose=${payload.purpose}`);
       throw new UnauthorizedException('Token de réinitialisation invalide');
     }

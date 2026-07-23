@@ -88,8 +88,8 @@ export class KookNotificationGateway implements OnGatewayConnection, OnGatewayDi
     this.server?.emit('comment:deleted', { recipeId, commentId });
   }
 
-  broadcastCommentLiked(recipeId: number, commentId: number, likesCount: number) {
-    this.server?.emit('comment:liked', { recipeId, commentId, likesCount });
+  broadcastCommentLiked(recipeId: number, commentId: number, likesCount: number, userId: number, liked: boolean) {
+    this.server?.emit('comment:liked', { recipeId, commentId, likesCount, userId, liked });
   }
 
   broadcastUserUpdated(user: { id: number; pseudo?: string; avatarUrl?: string; coverUrl?: string }) {
