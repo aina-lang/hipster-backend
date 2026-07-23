@@ -1,4 +1,5 @@
 import { Body, Controller, Post, UseGuards, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { KookAuthService } from './kook-auth.service';
@@ -18,48 +19,56 @@ export class KookAuthController {
   constructor(private readonly auth: KookAuthService) {}
 
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @Post('request-code')
   async requestCode(@Body() dto: RegisterKookDto) {
     return this.auth.requestCode(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Post('verify-code')
   async verifyCode(@Body() dto: VerifyOtpKookDto) {
     return this.auth.verifyCode(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @Post('register')
   async register(@Body() dto: RegisterAuthDto) {
     return this.auth.registerWithPassword(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Post('verify-registration')
   async verifyRegistration(@Body() dto: VerifyCodeDto) {
     return this.auth.verifyRegistration(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Post('login')
   async login(@Body() dto: LoginAuthDto) {
     return this.auth.loginWithPassword(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
   @Post('forgot-password')
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.auth.forgotPassword(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Post('verify-reset-code')
   async verifyResetCode(@Body() dto: VerifyCodeDto) {
     return this.auth.verifyResetCode(dto);
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
   @Post('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.auth.resetPassword(dto);

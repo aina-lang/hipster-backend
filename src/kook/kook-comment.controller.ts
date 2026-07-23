@@ -1,6 +1,7 @@
 import {
   Body, Controller, Delete, Get, Param, Post, UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { KookCommentService } from './kook-comment.service';
@@ -19,6 +20,7 @@ export class KookCommentController {
 
   @Public()
   @UseGuards(KookAuthGuard)
+  @Throttle({ default: { limit: 20, ttl: 600000 } })
   @Post()
   async create(@KookUser() user: any, @Param('recipeId') recipeId: string, @Body() dto: CreateCommentDto) {
     return this.comments.create(user, +recipeId, dto);
