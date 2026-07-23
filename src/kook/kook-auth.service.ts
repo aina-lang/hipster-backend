@@ -199,9 +199,11 @@ export class KookAuthService {
       this.kookMailService
         .sendOtpEmail(user.email, { name: user.pseudo || user.email, code })
         .catch((e) => this.logger.warn(`Impossible d\'envoyer l\'email de vérification à ${user.email}: ${e.message}`));
-      throw new UnauthorizedException(
-        'Veuillez vérifier votre adresse email avant de vous connecter. Un nouveau code vous a été envoyé.',
-      );
+      throw new UnauthorizedException({
+        message: 'Veuillez vérifier votre adresse email avant de vous connecter. Un nouveau code vous a été envoyé.',
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+      });
     }
 
     const payload = { sub: user.id, email: user.email, type: 'kook' };
