@@ -22,6 +22,8 @@ export class KookRecipesService {
     private readonly likeRepo: Repository<KookLike>,
     @InjectRepository(KookComment)
     private readonly commentRepo: Repository<KookComment>,
+    @InjectRepository(KookUser)
+    private readonly userRepo: Repository<KookUser>,
     private readonly notifService: KookNotificationService,
     private readonly notifGateway: KookNotificationGateway,
   ) {}
@@ -194,8 +196,10 @@ export class KookRecipesService {
     this.notifGateway.broadcastRecipeLiked(recipe.id, saved.likesCount, userId, true);
 
     if (recipe.creator.id !== userId) {
+      const actor = await this.userRepo.findOne({ where: { id: userId } });
       const notif = await this.notifService.create({
         recipient: recipe.creator,
+        actor,
         type: NotificationType.LIKE,
         recipeId: recipe.id,
       }).catch((e) => this.logger.error('Erreur notification like', e.message));
