@@ -2,7 +2,7 @@ import {
   Body, Controller, Get, Patch, Post, Param, Delete, UseGuards, Req,
   UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -14,6 +14,7 @@ import { KookUser } from './kook-user.decorator';
 
 @Public()
 @UseGuards(KookAuthGuard)
+@SkipThrottle()
 @Controller('kook/account')
 export class KookAccountController {
   constructor(
@@ -33,7 +34,6 @@ export class KookAccountController {
   }
 
   @Post('avatar')
-  @Throttle({ default: { limit: 10, ttl: 600000 } })
   @UseInterceptors(FileInterceptor('file'))
   async uploadAvatar(@KookUser() user: any, @UploadedFile() file: any) {
     if (!file) throw new BadRequestException('Aucun fichier fourni');
@@ -43,7 +43,6 @@ export class KookAccountController {
   }
 
   @Post('cover')
-  @Throttle({ default: { limit: 10, ttl: 600000 } })
   @UseInterceptors(FileInterceptor('file'))
   async uploadCover(@KookUser() user: any, @UploadedFile() file: any) {
     if (!file) throw new BadRequestException('Aucun fichier fourni');

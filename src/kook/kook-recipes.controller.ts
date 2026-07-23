@@ -1,7 +1,7 @@
 import {
   Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, Logger,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { KookUser } from './kook-user.decorator';
@@ -9,6 +9,7 @@ import { KookRecipesService } from './kook-recipes.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 
+@SkipThrottle()
 @Controller('kook/recipes')
 export class KookRecipesController {
   private readonly logger = new Logger(KookRecipesController.name);
@@ -17,7 +18,6 @@ export class KookRecipesController {
 
   @Public()
   @UseGuards(KookAuthGuard)
-  @Throttle({ default: { limit: 10, ttl: 3600000 } })
   @Post()
   async create(@KookUser() user: any, @Body() dto: CreateRecipeDto) {
     this.logger.log(`[create] user=${user?.id} ${user?.email} title="${dto?.title}"`);

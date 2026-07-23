@@ -1,9 +1,11 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { KookCategoriesService } from './kook-categories.service';
 import { KookUser } from './kook-user.decorator';
 
+@SkipThrottle()
 @Controller('kook/categories')
 export class KookCategoriesController {
   constructor(private readonly service: KookCategoriesService) {}

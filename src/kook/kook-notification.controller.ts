@@ -1,6 +1,7 @@
 import {
   Controller, Get, Post, Patch, Param, Query, UseGuards, Delete,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { KookAuthGuard } from './kook-auth.guard';
 import { KookNotificationService } from './kook-notification.service';
@@ -8,6 +9,7 @@ import { KookUser } from './kook-user.decorator';
 
 @Public()
 @UseGuards(KookAuthGuard)
+@SkipThrottle()
 @Controller('kook/notifications')
 export class KookNotificationController {
   constructor(private readonly notifs: KookNotificationService) {}
