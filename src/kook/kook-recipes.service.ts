@@ -43,6 +43,7 @@ export class KookRecipesService {
     this.logger.log(`[create] entity created, saving...`);
     const saved = await this.recipeRepo.save(recipe);
     this.logger.log(`[create] saved id=${saved.id}`);
+    this.notifGateway.broadcastRecipeCreated(saved);
     return saved;
   }
 
@@ -125,7 +126,9 @@ export class KookRecipesService {
     const updateData: any = { ...dto };
 
     Object.assign(recipe, updateData);
-    return this.recipeRepo.save(recipe);
+    const saved = await this.recipeRepo.save(recipe);
+    this.notifGateway.broadcastRecipeUpdated(saved);
+    return saved;
   }
 
   async delete(id: number, userId: number): Promise<void> {
@@ -133,6 +136,7 @@ export class KookRecipesService {
     if (!recipe) throw new NotFoundException('Recette introuvable');
     if (recipe.creator.id !== userId) throw new ForbiddenException('Vous n\'êtes pas le créateur');
     await this.recipeRepo.remove(recipe);
+    this.notifGateway.broadcastRecipeDeleted(id);
   }
 
   async bulkDelete(ids: number[], userId: number): Promise<{ deleted: number }> {
@@ -142,6 +146,7 @@ export class KookRecipesService {
     });
     const count = recipes.length;
     await this.recipeRepo.remove(recipes);
+    for (const recipe of recipes) this.notifGateway.broadcastRecipeDeleted(recipe.id);
     return { deleted: count };
   }
 
@@ -186,6 +191,7 @@ export class KookRecipesService {
 
     recipe.likesCount += 1;
     const saved = await this.recipeRepo.save(recipe);
+    this.notifGateway.broadcastRecipeLiked(recipe.id, saved.likesCount);
 
     if (recipe.creator.id !== userId) {
       const notif = await this.notifService.create({
@@ -209,6 +215,8 @@ export class KookRecipesService {
     await this.likeRepo.remove(existing);
 
     recipe.likesCount = Math.max(0, recipe.likesCount - 1);
-    return this.recipeRepo.save(recipe);
+    const saved = await this.recipeRepo.save(recipe);
+    this.notifGateway.broadcastRecipeLiked(recipe.id, saved.likesCount);
+    return saved;
   }
 }

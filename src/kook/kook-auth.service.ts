@@ -52,7 +52,10 @@ export class KookAuthService {
         code,
       });
     } catch (e) {
-      this.logger.warn(`Impossible d\'envoyer l\'email OTP à ${dto.email}: ${e.message}`);
+      this.logger.error(`Impossible d\'envoyer l\'email OTP à ${dto.email}: ${e.message}`);
+      throw new BadRequestException(
+        "Impossible d'envoyer l'email de vérification. Réessayez dans quelques instants.",
+      );
     }
 
     return { message: 'Code de vérification envoyé', email: dto.email };
@@ -95,21 +98,34 @@ export class KookAuthService {
   }
 
   async registerWithPassword(dto: RegisterAuthDto) {
-    const existing = await this.userRepo.findOne({ where: [{ email: dto.email }, { pseudo: dto.pseudo }] });
-    if (existing) {
-      if (existing.email === dto.email) throw new ConflictException('Cet email est déjà utilisé');
+    const existingByEmail = await this.userRepo.findOne({ where: { email: dto.email } });
+    const existingByPseudo = await this.userRepo.findOne({ where: { pseudo: dto.pseudo } });
+
+    if (existingByPseudo && existingByPseudo.email !== dto.email) {
       throw new ConflictException('Ce pseudo est déjà utilisé');
     }
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    const user = this.userRepo.create({
-      pseudo: dto.pseudo,
-      email: dto.email,
-      password: hashedPassword,
-      userType: KookUserType.CREATOR,
-    });
-    await this.userRepo.save(user);
+    let user: KookUser;
+    if (existingByEmail) {
+      if (existingByEmail.isEmailVerified) {
+        throw new ConflictException('Cet email est déjà utilisé');
+      }
+      // Account exists but was never verified (e.g. the previous verification email
+      // failed to send, or the code expired). Reuse it and send a fresh code instead
+      // of permanently locking this email address out of registering.
+      user = existingByEmail;
+      user.pseudo = dto.pseudo;
+      user.password = await bcrypt.hash(dto.password, 10);
+      await this.userRepo.save(user);
+    } else {
+      user = this.userRepo.create({
+        pseudo: dto.pseudo,
+        email: dto.email,
+        password: await bcrypt.hash(dto.password, 10),
+        userType: KookUserType.CREATOR,
+      });
+      await this.userRepo.save(user);
+    }
 
     const code = await this.otp.generateOtp(user, KookOtpType.REGISTER);
 
@@ -119,7 +135,10 @@ export class KookAuthService {
         code,
       });
     } catch (e) {
-      this.logger.warn(`Impossible d\'envoyer l\'email OTP à ${dto.email}: ${e.message}`);
+      this.logger.error(`Impossible d\'envoyer l\'email OTP à ${dto.email}: ${e.message}`);
+      throw new BadRequestException(
+        "Impossible d'envoyer l'email de vérification. Vérifiez l'adresse saisie ou réessayez dans quelques instants.",
+      );
     }
 
     return { message: 'Inscription réussie, code de vérification envoyé', email: dto.email };
@@ -175,6 +194,16 @@ export class KookAuthService {
     const valid = await bcrypt.compare(dto.password, user.password);
     if (!valid) throw new UnauthorizedException('Email/Pseudo ou mot de passe incorrect');
 
+    if (!user.isEmailVerified) {
+      const code = await this.otp.generateOtp(user, KookOtpType.REGISTER);
+      this.kookMailService
+        .sendOtpEmail(user.email, { name: user.pseudo || user.email, code })
+        .catch((e) => this.logger.warn(`Impossible d\'envoyer l\'email de vérification à ${user.email}: ${e.message}`));
+      throw new UnauthorizedException(
+        'Veuillez vérifier votre adresse email avant de vous connecter. Un nouveau code vous a été envoyé.',
+      );
+    }
+
     const payload = { sub: user.id, email: user.email, type: 'kook' };
     const access_token = this.jwt.sign(payload, { expiresIn: '4h' });
     const refresh_token = this.jwt.sign(payload, { expiresIn: '30d' });
@@ -213,7 +242,10 @@ export class KookAuthService {
         code,
       });
     } catch (e) {
-      this.logger.warn(`Impossible d\'envoyer l\'email de réinitialisation à ${dto.email}: ${e.message}`);
+      this.logger.error(`Impossible d\'envoyer l\'email de réinitialisation à ${dto.email}: ${e.message}`);
+      throw new BadRequestException(
+        "Impossible d'envoyer l'email de réinitialisation. Réessayez dans quelques instants.",
+      );
     }
 
     return { message: 'Code de réinitialisation envoyé', email: dto.email };

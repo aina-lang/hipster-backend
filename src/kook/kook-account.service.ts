@@ -3,12 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { KookUser } from './entities/kook-user.entity';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { KookNotificationGateway } from './gateways/kook-notification.gateway';
 
 @Injectable()
 export class KookAccountService {
   constructor(
     @InjectRepository(KookUser)
     private readonly userRepo: Repository<KookUser>,
+    private readonly notifGateway: KookNotificationGateway,
   ) {}
 
   async getProfile(userId: number) {
@@ -27,21 +29,27 @@ export class KookAccountService {
     }
 
     Object.assign(user, dto);
-    return this.userRepo.save(user);
+    const saved = await this.userRepo.save(user);
+    this.notifGateway.broadcastUserUpdated({ id: saved.id, pseudo: saved.pseudo, avatarUrl: saved.avatarUrl, coverUrl: saved.coverUrl });
+    return saved;
   }
 
   async uploadAvatar(userId: number, imageUrl: string) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
     user.avatarUrl = imageUrl;
-    return this.userRepo.save(user);
+    const saved = await this.userRepo.save(user);
+    this.notifGateway.broadcastUserUpdated({ id: saved.id, avatarUrl: saved.avatarUrl });
+    return saved;
   }
 
   async uploadCover(userId: number, imageUrl: string) {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
     user.coverUrl = imageUrl;
-    return this.userRepo.save(user);
+    const saved = await this.userRepo.save(user);
+    this.notifGateway.broadcastUserUpdated({ id: saved.id, coverUrl: saved.coverUrl });
+    return saved;
   }
 
   async deleteAccount(userId: number) {

@@ -61,4 +61,38 @@ export class KookNotificationGateway implements OnGatewayConnection, OnGatewayDi
       });
     }
   }
+
+  // --- Broadcasts to every connected client (public feed-level events) ---
+
+  broadcastRecipeCreated(recipe: any) {
+    this.server?.emit('recipe:created', recipe);
+  }
+
+  broadcastRecipeUpdated(recipe: any) {
+    this.server?.emit('recipe:updated', recipe);
+  }
+
+  broadcastRecipeDeleted(recipeId: number) {
+    this.server?.emit('recipe:deleted', { recipeId });
+  }
+
+  broadcastRecipeLiked(recipeId: number, likesCount: number) {
+    this.server?.emit('recipe:liked', { recipeId, likesCount });
+  }
+
+  broadcastCommentCreated(recipeId: number, comment: any) {
+    this.server?.emit('comment:created', { recipeId, comment });
+  }
+
+  broadcastCommentDeleted(recipeId: number, commentId: number) {
+    this.server?.emit('comment:deleted', { recipeId, commentId });
+  }
+
+  broadcastCommentLiked(recipeId: number, commentId: number, likesCount: number) {
+    this.server?.emit('comment:liked', { recipeId, commentId, likesCount });
+  }
+
+  broadcastUserUpdated(user: { id: number; pseudo?: string; avatarUrl?: string; coverUrl?: string }) {
+    this.server?.emit('user:updated', user);
+  }
 }

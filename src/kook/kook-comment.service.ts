@@ -46,6 +46,12 @@ export class KookCommentService {
     recipe.commentsCount += 1;
     await this.recipeRepo.save(recipe);
 
+    const fullComment = await this.commentRepo.findOne({
+      where: { id: comment.id },
+      relations: ['author', 'parent'],
+    });
+    this.notifGateway.broadcastCommentCreated(recipeId, fullComment);
+
     if (parent) {
       if (parent.author.id !== author.id) {
         const notif = await this.notifService.create({
@@ -68,10 +74,7 @@ export class KookCommentService {
       if (notif) this.notifGateway.sendNotification(recipe.creator.id, notif);
     }
 
-    return this.commentRepo.findOne({
-      where: { id: comment.id },
-      relations: ['author', 'parent'],
-    });
+    return fullComment;
   }
 
   async getUserLikes(recipeId: number, userId: number): Promise<number[]> {
@@ -107,12 +110,13 @@ export class KookCommentService {
       recipe.commentsCount = Math.max(0, recipe.commentsCount - 1);
       await this.recipeRepo.save(recipe);
     }
+    this.notifGateway.broadcastCommentDeleted(recipeId, commentId);
 
     return { message: 'Commentaire supprimé' };
   }
 
   async like(commentId: number, userId: number) {
-    const comment = await this.commentRepo.findOne({ where: { id: commentId } });
+    const comment = await this.commentRepo.findOne({ where: { id: commentId }, relations: ['recipe'] });
     if (!comment) throw new NotFoundException('Commentaire introuvable');
 
     const existing = await this.commentLikeRepo.findOne({
@@ -126,11 +130,13 @@ export class KookCommentService {
     }));
 
     comment.likesCount += 1;
-    return this.commentRepo.save(comment);
+    const saved = await this.commentRepo.save(comment);
+    this.notifGateway.broadcastCommentLiked(comment.recipe.id, commentId, saved.likesCount);
+    return saved;
   }
 
   async unlike(commentId: number, userId: number) {
-    const comment = await this.commentRepo.findOne({ where: { id: commentId } });
+    const comment = await this.commentRepo.findOne({ where: { id: commentId }, relations: ['recipe'] });
     if (!comment) throw new NotFoundException('Commentaire introuvable');
 
     const existing = await this.commentLikeRepo.findOne({
@@ -140,6 +146,8 @@ export class KookCommentService {
 
     await this.commentLikeRepo.remove(existing);
     comment.likesCount = Math.max(0, comment.likesCount - 1);
-    return this.commentRepo.save(comment);
+    const saved = await this.commentRepo.save(comment);
+    this.notifGateway.broadcastCommentLiked(comment.recipe.id, commentId, saved.likesCount);
+    return saved;
   }
 }
