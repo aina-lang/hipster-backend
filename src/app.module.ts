@@ -10,7 +10,8 @@ import { MailModule } from './mail/mail.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OtpModule } from './otp/otp.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { AppThrottlerGuard } from './common/guards/throttler.guard';
 import { APP_GUARD as APP_GUARD_2 } from '@nestjs/core';
 import { TasksModule } from './tasks/tasks.module';
 
@@ -96,7 +97,7 @@ import { join } from 'path';
     },
     {
       provide: APP_GUARD_2,
-      useClass: ThrottlerGuard,
+      useClass: AppThrottlerGuard,
     },
   ],
 })
