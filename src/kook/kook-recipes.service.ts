@@ -191,7 +191,7 @@ export class KookRecipesService {
 
     recipe.likesCount += 1;
     const saved = await this.recipeRepo.save(recipe);
-    this.notifGateway.broadcastRecipeLiked(recipe.id, saved.likesCount);
+    this.notifGateway.broadcastRecipeLiked(recipe.id, saved.likesCount, userId, true);
 
     if (recipe.creator.id !== userId) {
       const notif = await this.notifService.create({
@@ -216,7 +216,7 @@ export class KookRecipesService {
 
     recipe.likesCount = Math.max(0, recipe.likesCount - 1);
     const saved = await this.recipeRepo.save(recipe);
-    this.notifGateway.broadcastRecipeLiked(recipe.id, saved.likesCount);
+    this.notifGateway.broadcastRecipeLiked(recipe.id, saved.likesCount, userId, false);
     return saved;
   }
 }
