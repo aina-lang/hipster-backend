@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsOptional, IsInt, Min, IsEnum, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { RecipeDifficulty } from '../entities/recipe.entity';
+import { RecipeDifficulty, RecipePostType } from '../entities/recipe.entity';
 
 class RecipeStepDto {
   @IsString()
@@ -16,6 +16,10 @@ export class CreateRecipeDto {
   @IsString()
   @IsNotEmpty()
   title: string;
+
+  @IsOptional()
+  @IsEnum(RecipePostType)
+  postType?: RecipePostType;
 
   @IsOptional()
   @IsString()

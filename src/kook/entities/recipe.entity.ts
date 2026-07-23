@@ -10,6 +10,11 @@ export enum RecipeDifficulty {
   DIFFICILE = 'difficile',
 }
 
+export enum RecipePostType {
+  RECIPE = 'recipe',
+  TEXT = 'text',
+}
+
 @Entity('kook_recipes')
 export class Recipe {
   @PrimaryGeneratedColumn()
@@ -20,6 +25,9 @@ export class Recipe {
 
   @Column({ type: 'varchar', length: 255 })
   title: string;
+
+  @Column({ type: 'enum', enum: RecipePostType, default: RecipePostType.RECIPE })
+  postType: RecipePostType;
 
   @Column({ type: 'text', nullable: true })
   description?: string;

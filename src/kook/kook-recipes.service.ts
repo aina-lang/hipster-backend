@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, ConflictException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, MoreThanOrEqual, LessThanOrEqual, Between } from 'typeorm';
-import { Recipe } from './entities/recipe.entity';
+import { Recipe, RecipePostType } from './entities/recipe.entity';
 import { KookUser } from './entities/kook-user.entity';
 import { KookLike } from './entities/kook-like.entity';
 import { KookComment } from './entities/kook-comment.entity';
@@ -33,6 +33,7 @@ export class KookRecipesService {
     const recipe = this.recipeRepo.create({
       creator,
       title: dto.title,
+      postType: dto.postType || RecipePostType.RECIPE,
       description: dto.description,
       ingredients: dto.ingredients || undefined,
       instructions: dto.instructions,
