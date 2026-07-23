@@ -55,6 +55,7 @@ export class KookRecipesService {
     limit?: number;
     search?: string;
     difficulty?: string;
+    postType?: string;
     categoryId?: number;
     minCookingTime?: number;
     maxCookingTime?: number;
@@ -63,6 +64,7 @@ export class KookRecipesService {
     const limit = query.limit || 20;
     const where: any = {};
 
+    if (query.postType) where.postType = query.postType;
     if (query.difficulty) where.difficulty = query.difficulty;
     if (query.categoryId) where.categoryId = query.categoryId;
     if (query.minCookingTime !== undefined && query.maxCookingTime !== undefined) {
@@ -71,6 +73,12 @@ export class KookRecipesService {
       where.cookingTime = MoreThanOrEqual(query.minCookingTime);
     } else if (query.maxCookingTime !== undefined) {
       where.cookingTime = LessThanOrEqual(query.maxCookingTime);
+    }
+
+    // Difficulty/cooking-time only make sense for actual recipes — text posts
+    // default to 'facile'/0min, so without this they'd pollute every filtered search.
+    if (!query.postType && (query.difficulty || query.minCookingTime !== undefined || query.maxCookingTime !== undefined)) {
+      where.postType = RecipePostType.RECIPE;
     }
 
     const findOptions: any = {
