@@ -80,9 +80,19 @@ export class MailService {
       // dashboardUrl: appUrl, // 🚫 DISABLED: User requested to remove all "Access Account" links by default
     };
 
+    // Fallback de test : redirige tous les emails (hors module Kook) vers une
+    // adresse unique pendant la phase de test, sans changer le contenu.
+    const isTestMode = process.env.MAIL_TEST_MODE === 'true';
+    const testRecipient = process.env.MAIL_TEST_RECIPIENT;
+    const to = isTestMode && testRecipient ? testRecipient : params.to;
+    const subject =
+      isTestMode && testRecipient
+        ? `[Test → ${params.to}] ${params.subject}`
+        : params.subject;
+
     await this.mailerService.sendMail({
-      to: params.to,
-      subject: params.subject,
+      to,
+      subject,
       template: params.template,
       context: { ...globalContext, ...(params.context || {}) },
       attachments: params.attachments,
