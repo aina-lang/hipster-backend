@@ -1,21 +1,21 @@
 extends layout
 
 block content
-  h2 Abonnement terminé ℹ️
+  h2 Abonnement terminé
   p Bonjour #{name},
-  p Nous vous confirmons que votre abonnement Hipster IA a pris fin le **#{endDate}**.
-  
-  div(style="background-color: #fef2f2; padding: 24px; border-radius: 12px; margin: 32px 0; border: 1px solid #fee2e2;")
-    p(style="margin: 0; font-weight: 700; color: #991b1b;") Ce que cela signifie :
-    ul(style="color: #7f1d1d; font-size: 14px; margin-top: 12px;")
+  p Nous vous confirmons que votre abonnement Hipster IA a pris fin le <strong>#{endDate}</strong>.
+
+  .info-box.info-box-danger
+    p(style="margin: 0 0 12px; font-weight: 700; color: #A14A3A;") Ce que cela signifie :
+    ul(style="margin: 0; padding-left: 20px; color: #A14A3A;")
       li Vos limites premium ont été réinitialisées aux valeurs par défaut.
       li Vous ne serez plus prélevé pour ce service.
       li Vous pouvez vous réabonner à tout moment pour retrouver vos avantages.
 
-  p(style="color: #52525b; font-size: 14px;") 
+  p(style="color: #6E4A35; font-size: 14px;")
     | Nous espérons vous revoir bientôt pour de nouveaux projets créatifs !
 
   div.divider
 
-  p(style="font-size: 13px; color: #52525b; text-align: center;") 
+  p(style="font-size: 13px; color: #8A7566; text-align: center;")
     | L'équipe Hipster IA

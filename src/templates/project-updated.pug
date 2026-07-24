@@ -3,11 +3,10 @@ extends layout
 block content
   h2 Bonjour #{clientName},
   p Des modifications ont été apportées à votre projet.
-  
-  div(style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 24px; margin: 32px 0;")
-    h3(style="margin-top: 0; font-size: 16px; color: #09090b;") #{projectName}
-    
-    p(style="font-size: 14px; color: #52525b;") Le statut de votre projet a été mis à jour ou des détails importants ont été modifiés par notre équipe.
+
+  .card
+    h3(style="margin-top: 0; font-size: 16px; color: #3A2A1E;") #{projectName}
+    p(style="font-size: 14px; color: #6E4A35; margin-bottom: 0;") Le statut de votre projet a été mis à jour ou des détails importants ont été modifiés par notre équipe.
 
   p Vous pouvez consulter tous les changements en détail sur votre tableau de bord.
 

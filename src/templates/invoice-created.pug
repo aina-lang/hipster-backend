@@ -2,56 +2,56 @@ extends layout
 
 block content
   div(style="margin-bottom: 32px;")
-    h2 💼 #{typeLabel || 'Document'} disponible
+    h2 #{typeLabel || 'Document'} disponible
     p Bonjour #{clientName}, une nouvelle #{typeLabel ? typeLabel.toLowerCase() : 'facture'} a été générée pour vous.
 
-  div(style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 24px; margin: 32px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);")
-    div(style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f4f4f5; padding-bottom: 16px; margin-bottom: 20px;")
-      div(style="font-size: 18px; font-weight: 700; color: #09090b;") #{invoiceReference}
-      div(style="background-color: #f4f4f5; color: #71717a; padding: 4px 12px; border-radius: 6px; font-size: 11px; text-transform: uppercase; font-weight: 600; border: 1px solid #e4e4e7;") #{status}
-    
-    div.details(style="font-size: 14px; color: #52525b;")
+  .card
+    div(style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #F1E4D0; padding-bottom: 16px; margin-bottom: 20px;")
+      div(style="font-size: 18px; font-weight: 800; color: #3A2A1E;") #{invoiceReference}
+      span.badge.badge-neutral #{status}
+
+    div.details(style="font-size: 14px; color: #6E4A35;")
       if projectName
         div(style="display: flex; justify-content: space-between; margin-bottom: 8px;")
           span Projet
-          span(style="color: #18181b; font-weight: 500;") #{projectName}
+          span(style="color: #3A2A1E; font-weight: 600;") #{projectName}
       if dueDate
         div(style="display: flex; justify-content: space-between;")
           span Échéance
-          span(style="color: #18181b; font-weight: 500;") #{dueDate}
+          span(style="color: #3A2A1E; font-weight: 600;") #{dueDate}
 
     if items && items.length > 0
       table(style="width: 100%; border-collapse: collapse; margin: 24px 0;")
         thead
           tr
-            th(style="text-align: left; font-size: 11px; color: #a1a1aa; text-transform: uppercase; padding: 12px 0; border-bottom: 1px solid #f4f4f5;") Description
-            th(style="text-align: right; font-size: 11px; color: #a1a1aa; text-transform: uppercase; padding: 12px 0; border-bottom: 1px solid #f4f4f5;") Total
+            th(style="text-align: left; font-size: 11px; color: #A8886E; text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 0; border-bottom: 1.5px solid #F1E4D0;") Description
+            th(style="text-align: right; font-size: 11px; color: #A8886E; text-transform: uppercase; letter-spacing: 0.06em; padding: 12px 0; border-bottom: 1.5px solid #F1E4D0;") Total
         tbody
           each item in items
             tr
-              td(style="padding: 12px 0; border-bottom: 1px solid #f8f9fa; font-size: 14px; color: #27272a;") #{item.description}
-              td(style="text-align: right; padding: 12px 0; border-bottom: 1px solid #f8f9fa; font-size: 14px; color: #09090b; font-weight: 500;") #{(item.quantity * item.unitPrice).toFixed(2)}€
+              td(style="padding: 12px 0; border-bottom: 1px solid #F5EBDC; font-size: 14px; color: #4A3B30;") #{item.description}
+              td(style="text-align: right; padding: 12px 0; border-bottom: 1px solid #F5EBDC; font-size: 14px; color: #3A2A1E; font-weight: 600;") #{(item.quantity * item.unitPrice).toFixed(2)}€
 
-    div(style="border-top: 1px solid #f4f4f5; padding-top: 16px; margin-top: 16px;")
-      div(style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #71717a;")
+    div(style="border-top: 1.5px solid #F1E4D0; padding-top: 16px; margin-top: 16px;")
+      div(style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #8A7566;")
         span Sous-total HT
         span #{subtotal}€
       if tax
-        div(style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #71717a;")
+        div(style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #8A7566;")
           span TVA
           span #{tax}€
-      div(style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: #09090b; margin-top: 12px; padding-top: 12px; border-top: 2px solid #09090b;")
+      div(style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 800; color: #3A2A1E; margin-top: 12px; padding-top: 12px; border-top: 2px solid #5C4433;")
         span Total
         span #{amount}€
 
   if notes
-    div(style="background-color: #f8f9fa; border-left: 3px solid #09090b; padding: 16px; border-radius: 4px; margin: 24px 0;")
-      p(style="margin: 0; font-size: 13px; color: #71717a; font-style: italic;") 📝 Note: #{notes}
+    .info-box.info-box-brand
+      p(style="font-style: italic;") Note : #{notes}
 
   div(style="text-align: center; margin-top: 32px;")
-    a.btn(href=invoiceUrl style="margin: 8px;") 📄 Consulter en ligne
+    a.btn(href=invoiceUrl style="margin: 8px;") Consulter en ligne
     | &nbsp;&nbsp;
-    a.btn(href=pdfDownloadUrl || invoiceUrl style="margin: 8px; background-color: #1a1a1a; color: #ffffff; border: 1px solid #262626;") ⬇️ PDF
+    a.btn-secondary(href=pdfDownloadUrl || invoiceUrl style="margin: 8px;") Télécharger le PDF
     if mobileAppUrl
       div(style="margin-top: 16px;")
-        a(href=mobileAppUrl style="color: #71717a; text-decoration: none; font-size: 12px;") 📱 Ouvrir dans l'application mobile
+        a(href=mobileAppUrl style="color: #8A7566; text-decoration: none; font-size: 12px;") Ouvrir dans l'application mobile

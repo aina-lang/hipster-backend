@@ -3,47 +3,49 @@ extends layout
 block content
   h2 Bonjour #{assigneeName},
   p Vous avez été assigné(e) à une tâche de maintenance pour le site web <strong>#{websiteUrl}</strong>.
-  
-  div(style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e4e4e7; border-radius: 12px; padding: 28px; margin: 32px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);")
-    h3(style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #09090b; font-weight: 700; border-bottom: 2px solid #f4f4f5; padding-bottom: 12px;") 🔧 Maintenance WordPress
-    
+
+  .card
+    h3.card-title Maintenance WordPress
+
     table(width="100%" cellpadding="0" cellspacing="0" border="0")
       tr
-        td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500;") Site web
-        td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right;")
-          a(href=websiteUrl style="color: #18181b; text-decoration: none;") #{websiteUrl}
-      
+        td.row-label Site web
+        td.row-value
+          a(href=websiteUrl style="color: #3A2A1E;") #{websiteUrl}
+
       if clientName
         tr
-          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Client
-          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") #{clientName}
-      
+          td.row-label.row-sep Client
+          td.row-value.row-sep #{clientName}
+
       if taskDueDate
         tr
-          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Échéance
-          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right; border-top: 1px solid #f4f4f5;") 📅 #{taskDueDate}
-      
+          td.row-label.row-sep Échéance
+          td.row-value.row-sep #{taskDueDate}
+
       if recurrenceInfo
         tr
-          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Récurrence
-          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") 🔄 #{recurrenceInfo}
-      
+          td.row-label.row-sep Récurrence
+          td.row-value.row-sep #{recurrenceInfo}
+
       if adminLogin
         tr
-          td(colspan="2" style="padding: 20px 0 0 0; font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;") Accès administrateur
+          td(colspan="2" style="padding: 20px 0 0 0;")
+            span.eyebrow Accès administrateur
         tr
-          td(style="padding: 8px 0; font-size: 14px; color: #71717a; font-weight: 500;") Login
-          td(style="padding: 8px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right;") #{adminLogin}
-      
+          td.row-label Login
+          td.row-value #{adminLogin}
+
       if taskDescription
         tr
-          td(colspan="2" style="padding: 20px 0 0 0; font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;") Instructions
+          td(colspan="2" style="padding: 20px 0 0 0;")
+            span.eyebrow Instructions
         tr
-          td(colspan="2" style="padding: 8px 0 0 0; font-size: 14px; color: #52525b; line-height: 1.6;") #{taskDescription}
+          td(colspan="2" style="padding: 8px 0 0 0; font-size: 14px; color: #6E4A35; line-height: 1.6;") #{taskDescription}
 
-  div(style="background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 24px 0;")
-    p(style="margin: 0; font-size: 14px; color: #1e40af; line-height: 1.6;")
-      strong(style="color: #1e3a8a;") ✅ Tâches de maintenance à effectuer :
+  .info-box.info-box-blue
+    p
+      strong(style="color: #2C4670;") Tâches de maintenance à effectuer :
       br
       | • Mise à jour de WordPress et des plugins
       br
@@ -56,6 +58,6 @@ block content
       | • Vérification des liens cassés
 
   div(style="text-align: center; margin-top: 40px;")
-    a.btn(href=appUrl + '/app/maintenance' style="background: linear-gradient(135deg, #18181b 0%, #09090b 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.15);") 🚀 Accéder au tableau de maintenance
+    a.btn(href=appUrl + '/app/maintenance') Accéder au tableau de maintenance
 
-  p(style="margin-top: 40px; font-size: 13px; color: #71717a; line-height: 1.6;") Une fois la maintenance terminée, n'oubliez pas de marquer la tâche comme complétée dans le système.
+  p(style="margin-top: 40px; font-size: 13px; color: #8A7566; line-height: 1.6;") Une fois la maintenance terminée, n'oubliez pas de marquer la tâche comme complétée dans le système.

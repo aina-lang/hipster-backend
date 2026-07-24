@@ -3,116 +3,276 @@ html(lang="fr")
   head
     meta(charset="UTF-8")
     meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    meta(name="color-scheme" content="light")
+    meta(name="supported-color-schemes" content="light")
     title #{subject}
     style.
+      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
       body {
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        background-color: #f8f9fa;
+        font-family: 'Plus Jakarta Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #F3EEE5;
         margin: 0;
         padding: 0;
-        color: #18181b;
+        color: #4A3B30;
+      }
+      table { border-collapse: collapse; }
+      a { color: #5C4433; }
+      .bg-wrap {
+        background-color: #F3EEE5;
+        background-image: linear-gradient(180deg, #FAF6F0 0%, #F3EEE5 220px, #F3EEE5 100%);
+        padding: 32px 16px;
       }
       .container {
         max-width: 600px;
-        margin: 40px auto;
+        margin: 0 auto;
         background-color: #ffffff;
-        border-radius: 16px;
+        border-radius: 24px;
         overflow: hidden;
-        border: 1px solid #e4e4e7;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        border: 1px solid #EFE1CE;
+        box-shadow: 0 20px 45px -18px rgba(58, 42, 30, 0.22);
+      }
+      .topbar {
+        height: 6px;
+        background: linear-gradient(90deg, #5C4433 0%, #8B5E3C 50%, #C89B6E 100%);
       }
       .header {
-        background: #ffffff;
-        padding: 40px 20px;
+        background: linear-gradient(160deg, #FFFDFA 0%, #FBF3E7 100%);
+        padding: 44px 32px 32px;
         text-align: center;
-        border-bottom: 1px solid #f4f4f5;
+        border-bottom: 1px solid #F1E4D0;
+      }
+      .logo-frame {
+        display: inline-block;
+        padding: 10px;
+        background-color: #ffffff;
+        border-radius: 20px;
+        border: 1px solid #F1E4D0;
+        box-shadow: 0 8px 24px -8px rgba(92, 68, 51, 0.18);
+        margin-bottom: 18px;
       }
       .logo {
-        max-width: 160px;
+        max-width: 150px;
+        max-height: 60px;
         height: auto;
+        display: block;
       }
       .brand-name {
-        font-size: 24px;
+        font-size: 26px;
         font-weight: 800;
-        color: #09090b;
-        letter-spacing: -0.025em;
-        margin: 0;
+        color: #3A2A1E;
+        letter-spacing: -0.02em;
+        margin: 0 0 18px;
+      }
+      .brand-underline {
+        width: 48px;
+        height: 4px;
+        margin: 0 auto;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #5C4433, #C89B6E);
       }
       .content {
-        padding: 40px;
+        padding: 44px 40px;
         font-size: 16px;
-        line-height: 1.6;
+        line-height: 1.65;
       }
       h1, h2, h3 {
-        color: #09090b;
+        color: #3A2A1E;
         margin-top: 0;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      h2 {
+        font-size: 22px;
+        margin-bottom: 16px;
       }
       p {
-        color: #3f3f46;
-        margin-bottom: 24px;
+        color: #5B4636;
+        margin: 0 0 22px;
       }
+      strong { color: #3A2A1E; }
       .btn {
         display: inline-block;
-        background-color: #09090b;
-        color: #ffffff !important;
+        background: linear-gradient(135deg, #5C4433 0%, #8B5E3C 100%);
+        color: #FFF8EF !important;
         text-decoration: none;
-        padding: 14px 28px;
-        border-radius: 8px;
-        font-weight: 600;
+        padding: 15px 32px;
+        border-radius: 14px;
+        font-weight: 700;
         font-size: 15px;
-        transition: background-color 0.2s;
+        letter-spacing: 0.01em;
+        box-shadow: 0 10px 24px -8px rgba(92, 68, 51, 0.45);
       }
-      .footer {
-        text-align: center;
-        padding: 40px 20px;
-        background-color: #f8f9fa;
-        border-top: 1px solid #f4f4f5;
+      .btn-secondary {
+        display: inline-block;
+        background: #ffffff;
+        color: #5C4433 !important;
+        text-decoration: none;
+        padding: 14px 30px;
+        border-radius: 14px;
+        font-weight: 700;
+        font-size: 15px;
+        border: 1.5px solid #E8D9C5;
       }
-      .footer-text {
+      .card {
+        background: linear-gradient(160deg, #FFFDFA 0%, #FBF6EE 100%);
+        border: 1px solid #F1E4D0;
+        border-radius: 20px;
+        padding: 28px;
+        margin: 32px 0;
+        box-shadow: 0 10px 30px -14px rgba(92, 68, 51, 0.15);
+      }
+      .card-title {
+        margin: 0 0 18px;
+        font-size: 17px;
+        font-weight: 800;
+        color: #3A2A1E;
+        padding-bottom: 14px;
+        border-bottom: 1.5px solid #F1E4D0;
+      }
+      .row-label {
+        padding: 12px 0;
         font-size: 13px;
-        color: #71717a;
-        margin-bottom: 8px;
+        color: #8A7566;
+        font-weight: 600;
       }
-      .company-info {
-        font-size: 12px;
-        color: #a1a1aa;
-        line-height: 1.5;
-        margin-top: 20px;
+      .row-value {
+        padding: 12px 0;
+        font-size: 14px;
+        color: #3A2A1E;
+        font-weight: 700;
+        text-align: right;
+      }
+      .row-sep { border-top: 1px solid #F1E4D0; }
+      .eyebrow {
+        font-size: 11px;
+        color: #A8886E;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-weight: 700;
+      }
+      .icon-circle {
+        width: 68px;
+        height: 68px;
+        background: linear-gradient(160deg, #FBF3E7 0%, #F1E1C8 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 22px;
+        border: 1px solid #EFDCC0;
+        font-size: 28px;
+      }
+      .badge {
+        display: inline-block;
+        padding: 5px 14px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .badge-success { background-color: #EAF4EC; color: #2F6F4E; border: 1px solid #D2E7DA; }
+      .badge-danger { background-color: #FBECE8; color: #A14A3A; border: 1px solid #F0D6CC; }
+      .badge-warning { background-color: #FBF2E3; color: #9A6B2E; border: 1px solid #F0DFC0; }
+      .badge-neutral { background-color: #F3EEE5; color: #6E4A35; border: 1px solid #E8D9C5; }
+      .info-box {
+        border-radius: 14px;
+        padding: 20px;
+        margin: 24px 0;
+        font-size: 14px;
+        line-height: 1.65;
+      }
+      .info-box p { margin: 0; }
+      .info-box-brand { background-color: #FBF6EE; border-left: 4px solid #8B5E3C; color: #5B4636; }
+      .info-box-success { background-color: #EEF6F0; border-left: 4px solid #3F9163; color: #2F6F4E; }
+      .info-box-danger { background-color: #FBEEEA; border-left: 4px solid #C2604B; color: #A14A3A; }
+      .info-box-warning { background-color: #FDF6E9; border-left: 4px solid #D89A3E; color: #9A6B2E; }
+      .info-box-blue { background-color: #EEF3FB; border-left: 4px solid #4C74B9; color: #35507F; }
+      .code-box {
+        background-color: #FBF6EE;
+        border: 1px solid #F1E4D0;
+        border-radius: 16px;
+        padding: 36px 20px;
+        margin: 32px 0;
+        text-align: center;
+      }
+      .code {
+        font-size: 40px;
+        font-weight: 800;
+        letter-spacing: 10px;
+        color: #3A2A1E;
+        font-family: 'SFMono-Regular', Consolas, Menlo, monospace;
+        display: inline-block;
+        padding: 10px 22px;
+        border: 1px solid #F1E4D0;
+        border-radius: 12px;
+        background-color: #ffffff;
       }
       .divider {
         height: 1px;
-        background-color: #f4f4f5;
-        margin: 30px 0;
+        background-color: #F1E4D0;
+        margin: 32px 0;
       }
+      .footer {
+        text-align: center;
+        padding: 40px 32px;
+        background-color: #FBF6EE;
+        border-top: 1px solid #F1E4D0;
+      }
+      .footer-text {
+        font-size: 13px;
+        color: #8A7566;
+        margin-bottom: 8px;
+      }
+      .footer-signoff {
+        font-size: 12px;
+        color: #A8886E;
+        margin: 18px 0 0;
+        letter-spacing: 0.02em;
+      }
+      .company-info {
+        font-size: 12px;
+        color: #A8886E;
+        line-height: 1.6;
+        margin-top: 18px;
+      }
+      .company-info a { color: #8A7566; text-decoration: none; }
 
   body
-    .container
-      .header
-        if companyLogoUrl
-          img.logo(src=companyLogoUrl alt=companyName)
-        else
-          h1.brand-name #{companyName}
+    .bg-wrap
+      .container
+        .topbar
+        .header
+          if companyLogoUrl
+            .logo-frame
+              img.logo(src=companyLogoUrl alt=companyName)
+          else
+            h1.brand-name #{companyName}
+          .brand-underline
 
-      .content
-        block content
+        .content
+          block content
 
-      .footer
-        p.footer-text Cet email a été envoyé par #{companyName}.
-        .company-info
-          if companyAddress
-            | #{companyAddress}
-            if companyCity
-              |, #{companyCity}
-            if companyZipCode
-              |  #{companyZipCode}
+        .footer
+          p.footer-text Cet email a été envoyé par #{companyName}.
+          .company-info
+            if companyAddress
+              | #{companyAddress}
+              if companyCity
+                |, #{companyCity}
+              if companyZipCode
+                |  #{companyZipCode}
+              br
+            if companyPhone
+              | Tél : #{companyPhone} &nbsp;·&nbsp;
+            if companyEmail
+              | #{companyEmail}
             br
-          if companyPhone
-            | Tél: #{companyPhone} | 
-          if companyEmail
-            | Email: #{companyEmail}
-          br
-          if companyWebsite
-            a(href=companyWebsite style="color: #71717a; text-decoration: none;") #{companyWebsite}
-        
-        div(style="margin-top: 24px;")
-          p(style="font-size: 11px; color: #27272a;") © #{currentYear} #{companyName}. Tous droits réservés.
+            if companyWebsite
+              a(href=companyWebsite) #{companyWebsite}
+
+          p.footer-signoff Fait avec soin par l'équipe #{companyName}
+
+          div(style="margin-top: 20px;")
+            p(style="font-size: 11px; color: #C9B6A3; margin: 0;") © #{currentYear} #{companyName}. Tous droits réservés.

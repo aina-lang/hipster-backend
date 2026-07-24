@@ -5,19 +5,18 @@ block content
   p Bienvenue chez #{companyName} ! Nous sommes ravis de vous avoir parmi nous.
   p Votre compte a été créé avec succès. Voici vos identifiants de connexion :
 
-  div(style="background-color: #f8f9fa; padding: 24px; border-radius: 12px; margin: 32px 0; border: 1px solid #e4e4e7;")
+  .card
     table(width="100%" cellpadding="0" cellspacing="0" border="0")
       tr
-        td(style="padding: 10px 0; font-size: 14px; color: #52525b;") Email
-        td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right;") #{email}
+        td.row-label Email
+        td.row-value #{email}
       tr
-        td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #e4e4e7;") Mot de passe temporaire
-        td(style="padding: 10px 0; font-size: 16px; color: #09090b; font-weight: 700; text-align: right; border-top: 1px solid #e4e4e7; font-family: monospace;") #{temporaryPassword}
+        td.row-label.row-sep Mot de passe temporaire
+        td.row-value.row-sep(style="font-family: 'SFMono-Regular', Consolas, Menlo, monospace;") #{temporaryPassword}
 
-  p(style="color: #71717a; font-size: 14px; margin-top: 32px;") Nous vous recommandons de changer votre mot de passe dès votre première connexion pour garantir la sécurité de votre compte.
-
+  p(style="color: #8A7566; font-size: 14px; margin-top: 32px;") Nous vous recommandons de changer votre mot de passe dès votre première connexion pour garantir la sécurité de votre compte.
 
   div.divider
 
-  p(style="font-size: 13px; color: #52525b; text-align: center;") 
+  p(style="font-size: 13px; color: #8A7566; text-align: center;")
     | Si vous n'avez pas demandé cette inscription, veuillez ignorer cet email ou nous contacter si vous avez des questions.
