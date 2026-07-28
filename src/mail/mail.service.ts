@@ -64,6 +64,10 @@ export class MailService {
         companyLogoUrl = `${apiUrl}${cleanLogoPath}`;
       }
     }
+    // Fallback: no logo uploaded yet, use the brand mark hosted on the frontend
+    if (!companyLogoUrl) {
+      companyLogoUrl = `${frontendUrl}/assets/images/logo_.jpg`;
+    }
 
     const globalContext = {
       companyName: company.name,
@@ -72,9 +76,10 @@ export class MailService {
       companyZipCode: company.zipCode,
       companyCountry: company.country,
       companyPhone: company.phone,
-      companyEmail: company.email,
-      companyWebsite: company.website,
+      companyEmail: company.email || 'support@hipster-marketing.fr',
+      companyWebsite: company.website || 'https://www.hipster-marketing.fr',
       companyLogoUrl: companyLogoUrl,
+      heroImageUrl: `${frontendUrl}/assets/images/bg_email.jpg`,
       currentYear: new Date().getFullYear(),
       appUrl: appUrl,
       // dashboardUrl: appUrl, // 🚫 DISABLED: User requested to remove all "Access Account" links by default

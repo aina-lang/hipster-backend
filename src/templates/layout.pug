@@ -32,44 +32,16 @@ html(lang="fr")
         border: 1px solid #EFE1CE;
         box-shadow: 0 20px 45px -18px rgba(58, 42, 30, 0.22);
       }
-      .topbar {
-        height: 6px;
-        background: linear-gradient(90deg, #5C4433 0%, #8B5E3C 50%, #C89B6E 100%);
+      .hero {
+        line-height: 0;
+        background-color: #1C1815;
       }
-      .header {
-        background: linear-gradient(160deg, #FFFDFA 0%, #FBF3E7 100%);
-        padding: 44px 32px 32px;
-        text-align: center;
-        border-bottom: 1px solid #F1E4D0;
-      }
-      .logo-frame {
-        display: inline-block;
-        padding: 10px;
-        background-color: #ffffff;
-        border-radius: 20px;
-        border: 1px solid #F1E4D0;
-        box-shadow: 0 8px 24px -8px rgba(92, 68, 51, 0.18);
-        margin-bottom: 18px;
-      }
-      .logo {
-        max-width: 150px;
-        max-height: 60px;
+      .hero img {
+        width: 100%;
         height: auto;
+        max-height: 260px;
+        object-fit: cover;
         display: block;
-      }
-      .brand-name {
-        font-size: 26px;
-        font-weight: 800;
-        color: #3A2A1E;
-        letter-spacing: -0.02em;
-        margin: 0 0 18px;
-      }
-      .brand-underline {
-        width: 48px;
-        height: 4px;
-        margin: 0 auto;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #5C4433, #C89B6E);
       }
       .content {
         padding: 44px 40px;
@@ -83,8 +55,15 @@ html(lang="fr")
         letter-spacing: -0.01em;
       }
       h2 {
-        font-size: 22px;
-        margin-bottom: 16px;
+        font-size: 24px;
+        margin-bottom: 4px;
+      }
+      .title-accent {
+        width: 44px;
+        height: 4px;
+        margin: 0 0 22px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #5C4433, #C89B6E);
       }
       p {
         color: #5B4636;
@@ -96,11 +75,12 @@ html(lang="fr")
         background: linear-gradient(135deg, #5C4433 0%, #8B5E3C 100%);
         color: #FFF8EF !important;
         text-decoration: none;
-        padding: 15px 32px;
-        border-radius: 14px;
+        padding: 16px 34px;
+        border-radius: 999px;
         font-weight: 700;
-        font-size: 15px;
-        letter-spacing: 0.01em;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
         box-shadow: 0 10px 24px -8px rgba(92, 68, 51, 0.45);
       }
       .btn-secondary {
@@ -108,10 +88,12 @@ html(lang="fr")
         background: #ffffff;
         color: #5C4433 !important;
         text-decoration: none;
-        padding: 14px 30px;
-        border-radius: 14px;
+        padding: 15px 32px;
+        border-radius: 999px;
         font-weight: 700;
-        font-size: 15px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
         border: 1.5px solid #E8D9C5;
       }
       .card {
@@ -151,6 +133,38 @@ html(lang="fr")
         letter-spacing: 1.5px;
         font-weight: 700;
       }
+      .id-card {
+        background: linear-gradient(160deg, #FFFDFA 0%, #FBF6EE 100%);
+        border: 1px solid #F1E4D0;
+        border-radius: 18px;
+        padding: 24px 16px;
+        text-align: center;
+      }
+      .id-card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3A2A1E 0%, #5C4433 100%);
+        display: inline-block;
+        text-align: center;
+        line-height: 48px;
+        margin-bottom: 14px;
+      }
+      .id-card-label {
+        font-size: 11px;
+        color: #A8886E;
+        text-transform: uppercase;
+        letter-spacing: 1.3px;
+        font-weight: 700;
+        margin: 0 0 6px;
+      }
+      .id-card-value {
+        font-size: 15px;
+        color: #3A2A1E;
+        font-weight: 800;
+        margin: 0;
+        word-break: break-word;
+      }
       .icon-circle {
         width: 68px;
         height: 68px;
@@ -189,6 +203,25 @@ html(lang="fr")
       .info-box-danger { background-color: #FBEEEA; border-left: 4px solid #C2604B; color: #A14A3A; }
       .info-box-warning { background-color: #FDF6E9; border-left: 4px solid #D89A3E; color: #9A6B2E; }
       .info-box-blue { background-color: #EEF3FB; border-left: 4px solid #4C74B9; color: #35507F; }
+      .info-line {
+        font-size: 14px;
+        color: #5B4636;
+        line-height: 1.6;
+        margin: 24px 0;
+      }
+      .info-line-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background-color: #3A2A1E;
+        color: #ffffff !important;
+        text-align: center;
+        line-height: 26px;
+        font-size: 13px;
+        font-weight: 800;
+        font-style: italic;
+        display: inline-block;
+      }
       .code-box {
         background-color: #FBF6EE;
         border: 1px solid #F1E4D0;
@@ -216,20 +249,66 @@ html(lang="fr")
       }
       .footer {
         text-align: center;
-        padding: 40px 32px;
+        padding: 36px 32px 40px;
         background-color: #FBF6EE;
         border-top: 1px solid #F1E4D0;
       }
-      .footer-text {
-        font-size: 13px;
-        color: #8A7566;
-        margin-bottom: 8px;
+      .footer-mark {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        overflow: hidden;
+        display: inline-block;
+        margin-bottom: 14px;
+        border: 1px solid #EFDCC0;
+        background-color: #ffffff;
       }
-      .footer-signoff {
-        font-size: 12px;
+      .footer-mark img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .footer-brand {
+        font-size: 14px;
+        font-weight: 800;
+        color: #3A2A1E;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin: 0 0 18px;
+      }
+      .social-row { margin-bottom: 20px; }
+      .social-icon {
+        display: inline-block;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #3A2A1E;
+        color: #ffffff !important;
+        text-align: center;
+        line-height: 32px;
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0 4px;
+      }
+      .footer-help {
+        font-size: 13px;
+        color: #6E4A35;
+        margin: 0 0 16px;
+      }
+      .footer-help a { color: #6E4A35; font-weight: 700; text-decoration: none; }
+      .footer-tagline {
+        font-size: 10px;
         color: #A8886E;
-        margin: 18px 0 0;
-        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-weight: 700;
+        margin: 0 0 10px;
+      }
+      .footer-website a {
+        font-size: 12px;
+        color: #8A7566;
+        text-decoration: none;
       }
       .company-info {
         font-size: 12px;
@@ -242,20 +321,38 @@ html(lang="fr")
   body
     .bg-wrap
       .container
-        .topbar
-        .header
-          if companyLogoUrl
-            .logo-frame
-              img.logo(src=companyLogoUrl alt=companyName)
-          else
-            h1.brand-name #{companyName}
-          .brand-underline
+        if heroImageUrl
+          .hero
+            img(src=heroImageUrl alt=companyName)
 
         .content
           block content
 
         .footer
-          p.footer-text Cet email a été envoyé par #{companyName}.
+          .divider
+
+          if companyLogoUrl
+            .footer-mark
+              img(src=companyLogoUrl alt=companyName)
+
+          p.footer-brand #{companyName}
+
+          .social-row
+            span.social-icon f
+            span.social-icon(style="font-size: 10px;") IG
+            span.social-icon in
+
+          p.footer-help
+            | Besoin d'aide ?&nbsp;
+            if companyEmail
+              a(href=`mailto:${companyEmail}`) #{companyEmail}
+
+          p.footer-tagline Développement web &bull; Communication &bull; Marketing
+
+          if companyWebsite
+            p.footer-website
+              a(href=companyWebsite) #{companyWebsite.replace(/^https?:\/\//, '')}
+
           .company-info
             if companyAddress
               | #{companyAddress}
@@ -265,14 +362,8 @@ html(lang="fr")
                 |  #{companyZipCode}
               br
             if companyPhone
-              | Tél : #{companyPhone} &nbsp;·&nbsp;
-            if companyEmail
-              | #{companyEmail}
+              | Tél : #{companyPhone}
             br
-            if companyWebsite
-              a(href=companyWebsite) #{companyWebsite}
 
-          p.footer-signoff Fait avec soin par l'équipe #{companyName}
-
-          div(style="margin-top: 20px;")
+          div(style="margin-top: 16px;")
             p(style="font-size: 11px; color: #C9B6A3; margin: 0;") © #{currentYear} #{companyName}. Tous droits réservés.
