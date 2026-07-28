@@ -11,7 +11,7 @@ html(lang="fr")
 
       body {
         font-family: 'Plus Jakarta Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        background-color: #F3EEE5;
+        background-color: #ffffff;
         margin: 0;
         padding: 0;
         color: #4A3B30;
@@ -19,8 +19,7 @@ html(lang="fr")
       table { border-collapse: collapse; }
       a { color: #5C4433; }
       .bg-wrap {
-        background-color: #F3EEE5;
-        background-image: linear-gradient(180deg, #FAF6F0 0%, #F3EEE5 220px, #F3EEE5 100%);
+        background-color: #ffffff;
         padding: 32px 16px;
       }
       .container {
@@ -63,7 +62,7 @@ html(lang="fr")
         height: 4px;
         margin: 0 0 22px;
         border-radius: 999px;
-        background: linear-gradient(90deg, #5C4433, #C89B6E);
+        background: #5C4433;
       }
       p {
         color: #5B4636;
@@ -72,7 +71,7 @@ html(lang="fr")
       strong { color: #3A2A1E; }
       .btn {
         display: inline-block;
-        background: linear-gradient(135deg, #5C4433 0%, #8B5E3C 100%);
+        background: #5C4433;
         color: #FFF8EF !important;
         text-decoration: none;
         padding: 16px 34px;
@@ -97,7 +96,7 @@ html(lang="fr")
         border: 1.5px solid #E8D9C5;
       }
       .card {
-        background: linear-gradient(160deg, #FFFDFA 0%, #FBF6EE 100%);
+        background: #FFFDFA;
         border: 1px solid #F1E4D0;
         border-radius: 20px;
         padding: 28px;
@@ -134,7 +133,7 @@ html(lang="fr")
         font-weight: 700;
       }
       .id-card {
-        background: linear-gradient(160deg, #FFFDFA 0%, #FBF6EE 100%);
+        background: #FFFDFA;
         border: 1px solid #F1E4D0;
         border-radius: 18px;
         padding: 24px 16px;
@@ -144,7 +143,7 @@ html(lang="fr")
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #3A2A1E 0%, #5C4433 100%);
+        background: #5C4433;
         display: inline-block;
         text-align: center;
         line-height: 48px;
@@ -168,7 +167,7 @@ html(lang="fr")
       .icon-circle {
         width: 68px;
         height: 68px;
-        background: linear-gradient(160deg, #FBF3E7 0%, #F1E1C8 100%);
+        background: #FBF3E7;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -329,13 +328,14 @@ html(lang="fr")
           block content
 
         .footer
-          .divider
-
-          if companyLogoUrl
-            .footer-mark
-              img(src=companyLogoUrl alt=companyName)
-
-          p.footer-brand #{companyName}
+          table(width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 32px 0;")
+            tr
+              td(style="width: 38%; border-bottom: 1px solid #E8D9C5;")
+              td(style="padding: 0 16px; text-align: center; white-space: nowrap; font-size: 0; line-height: 1;")
+                if companyLogoUrl
+                  img(src=companyLogoUrl alt=companyName style="display: inline-block; width: 22px; height: 22px; border-radius: 50%; vertical-align: middle; margin-right: 8px; border: 1px solid #E8D9C5;")
+                span(style="font-size: 13px; font-weight: 800; color: #3A2A1E; letter-spacing: 0.18em; text-transform: uppercase; vertical-align: middle;") #{companyName}
+              td(style="width: 38%; border-bottom: 1px solid #E8D9C5;")
 
           .social-row
             span.social-icon f
