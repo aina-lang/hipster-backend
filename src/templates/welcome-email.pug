@@ -13,18 +13,14 @@ block content
       td(width="48%" valign="top")
         .id-card
           .id-card-icon
-            svg(width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;")
-              rect(x="2" y="4" width="20" height="16" rx="2")
-              path(d="m22 6-10 7L2 6")
+            img(src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'%3E%3C/rect%3E%3Cpath d='m22 6-10 7L2 6'%3E%3C/path%3E%3C/svg%3E" width="20" height="20" alt="email" style="vertical-align: middle;")
           p.id-card-label Votre email
           p.id-card-value #{email}
       td(width="4%")
       td(width="48%" valign="top")
         .id-card
           .id-card-icon
-            svg(width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;")
-              rect(x="4" y="11" width="16" height="10" rx="2")
-              path(d="M8 11V7a4 4 0 0 1 8 0v4")
+            img(src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='11' width='16' height='10' rx='2'%3E%3C/rect%3E%3Cpath d='M8 11V7a4 4 0 0 1 8 0v4'%3E%3C/path%3E%3C/svg%3E" width="20" height="20" alt="lock" style="vertical-align: middle;")
           p.id-card-label Mot de passe temporaire
           p.id-card-value #{temporaryPassword}
 
@@ -34,7 +30,7 @@ block content
 
   if appUrl
     div(style="text-align: center; margin-top: 36px;")
-      a.btn(href=appUrl) Accéder à mon espace →
+      a.btn(href=appUrl style="color: #FFF8EF; text-decoration: none;") Accéder à mon espace →
 
   div.divider
 
