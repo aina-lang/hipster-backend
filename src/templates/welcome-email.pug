@@ -13,20 +13,16 @@ block content
       td(width="48%" valign="top")
         .id-card
           .id-card-icon
-            svg(xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;")
-              rect(x="2" y="4" width="20" height="16" rx="2")
-              path(d="m22 6-10 7L2 6")
-          p.id-card-label Votre email
-          p.id-card-value #{email}
+            span(style="color: #ffffff; font-size: 18px; line-height: 48px;") ✉
+              p.id-card-label Votre email
+              p.id-card-value #{email}
       td(width="4%")
       td(width="48%" valign="top")
         .id-card
           .id-card-icon
-            svg(xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;")
-              rect(x="4" y="11" width="16" height="10" rx="2")
-              path(d="M8 11V7a4 4 0 0 1 8 0v4")
-          p.id-card-label Mot de passe temporaire
-          p.id-card-value #{temporaryPassword}
+            span(style="color: #ffffff; font-size: 18px; line-height: 48px;") 🔒
+              p.id-card-label Mot de passe temporaire
+              p.id-card-value #{temporaryPassword}
 
   p.info-line
     span.info-line-icon i

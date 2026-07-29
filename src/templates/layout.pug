@@ -332,11 +332,13 @@ html(lang="fr")
             div(style="border-bottom: 1px solid #E8D9C5; margin-bottom: 20px;")
             div(style="text-align: center;")
               if companyLogoUrl
-                div(style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px;")
-                  div(style="flex: 1; height: 1px; background: #E8D9C5;")
-                  img(src=companyLogoUrl alt=companyName style="display: block; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #E8D9C5; background-color: #ffffff; flex-shrink: 0;")
-                  div(style="flex: 1; height: 1px; background: #E8D9C5;")
-              p(style="font-size: 14px; font-weight: 800; color: #3A2A1E; letter-spacing: 0.18em; text-transform: uppercase; margin: 0;") #{companyName}
+                table(width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 14px;")
+                  tr
+                    td(style="border-top: 1px solid #E8D9C5; line-height: 1px; font-size: 1px;") &nbsp;
+                    td(width="44" style="padding: 0 12px;")
+                      img(src=companyLogoUrl alt=companyName width="44" height="44" style="display: block; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #E8D9C5; background-color: #ffffff;")
+                    td(style="border-top: 1px solid #E8D9C5; line-height: 1px; font-size: 1px;") &nbsp;
+                      p(style="font-size: 14px; font-weight: 800; color: #3A2A1E; letter-spacing: 0.18em; text-transform: uppercase; margin: 0;") #{companyName}
 
           .social-row
             span.social-icon f
