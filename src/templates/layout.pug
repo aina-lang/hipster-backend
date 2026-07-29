@@ -332,7 +332,10 @@ html(lang="fr")
             div(style="border-bottom: 1px solid #E8D9C5; margin-bottom: 20px;")
             div(style="text-align: center;")
               if companyLogoUrl
-                img(src=companyLogoUrl alt=companyName style="display: block; width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 10px; border: 1px solid #E8D9C5; background-color: #ffffff;")
+                div(style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px;")
+                  div(style="flex: 1; height: 1px; background: #E8D9C5;")
+                  img(src=companyLogoUrl alt=companyName style="display: block; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #E8D9C5; background-color: #ffffff; flex-shrink: 0;")
+                  div(style="flex: 1; height: 1px; background: #E8D9C5;")
               p(style="font-size: 14px; font-weight: 800; color: #3A2A1E; letter-spacing: 0.18em; text-transform: uppercase; margin: 0;") #{companyName}
 
           .social-row
