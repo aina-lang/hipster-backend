@@ -22,8 +22,6 @@ async function bootstrap() {
   if (!existsSync(uploadsPath)) mkdirSync(uploadsPath, { recursive: true });
   app.use('/uploads', express.static(uploadsPath));
 
-  // Stripe exige le corps brut (octets exacts) pour vérifier stripe-signature.
-  // Sans ce `verify`, express.json() peut empêcher req.rawBody d'être utilisable → échecs silencieux côté Dashboard Stripe.
   app.use(
     json({
       limit: '50mb',
@@ -52,10 +50,7 @@ async function bootstrap() {
 
   const reflector = app.get(Reflector);
   app.useGlobalInterceptors(new TransformInterceptor(reflector));
-  // app.useGlobalGuards(
-  // new JwtAuthGuard(reflector),
-  // new RolesGuard(reflector),
-  // );
+
   const config = new DocumentBuilder()
     .setTitle('Mon API en NESTJS')
     .setDescription('The user management API')
@@ -66,6 +61,6 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   const server = await app.listen(process.env.PORT ?? 4000, '0.0.0.0');
-  server.setTimeout(300000); // 5 minutes timeout to prevent 504 Gateway Timeout during heavy AI tasks
+  server.setTimeout(300000);
 }
 void bootstrap();

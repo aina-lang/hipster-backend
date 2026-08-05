@@ -72,6 +72,10 @@ export class MailService {
         companyLogoUrl = `${apiUrl}${cleanLogoPath}`;
       }
     }
+    // Fallback: no logo uploaded yet, use the brand mark hosted on the frontend
+    if (!companyLogoUrl) {
+      companyLogoUrl = `${frontendUrl}/assets/images/logo_.jpg`;
+    }
 
     const globalContext = {
       companyName: company.name,
@@ -80,17 +84,28 @@ export class MailService {
       companyZipCode: company.zipCode,
       companyCountry: company.country,
       companyPhone: company.phone,
-      companyEmail: company.email,
-      companyWebsite: company.website,
+      companyEmail: company.email || 'support@hipster-marketing.fr',
+      companyWebsite: company.website || 'https://www.hipster-marketing.fr',
       companyLogoUrl: companyLogoUrl,
+      heroImageUrl: `${frontendUrl}/assets/images/bg_email.jpg`,
       currentYear: new Date().getFullYear(),
       appUrl: appUrl,
       // dashboardUrl: appUrl, // 🚫 DISABLED: User requested to remove all "Access Account" links by default
     };
 
+    // Fallback de test : redirige tous les emails (hors module Kook) vers une
+    // adresse unique pendant la phase de test, sans changer le contenu.
+    const isTestMode = process.env.MAIL_TEST_MODE === 'true';
+    const testRecipient = process.env.MAIL_TEST_RECIPIENT;
+    const to = isTestMode && testRecipient ? testRecipient : params.to;
+    const subject =
+      isTestMode && testRecipient
+        ? `[Test → ${params.to}] ${params.subject}`
+        : params.subject;
+
     await this.mailerService.sendMail({
-      to: params.to,
-      subject: params.subject,
+      to,
+      subject,
       template: params.template,
       context: { ...globalContext, ...(params.context || {}) },
       attachments: params.attachments,
@@ -104,7 +119,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '🎉 Nouveau Projet Créé',
+      subject: 'Nouveau Projet Créé',
       template: 'project-created',
       context: data,
       userRoles: roles,
@@ -118,7 +133,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '🔄 Mise à jour du Projet',
+      subject: 'Mise à jour du Projet',
       template: 'project-updated',
       context: data,
       userRoles: roles,
@@ -132,7 +147,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '✅ Projet Terminé',
+      subject: 'Projet Terminé',
       template: 'project-completed',
       context: data,
       userRoles: roles,
@@ -146,7 +161,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: `🎉 Nouveau tier de fidélité: ${data.newTier}!`,
+      subject: `Nouveau tier de fidélité: ${data.newTier}!`,
       template: 'loyalty-reward',
       context: data,
       userRoles: roles,
@@ -160,7 +175,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '📋 Nouvelle Tâche Assignée',
+      subject: 'Nouvelle Tâche Assignée',
       template: 'task-assigned',
       context: data,
       userRoles: roles || ['employee'],
@@ -174,7 +189,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '🔧 Tâche de Maintenance Assignée',
+      subject: 'Tâche de Maintenance Assignée',
       template: 'maintenance-assigned',
       context: data,
       userRoles: roles || ['employee'],
@@ -280,7 +295,7 @@ export class MailService {
     await this.sendEmail({
       to,
       userRoles: roles,
-      subject: `📄 Votre ${typeLabel} ${invoice.reference} est disponible`,
+      subject: `Votre ${typeLabel} ${invoice.reference} est disponible`,
       template: 'invoice-created',
       context,
       attachments,
@@ -301,7 +316,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '📋 Nouveau projet soumis par un client',
+      subject: 'Nouveau projet soumis par un client',
       template: 'project-submission',
       context: data,
       userRoles: ['admin'],
@@ -323,7 +338,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '🎫 Nouveau ticket créé par un client',
+      subject: 'Nouveau ticket créé par un client',
       template: 'ticket-creation',
       context: data,
       userRoles: ['admin'],
@@ -346,7 +361,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '👥 Vous avez été assigné à un projet',
+      subject: 'Vous avez été assigné à un projet',
       template: 'project-assignment',
       context: data,
       userRoles: ['employee'],
@@ -359,7 +374,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '🔑 Votre code de vérification Hipster',
+      subject: 'Votre code de vérification Hipster',
       template: 'otp-email',
       context: data,
       userRoles: roles,
@@ -373,7 +388,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: '🔒 Votre nouveau mot de passe Hipster',
+      subject: 'Votre nouveau mot de passe Hipster',
       template: 'password-reset',
       context: {
         ...data,
@@ -459,7 +474,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: `🎟️ Ticket Accepté - ${data.ticketTitle}`,
+      subject: `Ticket Accepté - ${data.ticketTitle}`,
       template: 'ticket-accepted',
       context: data,
       userRoles: roles,
@@ -480,7 +495,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: `✅ Ticket Résolu - ${data.ticketTitle}`,
+      subject: `Ticket Résolu - ${data.ticketTitle}`,
       template: 'ticket-resolved',
       context: data,
       userRoles: roles,
@@ -498,7 +513,7 @@ export class MailService {
   ): Promise<void> {
     await this.sendEmail({
       to,
-      subject: `🎟️ Ticket Refusé - ${data.ticketTitle}`,
+      subject: `Ticket Refusé - ${data.ticketTitle}`,
       template: 'ticket-rejected',
       context: data,
       userRoles: roles,

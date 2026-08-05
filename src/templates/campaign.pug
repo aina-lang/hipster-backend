@@ -2,15 +2,15 @@ extends layout
 
 block content
   h2 Bonjour #{userName},
-  
+
   if description
-    div(style="background-color: #f8f9fa; border-left: 3px solid #09090b; padding: 16px; border-radius: 4px; margin-bottom: 24px;")
-      p(style="margin: 0; font-size: 13px; color: #52525b; font-style: italic;") #{description}
-  
-  div(style="white-space: pre-wrap; color: #18181b; font-size: 16px; line-height: 1.8;")
+    .info-box.info-box-brand
+      p(style="font-style: italic;") #{description}
+
+  div(style="white-space: pre-wrap; color: #3A2A1E; font-size: 16px; line-height: 1.8;")
     | #{content}
 
   div.divider
-  
-  p(style="font-size: 12px; color: #52525b; text-align: center;") 
+
+  p(style="font-size: 12px; color: #8A7566; text-align: center;")
     | Vous recevez cet email car vous faites partie de la communauté #{companyName}.

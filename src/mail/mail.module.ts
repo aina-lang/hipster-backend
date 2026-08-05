@@ -18,19 +18,19 @@ import { CompanyModule } from '../company/company.module';
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {
-          host: 'smtp.gmail.com',
-          port: 587,
+          host: process.env.MAIL_HOST,
+          port: Number(process.env.MAIL_PORT),
           secure: false, // true for 465, false for other ports
           auth: {
-            user: 'jayjenaa5@gmail.com',
-            pass: 'xlbibmqdvivmtuoj',
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS,
           },
           tls: {
             rejectUnauthorized: false, // Helpful for some environments
           },
         },
         defaults: {
-          from: '"Support Hipster Marketing && AI" <hipsterai@gmail.com>',
+          from: process.env.MAIL_FROM,
         },
         template: {
           dir: join(__dirname, '../templates'),

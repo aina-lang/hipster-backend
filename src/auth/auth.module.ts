@@ -10,15 +10,20 @@ import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshStrategy } from './strategies/refresh.strategy';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule,
     TypeOrmModule.forFeature([User, ClientProfile]),
     PassportModule,
-    JwtModule.register({
-      global: true,
-      secret: 'MON KEY', // TODO: Use environment variable
-      signOptions: { expiresIn: '4h' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET') || 'change-me-jwt-secret',
+        signOptions: { expiresIn: '4h' },
+      }),
     }),
     OtpModule,
     MailModule,

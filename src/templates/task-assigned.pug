@@ -3,62 +3,63 @@ extends layout
 block content
   h2 Bonjour #{assigneeName},
   p Une nouvelle tâche vous a été assignée dans le cadre du projet <strong>#{projectName}</strong>.
-  
-  div(style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e4e4e7; border-radius: 12px; padding: 28px; margin: 32px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);")
-    h3(style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #09090b; font-weight: 700; border-bottom: 2px solid #f4f4f5; padding-bottom: 12px;") 📋 #{taskTitle}
-    
+
+  .card
+    h3.card-title #{taskTitle}
+
     table(width="100%" cellpadding="0" cellspacing="0" border="0")
       if taskPriority
         tr
-          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500;") Priorité
-          td(style=`padding: 12px 0; font-size: 14px; font-weight: 700; text-align: right; ${taskPriority === 'high' ? 'color: #ef4444;' : taskPriority === 'medium' ? 'color: #f59e0b;' : 'color: #10b981;'}`)
+          td.row-label Priorité
+          td.row-value
             if taskPriority === 'high'
-              | 🔴 HAUTE
+              span.badge.badge-danger Haute
             else if taskPriority === 'medium'
-              | 🟡 MOYENNE
+              span.badge.badge-warning Moyenne
             else
-              | 🟢 BASSE
-      
+              span.badge.badge-success Basse
+
       if taskDueDate
         tr
-          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Échéance
-          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right; border-top: 1px solid #f4f4f5;") 📅 #{taskDueDate}
-      
+          td.row-label.row-sep Échéance
+          td.row-value.row-sep #{taskDueDate}
+
       if taskStatus
         tr
-          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Statut
-          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") #{taskStatus}
-      
+          td.row-label.row-sep Statut
+          td.row-value.row-sep #{taskStatus}
+
       tr
-        td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Projet
-        td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") #{projectName}
-      
+        td.row-label.row-sep Projet
+        td.row-value.row-sep #{projectName}
+
       if clientName
         tr
-          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Client
-          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") #{clientName}
-      
+          td.row-label.row-sep Client
+          td.row-value.row-sep #{clientName}
+
       if assignedBy
         tr
-          td(style="padding: 12px 0; font-size: 14px; color: #71717a; font-weight: 500; border-top: 1px solid #f4f4f5;") Assigné par
-          td(style="padding: 12px 0; font-size: 14px; color: #18181b; font-weight: 600; text-align: right; border-top: 1px solid #f4f4f5;") #{assignedBy}
-      
+          td.row-label.row-sep Assigné par
+          td.row-value.row-sep #{assignedBy}
+
       if taskDescription
         tr
-          td(colspan="2" style="padding: 20px 0 0 0; font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;") Description de la tâche
+          td(colspan="2" style="padding: 20px 0 0 0;")
+            span.eyebrow Description de la tâche
         tr
-          td(colspan="2" style="padding: 8px 0 0 0; font-size: 14px; color: #52525b; line-height: 1.6;") #{taskDescription}
+          td(colspan="2" style="padding: 8px 0 0 0; font-size: 14px; color: #6E4A35; line-height: 1.6;") #{taskDescription}
 
-  div(style="background-color: #f8f9fa; border-left: 4px solid #09090b; border-radius: 8px; padding: 20px; margin: 24px 0;")
-    p(style="margin: 0; font-size: 14px; color: #52525b; line-height: 1.6;")
-      strong(style="color: #09090b;") 💡 Prochaines étapes :
+  .info-box.info-box-brand
+    p
+      strong(style="color: #3A2A1E;") Prochaines étapes :
       br
       | Vous pouvez maintenant commencer à travailler sur cette tâche. N'oubliez pas de mettre à jour son statut au fur et à mesure de votre progression dans le tableau Kanban du projet.
 
   div(style="text-align: center; margin-top: 40px;")
     if taskUrl
-      a.btn(href=taskUrl style="background: linear-gradient(135deg, #18181b 0%, #09090b 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.15);") 🚀 Voir la tâche
+      a.btn(href=taskUrl) Voir la tâche
     else
-      a.btn(href=appUrl + '/app/tasks' style="background: linear-gradient(135deg, #18181b 0%, #09090b 100%); box-shadow: 0 4px 12px rgba(0,0,0,0.15);") 🚀 Voir mes tâches
+      a.btn(href=appUrl + '/app/tasks') Voir mes tâches
 
-  p(style="margin-top: 40px; font-size: 13px; color: #71717a; line-height: 1.6;") Si vous avez des questions concernant cette tâche, n'hésitez pas à contacter #{assignedBy || 'votre chef de projet'}.
+  p(style="margin-top: 40px; font-size: 13px; color: #8A7566; line-height: 1.6;") Si vous avez des questions concernant cette tâche, n'hésitez pas à contacter #{assignedBy || 'votre chef de projet'}.

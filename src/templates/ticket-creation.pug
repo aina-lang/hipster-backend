@@ -3,29 +3,34 @@ extends layout
 block content
   h2 Bonjour #{adminName},
   p Un nouveau ticket de support a été créé par un client.
-  
-  div(style="background-color: #ffffff; border: 1px solid #e4e4e7; border-radius: 12px; padding: 24px; margin: 32px 0;")
-    h3(style="margin-top: 0; margin-bottom: 20px; font-size: 16px; color: #09090b; border-bottom: 1px solid #f4f4f5; padding-bottom: 12px;") Détails du ticket
-    
+
+  .card
+    h3.card-title Détails du ticket
+
     table(width="100%" cellpadding="0" cellspacing="0" border="0")
       tr
-        td(style="padding: 10px 0; font-size: 14px; color: #52525b;") Client
-        td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right;") #{clientName}
-      
+        td.row-label Client
+        td.row-value #{clientName}
+
       tr
-        td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #f9f9f9;") Sujet
-        td(style="padding: 10px 0; font-size: 14px; color: #18181b; font-weight: 700; text-align: right; border-top: 1px solid #f9f9f9;") #{ticketTitle}
-      
+        td.row-label.row-sep Sujet
+        td.row-value.row-sep #{ticketTitle}
+
       if priority
         tr
-          td(style="padding: 10px 0; font-size: 14px; color: #52525b; border-top: 1px solid #f9f9f9;") Priorité
-          td(style=`padding: 10px 0; font-size: 14px; color: ${priority === 'HIGH' ? '#ef4444' : '#18181b'}; font-weight: 700; text-align: right; border-top: 1px solid #f9f9f9;`) #{priority}
-      
+          td.row-label.row-sep Priorité
+          td.row-value.row-sep
+            if priority === 'HIGH'
+              span.badge.badge-danger #{priority}
+            else
+              span.badge.badge-neutral #{priority}
+
       if ticketDescription
         tr
-          td(colspan="2" style="padding: 16px 0 0 0; font-size: 11px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 1px;") Description du problème
+          td(colspan="2" style="padding: 18px 0 0 0;")
+            span.eyebrow Description du problème
         tr
-          td(colspan="2" style="padding: 8px 0 0 0; font-size: 14px; color: #52525b;") #{ticketDescription}
+          td(colspan="2" style="padding: 8px 0 0 0; font-size: 14px; color: #6E4A35;") #{ticketDescription}
 
   p(style="margin-top: 32px;") Veuillez prendre en charge ce ticket et répondre au client dès que possible.
 

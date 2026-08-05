@@ -2,11 +2,17 @@ import {
   Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn,
 } from 'typeorm';
 import { KookUser } from './kook-user.entity';
+import { RecipeCategory } from './recipe-category.entity';
 
 export enum RecipeDifficulty {
   FACILE = 'facile',
   MOYEN = 'moyen',
   DIFFICILE = 'difficile',
+}
+
+export enum RecipePostType {
+  RECIPE = 'recipe',
+  TEXT = 'text',
 }
 
 @Entity('kook_recipes')
@@ -20,14 +26,20 @@ export class Recipe {
   @Column({ type: 'varchar', length: 255 })
   title: string;
 
+  @Column({ type: 'enum', enum: RecipePostType, default: RecipePostType.RECIPE })
+  postType: RecipePostType;
+
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ type: 'text', nullable: true })
-  ingredients?: string;
+  @Column({ type: 'json', nullable: true })
+  ingredients?: string[];
 
   @Column({ type: 'text', nullable: true })
   instructions?: string;
+
+  @Column({ type: 'json', nullable: true })
+  steps?: { text: string; imageUrl?: string }[];
 
   @Column({ type: 'int', default: 0 })
   cookingTime: number;
@@ -38,8 +50,17 @@ export class Recipe {
   @Column({ type: 'varchar', length: 512, nullable: true })
   imageUrl?: string;
 
+  @ManyToOne(() => RecipeCategory, (category) => category.id, { nullable: true })
+  category?: RecipeCategory;
+
+  @Column({ type: 'int', nullable: true })
+  categoryId?: number;
+
   @Column({ default: 0 })
   likesCount: number;
+
+  @Column({ default: 0 })
+  commentsCount: number;
 
   @CreateDateColumn()
   createdAt: Date;
