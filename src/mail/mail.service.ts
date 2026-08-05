@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { CompanyService } from '../company/company.service';
+import { normalizeRoles } from '../common/utils/roles.utils';
 
 @Injectable()
 export class MailService {
@@ -19,7 +20,11 @@ export class MailService {
   }): Promise<void> {
     const company = await this.companyService.getProfile();
 
-    const isAdminOrEmployee = params.userRoles?.some(
+    // Les rôles remontent parfois double-encodés ('["partner"]') selon la
+    // façon dont ils ont été persistés : on normalise avant tout test.
+    const roles = normalizeRoles(params.userRoles);
+
+    const isAdminOrEmployee = roles.some(
       (r) => r === 'admin' || r === 'employee',
     );
 
@@ -46,7 +51,10 @@ export class MailService {
     let appUrl = frontendUrl;
     if (isAdminOrEmployee) {
       appUrl = backofficeUrl;
-    } else if (params.userRoles?.includes('client_marketing')) {
+    } else if (roles.includes('partner')) {
+      // Les partenaires ont leur propre espace, distinct du portail client.
+      appUrl = `${frontendUrl}/partner`;
+    } else if (roles.includes('client_marketing')) {
       // Prioritize mobile for marketing clients if they have the app
       appUrl = mobileUrl;
     }
@@ -178,12 +186,15 @@ export class MailService {
     data: any,
     roles?: string[],
   ): Promise<void> {
-    const isClient = roles?.includes('client_marketing');
-    const isEmployee = roles?.includes('employee');
-    const isAdmin = roles?.includes('admin');
+    const normalized = normalizeRoles(roles);
+    const isClient = normalized.includes('client_marketing');
+    const isEmployee = normalized.includes('employee');
+    const isAdmin = normalized.includes('admin');
+    const isPartner = normalized.includes('partner');
 
     let welcomeMessage = 'Bienvenue sur la plateforme Hipster.';
     let subMessage = '';
+    let subject = 'Bienvenue chez Hipster Studio!';
 
     if (isAdmin) {
       welcomeMessage = 'Votre compte Administrateur a été créé avec succès.';
@@ -193,6 +204,12 @@ export class MailService {
       welcomeMessage = 'Votre compte Employé est prêt.';
       subMessage =
         'Rapprochez-vous de votre manager pour obtenir vos accès et missions.';
+    } else if (isPartner) {
+      // 🤝 Réseau Hipster Partners : apporteurs d'affaires & réalisateurs
+      welcomeMessage = 'Bienvenue dans le réseau Hipster Partners !';
+      subMessage =
+        'Votre espace partenaire est ouvert : vous pouvez y déclarer vos affaires, suivre leur avancement et consulter vos commissions.';
+      subject = 'Bienvenue dans le réseau Hipster Partners !';
     } else if (isClient) {
       welcomeMessage = 'Bienvenue chez Hipster Marketing !';
       subMessage = 'Nous sommes ravis de collaborer avec vous.';
@@ -200,7 +217,7 @@ export class MailService {
 
     await this.sendEmail({
       to,
-      subject: 'Bienvenue chez Hipster Studio!',
+      subject,
       template: 'welcome-email',
       context: {
         ...data,

@@ -108,13 +108,19 @@ export class UsersService {
       try {
         // Note: We need to use this.mailService inside the transaction, but mailService is injected in the service instance.
         // Since we are in an arrow function, 'this' refers to the service instance, so it should work.
-        await this.mailService.sendWelcomeEmail(savedUser.email, {
-          firstName: savedUser.firstName,
-          email: savedUser.email,
-          temporaryPassword:
-            temporaryPassword || "Veuillez contacter l'administrateur",
-          dashboardUrl: `${process.env.FRONTEND_URL}/auth/login`, // Updated to point to login page
-        });
+        await this.mailService.sendWelcomeEmail(
+          savedUser.email,
+          {
+            firstName: savedUser.firstName,
+            email: savedUser.email,
+            temporaryPassword:
+              temporaryPassword || "Veuillez contacter l'administrateur",
+            dashboardUrl: `${process.env.FRONTEND_URL}/auth/login`, // Updated to point to login page
+          },
+          // Sans les rôles, le mail retombe sur le message générique
+          // et sur la mauvaise URL d'espace (partenaire / client / back-office).
+          savedUser.roles,
+        );
       } catch (error) {
         console.error('Failed to send welcome email:', error);
       }
@@ -351,11 +357,15 @@ export class UsersService {
 
     // ✅ Send email to the user
     try {
-      await this.mailService.sendNewPasswordEmail(user.email, {
-        name: user.firstName || user.email,
-        password: temporaryPassword,
-        dashboardUrl: `${process.env.FRONTEND_URL}/auth/login`,
-      } as any);
+      await this.mailService.sendNewPasswordEmail(
+        user.email,
+        {
+          name: user.firstName || user.email,
+          password: temporaryPassword,
+          dashboardUrl: `${process.env.FRONTEND_URL}/auth/login`,
+        } as any,
+        user.roles,
+      );
     } catch (error) {
       console.error('Failed to send password reset email:', error);
     }

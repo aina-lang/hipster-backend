@@ -71,4 +71,10 @@ export class ClientPortalController {
   getWebsites(@User('id') userId: number) {
     return this.clientPortalService.getWebsites(userId);
   }
+
+  @ApiOperation({ summary: 'Suivi de maintenance des sites du client' })
+  @Get('maintenance')
+  getMaintenanceSites(@User('id') userId: number) {
+    return this.clientPortalService.getMaintenanceSites(userId);
+  }
 }

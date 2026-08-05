@@ -7,8 +7,22 @@ import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
 import { Task, TaskStatus, TaskPriority } from 'src/tasks/entities/task.entity';
 import { NotificationsService } from 'src/notifications/notifications.service';
 import { ProjectMember } from 'src/projects/entities/project-member.entity';
+import { UpdateMaintenancePricingDto } from './dto/update-maintenance-pricing.dto';
+import {
+  stripWebsitePricing,
+  stripWebsitePricingFromAll,
+} from 'src/common/utils/website-pricing.utils';
 
 const MAINTENANCE_PROJECT_NAME = 'Maintenance Sites Web';
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** TypeORM renvoie les colonnes `decimal` sous forme de chaîne. */
+const toAmount = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
 
 @Injectable()
 export class MaintenanceService implements OnModuleInit {
@@ -149,6 +163,56 @@ export class MaintenanceService implements OnModuleInit {
   }
 
   /**
+   * 🌐 Met TOUS les sites clients en maintenance en une passe.
+   * Idempotent : les sites déjà suivis sont simplement ignorés.
+   */
+  async addAllWebsitesToMaintenance(userId: number): Promise<{
+    total: number;
+    added: number;
+    alreadyPresent: number;
+    errors?: { id: number; url: string; error: string }[];
+  }> {
+    const websites = await this.websiteRepository.find({ order: { id: 'ASC' } });
+    const project = await this.getOrCreateMaintenanceProject(userId);
+
+    const existingTasks = await this.taskRepository.find({
+      where: { project: { id: project.id } },
+      select: ['id', 'websiteId'],
+    });
+    const tracked = new Set(
+      existingTasks.map((t) => t.websiteId).filter((id): id is number => !!id),
+    );
+
+    const errors: { id: number; url: string; error: string }[] = [];
+    let added = 0;
+    let alreadyPresent = 0;
+
+    for (const website of websites) {
+      if (tracked.has(website.id)) {
+        alreadyPresent++;
+        continue;
+      }
+      try {
+        await this.addWebsiteToMaintenance(website.id, userId);
+        added++;
+      } catch (e) {
+        const error = e instanceof Error ? e.message : 'Erreur inconnue';
+        this.logger.error(
+          `Impossible d'ajouter le site #${website.id} (${website.url}) à la maintenance: ${error}`,
+        );
+        errors.push({ id: website.id, url: website.url, error });
+      }
+    }
+
+    return {
+      total: websites.length,
+      added,
+      alreadyPresent,
+      errors: errors.length ? errors : undefined,
+    };
+  }
+
+  /**
    * Remove website from maintenance (deletes task)
    */
   async removeWebsiteFromMaintenance(websiteId: number): Promise<void> {
@@ -193,10 +257,10 @@ export class MaintenanceService implements OnModuleInit {
   /**
    * Get all websites currently in maintenance
    */
-  async getMaintenanceWebsites(): Promise<Task[]> {
+  async getMaintenanceWebsites(isAdmin = false): Promise<Task[]> {
     const project = await this.getOrCreateMaintenanceProject(1);
 
-    return this.taskRepository.find({
+    const tasks = await this.taskRepository.find({
       where: { project: { id: project.id } },
       relations: [
         'website',
@@ -207,12 +271,21 @@ export class MaintenanceService implements OnModuleInit {
       ],
       order: { createdAt: 'DESC' },
     });
+
+    if (!isAdmin) {
+      tasks.forEach((t) => stripWebsitePricing(t.website));
+    }
+
+    return tasks;
   }
 
   /**
    * Get maintenance project with all tasks and ALL websites
    */
-  async getMaintenanceProject(userId: number): Promise<Project> {
+  async getMaintenanceProject(
+    userId: number,
+    isAdmin = false,
+  ): Promise<Project> {
     const basicProject = await this.getOrCreateMaintenanceProject(userId);
 
     // ⚡ OPTIMIZED: Fetch full details separately only when needed
@@ -227,6 +300,10 @@ export class MaintenanceService implements OnModuleInit {
       relations: ['client', 'client.user', 'lastMaintenanceBy'],
       order: { url: 'ASC' },
     });
+
+    if (!isAdmin) {
+      stripWebsitePricingFromAll(websites);
+    }
 
     if (project) {
       project.websites = websites;
@@ -400,5 +477,127 @@ export class MaintenanceService implements OnModuleInit {
       task.status = TaskStatus.DONE;
       await this.taskRepository.save(task);
     }
+  }
+
+  // ---------------------------------------------------------------
+  // 🔒 TARIFS — admin uniquement (garanti côté contrôleur)
+  // ---------------------------------------------------------------
+
+  /**
+   * Récapitulatif des tarifs de maintenance.
+   *
+   * Un site = un montant mensuel HT, sans notion de périodicité.
+   * Les sites sont regroupés par tarif identique (`tiers`) : c'est ce qui
+   * permet de voir d'un coup d'œil combien de prix différents circulent
+   * réellement et quels sites sont sur chacun.
+   */
+  async getPricingOverview() {
+    const [websites, maintenanceProject] = await Promise.all([
+      this.websiteRepository.find({
+        relations: ['client', 'client.user'],
+        order: { url: 'ASC' },
+      }),
+      this.getOrCreateMaintenanceProject(1),
+    ]);
+
+    const tasks = await this.taskRepository.find({
+      where: { project: { id: maintenanceProject.id } },
+      select: ['id', 'websiteId', 'status'],
+    });
+    const inMaintenance = new Set(
+      tasks.map((t) => t.websiteId).filter((id): id is number => !!id),
+    );
+
+    const sites = websites.map((w) => {
+      const price = toAmount(w.maintenancePrice);
+
+      return {
+        websiteId: w.id,
+        url: w.url,
+        clientId: w.clientId,
+        clientName: w.client?.user
+          ? `${w.client.user.firstName ?? ''} ${w.client.user.lastName ?? ''}`.trim() ||
+            w.client.companyName ||
+            'Client inconnu'
+          : w.client?.companyName || 'Client inconnu',
+        inMaintenance: inMaintenance.has(w.id),
+        /** Montant mensuel HT. */
+        maintenancePrice: price,
+        maintenanceNotes: w.maintenanceNotes ?? null,
+        yearlyPrice: price !== null ? round2(price * 12) : null,
+        lastMaintenanceDate: w.lastMaintenanceDate ?? null,
+      };
+    });
+
+    const priced = sites.filter((s) => s.maintenancePrice !== null);
+
+    const monthlyRecurring = round2(
+      priced.reduce((sum, s) => sum + (s.maintenancePrice ?? 0), 0),
+    );
+
+    // 🎯 Combien de tarifs distincts existent, et qui est sur quoi
+    const tierMap = new Map<
+      number,
+      {
+        price: number;
+        count: number;
+        sites: { websiteId: number; url: string; clientName: string }[];
+      }
+    >();
+
+    for (const site of priced) {
+      const price = site.maintenancePrice as number;
+      const tier = tierMap.get(price) ?? { price, count: 0, sites: [] };
+      tier.count++;
+      tier.sites.push({
+        websiteId: site.websiteId,
+        url: site.url,
+        clientName: site.clientName,
+      });
+      tierMap.set(price, tier);
+    }
+
+    const tiers = [...tierMap.values()].sort((a, b) => b.price - a.price);
+
+    return {
+      sites,
+      tiers,
+      totals: {
+        sitesTotal: sites.length,
+        sitesPriced: priced.length,
+        sitesWithoutPrice: sites.length - priced.length,
+        sitesInMaintenance: sites.filter((s) => s.inMaintenance).length,
+        sitesInMaintenanceWithoutPrice: sites.filter(
+          (s) => s.inMaintenance && s.maintenancePrice === null,
+        ).length,
+        distinctPrices: tiers.length,
+        monthlyRecurring,
+        yearlyRecurring: round2(monthlyRecurring * 12),
+      },
+    };
+  }
+
+  /**
+   * Met à jour le tarif de maintenance d'un site.
+   */
+  async updateWebsitePricing(
+    websiteId: number,
+    dto: UpdateMaintenancePricingDto,
+  ): Promise<ClientWebsite> {
+    const website = await this.websiteRepository.findOne({
+      where: { id: websiteId },
+    });
+    if (!website) {
+      throw new NotFoundException('Site web non trouvé');
+    }
+
+    if (dto.maintenancePrice !== undefined) {
+      website.maintenancePrice = dto.maintenancePrice ?? undefined;
+    }
+    if (dto.maintenanceNotes !== undefined) {
+      website.maintenanceNotes = dto.maintenanceNotes;
+    }
+
+    return this.websiteRepository.save(website);
   }
 }

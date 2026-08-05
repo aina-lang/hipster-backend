@@ -25,6 +25,8 @@ import { User } from 'src/common/decorators/user.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 import { Public } from 'src/common/decorators/public.decorator';
+import { isMaintenancePricingAdmin } from 'src/common/utils/roles.utils';
+import { stripWebsitePricingFromAll } from 'src/common/utils/website-pricing.utils';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
@@ -180,7 +182,9 @@ export class ProfilesController {
   // --------------------
   @ApiOperation({ summary: 'Lister tous les sites web (Global)' })
   @Get('websites')
-  findAllWebsites() {
-    return this.clientWebsitesService.findAll();
+  async findAllWebsites(@User() user: any) {
+    const websites = await this.clientWebsitesService.findAll();
+    if (!isMaintenancePricingAdmin(user)) stripWebsitePricingFromAll(websites);
+    return websites;
   }
 }

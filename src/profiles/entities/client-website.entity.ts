@@ -59,4 +59,16 @@ export class ClientWebsite {
 
   @Column({ nullable: true })
   lastMaintenanceById?: number;
+
+  // ---------------------------------------------------------------
+  // TARIFS MAINTENANCE — 🔒 réservé aux admins (jamais exposé aux employés)
+  // ---------------------------------------------------------------
+
+  /** Montant mensuel HT facturé au client pour la maintenance de ce site. */
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  maintenancePrice?: number;
+
+  /** Contexte libre : remise accordée, ancien tarif, engagement, etc. */
+  @Column({ type: 'text', nullable: true })
+  maintenanceNotes?: string;
 }

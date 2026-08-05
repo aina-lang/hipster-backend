@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { Project } from 'src/projects/entities/project.entity';
+import { Task } from 'src/tasks/entities/task.entity';
 import { Ticket } from 'src/tickets/entities/ticket.entity';
 import { Invoice } from 'src/invoices/entities/invoice.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
@@ -25,6 +26,8 @@ export class ClientPortalService {
     private readonly clientProfileRepo: Repository<ClientProfile>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Task)
+    private readonly taskRepo: Repository<Task>,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -227,6 +230,37 @@ export class ClientPortalService {
       }
     }
     return result;
+  }
+
+  /**
+   * Suivi de maintenance du client connecté.
+   * Ne renvoie que les sites appartenant à SON profil client, et jamais les
+   * tarifs ni les accès admin (déjà exposés par `getWebsites`).
+   */
+  async getMaintenanceSites(userId: number) {
+    const client = await this.findClient(userId);
+
+    const tasks = await this.taskRepo.find({
+      where: {
+        website: { clientId: client.id },
+        project: { name: Like('Maintenance Sites Web%') },
+      },
+      relations: ['website'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return tasks
+      .filter((task) => task.website)
+      .map((task) => ({
+        id: task.website!.id,
+        url: task.website!.url,
+        description: task.website!.description ?? null,
+        lastMaintenanceDate: task.website!.lastMaintenanceDate ?? null,
+        nextMaintenanceDate: task.dueDate ?? task.nextRunAt ?? null,
+        recurrenceType: task.recurrenceType ?? null,
+        recurrenceInterval: task.recurrenceInterval ?? null,
+        recurrenceDays: task.recurrenceDays ?? null,
+      }));
   }
 
   async getInvoiceStats(userId: number) {

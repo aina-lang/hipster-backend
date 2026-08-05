@@ -373,13 +373,14 @@ export class AuthService {
       { password: hashedPassword }
     );
 
-    // Envoyer le nouveau mot de passe par email
-    await this.mailService.sendWelcomeEmail(
+    // Envoyer le nouveau mot de passe par email.
+    // On utilise le mail de réinitialisation (et non celui de bienvenue) :
+    // c'est le même que celui envoyé depuis l'administration.
+    await this.mailService.sendNewPasswordEmail(
       user.email,
       {
-        firstName: user.firstName,
-        email: user.email,
-        temporaryPassword,
+        name: user.firstName || user.email,
+        password: temporaryPassword,
       },
       user.roles,
     );

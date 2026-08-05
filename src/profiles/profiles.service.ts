@@ -144,13 +144,17 @@ export class ProfilesService {
       // ✅ Send welcome email if new user was created
       if (dto.userData && user.email) {
         try {
-          await this.mailService.sendWelcomeEmail(user.email, {
-            firstName: user.firstName,
-            email: user.email,
-            temporaryPassword:
-              passwordToSend || "Veuillez contacter l'administrateur",
-            dashboardUrl: `${process.env.FRONTEND_URL}/auth/login`,
-          });
+          await this.mailService.sendWelcomeEmail(
+            user.email,
+            {
+              firstName: user.firstName,
+              email: user.email,
+              temporaryPassword:
+                passwordToSend || "Veuillez contacter l'administrateur",
+              dashboardUrl: `${process.env.FRONTEND_URL}/auth/login`,
+            },
+            user.roles,
+          );
         } catch (error) {
           console.error('Failed to send welcome email to client:', error);
         }

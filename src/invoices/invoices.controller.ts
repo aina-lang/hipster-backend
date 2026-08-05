@@ -22,13 +22,22 @@ import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { QueryInvoicesDto } from './dto/query-invoices.dto';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiPaginationQueries } from 'src/common/decorators/api-pagination-query.decorator';
 import { InvoiceStatus, InvoiceType } from './entities/invoice.entity';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
+import { Roles } from 'src/common/decorators/role.decorator';
+import { Role } from 'src/common/enums/role.enum';
 
+/**
+ * 🔒 Devis & factures : réservé aux admins.
+ * Les clients passent par `client-portal` (leurs propres documents uniquement) ;
+ * les employés n'ont aucun accès à la facturation.
+ */
 @ApiTags('Invoices')
+@ApiBearerAuth()
+@Roles(Role.ADMIN)
 @Controller('invoices')
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}

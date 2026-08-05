@@ -13,6 +13,12 @@ import { CreateClientWebsiteDto } from './dto/create-client-website.dto';
 import { UpdateClientWebsiteDto } from './dto/update-client-website.dto';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
+import { User } from 'src/common/decorators/user.decorator';
+import { isMaintenancePricingAdmin } from 'src/common/utils/roles.utils';
+import {
+  stripWebsitePricing,
+  stripWebsitePricingFromAll,
+} from 'src/common/utils/website-pricing.utils';
 
 @Controller('profiles/clients/:clientId/websites')
 export class ClientWebsitesController {
@@ -27,25 +33,36 @@ export class ClientWebsitesController {
   }
 
   @Get()
-  findAll(@Param('clientId', ParseIntPipe) clientId: number) {
-    return this.websitesService.findAllByClient(clientId);
+  async findAll(
+    @Param('clientId', ParseIntPipe) clientId: number,
+    @User() user: any,
+  ) {
+    const websites = await this.websitesService.findAllByClient(clientId);
+    if (!isMaintenancePricingAdmin(user)) stripWebsitePricingFromAll(websites);
+    return websites;
   }
 
   @Get(':id')
-  findOne(
+  async findOne(
     @Param('clientId', ParseIntPipe) clientId: number,
     @Param('id', ParseIntPipe) id: number,
+    @User() user: any,
   ) {
-    return this.websitesService.findOne(id, clientId);
+    const website = await this.websitesService.findOne(id, clientId);
+    return isMaintenancePricingAdmin(user) ? website : stripWebsitePricing(website);
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('clientId', ParseIntPipe) clientId: number,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: UpdateClientWebsiteDto,
+    @User() user: any,
   ) {
-    return this.websitesService.update(id, clientId, updateDto);
+    // Les tarifs ne transitent pas par ce DTO (voir PATCH /maintenance/websites/:id/pricing),
+    // mais la réponse renvoie l'entité complète : on la nettoie aussi.
+    const website = await this.websitesService.update(id, clientId, updateDto);
+    return isMaintenancePricingAdmin(user) ? website : stripWebsitePricing(website);
   }
 
   @ResponseMessage('Websites supprimés avec succès')
