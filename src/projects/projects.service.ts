@@ -15,6 +15,7 @@ import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
 import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
 
 import { User } from 'src/users/entities/user.entity';
+import { computeTaskProgress } from 'src/common/utils/task-progress.utils';
 import { File } from 'src/files/entities/file.entity';
 import { Task, TaskStatus } from 'src/tasks/entities/task.entity';
 import { FindProjectsQueryDto } from './dto/find-projects-query.dto';
@@ -1063,9 +1064,12 @@ export class ProjectsService {
       const todoCount = tasks.filter(
         (t) => t.status === TaskStatus.TODO,
       ).length;
+      const reviewCount = tasks.filter(
+        (t) => t.status === TaskStatus.REVIEW,
+      ).length;
 
       console.log(
-        `[Project #${projectId}] Tasks: ${total} total, ${doneCount} done, ${inProgressCount} in progress, ${blockedCount} blocked, ${todoCount} todo`,
+        `[Project #${projectId}] Tasks: ${total} total, ${doneCount} done, ${inProgressCount} in progress, ${reviewCount} in review, ${blockedCount} blocked, ${todoCount} todo`,
       );
 
       // Cas 2: Toutes les tâches sont terminées → COMPLETED
@@ -1081,12 +1085,13 @@ export class ProjectsService {
         project.status = ProjectStatus.ON_HOLD;
         console.log(`[Project #${projectId}] Has blocked tasks → ON_HOLD`);
       }
-      // Cas 4: Au moins une tâche en cours → IN_PROGRESS
-      else if (inProgressCount > 0 || doneCount > 0) {
-        // Si on a des tâches en cours OU des tâches terminées (mais pas toutes), le projet est en cours
+      // Cas 4: Au moins une tâche entamée (en cours, en révision ou terminée)
+      // → IN_PROGRESS. La relecture est du travail entamé : un projet dont
+      // toutes les tâches sont en révision n'est pas « planifié ».
+      else if (inProgressCount > 0 || reviewCount > 0 || doneCount > 0) {
         project.status = ProjectStatus.IN_PROGRESS;
         console.log(
-          `[Project #${projectId}] Has tasks in progress or some done → IN_PROGRESS`,
+          `[Project #${projectId}] Has tasks in progress, in review or some done → IN_PROGRESS`,
         );
       }
       // Cas 5: Toutes les tâches sont en TODO → PLANNED
@@ -1455,10 +1460,12 @@ export class ProjectsService {
     return savedProject;
   }
 
+  /**
+   * Progression pondérée : chaque statut apporte sa part d'avancement.
+   * Voir `TASK_PROGRESS_WEIGHTS` pour le barème.
+   */
   private calculateProgress(tasks: Task[]): number {
-    if (!tasks || tasks.length === 0) return 0;
-    const doneCount = tasks.filter((t) => t.status === TaskStatus.DONE).length;
-    return Math.round((doneCount / tasks.length) * 100);
+    return computeTaskProgress(tasks);
   }
 
   async generatePdf(id: number): Promise<Buffer> {
