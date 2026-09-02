@@ -24,6 +24,25 @@ export enum DealStatus {
   PROJET_EN_COURS = 'projet_en_cours',
   PROJET_TERMINE = 'projet_termine',
   PROJET_ANNULE = 'projet_annule',
+  // Statuts closers : le closer renseigne l'issue du rendez-vous
+  RDV_SIGNE = 'rdv_signe',
+  RDV_NON_SIGNE = 'rdv_non_signe',
+  A_RELANCER = 'a_relancer',
+  RDV_ANNULE = 'rdv_annule',
+}
+
+/** Statuts réservés au fonctionnement closer */
+export const CLOSER_STATUSES: DealStatus[] = [
+  DealStatus.RDV_SIGNE,
+  DealStatus.RDV_NON_SIGNE,
+  DealStatus.A_RELANCER,
+  DealStatus.RDV_ANNULE,
+];
+
+/** Types de prestation vendus par les closers */
+export enum PrestationType {
+  SITE_INTERNET = 'site_internet',
+  CONFIGURATEUR = 'configurateur',
 }
 
 /**
@@ -76,6 +95,10 @@ export class Deal {
 
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   createdBy?: User | null;
+
+  /** Date de passage au statut SIGNÉ (base des paliers mensuels closers) */
+  @Column({ type: 'timestamp', nullable: true })
+  signedAt?: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

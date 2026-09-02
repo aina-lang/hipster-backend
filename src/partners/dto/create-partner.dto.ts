@@ -1,17 +1,28 @@
 import {
   IsBoolean,
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PartnerType } from '../entities/partner.entity';
 
 export class CreatePartnerDto {
   @ApiProperty({ example: "Com'Plus", description: "Nom de l'agence partenaire" })
   @IsString()
   @IsNotEmpty()
   agencyName: string;
+
+  @ApiPropertyOptional({
+    enum: PartnerType,
+    default: PartnerType.AGENCY,
+    description: 'Type de partenaire : agence classique ou closer',
+  })
+  @IsOptional()
+  @IsEnum(PartnerType)
+  type?: PartnerType;
 
   @ApiPropertyOptional({ example: 'Camille Prévost', description: 'Nom du contact' })
   @IsOptional()

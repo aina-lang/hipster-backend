@@ -9,8 +9,15 @@ import {
 } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 
+export enum PartnerType {
+  /** Agence partenaire classique (suivi de projet complet) */
+  AGENCY = 'agency',
+  /** Closer : reçoit des RDV, indique signé / non signé, commission auto */
+  CLOSER = 'closer',
+}
+
 /**
- * 🤝 PARTNER (fiche agence partenaire)
+ * 🤝 PARTNER (fiche agence partenaire ou closer)
  * Créée uniquement par Hipster Marketing (admin).
  */
 @Entity('partners')
@@ -20,6 +27,9 @@ export class Partner {
 
   @Column()
   agencyName: string;
+
+  @Column({ type: 'enum', enum: PartnerType, default: PartnerType.AGENCY })
+  type: PartnerType;
 
   @Column({ nullable: true })
   contactName?: string;

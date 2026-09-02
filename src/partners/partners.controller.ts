@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
   Request,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -58,6 +59,22 @@ export class PartnersController {
   @Get('me/profile')
   myProfile(@Request() req) {
     return this.partnersService.getMyPartner(this.ctx(req));
+  }
+
+  /** 📊 Résultats du mois du closer connecté */
+  @ApiOperation({ summary: 'Statistiques mensuelles du closer connecté' })
+  @Roles(Role.PARTNER)
+  @Get('me/closer-stats')
+  myCloserStats(@Request() req, @Query('month') month?: string) {
+    return this.partnersService.getMyCloserStats(this.ctx(req), month);
+  }
+
+  /** 📊 Résultats mensuels de chaque closer + total équipe (admin) */
+  @ApiOperation({ summary: 'Statistiques mensuelles des closers (admin)' })
+  @Roles(Role.ADMIN)
+  @Get('closers/stats')
+  closersStats(@Query('month') month?: string) {
+    return this.partnersService.getClosersStats(month);
   }
 
   /** 👥 Liste des partenaires (admin) */

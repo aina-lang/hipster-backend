@@ -6,9 +6,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Partner } from './entities/partner.entity';
+import { Partner, PartnerType } from './entities/partner.entity';
 import { PartnerClient } from './entities/partner-client.entity';
-import { Deal, DealStatus } from './entities/deal.entity';
+import {
+  CLOSER_STATUSES,
+  Deal,
+  DealStatus,
+  PrestationType,
+} from './entities/deal.entity';
 import { Commission, CommissionStatus } from './entities/commission.entity';
 import {
   DealDocument,
@@ -28,6 +33,16 @@ export interface RequestUser {
   userId: number;
   roles: string[];
 }
+
+/**
+ * 💶 Rémunération closers
+ * - Site internet : 10 % du montant HT vendu
+ * - Configurateur : paliers mensuels NON rétroactifs selon le rang de la vente
+ *   (1-3 : 200 €, 4-6 : 225 €, 7+ : 250 €)
+ */
+export const CLOSER_SITE_RATE = 10;
+export const closerConfigTierAmount = (rank: number): number =>
+  rank <= 3 ? 200 : rank <= 6 ? 225 : 250;
 
 const DEAL_RELATIONS = [
   'client',
@@ -93,6 +108,7 @@ export class PartnersService {
   async createPartner(dto: CreatePartnerDto): Promise<Partner> {
     const partner = this.partnerRepo.create({
       agencyName: dto.agencyName,
+      type: dto.type ?? PartnerType.AGENCY,
       contactName: dto.contactName,
       email: dto.email,
       phone: dto.phone,
@@ -131,6 +147,7 @@ export class PartnersService {
     const partner = await this.findOnePartner(id);
     Object.assign(partner, {
       agencyName: dto.agencyName ?? partner.agencyName,
+      type: dto.type ?? partner.type,
       contactName: dto.contactName ?? partner.contactName,
       email: dto.email ?? partner.email,
       phone: dto.phone ?? partner.phone,
@@ -205,6 +222,11 @@ export class PartnersService {
     if (me && !dto.apporteurId && !dto.realisateurId) {
       apporteur = me;
     }
+    // Un closer est TOUJOURS l'apporteur de ses affaires
+    // (ses ventes doivent remonter dans son propre tableau de bord)
+    if (me?.type === PartnerType.CLOSER) {
+      apporteur = me;
+    }
     // Un partenaire ne peut créer que des affaires qui le concernent
     if (me && apporteur?.id !== me.id && realisateur?.id !== me.id) {
       throw new ForbiddenException(
@@ -231,13 +253,18 @@ export class PartnersService {
     }
 
     const amountHT = Number(dto.amountHT) || 0;
+    const isCloserDeal = apporteur?.type === PartnerType.CLOSER;
+    const status = dto.status || DealStatus.NOUVELLE_AFFAIRE;
+
     const deal = await this.dealRepo.save(
       this.dealRepo.create({
         name: dto.name,
         prestationType: dto.prestationType,
         description: dto.description,
         amountHT,
-        status: dto.status || DealStatus.NOUVELLE_AFFAIRE,
+        status,
+        signedAt:
+          isCloserDeal && status === DealStatus.RDV_SIGNE ? new Date() : null,
         client,
         apporteur: apporteur ?? undefined,
         realisateur: realisateur ?? undefined,
@@ -245,17 +272,20 @@ export class PartnersService {
       }),
     );
 
-    // Commission automatique (10 %)
+    // Commission automatique (10 % agences ; paliers/10 % closers recalculés ensuite)
     const rate = 10;
     await this.commissionRepo.save(
       this.commissionRepo.create({
         deal: { id: deal.id } as any,
         rate,
-        amount: this.round2((amountHT * rate) / 100),
+        amount: isCloserDeal ? 0 : this.round2((amountHT * rate) / 100),
         beneficiary: apporteur ?? undefined,
         status: CommissionStatus.A_CALCULER,
       }),
     );
+    if (isCloserDeal) {
+      await this.recomputeCloserCommission(deal.id);
+    }
 
     await this.notifyDealAssigned(deal, apporteur, realisateur, user);
     return this.findOneDeal(deal.id, user);
@@ -321,7 +351,8 @@ export class PartnersService {
     }
     await this.dealRepo.save(deal);
 
-    if (recompute || dto.apporteurId !== undefined) {
+    // prestationType change les règles closers (10 % site vs paliers configurateur)
+    if (recompute || dto.apporteurId !== undefined || dto.prestationType !== undefined) {
       await this.recomputeCommission(deal.id);
     }
     return this.findOneDeal(id, user);
@@ -333,6 +364,12 @@ export class PartnersService {
       relations: ['apporteur', 'commission'],
     });
     if (!deal) return;
+
+    // Affaire apportée par un closer → règles closers (10 % site / paliers configurateur)
+    if (deal.apporteur?.type === PartnerType.CLOSER) {
+      return this.recomputeCloserCommission(dealId);
+    }
+
     let commission = deal.commission;
     if (!commission) {
       commission = this.commissionRepo.create({
@@ -346,14 +383,105 @@ export class PartnersService {
     await this.commissionRepo.save(commission);
   }
 
+  /**
+   * 💶 Commission closer — ne compte que lorsque l'affaire est SIGNÉE.
+   * Site internet : 10 % du HT. Configurateur : palier selon le rang de la
+   * vente signée dans le mois (paliers non rétroactifs, remise à zéro le 1er).
+   */
+  private async recomputeCloserCommission(dealId: number): Promise<void> {
+    const deal = await this.dealRepo.findOne({
+      where: { id: dealId },
+      relations: ['apporteur', 'commission'],
+    });
+    if (!deal || !deal.apporteur) return;
+
+    let commission = deal.commission;
+    if (!commission) {
+      commission = this.commissionRepo.create({
+        deal: { id: dealId } as any,
+        rate: 0,
+        status: CommissionStatus.A_CALCULER,
+      });
+    }
+    commission.beneficiary = deal.apporteur;
+
+    if (deal.status !== DealStatus.RDV_SIGNE) {
+      // Non signé / à relancer / annulé → aucune commission
+      commission.amount = 0;
+      commission.saleRank = null;
+      commission.status = CommissionStatus.A_CALCULER;
+      commission.dueDate = null;
+      await this.commissionRepo.save(commission);
+      return;
+    }
+
+    const signedAt = deal.signedAt ? new Date(deal.signedAt) : new Date();
+    if (deal.prestationType === PrestationType.CONFIGURATEUR) {
+      // Rang de la vente dans le mois de signature (les ventes de sites ne comptent pas)
+      const monthStart = new Date(signedAt.getFullYear(), signedAt.getMonth(), 1);
+      const monthEnd = new Date(signedAt.getFullYear(), signedAt.getMonth() + 1, 1);
+      const before = await this.dealRepo
+        .createQueryBuilder('d')
+        .innerJoin('d.apporteur', 'a')
+        .where('a.id = :closerId', { closerId: deal.apporteur.id })
+        .andWhere('d.id != :dealId', { dealId: deal.id })
+        .andWhere('d.status = :signed', { signed: DealStatus.RDV_SIGNE })
+        .andWhere('d.prestationType = :config', {
+          config: PrestationType.CONFIGURATEUR,
+        })
+        .andWhere('d.signedAt >= :monthStart AND d.signedAt < :monthEnd', {
+          monthStart,
+          monthEnd,
+        })
+        .andWhere(
+          '(d.signedAt < :signedAt OR (d.signedAt = :signedAt AND d.id < :dealId))',
+          { signedAt },
+        )
+        .getCount();
+      const rank = before + 1;
+      commission.saleRank = rank;
+      commission.rate = 0;
+      commission.amount = closerConfigTierAmount(rank);
+    } else {
+      // Site internet (et défaut) : 10 % du montant HT vendu
+      commission.saleRank = null;
+      commission.rate = CLOSER_SITE_RATE;
+      commission.amount = this.round2(
+        (Number(deal.amountHT) * CLOSER_SITE_RATE) / 100,
+      );
+    }
+
+    // Signé → la commission est due au closer par Hipster Marketing
+    commission.status = CommissionStatus.A_PAYER;
+    commission.dueDate = commission.dueDate || new Date();
+    await this.commissionRepo.save(commission);
+  }
+
   async updateStatus(id: number, status: DealStatus, user: RequestUser): Promise<Deal> {
     const deal = await this.findOneDeal(id, user);
     const previous = deal.status;
     deal.status = status;
+
+    const isCloserDeal = deal.apporteur?.type === PartnerType.CLOSER;
+    if (isCloserDeal) {
+      if (status === DealStatus.RDV_SIGNE && previous !== DealStatus.RDV_SIGNE) {
+        deal.signedAt = new Date();
+      } else if (
+        status !== DealStatus.RDV_SIGNE &&
+        previous === DealStatus.RDV_SIGNE
+      ) {
+        deal.signedAt = null;
+      }
+    }
     await this.dealRepo.save(deal);
 
     // Effets métier sur la commission
-    if (status === DealStatus.ACOMPTE_ENCAISSE && deal.commission) {
+    if (isCloserDeal) {
+      await this.recomputeCloserCommission(deal.id);
+      if (status === DealStatus.RDV_SIGNE && previous !== DealStatus.RDV_SIGNE) {
+        await this.notifyCommissionDue(deal);
+      }
+    } else if (status === DealStatus.ACOMPTE_ENCAISSE && deal.commission) {
       deal.commission.status = CommissionStatus.A_FACTURER;
       deal.commission.dueDate = new Date();
       await this.commissionRepo.save(deal.commission);
@@ -558,6 +686,123 @@ export class PartnersService {
   }
 
   // =========================================================
+  // CLOSERS — statistiques mensuelles
+  // =========================================================
+
+  /** Bornes du mois demandé (format 'YYYY-MM', défaut : mois courant) */
+  private monthRange(month?: string): { start: Date; end: Date } {
+    let base = new Date();
+    if (month && /^\d{4}-\d{2}$/.test(month)) {
+      const [y, m] = month.split('-').map(Number);
+      base = new Date(y, m - 1, 1);
+    }
+    return {
+      start: new Date(base.getFullYear(), base.getMonth(), 1),
+      end: new Date(base.getFullYear(), base.getMonth() + 1, 1),
+    };
+  }
+
+  /**
+   * 📊 Résultats du mois d'un closer.
+   * Signé → compté sur le mois de signature (signedAt).
+   * Autres issues → comptées sur le mois de dernière mise à jour.
+   */
+  async getCloserMonthlyStats(closer: Partner, month?: string) {
+    const { start, end } = this.monthRange(month);
+    const deals = await this.dealRepo.find({
+      where: { apporteur: { id: closer.id } },
+      relations: ['commission', 'client'],
+      order: { createdAt: 'DESC' },
+    });
+
+    const inMonth = (d?: Date | string | null) => {
+      if (!d) return false;
+      const date = new Date(d);
+      return date >= start && date < end;
+    };
+
+    const signes = deals.filter(
+      (d) => d.status === DealStatus.RDV_SIGNE && inMonth(d.signedAt || d.updatedAt),
+    );
+    const nonSignes = deals.filter(
+      (d) => d.status === DealStatus.RDV_NON_SIGNE && inMonth(d.updatedAt),
+    );
+    const aRelancer = deals.filter(
+      (d) => d.status === DealStatus.A_RELANCER && inMonth(d.updatedAt),
+    );
+    const annules = deals.filter(
+      (d) => d.status === DealStatus.RDV_ANNULE && inMonth(d.updatedAt),
+    );
+
+    const ventesConfigurateur = signes.filter(
+      (d) => d.prestationType === PrestationType.CONFIGURATEUR,
+    ).length;
+    const caHT = signes.reduce((s, d) => s + Number(d.amountHT), 0);
+    const commissionMois = signes.reduce(
+      (s, d) => s + Number(d.commission?.amount || 0),
+      0,
+    );
+
+    return {
+      closerId: closer.id,
+      closerName: closer.agencyName,
+      contactName: closer.contactName || null,
+      // Rendez-vous effectués = issues renseignées signé + non signé
+      rdvEffectues: signes.length + nonSignes.length,
+      signes: signes.length,
+      nonSignes: nonSignes.length,
+      aRelancer: aRelancer.length,
+      annules: annules.length,
+      ventesConfigurateur,
+      // Palier applicable à la PROCHAINE vente configurateur du mois
+      palierActuel: closerConfigTierAmount(ventesConfigurateur + 1),
+      caHT: this.round2(caHT),
+      commissionMois: this.round2(commissionMois),
+    };
+  }
+
+  /** 📊 Résultats du closer connecté */
+  async getMyCloserStats(user: RequestUser, month?: string) {
+    const me = await this.getMyPartner(user);
+    if (!me) throw new NotFoundException('Profil partenaire introuvable');
+    return this.getCloserMonthlyStats(me, month);
+  }
+
+  /** 📊 Vue admin : résultats de chaque closer + total équipe */
+  async getClosersStats(month?: string) {
+    const closers = await this.partnerRepo.find({
+      where: { type: PartnerType.CLOSER },
+      order: { agencyName: 'ASC' },
+    });
+    const closerStats = await Promise.all(
+      closers.map((c) => this.getCloserMonthlyStats(c, month)),
+    );
+    const total = closerStats.reduce(
+      (acc, s) => ({
+        rdvEffectues: acc.rdvEffectues + s.rdvEffectues,
+        signes: acc.signes + s.signes,
+        nonSignes: acc.nonSignes + s.nonSignes,
+        aRelancer: acc.aRelancer + s.aRelancer,
+        annules: acc.annules + s.annules,
+        ventesConfigurateur: acc.ventesConfigurateur + s.ventesConfigurateur,
+        caHT: this.round2(acc.caHT + s.caHT),
+        commissionMois: this.round2(acc.commissionMois + s.commissionMois),
+      }),
+      {
+        rdvEffectues: 0,
+        signes: 0,
+        nonSignes: 0,
+        aRelancer: 0,
+        annules: 0,
+        ventesConfigurateur: 0,
+        caHT: 0,
+        commissionMois: 0,
+      },
+    );
+    return { closers: closerStats, total };
+  }
+
+  // =========================================================
   // NOTIFICATIONS
   // =========================================================
   private async notify(partner: Partner | null | undefined, params: {
@@ -725,4 +970,8 @@ export const STATUS_LABELS: Record<string, string> = {
   projet_en_cours: 'Projet en cours',
   projet_termine: 'Projet terminé',
   projet_annule: 'Projet annulé',
+  rdv_signe: 'Rendez-vous effectué – SIGNÉ',
+  rdv_non_signe: 'Rendez-vous effectué – NON SIGNÉ',
+  a_relancer: 'À relancer',
+  rdv_annule: 'Rendez-vous annulé / absent',
 };

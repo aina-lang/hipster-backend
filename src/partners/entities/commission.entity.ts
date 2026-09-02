@@ -35,6 +35,13 @@ export class Commission {
   @Column({ type: 'decimal', precision: 5, scale: 2, default: 10 })
   rate: number;
 
+  /**
+   * Rang de la vente configurateur dans le mois du closer (1, 2, 3…)
+   * Sert à afficher le palier appliqué (200 / 225 / 250 €). Null hors closers.
+   */
+  @Column({ type: 'int', nullable: true })
+  saleRank?: number | null;
+
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   amount: number;
 
