@@ -15,11 +15,19 @@ export class CreateInvoiceDto {
   @IsOptional()
   type?: InvoiceType = InvoiceType.INVOICE;
 
-  // Le document est lié à un projet ; le client est dérivé du projet
+  // Projet optionnel ; s'il est fourni, le client est dérivé du projet
   @Type(() => Number)
   @IsInt()
   @IsPositive()
-  projectId: number;
+  @IsOptional()
+  projectId?: number;
+
+  // Rattachement direct à un client quand aucun projet n'est fourni
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  clientId?: number;
 
   // Montant en euros (2 décimales)
   @Type(() => Number)

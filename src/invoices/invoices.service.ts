@@ -6,6 +6,7 @@ import { UpdateInvoiceDto } from './dto/update-invoice.dto';
 import { Invoice, InvoiceType, InvoiceStatus } from './entities/invoice.entity';
 import { InvoiceStatsDto } from './dto/invoice-stats.dto';
 import { Project } from 'src/projects/entities/project.entity';
+import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { QueryInvoicesDto } from './dto/query-invoices.dto';
 import { PaginatedResult } from 'src/common/types/paginated-result.type';
 import { User } from 'src/users/entities/user.entity';
@@ -22,27 +23,42 @@ export class InvoicesService {
     private readonly invoiceRepo: Repository<Invoice>,
     @InjectRepository(Project)
     private readonly projectRepo: Repository<Project>,
+    @InjectRepository(ClientProfile)
+    private readonly clientRepo: Repository<ClientProfile>,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(createInvoiceDto: CreateInvoiceDto, user: User) {
-    const { projectId, type, ...rest } = createInvoiceDto;
+    const { projectId, clientId, type, ...rest } = createInvoiceDto;
 
-    const project = await this.projectRepo.findOne({
-      where: { id: projectId },
-      relations: ['client', 'client.user'],
-    });
-    if (!project) throw new NotFoundException('Projet introuvable');
+    // Projet optionnel : s'il est fourni le client en est dérivé,
+    // sinon on peut rattacher directement un client via clientId.
+    let project: Project | null = null;
+    let client: ClientProfile | null = null;
 
-    const client = project.client;
-    if (!client) throw new NotFoundException('Client du projet introuvable');
+    if (projectId) {
+      project = await this.projectRepo.findOne({
+        where: { id: projectId },
+        relations: ['client', 'client.user'],
+      });
+      if (!project) throw new NotFoundException('Projet introuvable');
+      client = project.client || null;
+    }
+
+    if (!client && clientId) {
+      client = await this.clientRepo.findOne({
+        where: { id: clientId },
+        relations: ['user'],
+      });
+      if (!client) throw new NotFoundException('Client introuvable');
+    }
 
     const invoice = this.invoiceRepo.create({
       ...rest,
       type: type || InvoiceType.INVOICE,
-      project,
-      client,
+      project: project ?? undefined,
+      client: client ?? undefined,
       reference: this.generateReference(type || InvoiceType.INVOICE),
       notes: rest.notes || null,
     });
@@ -50,7 +66,7 @@ export class InvoicesService {
     const savedInvoice = await this.invoiceRepo.save(invoice);
 
     // Notification in-app pour le client
-    if (client.user?.id) {
+    if (client?.user?.id) {
       try {
         await this.notificationsService.createInvoiceNotification(
           savedInvoice.id,
@@ -65,7 +81,7 @@ export class InvoicesService {
 
     // Envoi de l'email avec le fichier uploadé en pièce jointe
     try {
-      const emailTo = client.user?.email || client.contactEmail;
+      const emailTo = client?.user?.email || client?.contactEmail;
       let fileBuffer: Buffer | undefined;
       let fileName: string | undefined;
       const uploadDir = getUploadPath();
@@ -79,7 +95,7 @@ export class InvoicesService {
           savedInvoice,
           fileBuffer,
           fileName,
-          client.user?.roles || [],
+          client?.user?.roles || [],
         );
       }
     } catch (e) {
