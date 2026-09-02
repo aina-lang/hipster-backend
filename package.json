@@ -24,7 +24,8 @@
     "migration:revert": "npm run typeorm -- migration:revert -d src/data-source.ts",
     "seed": "ts-node -r tsconfig-paths/register src/database/seeders/workflow.seed.ts",
     "seed:partners": "ts-node -r tsconfig-paths/register src/database/seeders/partners.seed.ts",
-    "seed:closers": "ts-node -r tsconfig-paths/register src/database/seeders/closers.seed.ts"
+    "seed:closers": "ts-node -r tsconfig-paths/register src/database/seeders/closers.seed.ts",
+    "seed:clients": "ts-node -r tsconfig-paths/register src/database/seeders/clients.seed.ts"
   },
   "dependencies": {
     "@apollo/server": "^5.0.0",
