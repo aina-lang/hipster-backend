@@ -6,6 +6,7 @@ import { Task } from 'src/tasks/entities/task.entity';
 import { Ticket } from 'src/tickets/entities/ticket.entity';
 import { Invoice } from 'src/invoices/entities/invoice.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
+import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
 import { User } from 'src/users/entities/user.entity';
 import { CreateClientTicketDto } from './dto/create-client-ticket.dto';
 import { RequestCategory } from 'src/common/enums/request-category.enum';
@@ -28,6 +29,8 @@ export class ClientPortalService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Task)
     private readonly taskRepo: Repository<Task>,
+    @InjectRepository(ClientWebsite)
+    private readonly websiteRepo: Repository<ClientWebsite>,
     private readonly notificationsService: NotificationsService,
   ) {}
 
@@ -208,28 +211,35 @@ export class ClientPortalService {
 
   async getWebsites(userId: number) {
     const client = await this.findClient(userId);
-    const projects = await this.projectRepo.find({
-      where: { client: { id: client.id } },
-      relations: ['websites'],
+
+    // Tous les sites rattachés au client (pas seulement ceux liés à un projet)
+    const websites = await this.websiteRepo.find({
+      where: { clientId: client.id },
+      order: { url: 'ASC' },
     });
 
-    const result: any[] = [];
-    for (const project of projects) {
-      if (project.websites) {
-        for (const website of project.websites) {
-          result.push({
-            id: website.id,
-            url: website.url,
-            adminLogin: website.adminLogin,
-            plainPassword: website.plainPassword,
-            adminPassword: website.adminPassword,
-            projectId: project.id,
-            projectName: project.name,
-          });
-        }
-      }
-    }
-    return result;
+    // Sites suivis dans le projet global de maintenance → indicateur pour le client
+    const tasks = await this.taskRepo.find({
+      where: {
+        website: { clientId: client.id },
+        project: { name: Like('Maintenance Sites Web%') },
+      },
+      select: ['id', 'websiteId'],
+    });
+    const inMaintenance = new Set(
+      tasks.map((t) => t.websiteId).filter((id): id is number => !!id),
+    );
+
+    return websites.map((website) => ({
+      id: website.id,
+      url: website.url,
+      adminLogin: website.adminLogin,
+      plainPassword: website.plainPassword,
+      adminPassword: website.adminPassword,
+      description: website.description ?? null,
+      inMaintenance: inMaintenance.has(website.id),
+      lastMaintenanceDate: website.lastMaintenanceDate ?? null,
+    }));
   }
 
   /**

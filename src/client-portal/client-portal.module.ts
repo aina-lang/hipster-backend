@@ -8,6 +8,7 @@ import { Invoice } from 'src/invoices/entities/invoice.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Task } from 'src/tasks/entities/task.entity';
+import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
       ClientProfile,
       User,
       Task,
+      ClientWebsite,
     ]),
     NotificationsModule,
   ],
