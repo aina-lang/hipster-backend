@@ -25,7 +25,8 @@
     "seed": "ts-node -r tsconfig-paths/register src/database/seeders/workflow.seed.ts",
     "seed:partners": "ts-node -r tsconfig-paths/register src/database/seeders/partners.seed.ts",
     "seed:closers": "ts-node -r tsconfig-paths/register src/database/seeders/closers.seed.ts",
-    "seed:clients": "ts-node -r tsconfig-paths/register src/database/seeders/clients.seed.ts"
+    "seed:clients": "ts-node -r tsconfig-paths/register src/database/seeders/clients.seed.ts",
+    "seed:closer-clients": "ts-node -r tsconfig-paths/register src/database/seeders/closer-clients.seed.ts"
   },
   "dependencies": {
     "@apollo/server": "^5.0.0",
