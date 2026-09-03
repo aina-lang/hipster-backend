@@ -13,6 +13,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PartnersService, RequestUser } from './partners.service';
 import { CreatePartnerDto } from './dto/create-partner.dto';
 import { UpdatePartnerDto } from './dto/update-partner.dto';
+import { CreateCloserClientDto } from './dto/create-closer-client.dto';
 import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enums/role.enum';
@@ -59,6 +60,23 @@ export class PartnersController {
   @Get('me/profile')
   myProfile(@Request() req) {
     return this.partnersService.getMyPartner(this.ctx(req));
+  }
+
+  /** 👤 Le closer crée la fiche client d'un artisan signé */
+  @ApiOperation({ summary: 'Créer un client (closer)' })
+  @ResponseMessage("Client créé — l'email d'accès a été envoyé")
+  @Roles(Role.PARTNER)
+  @Post('me/clients')
+  createMyClient(@Body() dto: CreateCloserClientDto, @Request() req) {
+    return this.partnersService.createCloserClient(dto, this.ctx(req));
+  }
+
+  /** 📋 Clients signés par le closer connecté */
+  @ApiOperation({ summary: 'Mes clients (closer)' })
+  @Roles(Role.PARTNER)
+  @Get('me/clients')
+  myClients(@Request() req) {
+    return this.partnersService.getMyClients(this.ctx(req));
   }
 
   /** 📊 Résultats du mois du closer connecté */

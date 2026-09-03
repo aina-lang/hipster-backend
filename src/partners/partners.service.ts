@@ -1,9 +1,12 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Partner, PartnerType } from './entities/partner.entity';
@@ -21,6 +24,13 @@ import {
 } from './entities/deal-document.entity';
 import { CreatePartnerDto } from './dto/create-partner.dto';
 import { UpdatePartnerDto } from './dto/update-partner.dto';
+import { CreateCloserClientDto } from './dto/create-closer-client.dto';
+import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
+import { User } from 'src/users/entities/user.entity';
+import { ClientType } from 'src/common/enums/client.enum';
+import { OtpService } from 'src/otp/otp.service';
+import { OtpType } from 'src/common/enums/otp.enum';
+import { MailService } from 'src/mail/mail.service';
 import { CreateDealDto } from './dto/create-deal.dto';
 import { UpdateDealDto } from './dto/update-deal.dto';
 import { UpdateCommissionDto } from './dto/update-commission.dto';
@@ -70,6 +80,8 @@ export class PartnersService {
     private readonly documentRepo: Repository<DealDocument>,
     private readonly usersService: UsersService,
     private readonly notifications: NotificationsService,
+    private readonly otpService: OtpService,
+    private readonly mailService: MailService,
   ) {}
 
   // =========================================================
@@ -683,6 +695,171 @@ export class PartnersService {
       commissionsPaid: this.round2(payedByMe),
       recentDeals: deals.slice(0, 6),
     };
+  }
+
+  // =========================================================
+  // CLOSERS — clients signés
+  // =========================================================
+
+  /**
+   * 👤 Un closer crée la fiche client d'un artisan qu'il vient de signer :
+   * - compte espace client créé (email avec lien pour définir son mot de passe)
+   * - client rattaché définitivement au closer d'origine
+   * - fiche visible côté admin + notification admin
+   */
+  async createCloserClient(dto: CreateCloserClientDto, user: RequestUser) {
+    const me = await this.getMyPartner(user);
+    if (!me || me.type !== PartnerType.CLOSER) {
+      throw new ForbiddenException('Réservé aux closers');
+    }
+
+    const userRepo = this.partnerRepo.manager.getRepository(User);
+    const profileRepo = this.partnerRepo.manager.getRepository(ClientProfile);
+
+    const email = dto.email.trim().toLowerCase();
+    const existing = await userRepo.findOne({ where: { email } });
+    if (existing) {
+      throw new ConflictException('Cet email est déjà utilisé par un compte');
+    }
+
+    // Mot de passe aléatoire jamais communiqué : le client définit le sien
+    // via le lien envoyé par email.
+    const randomPassword = await bcrypt.hash(
+      crypto.randomBytes(24).toString('hex'),
+      10,
+    );
+
+    const clientUser = await userRepo.save(
+      userRepo.create({
+        email,
+        password: randomPassword,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        phones: dto.phone ? [dto.phone] : undefined,
+        roles: [Role.CLIENT_MARKETING],
+        isActive: true,
+        isEmailVerified: true,
+        clientProfile: {
+          companyName: dto.companyName,
+          clientType: ClientType.COMPANY,
+          siren: dto.siren,
+          siret: dto.siret,
+          contactEmail: email,
+          billingAddress: dto.address,
+        } as ClientProfile,
+      }),
+    );
+
+    const profile = await profileRepo.findOne({
+      where: { user: { id: clientUser.id } },
+    });
+    if (!profile) throw new NotFoundException('Profil client non créé');
+    profile.originCloser = me;
+    profile.originCloserId = me.id;
+    await profileRepo.save(profile);
+
+    // Client miroir dans le CRM Partners pour les affaires, lié à la fiche CRM
+    const partnerClient = await this.clientRepo.save(
+      this.clientRepo.create({
+        name: dto.companyName,
+        email,
+        phone: dto.phone,
+        address: dto.address,
+        apporteur: me,
+        clientProfileId: profile.id,
+      }),
+    );
+
+    // Email d'accès : lien de définition du mot de passe, valable 72 h
+    try {
+      const code = await this.otpService.generateOtp(
+        clientUser,
+        OtpType.PASSWORD_RESET,
+        72 * 60,
+      );
+      const base = process.env.FRONTEND_URL || 'https://hipster-ia.fr';
+      const setPasswordUrl = `${base}/set-password?email=${encodeURIComponent(email)}&code=${code}`;
+      await this.mailService.sendEmail({
+        to: email,
+        subject: 'Bienvenue — activez votre espace client Hipster Marketing',
+        template: 'client-set-password',
+        context: {
+          name: `${dto.firstName} ${dto.lastName}`,
+          email,
+          setPasswordUrl,
+          closerName: me.contactName || me.agencyName,
+        },
+        userRoles: clientUser.roles,
+      });
+    } catch (e) {
+      this.logger.error(`Échec envoi email d'accès client: ${e}`);
+    }
+
+    // Notification des admins : « Nouveau client créé par X : Y »
+    try {
+      const admins = await userRepo
+        .createQueryBuilder('u')
+        .where('u.roles LIKE :role', { role: '%admin%' })
+        .getMany();
+      await Promise.all(
+        admins.map((admin) =>
+          this.notifications.notifyUser({
+            userId: admin.id,
+            type: 'closer_client_created',
+            title: '👤 Nouveau client signé',
+            message: `Nouveau client créé par ${me.agencyName} : ${dto.companyName}`,
+            actionUrl: `/app/client/show?id=${profile.id}`,
+            data: { clientProfileId: profile.id, closerId: me.id },
+          }),
+        ),
+      );
+    } catch (e) {
+      this.logger.error(`Échec notification admin nouveau client: ${e}`);
+    }
+
+    return {
+      clientProfileId: profile.id,
+      partnerClientId: partnerClient.id,
+      email,
+      message: "Client créé — l'email d'accès a été envoyé",
+    };
+  }
+
+  /** 📋 Clients signés par le closer connecté (chacun ne voit que les siens) */
+  async getMyClients(user: RequestUser) {
+    const me = await this.getMyPartner(user);
+    if (!me) throw new NotFoundException('Profil partenaire introuvable');
+
+    const profileRepo = this.partnerRepo.manager.getRepository(ClientProfile);
+    const profiles = await profileRepo.find({
+      where: { originCloserId: me.id },
+      relations: ['user'],
+      order: { id: 'DESC' },
+    });
+
+    // Correspondance vers le client CRM Partners (pour créer des affaires)
+    const partnerClients = await this.clientRepo.find({
+      where: { apporteur: { id: me.id } },
+    });
+    const byProfile = new Map(
+      partnerClients
+        .filter((pc) => pc.clientProfileId)
+        .map((pc) => [pc.clientProfileId as number, pc.id]),
+    );
+
+    return profiles.map((p) => ({
+      id: p.id,
+      companyName: p.companyName,
+      firstName: p.user?.firstName,
+      lastName: p.user?.lastName,
+      email: p.user?.email,
+      phones: p.user?.phones ?? [],
+      siren: p.siren ?? null,
+      siret: p.siret ?? null,
+      address: p.billingAddress ?? null,
+      createdAt: p.user?.createdAt ?? null,
+      partnerClientId: byProfile.get(p.id) ?? null,
+    }));
   }
 
   // =========================================================

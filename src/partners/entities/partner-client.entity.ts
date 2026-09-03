@@ -36,6 +36,10 @@ export class PartnerClient {
   @ManyToOne(() => Partner, { nullable: true, onDelete: 'SET NULL' })
   apporteur?: Partner | null;
 
+  /** Fiche client CRM liée (quand le client a un vrai compte espace client) */
+  @Column({ nullable: true })
+  clientProfileId?: number | null;
+
   @OneToMany(() => Deal, (d) => d.client)
   deals: Deal[];
 

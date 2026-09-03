@@ -189,7 +189,8 @@ export class ProfilesService {
       .leftJoinAndSelect('client.invoices', 'invoices')
       .leftJoinAndSelect('client.tickets', 'tickets')
       .leftJoinAndSelect('client.payments', 'payments')
-      .leftJoinAndSelect('client.websites', 'websites');
+      .leftJoinAndSelect('client.websites', 'websites')
+      .leftJoinAndSelect('client.originCloser', 'originCloser');
 
     // Apply filters
     if (clientType) {
@@ -229,7 +230,7 @@ export class ProfilesService {
   async findClientById(id: number): Promise<ClientProfile> {
     const profile = await this.clientRepo.findOne({
       where: { id },
-      relations: ['user', 'projects', 'invoices', 'tickets', 'payments'],
+      relations: ['user', 'projects', 'invoices', 'tickets', 'payments', 'originCloser'],
     });
     if (!profile)
       throw new NotFoundException(`ClientProfile #${id} introuvable`);

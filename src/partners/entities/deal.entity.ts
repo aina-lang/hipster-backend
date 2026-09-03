@@ -43,6 +43,10 @@ export const CLOSER_STATUSES: DealStatus[] = [
 export enum PrestationType {
   SITE_INTERNET = 'site_internet',
   CONFIGURATEUR = 'configurateur',
+  ECOMMERCE = 'ecommerce',
+  LOGO = 'logo',
+  CREATION_GRAPHIQUE = 'creation_graphique',
+  AUTRE = 'autre',
 }
 
 /**

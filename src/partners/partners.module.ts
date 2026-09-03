@@ -11,6 +11,8 @@ import { Commission } from './entities/commission.entity';
 import { DealDocument } from './entities/deal-document.entity';
 import { UsersModule } from 'src/users/users.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
+import { OtpModule } from 'src/otp/otp.module';
+import { MailModule } from 'src/mail/mail.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
     ]),
     UsersModule,
     NotificationsModule,
+    OtpModule,
+    MailModule,
   ],
   controllers: [
     PartnersController,

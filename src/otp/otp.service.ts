@@ -18,11 +18,15 @@ export class OtpService {
   /**
    * Génère un OTP à usage unique pour un utilisateur donné (standard ou AI)
    */
-  async generateOtp(user: User, type: OtpType): Promise<string> {
+  async generateOtp(
+    user: User,
+    type: OtpType,
+    expiresInMinutes = 5,
+  ): Promise<string> {
     const code = crypto.randomInt(100000, 999999).toString();
     const hashedOtp = await bcrypt.hash(code, 10);
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+    expiresAt.setMinutes(expiresAt.getMinutes() + expiresInMinutes);
     const otp = this.otpRepository.create({ token: hashedOtp, type, expiresAt, user });
     await this.otpRepository.save(otp);
     return code;

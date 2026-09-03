@@ -4,11 +4,13 @@ import { Payment } from 'src/payments/entities/payment.entity';
 import { Project } from 'src/projects/entities/project.entity';
 import { Ticket } from 'src/tickets/entities/ticket.entity';
 import { User } from 'src/users/entities/user.entity';
+import { Partner } from 'src/partners/entities/partner.entity';
 import { ClientWebsite } from './client-website.entity';
 import {
   Column,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -33,7 +35,21 @@ export class ClientProfile {
   siret?: string;
 
   @Column({ nullable: true })
+  siren?: string;
+
+  @Column({ nullable: true })
   tvaNumber?: string;
+
+  /**
+   * 🤝 Closer d'origine : le closer qui a signé/créé ce client.
+   * Le rattachement commercial est conservé pour toutes ses futures demandes.
+   */
+  @ManyToOne(() => Partner, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'originCloserId' })
+  originCloser?: Partner | null;
+
+  @Column({ nullable: true })
+  originCloserId?: number | null;
 
   @Column({ nullable: true })
   website?: string;

@@ -197,6 +197,53 @@ export class ClientPortalService {
       });
     } catch {}
 
+    // 🔔 Rattachement commercial : on prévient les admins (avec le closer
+    // d'origine s'il existe) et le closer lui-même — le lien closer/client
+    // ne se perd jamais, même des mois après la signature.
+    try {
+      const fullProfile = await this.clientProfileRepo.findOne({
+        where: { id: client.id },
+        relations: ['user', 'originCloser', 'originCloser.user'],
+      });
+      const clientName =
+        fullProfile?.companyName ||
+        `${fullProfile?.user?.firstName ?? ''} ${fullProfile?.user?.lastName ?? ''}`.trim() ||
+        'Client';
+      const closer = fullProfile?.originCloser;
+
+      const admins = await this.userRepo
+        .createQueryBuilder('u')
+        .where('u.roles LIKE :role', { role: '%admin%' })
+        .getMany();
+      await Promise.all(
+        admins.map((admin) =>
+          this.notificationsService.notifyUser({
+            userId: admin.id,
+            type: 'client_ticket_created',
+            title: '📩 Nouvelle demande client',
+            message: closer
+              ? `Nouvelle demande de ${clientName} – Closer d'origine : ${closer.agencyName}`
+              : `Nouvelle demande de ${clientName} : « ${dto.subject} »`,
+            actionUrl: `/app/ticket`,
+            data: { ticketId: saved.id, clientProfileId: client.id, closerId: closer?.id ?? null },
+          }),
+        ),
+      );
+
+      if (closer?.user?.id) {
+        await this.notificationsService.notifyUser({
+          userId: closer.user.id,
+          type: 'closer_client_ticket',
+          title: '📩 Demande de votre client',
+          message: `Votre client ${clientName} vient d'effectuer une nouvelle demande : ${dto.subject}`,
+          actionUrl: `/partner/clients`,
+          data: { ticketId: saved.id, clientProfileId: client.id },
+        });
+      }
+    } catch {
+      /* les notifications ne bloquent jamais la création de la demande */
+    }
+
     return saved;
   }
 
