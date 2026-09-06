@@ -100,6 +100,14 @@ export class Deal {
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   createdBy?: User | null;
 
+  /**
+   * Maintenance vendue avec le configurateur.
+   * Bonus fixe de 25 € sur la commission closer de CETTE vente uniquement :
+   * les paliers mensuels restent inchangés.
+   */
+  @Column({ default: false })
+  maintenanceSold: boolean;
+
   /** Date de passage au statut SIGNÉ (base des paliers mensuels closers) */
   @Column({ type: 'timestamp', nullable: true })
   signedAt?: Date | null;

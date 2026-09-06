@@ -49,10 +49,13 @@ export interface RequestUser {
  * - Site internet : 10 % du montant HT vendu
  * - Configurateur : paliers mensuels NON rétroactifs selon le rang de la vente
  *   (1-3 : 200 €, 4-6 : 225 €, 7+ : 250 €)
+ * - Maintenance vendue avec le configurateur : bonus fixe de +25 € sur cette
+ *   vente uniquement. Le bonus ne décale ni ne modifie les paliers.
  */
 export const CLOSER_SITE_RATE = 10;
 export const closerConfigTierAmount = (rank: number): number =>
   rank <= 3 ? 200 : rank <= 6 ? 225 : 250;
+export const CLOSER_MAINTENANCE_BONUS = 25;
 
 const DEAL_RELATIONS = [
   'client',
@@ -275,6 +278,7 @@ export class PartnersService {
         description: dto.description,
         amountHT,
         status,
+        maintenanceSold: dto.maintenanceSold ?? false,
         signedAt:
           isCloserDeal && status === DealStatus.RDV_SIGNE ? new Date() : null,
         client,
@@ -359,6 +363,10 @@ export class PartnersService {
     let recompute = false;
     if (dto.amountHT !== undefined) {
       deal.amountHT = Number(dto.amountHT) || 0;
+      recompute = true;
+    }
+    if (dto.maintenanceSold !== undefined) {
+      deal.maintenanceSold = dto.maintenanceSold;
       recompute = true;
     }
     await this.dealRepo.save(deal);
@@ -453,7 +461,10 @@ export class PartnersService {
       const rank = before + 1;
       commission.saleRank = rank;
       commission.rate = 0;
-      commission.amount = closerConfigTierAmount(rank);
+      // Palier du rang + bonus maintenance : le bonus s'ajoute, il ne change pas le palier
+      commission.amount =
+        closerConfigTierAmount(rank) +
+        (deal.maintenanceSold ? CLOSER_MAINTENANCE_BONUS : 0);
     } else {
       // Site internet (et défaut) : 10 % du montant HT vendu
       commission.saleRank = null;

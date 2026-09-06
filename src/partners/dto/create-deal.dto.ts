@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -78,6 +79,15 @@ export class CreateDealDto {
   @IsNumber()
   @Min(0)
   amountHT: number;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'Maintenance vendue avec le configurateur : +25 € de commission closer sur cette vente',
+  })
+  @IsOptional()
+  @IsBoolean()
+  maintenanceSold?: boolean;
 
   @ApiPropertyOptional({ enum: DealStatus, example: DealStatus.NOUVELLE_AFFAIRE })
   @IsOptional()
