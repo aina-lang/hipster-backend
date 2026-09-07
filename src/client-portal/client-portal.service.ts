@@ -172,7 +172,7 @@ export class ClientPortalService {
 
       if (dto.category === RequestCategory.ANOMALY && !project.maintenance_active) {
         throw new BadRequestException(
-          'Votre contrat de maintenance est inactif. Veuillez contacter le support pour signaler cette anomalie.',
+          "Votre contrat de maintenance est inactif. En l’absence de contrat actif, toute intervention technique, correction d’anomalie ou modification sera facturée.",
         );
       }
     }
