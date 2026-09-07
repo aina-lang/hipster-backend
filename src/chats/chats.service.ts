@@ -176,16 +176,41 @@ export class ChatsService {
       .getMany();
   }
 
+  /**
+   * La table de jonction `chat_room_participants` est créée par TypeORM avec
+   * ON DELETE NO ACTION : tant qu'un participant y est rattaché, MySQL refuse
+   * de supprimer la conversation (erreur 1451). On détache donc les
+   * participants d'abord. Les messages, eux, sont bien en CASCADE.
+   */
+  private async detachParticipants(rooms: ChatRoom[]): Promise<void> {
+    const withParticipants = rooms.filter((r) => r.participants?.length);
+    if (!withParticipants.length) return;
+    for (const room of withParticipants) room.participants = [];
+    await this.chatRoomRepository.save(withParticipants);
+  }
+
   async removeRoom(id: number): Promise<void> {
+    const room = await this.chatRoomRepository.findOne({
+      where: { id },
+      relations: ['participants'],
+    });
+    if (!room) throw new NotFoundException(`Conversation #${id} introuvable`);
+    await this.detachParticipants([room]);
     await this.chatRoomRepository.delete(id);
   }
 
   // 🔹 DELETE MULTIPLE
   async removeManyRooms(ids: number[]): Promise<{ deleted: number; notFound: number[] }> {
-    const rooms = await this.chatRoomRepository.find({ where: { id: In(ids) } });
+    const rooms = await this.chatRoomRepository.find({
+      where: { id: In(ids) },
+      relations: ['participants'],
+    });
     const foundIds = rooms.map((r) => r.id);
     const notFound = ids.filter((id) => !foundIds.includes(id));
-    if (rooms.length) await this.chatRoomRepository.remove(rooms);
+    if (rooms.length) {
+      await this.detachParticipants(rooms);
+      await this.chatRoomRepository.remove(rooms);
+    }
     return { deleted: rooms.length, notFound };
   }
 }
