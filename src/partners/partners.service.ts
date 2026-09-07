@@ -571,6 +571,23 @@ export class PartnersService {
     return saved;
   }
 
+  async removeCommission(id: number): Promise<{ message: string }> {
+    const commission = await this.commissionRepo.findOneBy({ id });
+    if (!commission) throw new NotFoundException('Commission introuvable');
+    await this.commissionRepo.remove(commission);
+    return { message: `Commission #${id} supprimée` };
+  }
+
+  async removeManyCommissions(
+    ids: number[],
+  ): Promise<{ deleted: number; notFound: number[] }> {
+    const commissions = await this.commissionRepo.find({ where: { id: In(ids) } });
+    const foundIds = commissions.map((c) => c.id);
+    const notFound = ids.filter((id) => !foundIds.includes(id));
+    if (commissions.length) await this.commissionRepo.remove(commissions);
+    return { deleted: commissions.length, notFound };
+  }
+
   async attachJustificatif(id: number, path: string): Promise<Commission> {
     const commission = await this.commissionRepo.findOne({ where: { id } });
     if (!commission) throw new NotFoundException('Commission introuvable');

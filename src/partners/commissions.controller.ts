@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Patch,
+  Delete,
   Param,
   Request,
   UseInterceptors,
@@ -23,6 +24,7 @@ import {
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 
 @ApiTags('Partner Commissions')
 @ApiBearerAuth()
@@ -69,6 +71,24 @@ export class CommissionsController {
     @Request() req,
   ) {
     return this.partnersService.updateCommission(+id, dto, this.ctx(req));
+  }
+
+  /** 🗑️ Supprimer plusieurs commissions (admin) */
+  @ApiOperation({ summary: 'Supprimer plusieurs commissions' })
+  @ResponseMessage('Commissions supprimées avec succès')
+  @Roles(Role.ADMIN)
+  @Delete('bulk')
+  removeMany(@Body() dto: BulkDeleteDto) {
+    return this.partnersService.removeManyCommissions(dto.ids);
+  }
+
+  /** 🗑️ Supprimer une commission (admin) */
+  @ApiOperation({ summary: 'Supprimer une commission' })
+  @ResponseMessage('Commission supprimée avec succès')
+  @Roles(Role.ADMIN)
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.partnersService.removeCommission(+id);
   }
 
   /** 📎 Justificatif de commission (admin) */
