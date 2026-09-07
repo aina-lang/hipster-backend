@@ -46,6 +46,7 @@ export enum PrestationType {
   ECOMMERCE = 'ecommerce',
   LOGO = 'logo',
   CREATION_GRAPHIQUE = 'creation_graphique',
+  MAINTENANCE = 'maintenance',
   AUTRE = 'autre',
 }
 
