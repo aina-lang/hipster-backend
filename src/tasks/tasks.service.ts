@@ -20,6 +20,7 @@ import { User } from 'src/users/entities/user.entity';
 
 import { ClientWebsite } from '../profiles/entities/client-website.entity';
 import { Ticket, TicketStatus } from 'src/tickets/entities/ticket.entity';
+import { File } from 'src/files/entities/file.entity';
 import { NotificationsService } from 'src/notifications/notifications.service';
 @Injectable()
 export class TasksService {
@@ -43,6 +44,9 @@ export class TasksService {
     @InjectRepository(Ticket)
     private readonly ticketRepo: Repository<Ticket>,
 
+    @InjectRepository(File)
+    private readonly fileRepo: Repository<File>,
+
     private readonly projectsService: ProjectsService,
     private readonly mailService: MailService,
     private readonly notificationsService: NotificationsService,
@@ -50,7 +54,7 @@ export class TasksService {
 
   // 🔹 CREATE
   async create(dto: CreateTaskDto, userId: number): Promise<Task> {
-    const { projectId, assigneeIds, ...data } = dto;
+    const { projectId, assigneeIds, fileIds, ...data } = dto;
 
     const currentUser = await this.userRepo.findOneBy({ id: userId });
 
@@ -73,16 +77,17 @@ export class TasksService {
         throw new BadRequestException('Un ou plusieurs employés introuvables');
       }
 
-      // Extraire les EmployeeProfiles
-      assignees = users
-        .map((u) => u.employeeProfile)
-        .filter((ep) => ep != null && ep.user != null) as EmployeeProfile[];
-
-      if (assignees.length !== assigneeIds.length) {
-        throw new BadRequestException(
-          "Un ou plusieurs utilisateurs n'ont pas de profil employé",
-        );
+      // Un admin sans profil employé peut aussi être assigné :
+      // on lui crée un profil minimal à la volée.
+      for (const u of users) {
+        if (!u.employeeProfile) {
+          u.employeeProfile = await this.employeeRepo.save(
+            this.employeeRepo.create({ poste: 'Équipe', user: u }),
+          );
+          u.employeeProfile.user = u;
+        }
       }
+      assignees = users.map((u) => u.employeeProfile) as EmployeeProfile[];
 
       // ✅ VALIDATION: Vérifier que tous les assignés sont membres du projet
       const projectMemberIds = project.members.map((m) => m.employee.id);
@@ -103,14 +108,42 @@ export class TasksService {
       }
     }
 
+    // Médias joints (captures, PDF…) pour que l'assigné comprenne la demande
+    const files = fileIds?.length
+      ? await this.fileRepo.findBy({ id: In(fileIds) })
+      : [];
+
     const task = this.taskRepo.create({
       ...data,
       project,
       assignees,
+      files,
       createdBy: currentUser || undefined,
     });
 
     const savedTask = await this.taskRepo.save(task);
+
+    // 🔔 Notification in-app immédiate pour chaque assigné, avec le contexte
+    // complet : client + projet + priorité + échéance.
+    const clientLabel = project.client?.companyName ||
+      (project.client?.user
+        ? `${project.client.user.firstName} ${project.client.user.lastName}`
+        : null);
+    for (const assignee of assignees) {
+      if (!assignee.user?.id || assignee.user.id === currentUser?.id) continue;
+      try {
+        await this.notificationsService.notifyUser({
+          userId: assignee.user.id,
+          type: 'task_assigned',
+          title: '📌 Nouvelle tâche assignée',
+          message: `${task.title}${clientLabel ? ` — ${clientLabel}` : ''} (${project.name})`,
+          actionUrl: `/app/project/show?id=${project.id}`,
+          data: { taskId: savedTask.id, projectId: project.id },
+        });
+      } catch {
+        /* la notification ne bloque pas la création */
+      }
+    }
 
     // ✅ Send email to assigned employees (excluding current user)
     if (assignees.length > 0) {
@@ -211,11 +244,38 @@ export class TasksService {
     };
   }
 
+  // 🔹 MES TÂCHES (dashboard employé)
+  /**
+   * Tâches assignées à l'utilisateur connecté, avec tout le contexte :
+   * client, projet, priorité, échéance, médias.
+   */
+  async findMyTasks(userId: number): Promise<Task[]> {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: ['employeeProfile'],
+    });
+    if (!user?.employeeProfile) return [];
+
+    return this.taskRepo
+      .createQueryBuilder('task')
+      .innerJoin('task.assignees', 'me', 'me.id = :epId', {
+        epId: user.employeeProfile.id,
+      })
+      .leftJoinAndSelect('task.project', 'project')
+      .leftJoinAndSelect('project.client', 'client')
+      .leftJoinAndSelect('client.user', 'clientUser')
+      .leftJoinAndSelect('task.website', 'website')
+      .leftJoinAndSelect('task.files', 'files')
+      .orderBy(`CASE WHEN task.status = 'done' THEN 1 ELSE 0 END`, 'ASC')
+      .addOrderBy('task.dueDate', 'ASC')
+      .getMany();
+  }
+
   // 🔹 FIND ONE
   async findOne(id: number): Promise<Task> {
     const task = await this.taskRepo.findOne({
       where: { id },
-      relations: ['project', 'assignees'],
+      relations: ['project', 'project.client', 'project.client.user', 'assignees', 'files'],
     });
     if (!task) throw new NotFoundException(`Tâche #${id} introuvable`);
     return task;
@@ -225,7 +285,7 @@ export class TasksService {
   async update(id: number, dto: UpdateTaskDto, userId: number): Promise<Task> {
     const task = await this.taskRepo.findOne({
       where: { id },
-      relations: ['project', 'assignees'],
+      relations: ['project', 'project.client', 'project.client.user', 'assignees', 'files'],
     });
     if (!task) throw new NotFoundException(`Tâche #${id} introuvable`);
 
@@ -234,7 +294,7 @@ export class TasksService {
       task.updatedBy = currentUser;
     }
 
-    const { projectId, assigneeIds, ...data } = dto;
+    const { projectId, assigneeIds, fileIds, ...data } = dto;
 
     // ✅ Allow recurrence for ALL projects now
     // if (hasRecurrence && task.project?.maintenanceConfig?.enabled !== true) {
@@ -242,6 +302,13 @@ export class TasksService {
     //     'La configuration de récurrence est uniquement disponible pour les projets de maintenance',
     //   );
     // }
+
+    // Mise à jour des médias joints
+    if (fileIds) {
+      task.files = fileIds.length
+        ? await this.fileRepo.findBy({ id: In(fileIds) })
+        : [];
+    }
 
     // Changement de projet
     if (projectId) {
@@ -268,16 +335,16 @@ export class TasksService {
         throw new BadRequestException('Un ou plusieurs employés introuvables');
       }
 
-      // Extraire les EmployeeProfiles
-      const employees = users
-        .map((u) => u.employeeProfile)
-        .filter((ep) => ep != null && ep.user != null) as EmployeeProfile[];
-
-      if (employees.length !== assigneeIds.length) {
-        throw new BadRequestException(
-          "Un ou plusieurs utilisateurs n'ont pas de profil employé",
-        );
+      // Un admin sans profil employé peut aussi être assigné.
+      for (const u of users) {
+        if (!u.employeeProfile) {
+          u.employeeProfile = await this.employeeRepo.save(
+            this.employeeRepo.create({ poste: 'Équipe', user: u }),
+          );
+          u.employeeProfile.user = u;
+        }
       }
+      const employees = users.map((u) => u.employeeProfile) as EmployeeProfile[];
 
       // ✅ VALIDATION: Vérifier que tous les assignés sont membres du projet
       if (projectForValidation) {

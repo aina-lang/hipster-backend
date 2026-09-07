@@ -59,6 +59,11 @@ export class CreateTaskDto {
   )
   assigneeIds?: number[];
 
+  @IsOptional()
+  @IsArray({ message: 'fileIds doit être un tableau d’identifiants.' })
+  @IsNumber({}, { each: true, message: 'Chaque fileId doit être un nombre.' })
+  fileIds?: number[];
+
   // Recurrence
   @IsOptional()
   @IsString()

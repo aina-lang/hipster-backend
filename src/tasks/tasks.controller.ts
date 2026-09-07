@@ -46,6 +46,12 @@ export class TasksController {
   }
 
   @ApiOperation({ summary: "Récupérer les tâches d'un projet" })
+  /** 📌 Tâches assignées à l'utilisateur connecté (dashboard) */
+  @Get('my')
+  async findMine(@Req() req) {
+    return this.tasksService.findMyTasks(req.user.userId);
+  }
+
   @Get('project/:projectId')
   async findByProject(@Param('projectId', ParseIntPipe) projectId: number) {
     return this.tasksService.findByProject(projectId);

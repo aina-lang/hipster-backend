@@ -12,6 +12,7 @@ import { ClientWebsite } from 'src/profiles/entities/client-website.entity';
 
 import { MailModule } from 'src/mail/mail.module';
 import { RecurringTasksModule } from './recurring-tasks/recurring-tasks.module';
+import { File } from 'src/files/entities/file.entity';
 import { Ticket } from 'src/tickets/entities/ticket.entity';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 
@@ -24,6 +25,7 @@ import { NotificationsModule } from 'src/notifications/notifications.module';
       EmployeeProfile,
       ClientWebsite,
       Ticket,
+      File,
     ]),
     ProjectsModule,
     MailModule,

@@ -15,6 +15,7 @@ import { EmployeeProfile } from 'src/profiles/entities/employee-profile.entity';
 import { Ticket } from 'src/tickets/entities/ticket.entity';
 import { User } from 'src/users/entities/user.entity';
 import { ClientWebsite } from '../../profiles/entities/client-website.entity';
+import { File } from 'src/files/entities/file.entity';
 
 export enum TaskStatus {
   TODO = 'todo',
@@ -76,6 +77,11 @@ export class Task {
     inverseJoinColumn: { name: 'employee_id', referencedColumnName: 'id' },
   })
   assignees: EmployeeProfile[];
+
+  /** Médias joints à la tâche (captures, PDF…) pour comprendre la demande */
+  @ManyToMany(() => File)
+  @JoinTable({ name: 'task_files' })
+  files: File[];
 
   // 🔗 Si cette tâche vient d'un ticket
   @ManyToOne(() => Ticket, { nullable: true, onDelete: 'SET NULL' })
