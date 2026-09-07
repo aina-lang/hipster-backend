@@ -94,6 +94,31 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { success: true };
   }
 
+  /**
+   * ✍️ Indicateur de saisie. Diffusé aux autres membres de la conversation
+   * uniquement — `client.to()` exclut l'émetteur. Rien n'est persisté :
+   * c'est un signal éphémère.
+   */
+  @SubscribeMessage('chat:typing')
+  handleTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    data: {
+      roomId: number;
+      userId: number;
+      userName?: string;
+      isTyping: boolean;
+    },
+  ) {
+    client.to(`chat:${data.roomId}`).emit('chat:typing', {
+      roomId: data.roomId,
+      userId: data.userId,
+      userName: data.userName,
+      isTyping: !!data.isTyping,
+    });
+    return { success: true };
+  }
+
   @SubscribeMessage('chat:send')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
@@ -116,12 +141,42 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         user.roles || [],
       );
       this.server.to(`chat:${data.roomId}`).emit('chat:newMessage', message);
+      // Le message n'atteint que les sockets ayant rejoint cette room. Pour que
+      // la liste des conversations se mette à jour chez tout le monde, on
+      // prévient aussi chaque participant sur son canal personnel.
+      await this.notifyRoomUpdated(data.roomId, message);
       this.logger.log(
         `Message sent in room ${data.roomId} by user ${data.userId}`,
       );
     } catch (error) {
       this.logger.error(`Failed to send message: ${error.message}`);
       client.emit('chat:error', { message: error.message });
+    }
+  }
+
+  /**
+   * Prévient chaque membre de la conversation qu'elle a bougé, sur son canal
+   * `user:<id>` : la liste se réordonne sans rechargement, même si la
+   * conversation concernée n'est pas ouverte.
+   */
+  private async notifyRoomUpdated(roomId: number, message: any) {
+    try {
+      const room = await this.chatsService.findOne(roomId);
+      const recipients = [
+        ...(room?.participants || []),
+        ...(room?.client?.user ? [room.client.user] : []),
+      ];
+      const seen = new Set<number>();
+      for (const recipient of recipients) {
+        if (!recipient || seen.has(recipient.id)) continue;
+        seen.add(recipient.id);
+        this.server.to(`user:${recipient.id}`).emit('chat:roomUpdated', {
+          roomId,
+          message,
+        });
+      }
+    } catch (error) {
+      this.logger.error(`notifyRoomUpdated a échoué: ${error.message}`);
     }
   }
 
