@@ -300,8 +300,43 @@ export class TicketsService {
       ticket.project = project;
     }
 
+    const previousStatus = ticket.status;
     Object.assign(ticket, dto);
-    return this.ticketRepo.save(ticket);
+    const saved = await this.ticketRepo.save(ticket);
+
+    // 🔔 Le client voit passer sa demande d'un statut à l'autre : on le
+    // prévient dès qu'on lui répond (cloche + point rouge sur son espace).
+    if (dto.status && dto.status !== previousStatus) {
+      try {
+        const full = await this.ticketRepo.findOne({
+          where: { id },
+          relations: ['client', 'client.user'],
+        });
+        const clientUserId = full?.client?.user?.id;
+        if (clientUserId) {
+          const STATUS_FR: Record<string, string> = {
+            open: 'Ouverte',
+            in_review: 'En analyse',
+            accepted: 'Acceptée',
+            converted: 'Convertie en projet',
+            closed: 'Clôturée',
+            rejected: 'Refusée',
+          };
+          await this.notificationsService.notifyUser({
+            userId: clientUserId,
+            type: 'ticket_status',
+            title: '📩 Votre demande a été traitée',
+            message: `« ${saved.subject} » : ${STATUS_FR[String(dto.status)] || dto.status}`,
+            actionUrl: '/portal/tickets',
+            data: { ticketId: id, status: dto.status },
+          });
+        }
+      } catch {
+        /* la notification ne bloque pas la mise à jour */
+      }
+    }
+
+    return saved;
   }
 
   async remove(id: number): Promise<{ message: string }> {

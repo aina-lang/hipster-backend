@@ -13,6 +13,7 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { User } from 'src/users/entities/user.entity';
 import { ClientProfile } from 'src/profiles/entities/client-profile.entity';
 import { Role } from 'src/common/enums/role.enum';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class ChatsService {
@@ -25,6 +26,7 @@ export class ChatsService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(ClientProfile)
     private readonly clientProfileRepository: Repository<ClientProfile>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createRoom(dto: CreateChatDto): Promise<ChatRoom> {
@@ -158,6 +160,48 @@ export class ChatsService {
     });
     const saved = await this.chatMessageRepository.save(msg);
     await this.chatRoomRepository.update(room.id, { updatedAt: new Date() });
+
+    // 🔔 Chaque destinataire de la conversation est notifié (cloche + point
+    // rouge) : les admins quand un client écrit, le client quand on lui répond.
+    try {
+      const recipients = new Map<number, User>();
+      for (const p of room.participants || []) {
+        if (p.id !== userId) recipients.set(p.id, p);
+      }
+      if (room.client?.user && room.client.user.id !== userId) {
+        recipients.set(room.client.user.id, room.client.user);
+      }
+
+      const senderName =
+        `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email;
+      const roomLabel =
+        room.name || room.client?.companyName || senderName;
+      const preview =
+        (dto.content || '').length > 80
+          ? `${dto.content.slice(0, 80)}…`
+          : dto.content || 'Pièce jointe';
+
+      await Promise.all(
+        [...recipients.values()].map((recipient) => {
+          const roles = (recipient.roles || []).map((r) => String(r));
+          const isClientRecipient =
+            roles.includes('client_marketing') || roles.includes('client_ai');
+          return this.notificationsService.notifyUser({
+            userId: recipient.id,
+            type: 'chat_message',
+            title: `💬 ${roomLabel}`,
+            message: `${senderName} : ${preview}`,
+            actionUrl: isClientRecipient
+              ? '/portal/chat'
+              : `/app/chat?roomId=${room.id}`,
+            data: { roomId: room.id, messageId: saved.id },
+          });
+        }),
+      );
+    } catch {
+      /* les notifications ne bloquent jamais l'envoi du message */
+    }
+
     return this.chatMessageRepository.findOne({
       where: { id: saved.id },
       relations: ['user', 'room'],

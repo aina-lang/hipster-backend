@@ -651,7 +651,7 @@ export class ProjectsService {
     });
     if (!project) throw new NotFoundException(`Projet #${id} introuvable`);
     console.log('Loaded project members:', project.members);
-    project.progress = this.calculateProgress(project.tasks || []);
+    project.progress = this.effectiveProgress(project);
     return project;
   }
 
@@ -1185,9 +1185,14 @@ export class ProjectsService {
 
       // If not admin, apply role-based filters
       if (!isAdmin) {
+        // Un employé peut aussi porter un rôle client (ex: client_ai pour
+        // l'app mobile) : l'accès équipe prime, sinon il ne verrait que
+        // ses projets « en tant que client » — c'est-à-dire rien.
+        const isEmployee = user.roles.includes('employee' as any);
         const isClient =
-          user.roles.includes('client_marketing' as any) ||
-          user.roles.includes('client_ai' as any);
+          !isEmployee &&
+          (user.roles.includes('client_marketing' as any) ||
+            user.roles.includes('client_ai' as any));
 
         if (isClient) {
           qb.andWhere('clientUser.id = :userId', { userId });
@@ -1237,7 +1242,7 @@ export class ProjectsService {
 
     return {
       data: data.map((p) => {
-        p.progress = this.calculateProgress(p.tasks || []);
+        p.progress = this.effectiveProgress(p);
         return p;
       }),
       meta: {
@@ -1281,9 +1286,14 @@ export class ProjectsService {
       const isAdmin = user.roles.includes('admin' as any);
 
       if (!isAdmin) {
+        // Un employé peut aussi porter un rôle client (ex: client_ai pour
+        // l'app mobile) : l'accès équipe prime, sinon il ne verrait que
+        // ses projets « en tant que client » — c'est-à-dire rien.
+        const isEmployee = user.roles.includes('employee' as any);
         const isClient =
-          user.roles.includes('client_marketing' as any) ||
-          user.roles.includes('client_ai' as any);
+          !isEmployee &&
+          (user.roles.includes('client_marketing' as any) ||
+            user.roles.includes('client_ai' as any));
 
         if (isClient) {
           qb.andWhere('clientUser.id = :userId', { userId });
@@ -1321,7 +1331,7 @@ export class ProjectsService {
 
     return {
       data: data.map((p) => {
-        p.progress = this.calculateProgress(p.tasks || []);
+        p.progress = this.effectiveProgress(p);
         return p;
       }),
       meta: {
@@ -1468,6 +1478,17 @@ export class ProjectsService {
     return computeTaskProgress(tasks);
   }
 
+  /**
+   * Progression affichée : pondérée par les tâches quand il y en a ;
+   * sans tâches, on garde la valeur saisie sur le projet (et 100 % pour
+   * un projet terminé) au lieu d'écraser avec 0.
+   */
+  private effectiveProgress(project: Project): number {
+    if (project.tasks?.length) return computeTaskProgress(project.tasks);
+    if (project.status === ProjectStatus.COMPLETED) return 100;
+    return Number(project.progress) || 0;
+  }
+
   async generatePdf(id: number): Promise<Buffer> {
     const project = await this.projectRepo.findOne({
       where: { id },
@@ -1531,7 +1552,7 @@ export class ProjectsService {
   }
 
   private getProjectHtml(project: Project): string {
-    const progress = this.calculateProgress(project.tasks || []);
+    const progress = this.effectiveProgress(project);
     const formatDate = (date: Date | string | undefined) => {
       if (!date) return 'N/A';
       return new Date(date).toLocaleDateString('fr-FR');
