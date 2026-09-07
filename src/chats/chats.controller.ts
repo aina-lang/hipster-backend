@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ChatsService } from './chats.service';
+import { ChatGateway } from './chat.gateway';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -22,7 +23,10 @@ import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 @UseGuards(AuthGuard('jwt'))
 @Controller('chats')
 export class ChatsController {
-  constructor(private readonly chatsService: ChatsService) {}
+  constructor(
+    private readonly chatsService: ChatsService,
+    private readonly chatGateway: ChatGateway,
+  ) {}
 
   @ApiOperation({ summary: 'Créer une nouvelle conversation' })
   @ResponseMessage('Conversation créée avec succès')
@@ -81,6 +85,28 @@ export class ChatsController {
   ) {
     const userId = req.user.id || req.user.sub;
     return this.chatsService.sendMessage(+id, userId, dto, req.user.roles);
+  }
+
+  @ApiOperation({ summary: 'Supprimer un message dans une conversation' })
+  @ResponseMessage('Message supprimé avec succès')
+  @Delete(':id/messages/:messageId')
+  async removeMessage(
+    @Param('id') id: string,
+    @Param('messageId') messageId: string,
+    @Request() req,
+  ) {
+    const userId = req.user.id || req.user.sub;
+    await this.chatsService.removeMessage(
+      +id,
+      +messageId,
+      userId,
+      req.user.roles || [],
+    );
+    // Les autres participants voient le message disparaître sans recharger
+    this.chatGateway.emitToRoom(+id, 'chat:messageDeleted', {
+      roomId: +id,
+      messageId: +messageId,
+    });
   }
 
   @ApiOperation({ summary: 'Supprimer plusieurs conversations' })

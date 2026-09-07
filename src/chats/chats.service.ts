@@ -177,6 +177,38 @@ export class ChatsService {
   }
 
   /**
+   * Suppression d'un message. Son auteur peut toujours retirer le sien ; un
+   * admin ou un employé peut retirer n'importe quel message de la conversation.
+   */
+  async removeMessage(
+    roomId: number,
+    messageId: number,
+    userId: number,
+    userRoles: string[],
+  ): Promise<void> {
+    const message = await this.chatMessageRepository.findOne({
+      where: { id: messageId },
+      relations: ['user', 'room'],
+    });
+    if (!message || message.room?.id !== roomId) {
+      throw new NotFoundException(
+        `Message #${messageId} introuvable dans la conversation #${roomId}`,
+      );
+    }
+
+    const isStaff =
+      userRoles.includes(Role.ADMIN) || userRoles.includes(Role.EMPLOYEE);
+    const isAuthor = message.user?.id === userId;
+    if (!isStaff && !isAuthor) {
+      throw new ForbiddenException(
+        'Vous ne pouvez supprimer que vos propres messages',
+      );
+    }
+
+    await this.chatMessageRepository.delete(messageId);
+  }
+
+  /**
    * La table de jonction `chat_room_participants` est créée par TypeORM avec
    * ON DELETE NO ACTION : tant qu'un participant y est rattaché, MySQL refuse
    * de supprimer la conversation (erreur 1451). On détache donc les
