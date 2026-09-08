@@ -120,7 +120,10 @@ export class PartnersService {
   // =========================================================
   // PARTENAIRES (admin)
   // =========================================================
-  async createPartner(dto: CreatePartnerDto): Promise<Partner> {
+  async createPartner(
+    dto: CreatePartnerDto,
+  ): Promise<Partner & { generatedPassword?: string }> {
+    let generatedPassword: string | undefined;
     const partner = this.partnerRepo.create({
       agencyName: dto.agencyName,
       type: dto.type ?? PartnerType.AGENCY,
@@ -135,14 +138,27 @@ export class PartnersService {
     const saved = await this.partnerRepo.save(partner);
 
     if (dto.hasPortalAccess) {
-      await this.provisionAccount(saved);
+      generatedPassword = (await this.provisionAccount(saved)).generatedPassword;
     }
-    return this.findOnePartner(saved.id);
+
+    // Le mot de passe n'est renvoyé qu'ici, à la création : il est haché en
+    // base et ne pourra plus être relu — seulement régénéré.
+    const created = await this.findOnePartner(saved.id);
+    return generatedPassword
+      ? Object.assign(created, { generatedPassword })
+      : created;
   }
 
   /** Crée le compte de login (rôle partner) et l'e-mail d'identifiants */
-  private async provisionAccount(partner: Partner): Promise<Partner> {
-    if (partner.user) return partner;
+  /**
+   * Crée le compte de connexion du partenaire et renvoie le mot de passe
+   * généré, pour que l'admin puisse le lui transmettre de vive voix : le mot
+   * de passe est haché en base, il ne sera plus jamais consultable ensuite.
+   */
+  private async provisionAccount(
+    partner: Partner,
+  ): Promise<{ partner: Partner; generatedPassword?: string }> {
+    if (partner.user) return { partner };
 
     const [firstName, ...rest] = (partner.contactName || partner.agencyName).split(' ');
     const user = await this.usersService.create({
@@ -155,7 +171,8 @@ export class PartnersService {
 
     partner.user = { id: user.id } as any;
     partner.hasPortalAccess = true;
-    return this.partnerRepo.save(partner);
+    const saved = await this.partnerRepo.save(partner);
+    return { partner: saved, generatedPassword: user.generatedPassword };
   }
 
   async updatePartner(id: number, dto: UpdatePartnerDto): Promise<Partner> {
@@ -180,7 +197,11 @@ export class PartnersService {
 
     if (!partner.user) {
       // Premier accès : on provisionne le compte
-      return this.provisionAccount(partner).then(() => this.findOnePartner(id));
+      const { generatedPassword } = await this.provisionAccount(partner);
+      const created = await this.findOnePartner(id);
+      return generatedPassword
+        ? Object.assign(created, { generatedPassword })
+        : created;
     }
 
     partner.hasPortalAccess = !partner.hasPortalAccess;
