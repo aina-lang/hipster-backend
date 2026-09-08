@@ -211,6 +211,10 @@ export class TasksService {
     const qb = this.taskRepo
       .createQueryBuilder('task')
       .leftJoinAndSelect('task.project', 'project')
+      // Le tableau de bord affiche le client rattaché à chaque tâche : sans
+      // ces deux jointures, task.project.client restait toujours undefined.
+      .leftJoinAndSelect('project.client', 'client')
+      .leftJoinAndSelect('client.user', 'clientUser')
       .leftJoinAndSelect('task.assignees', 'assignee');
 
     if (search) {
