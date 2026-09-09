@@ -48,13 +48,14 @@ export interface RequestUser {
  * 💶 Rémunération closers
  * - Site internet : 10 % du montant HT vendu
  * - Configurateur : paliers mensuels NON rétroactifs selon le rang de la vente
- *   (1-3 : 200 €, 4-6 : 225 €, 7+ : 250 €)
+ *   (1-6 : 225 €, 7+ : 250 €). Les 3 premières ventes payaient 200 € avant
+ *   d'être alignées sur le palier suivant.
  * - Maintenance vendue avec le configurateur : bonus fixe de +25 € sur cette
  *   vente uniquement. Le bonus ne décale ni ne modifie les paliers.
  */
 export const CLOSER_SITE_RATE = 10;
 export const closerConfigTierAmount = (rank: number): number =>
-  rank <= 3 ? 200 : rank <= 6 ? 225 : 250;
+  rank <= 6 ? 225 : 250;
 export const CLOSER_MAINTENANCE_BONUS = 25;
 
 const DEAL_RELATIONS = [
