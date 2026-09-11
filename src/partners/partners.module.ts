@@ -9,6 +9,7 @@ import { PartnerClient } from './entities/partner-client.entity';
 import { Deal } from './entities/deal.entity';
 import { Commission } from './entities/commission.entity';
 import { DealDocument } from './entities/deal-document.entity';
+import { PartnerDocument } from './entities/partner-document.entity';
 import { UsersModule } from 'src/users/users.module';
 import { NotificationsModule } from 'src/notifications/notifications.module';
 import { OtpModule } from 'src/otp/otp.module';
@@ -22,6 +23,7 @@ import { MailModule } from 'src/mail/mail.module';
       Deal,
       Commission,
       DealDocument,
+      PartnerDocument,
     ]),
     UsersModule,
     NotificationsModule,

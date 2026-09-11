@@ -8,8 +8,16 @@ import {
   Delete,
   Query,
   Request,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { getUploadPath } from 'src/common/utils/upload-path';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PartnerDocumentType } from './entities/partner-document.entity';
 import { PartnersService, RequestUser } from './partners.service';
 import { CreatePartnerDto } from './dto/create-partner.dto';
 import { UpdatePartnerDto } from './dto/update-partner.dto';
@@ -18,6 +26,22 @@ import { BulkDeleteDto } from 'src/common/dto/bulk-delete.dto';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
+
+const uploadInterceptor = FileInterceptor('file', {
+  storage: diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, getUploadPath());
+    },
+    filename: (req, file, cb) => {
+      const randomName = Array(32)
+        .fill(null)
+        .map(() => Math.round(Math.random() * 16).toString(16))
+        .join('');
+      cb(null, `${randomName}${extname(file.originalname)}`);
+    },
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
 
 @ApiTags('Partners')
 @ApiBearerAuth()
@@ -134,6 +158,51 @@ export class PartnersController {
   @Patch(':id/toggle-access')
   toggleAccess(@Param('id') id: string) {
     return this.partnersService.toggleAccess(+id);
+  }
+
+  /** 📎 Uploader un document sur la fiche du partenaire (contrat, RIB...) */
+  @ApiOperation({ summary: "Ajouter un document à la fiche d'un partenaire (admin)" })
+  @ApiConsumes('multipart/form-data')
+  @ResponseMessage('Document ajouté')
+  @Roles(Role.ADMIN)
+  @Post(':id/documents')
+  @UseInterceptors(uploadInterceptor)
+  addDocument(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: { type?: PartnerDocumentType },
+    @Request() req,
+  ) {
+    if (!file) throw new BadRequestException('Fichier manquant');
+    return this.partnersService.addPartnerDocument(
+      +id,
+      {
+        originalName: file.originalname,
+        filename: file.filename,
+        url: `/uploads/${file.filename}`,
+        mimeType: file.mimetype,
+        size: file.size,
+      },
+      (body.type as PartnerDocumentType) || PartnerDocumentType.DOCUMENT_UTILE,
+      this.ctx(req),
+    );
+  }
+
+  /** 📎 Documents de la fiche d'un partenaire (admin) */
+  @ApiOperation({ summary: "Documents de la fiche d'un partenaire (admin)" })
+  @Roles(Role.ADMIN)
+  @Get(':id/documents')
+  listDocuments(@Param('id') id: string, @Request() req) {
+    return this.partnersService.listPartnerDocuments(+id, this.ctx(req));
+  }
+
+  /** 🗑️ Supprimer un document de la fiche partenaire (admin) */
+  @ApiOperation({ summary: 'Supprimer un document de la fiche partenaire (admin)' })
+  @ResponseMessage('Document supprimé')
+  @Roles(Role.ADMIN)
+  @Delete('documents/:docId')
+  removeDocument(@Param('docId') docId: string, @Request() req) {
+    return this.partnersService.removePartnerDocument(+docId, this.ctx(req));
   }
 
   /** 🗑️ Supprimer plusieurs partenaires (admin) */

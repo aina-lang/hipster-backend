@@ -3,11 +3,13 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
+import { PartnerDocument } from './partner-document.entity';
 
 export enum PartnerType {
   /** Agence partenaire classique (suivi de projet complet) */
@@ -57,6 +59,10 @@ export class Partner {
   @OneToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
   user?: User | null;
+
+  /** Documents attachés à la fiche (contrat, RIB, pièce d'identité...) */
+  @OneToMany(() => PartnerDocument, (d) => d.partner)
+  documents: PartnerDocument[];
 
   @CreateDateColumn()
   createdAt: Date;

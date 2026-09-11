@@ -10,6 +10,10 @@ import * as crypto from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Partner, PartnerType } from './entities/partner.entity';
+import {
+  PartnerDocument,
+  PartnerDocumentType,
+} from './entities/partner-document.entity';
 import { PartnerClient } from './entities/partner-client.entity';
 import {
   CLOSER_STATUSES,
@@ -82,6 +86,8 @@ export class PartnersService {
     private readonly commissionRepo: Repository<Commission>,
     @InjectRepository(DealDocument)
     private readonly documentRepo: Repository<DealDocument>,
+    @InjectRepository(PartnerDocument)
+    private readonly partnerDocumentRepo: Repository<PartnerDocument>,
     private readonly usersService: UsersService,
     private readonly notifications: NotificationsService,
     private readonly otpService: OtpService,
@@ -666,6 +672,77 @@ export class PartnersService {
     if (!doc) throw new NotFoundException('Document introuvable');
     await this.findOneDeal(doc.deal.id, user); // contrôle d'accès
     await this.documentRepo.remove(doc);
+    return { message: 'Document supprimé' };
+  }
+
+  // =========================================================
+  // DOCUMENTS DE LA FICHE PARTENAIRE (contrat, RIB...)
+  // Distincts des documents d'affaire ci-dessus : rattachés au Partner,
+  // pas au Deal. Réservé à l'admin, comme le reste de la fiche partenaire.
+  // =========================================================
+  async addPartnerDocument(
+    partnerId: number,
+    file: {
+      originalName: string;
+      filename: string;
+      url: string;
+      mimeType?: string;
+      size?: number;
+    },
+    type: PartnerDocumentType,
+    user: RequestUser,
+  ): Promise<PartnerDocument> {
+    if (!this.isAdmin(user)) {
+      throw new ForbiddenException(
+        "Seul Hipster Marketing peut gérer les documents d'un partenaire",
+      );
+    }
+    const partner = await this.findOnePartner(partnerId);
+    return this.partnerDocumentRepo.save(
+      this.partnerDocumentRepo.create({
+        partner: { id: partner.id } as any,
+        type: type || PartnerDocumentType.DOCUMENT_UTILE,
+        originalName: file.originalName,
+        filename: file.filename,
+        url: file.url,
+        mimeType: file.mimeType,
+        size: file.size,
+        uploadedBy: { id: user.userId } as any,
+      }),
+    );
+  }
+
+  async listPartnerDocuments(
+    partnerId: number,
+    user: RequestUser,
+  ): Promise<PartnerDocument[]> {
+    if (!this.isAdmin(user)) {
+      throw new ForbiddenException(
+        "Seul Hipster Marketing peut consulter les documents d'un partenaire",
+      );
+    }
+    await this.findOnePartner(partnerId);
+    return this.partnerDocumentRepo.find({
+      where: { partner: { id: partnerId } },
+      relations: ['uploadedBy'],
+      order: { uploadedAt: 'DESC' },
+    });
+  }
+
+  async removePartnerDocument(
+    docId: number,
+    user: RequestUser,
+  ): Promise<{ message: string }> {
+    if (!this.isAdmin(user)) {
+      throw new ForbiddenException(
+        "Seul Hipster Marketing peut supprimer les documents d'un partenaire",
+      );
+    }
+    const doc = await this.partnerDocumentRepo.findOne({
+      where: { id: docId },
+    });
+    if (!doc) throw new NotFoundException('Document introuvable');
+    await this.partnerDocumentRepo.remove(doc);
     return { message: 'Document supprimé' };
   }
 
