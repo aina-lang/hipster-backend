@@ -28,6 +28,7 @@ export enum DealStatus {
   RDV_SIGNE = 'rdv_signe',
   RDV_NON_SIGNE = 'rdv_non_signe',
   A_RELANCER = 'a_relancer',
+  R2 = 'r2',
   RDV_ANNULE = 'rdv_annule',
 }
 
@@ -36,6 +37,7 @@ export const CLOSER_STATUSES: DealStatus[] = [
   DealStatus.RDV_SIGNE,
   DealStatus.RDV_NON_SIGNE,
   DealStatus.A_RELANCER,
+  DealStatus.R2,
   DealStatus.RDV_ANNULE,
 ];
 

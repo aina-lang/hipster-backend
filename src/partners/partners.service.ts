@@ -1277,5 +1277,6 @@ export const STATUS_LABELS: Record<string, string> = {
   rdv_signe: 'Rendez-vous effectué – SIGNÉ',
   rdv_non_signe: 'Rendez-vous effectué – NON SIGNÉ',
   a_relancer: 'À relancer',
+  r2: 'R2',
   rdv_annule: 'Rendez-vous annulé / absent',
 };
